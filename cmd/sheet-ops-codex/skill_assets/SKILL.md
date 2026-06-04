@@ -1,0 +1,177 @@
+---
+name: sheet-ops
+description: Single human-facing public entry for Sheet Ops workbook requests.
+argument-hint: <workbook-task>
+allowed-tools: Read Grep Glob Bash
+---
+
+# Sheet Ops
+
+Use this installed skill as the single human-facing public entry for repeated
+workbook work that should become a local process artifact, not only a one-off
+chat answer. Accept the user's natural-language workbook request, separate the
+task facts needed for execution, write or select a structured request reference,
+and hand a typed `UseEnvelopeV2` to the internal proof-gated execution boundary.
+
+This file is a mirrored install/distribution surface. The canonical package contract remains the authority in repository architecture, and this copy is a self-contained mirrored documentation surface for installed/bundled consumers.
+
+The internal proof-gated execution boundary is a skill-owned runtime handoff,
+not a runner-pane command.
+
+Do not present that launcher as a second human-facing public entry. The user
+calls this skill; this skill creates or selects the envelope and uses the
+runtime handoff internally.
+
+runner-pane bypass guard: Do not type, paste, or run the skill-local launcher path directly.
+In a loop-station or consumer runner, the user-facing entry is this `sheet-ops`
+skill; the launcher remains internal to skill execution.
+Do not search for, inspect, or construct internal command lines in the runner
+pane. Treat this skill document as the public entry instructions.
+
+This skill is installed from the repository-local `install-skill.sh` command. It
+does not ship a zip file, tarball, or prebuilt platform binary. It builds the
+skill-local agent runtime during install. The runtime handoff remains internal
+to this skill and to the installed wrapper.
+
+## Why not just Codex/Claude?
+
+Modern LLMs can already help with workbook tasks. Sheet Ops starts from that
+assumption and focuses on what becomes useful after repetition: keeping the
+process behind a workbook edit as local files that can be reviewed, tested,
+adapted, and reused later.
+
+In this skill, the LLM only plans and compiles. Go runtime executes and verifies
+workbook work; schema contracts decide what is valid, and evidence records what happened for review and repair.
+
+## Public Preview Claims
+
+Supported today:
+
+- local source-install Sheet Ops skill entry for workbook requests
+- public agent capabilities: `group_summarize`, `highlight_threshold`, and
+  `join_lookup`
+- deterministic fixture-backed harness smoke with the public preview claim
+  contract
+- schema-authorized `TaskSpec -> OperationIR -> Execute -> Verify -> Evidence`
+  runtime path
+- render artifact emission as preview artifact evidence
+
+Preview limitations:
+
+- live Codex delegation smoke is a non-blocking opt-in diagnostic, not a
+  required release gate
+- render artifact emission is not visual quality verification
+- Sheet Ops is not hosted or multi-tenant ready
+- `write_values` is not a public agent capability
+
+Follow-up:
+
+- harden live delegation smoke
+- add visual quality checks after renderer support is reliable
+- harden hosted state/privacy boundaries before hosted claims
+- add public orchestration and e2e tests before promoting `write_values`
+
+## Primary Workflow
+
+1. Capture the user's workbook request in natural language.
+2. Separate the task facts needed to identify the scenario, request text or request file, input workbook, and output workbook.
+3. If the user already supplied the source sheet, output boundary, and operation shape clearly enough, write a structured `UseRequest` JSON request file and pack it with `--request-kind structured_use_request`. Do not pre-read the workbook through Python, `openpyxl`, ZIP/XML scraping, or other ad hoc inspection just to confirm headers.
+4. If additional workbook facts are still needed, use a plain text or markdown request file and pack it with `--request-kind prompt_text` so the internal request-compiler inspects workbook facts in Go.
+5. Derived request, envelope, output, report, and evidence files must be written outside immutable case input folders. In loop-station or any harness that provides an attempt output directory, write the request reference and typed `UseEnvelopeV2` under that attempt output directory. Do not create `use-envelope.json` inside the case input folder.
+6. Hand the envelope to the internal compatibility dispatcher through the
+   skill-owned runtime handoff. Do not type or reconstruct an internal command
+   in the runner pane. The dispatcher routes typed structured request JSON to
+   `use-structured`; text or markdown requests route to `use-open`. Closed
+   validated execution requests are for `run-validated` only.
+7. Read the JSON result on stdout.
+8. Inspect the evidence path and output workbook only when the result succeeds.
+9. Return the final user-facing answer from this parent skill context.
+
+## Tool Authority
+
+Consumer restrictions live in `agents/profiles/*.toml`. This public skill
+surface does not widen runner-pane tool permissions; profile-rendered consumer
+surfaces remain the code-reviewed source of truth for allowed tools, commands,
+carriers, and writable scope.
+
+## Routing Guardrail
+
+Do not route a live Sheet Ops request through consumer-local demo or
+compatibility surfaces such as `.codex/skills/example-*` or
+`.codex/skills/shared-workbook-case-executor`. Those are harness fixtures, not
+the single human-facing public entry, and they may exercise legacy adapters or
+non-authoritative execution paths.
+
+## Installation Contract
+
+The user environment must have Go 1.25 or newer before installing this skill.
+
+Official install flow:
+
+1. Check whether Go is already visible in the current shell:
+   `command -v go && go version`
+2. If Go is missing or older than 1.25, install or upgrade Go from the official
+   Go guide: https://go.dev/doc/install
+3. Run the repository-local installer:
+
+```bash
+/path/to/sheet-ops/install-skill.sh --project /path/to/target/workspace
+```
+
+If Go is installed but not visible in the current app or shell `PATH`, find the
+actual Go executable first and pass it explicitly:
+
+```bash
+/path/to/sheet-ops/install-skill.sh --project /path/to/target/workspace --go-bin /absolute/path/to/go
+```
+
+Do not guess the Go path or install a second copy before checking the existing
+installation.
+
+If Go is missing or older than 1.25, `install-skill` asks before sending the user to the official Go installation guide. If Go 1.25 or newer is already available, it does not prompt and installs without asking.
+
+## Diagnostic Workflow
+
+Public split workflow:
+
+1. Write a typed `UseEnvelopeV2` JSON file with the deterministic packing step under the attempt output directory or another writable derived-output location. Do not create `use-envelope.json` inside the case input folder.
+2. Use the internal compatibility launcher through the skill-owned runtime
+   handoff; do not type or reconstruct its command line.
+3. Let the launcher dispatch the request:
+   - `request.kind=prompt_text` goes through `use-open`
+   - `request.kind=structured_use_request` goes through `use-structured`
+   - closed validated execution requests belong to `run-validated`
+4. Read the JSON result on stdout.
+5. If the result status is `failed` and `terminal_state` is `BLOCKED_AT_REQUEST_COMPILER`, treat it as a blocked compiler outcome, stop, and inspect the request-compiler artifacts under `.sheet-ops-state/artifacts/work/<work-unit-id>/request-compiler/`. Those artifacts may contain compiler decision details such as `needs_human_checkpoint`.
+6. Inspect the output workbook only when the result status is `succeeded`.
+
+External normalized-intent flow remains an advanced maintainer diagnostic
+surface. It is not the normal human-facing Sheet Ops route and must not be used
+by runner panes as a substitute for invoking this public skill.
+
+Legacy public compiler entries are not part of the Task 4 split. Do not route workbook requests through direct prompt/text compilation from the public codex CLI.
+
+## Runtime State
+
+The wrapper script resolves `SHEET_OPS_STATE_ROOT` as `$PWD/.sheet-ops-state` only when that environment variable is unset, then derives:
+
+- artifacts: `.sheet-ops-state/artifacts`
+- knowledge: `.sheet-ops-state/knowledge`
+
+For public open-layer requests, there is always one effective state root. The runtime workspace is derived from the input workbook directory:
+
+- workspace: `<input-workbook-dir>`
+- default state root when `SHEET_OPS_STATE_ROOT` is unset: `<workspace>/.sheet-ops-state`
+- only accepted explicit state root: `<workspace>/.sheet-ops-state`
+- artifacts root: `<effective-state-root>/artifacts`
+- knowledge root: `<effective-state-root>/knowledge`
+
+If neither supported state-root condition is true, the command is rejected.
+
+Installed public runs default to:
+
+- `SHEET_OPS_RETENTION_MODE=redacted`
+- `SHEET_OPS_RENDER_MODE=never`
+
+Use explicit environment overrides only when a maintainer intentionally needs
+full forensic retention or render evidence. That override path is for local testing mode only and is not deployment-safe yet.

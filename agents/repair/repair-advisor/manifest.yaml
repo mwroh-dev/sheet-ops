@@ -1,0 +1,7 @@
+agent_id: repair-advisor
+role_group: repair
+input_contract: contracts/results/verification_review.schema.json
+output_contract: contracts/results/repair_advice.schema.json
+skills: []
+knowledge_namespaces:
+  - knowledge/repair

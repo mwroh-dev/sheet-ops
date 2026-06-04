@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/requests/request_mode_judgment.schema.json",
+  "title": "RequestModeJudgment",
+  "type": "object",
+  "required": [
+    "request_mode",
+    "reason"
+  ],
+  "properties": {
+    "request_mode": {
+      "enum": [
+        "structured_use_request",
+        "prompt_text"
+      ]
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": false
+}

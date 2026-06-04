@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ScenarioEvidence",
+  "type": "object",
+  "required": [
+    "scenario_id",
+    "run_id",
+    "operation",
+    "request",
+    "outcome",
+    "telemetry",
+    "runtime_version"
+  ],
+  "properties": {
+    "scenario_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "session_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Present when the evidence bundle references a separate session root for telemetry and proofs."
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "operation": {
+      "type": "string",
+      "minLength": 1
+    },
+    "request": {
+      "type": "string",
+      "minLength": 1
+    },
+    "plan_path": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Present when the run reached and retained a planning artifact."
+    },
+    "policy_path": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Present when the run emitted a policy decision artifact."
+    },
+    "episode_path": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Present only when the run emits execution-episode artifacts."
+    },
+    "verification_path": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Present when the run emitted a verification artifact."
+    },
+    "verification_review_path": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Present when the run emitted a verification review artifact."
+    },
+    "render_path": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Present when the run emitted visual/render status evidence for the output workbook."
+    },
+    "failure_evidence_path": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Required when outcome is fail. Points to the fail-only evidence artifact for this run."
+    },
+    "repair_advice_path": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Present when the run emitted a repair-advice artifact."
+    },
+    "outcome": {
+      "enum": [
+        "pass",
+        "fail"
+      ]
+    },
+    "telemetry": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "proofs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Present when the evidence bundle references proof artifacts emitted under the session root."
+    },
+    "runtime_version": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "runtime_name"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "runtime_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "runtime_commit": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "outcome": {
+            "const": "fail"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "failure_evidence_path"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "failure_evidence_path"
+          ]
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

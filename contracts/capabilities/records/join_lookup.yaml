@@ -1,0 +1,45 @@
+{
+  "name": "join_lookup",
+  "operation_family": "join_lookup",
+  "task_operations": [
+    "create_join_lookup_result_sheet"
+  ],
+  "inputs": [
+    "input_workbook",
+    "source_sheet",
+    "lookup_sheet",
+    "join_key",
+    "include_source_columns",
+    "append_lookup_columns"
+  ],
+  "outputs": [
+    "output_workbook",
+    "target_sheet"
+  ],
+  "required_facts": [
+    "sheets",
+    "source_headers",
+    "lookup_headers"
+  ],
+  "verifies": [
+    "source_preserved",
+    "lookup_rows_match",
+    "appended_columns_match"
+  ],
+  "contract_paths": [
+    "contracts/task/task_spec.schema.json",
+    "contracts/ir/workbook_operation_ir.schema.json",
+    "contracts/verification/verification_result.schema.json"
+  ],
+  "runtime_paths": [
+    "runtime/compiler/workbook_compiler.go",
+    "runtime/execute/join_lookup.go",
+    "runtime/verify/join_lookup.go"
+  ],
+  "examples": [
+    "examples/join_lookup/structured_use_request.json",
+    "examples/join_lookup/validated_execution_request.json"
+  ],
+  "status": "supported",
+  "exposure": "public_agent_capability"
+}

@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VerificationResult",
+  "type": "object",
+  "required": [
+    "pass",
+    "operation",
+    "output_file",
+    "reasons"
+  ],
+  "properties": {
+    "pass": {
+      "type": "boolean"
+    },
+    "operation": {
+      "enum": [
+        "highlight_threshold_rows",
+        "create_summary_sheet",
+        "create_join_lookup_result_sheet",
+        "write_values"
+      ]
+    },
+    "highlighted_rows": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "output_file": {
+      "type": "string"
+    },
+    "summary_sheet": {
+      "type": "string"
+    },
+    "summary_mode": {
+      "enum": [
+        "values",
+        "formulas"
+      ]
+    },
+    "summary_rows": {
+      "type": "integer"
+    },
+    "formula_cells": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "written_cells": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "layers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["level", "name", "pass"],
+        "properties": {
+          "level": { "type": "integer", "minimum": 1, "maximum": 7 },
+          "name": { "type": "string", "minLength": 1 },
+          "pass": { "type": "boolean" },
+          "reasons": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,12 @@
+agent_id = "public-entry"
+role = "human-facing entry"
+purpose = "Capture a workbook request, resolve only open-layer ambiguity, and hand off to the bounded harness."
+allowed_tools = ["Read", "Write", "spawn_agent", "wait_agent", "close_agent"]
+disallowed_tools = ["Bash", "Skill", "WebSearch", "WebFetch"]
+allowed_commands = ["prepare-use"]
+disallowed_commands = ["pack-request", "judge-request-mode", "compile-open-request", "run-structured-use", "verify-use-result"]
+allowed_carriers = ["default"]
+private_capabilities = ["request-packer", "request-mode-judge", "request-open-compiler", "use-structured-runner", "result-verifier"]
+readable_paths = ["skills/sheet-ops/SKILL.md", "agents/request-packer/contract/request_packer_input.schema.json", "contracts/requests/request_ref.schema.json", "contracts/requests/use_envelope_v2.schema.json", "contracts/requests/use_request.schema.json"]
+writable_paths = ["case-local request and envelope files only"]
+generated_outputs = [".claude/agents/public-entry.md"]

@@ -1,0 +1,32 @@
+{
+  "scenario_id": "group-summarize-values-example",
+  "request_text": "Create a summary sheet of revenue and order count by product, excluding canceled orders.",
+  "input_file": "workspace/orders.xlsx",
+  "sheet_name": "주문내역",
+  "output_file": "workspace/orders-summary.xlsx",
+  "operation": "create_summary_sheet",
+  "target_sheet": "상품별_요약",
+  "summary_mode": "values",
+  "filters": [
+    {
+      "column": "배송상태",
+      "op": "!=",
+      "value": "취소"
+    }
+  ],
+  "group_by": [
+    "상품명"
+  ],
+  "metrics": [
+    {
+      "column": "결제금액",
+      "op": "sum",
+      "as": "총매출"
+    },
+    {
+      "column": "주문번호",
+      "op": "count",
+      "as": "주문수"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+agent_id = "request-mode-judge"
+role = "request mode judge"
+purpose = "Judge whether a request can stay structured or must enter the open-layer ambiguity path."
+allowed_tools = ["Read"]
+disallowed_tools = ["Bash", "Skill", "Write", "spawn_agent", "wait_agent", "close_agent", "WebSearch", "WebFetch"]
+allowed_commands = ["judge-request-mode"]
+disallowed_commands = ["prepare-use", "pack-request", "compile-open-request", "run-structured-use", "verify-use-result"]
+allowed_carriers = ["default"]
+private_capabilities = []
+readable_paths = ["contracts/requests/request_ref.schema.json", "contracts/requests/request_mode_judgment.schema.json", "contracts/requests/structured_use_request.schema.json", "contracts/requests/use_request.schema.json", "contracts/capabilities/records"]
+writable_paths = ["none"]
+generated_outputs = []

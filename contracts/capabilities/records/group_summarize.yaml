@@ -1,0 +1,47 @@
+{
+  "name": "group_summarize",
+  "operation_family": "group_summarize",
+  "task_operations": [
+    "create_summary_sheet"
+  ],
+  "inputs": [
+    "input_workbook",
+    "source_sheet",
+    "filters",
+    "group_by",
+    "metrics",
+    "summary_mode"
+  ],
+  "outputs": [
+    "output_workbook",
+    "target_sheet"
+  ],
+  "required_facts": [
+    "sheets",
+    "headers",
+    "source_rows"
+  ],
+  "verifies": [
+    "source_preserved",
+    "summary_rows_match",
+    "formulas_calculate"
+  ],
+  "contract_paths": [
+    "contracts/task/task_spec.schema.json",
+    "contracts/ir/workbook_operation_ir.schema.json",
+    "contracts/verification/verification_result.schema.json"
+  ],
+  "runtime_paths": [
+    "runtime/inspect/group_summarize.go",
+    "runtime/compiler/workbook_compiler.go",
+    "runtime/execute/group_summarize_values.go",
+    "runtime/execute/group_summarize_formulas.go",
+    "runtime/verify/group_summarize_verify.go"
+  ],
+  "examples": [
+    "examples/group_summarize/values_request.json",
+    "examples/group_summarize/formulas_request.json"
+  ],
+  "status": "supported",
+  "exposure": "public_agent_capability"
+}

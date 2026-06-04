@@ -1,0 +1,12 @@
+agent_id = "request-packer"
+role = "consumer-side request packer"
+purpose = "Pack already-resolved request facts into the bounded request form without inspecting workbook internals."
+allowed_tools = ["Read", "Write"]
+disallowed_tools = ["Bash", "Skill", "spawn_agent", "wait_agent", "close_agent", "WebSearch", "WebFetch"]
+allowed_commands = ["pack-request"]
+disallowed_commands = ["prepare-use", "judge-request-mode", "compile-open-request", "run-structured-use", "verify-use-result"]
+allowed_carriers = ["worker"]
+private_capabilities = []
+readable_paths = ["agents/request-packer/contract/request_packer_input.schema.json", "contracts/requests/request_ref.schema.json", "contracts/requests/request_mode_judgment.schema.json", "contracts/requests/use_envelope_v2.schema.json"]
+writable_paths = ["case-local request and envelope files only"]
+generated_outputs = [".claude/agents/request-packer.md"]

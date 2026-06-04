@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/inspection/workbook_facts.schema.json",
+  "title": "WorkbookFacts",
+  "type": "object",
+  "required": ["input_file", "sheets"],
+  "properties": {
+    "input_file": { "type": "string", "minLength": 1 },
+    "sheets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "hidden": { "type": "boolean" },
+          "row_count": { "type": "integer", "minimum": 0 },
+          "column_count": { "type": "integer", "minimum": 0 },
+          "used_range": {
+            "type": "object",
+            "required": ["start_cell", "end_cell"],
+            "properties": {
+              "start_cell": { "type": "string", "minLength": 1 },
+              "end_cell": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": false
+          },
+          "columns": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "formulas": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["cell", "formula"],
+              "properties": {
+                "cell": { "type": "string", "minLength": 1 },
+                "formula": { "type": "string", "minLength": 1 }
+              },
+              "additionalProperties": false
+            }
+          },
+          "tables": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "range"],
+              "properties": {
+                "name": { "type": "string", "minLength": 1 },
+                "range": { "type": "string", "minLength": 1 }
+              },
+              "additionalProperties": false
+            }
+          },
+          "defined_names": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "refers_to"],
+              "properties": {
+                "name": { "type": "string", "minLength": 1 },
+                "refers_to": { "type": "string", "minLength": 1 },
+                "scope": { "type": "string", "minLength": 1 }
+              },
+              "additionalProperties": false
+            }
+          },
+          "merged_cells": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["range"],
+              "properties": {
+                "range": { "type": "string", "minLength": 1 }
+              },
+              "additionalProperties": false
+            }
+          },
+          "validations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["range"],
+              "properties": {
+                "range": { "type": "string", "minLength": 1 },
+                "type": { "type": "string" },
+                "operator": { "type": "string" },
+                "formula1": { "type": "string" },
+                "formula2": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "conditional_formats": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["range"],
+              "properties": {
+                "range": { "type": "string", "minLength": 1 },
+                "rules": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": { "type": "string" },
+                      "criteria": { "type": "string" },
+                      "value": { "type": "string" }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "hidden_rows": {
+            "type": "array",
+            "items": { "type": "integer", "minimum": 1 }
+          },
+          "hidden_columns": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

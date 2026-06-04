@@ -1,0 +1,16 @@
+{
+  "execution_kind": "primitive",
+  "operation_family": "write_values",
+  "target_sheet": "Notes",
+  "preserve_original": true,
+  "values": [
+    {
+      "cell": "A1",
+      "value": "status"
+    },
+    {
+      "cell": "B1",
+      "value": "ready"
+    }
+  ]
+}

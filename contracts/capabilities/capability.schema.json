@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/capabilities/capability.schema.json",
+  "title": "Capability",
+  "type": "object",
+  "$defs": {
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "repo_relative_path_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "not": {
+          "pattern": "^/"
+        }
+      }
+    }
+  },
+  "required": [
+    "name",
+    "operation_family",
+    "task_operations",
+    "inputs",
+    "outputs",
+    "required_facts",
+    "verifies",
+    "contract_paths",
+    "runtime_paths",
+    "examples",
+    "status",
+    "exposure"
+  ],
+  "properties": {
+    "name": {
+      "enum": [
+        "group_summarize",
+        "highlight_threshold",
+        "join_lookup",
+        "write_values"
+      ]
+    },
+    "operation_family": {
+      "enum": [
+        "group_summarize",
+        "highlight_threshold",
+        "join_lookup",
+        "write_values"
+      ]
+    },
+    "task_operations": {
+      "$ref": "#/$defs/non_empty_string_array"
+    },
+    "inputs": {
+      "$ref": "#/$defs/non_empty_string_array"
+    },
+    "outputs": {
+      "$ref": "#/$defs/non_empty_string_array"
+    },
+    "required_facts": {
+      "$ref": "#/$defs/non_empty_string_array"
+    },
+    "verifies": {
+      "$ref": "#/$defs/non_empty_string_array"
+    },
+    "contract_paths": {
+      "$ref": "#/$defs/repo_relative_path_array"
+    },
+    "runtime_paths": {
+      "$ref": "#/$defs/repo_relative_path_array"
+    },
+    "examples": {
+      "$ref": "#/$defs/repo_relative_path_array"
+    },
+    "status": {
+      "enum": [
+        "supported",
+        "planned",
+        "deprecated"
+      ]
+    },
+    "exposure": {
+      "enum": [
+        "public_agent_capability",
+        "runtime_primitive"
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "group_summarize"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "operation_family": {
+            "const": "group_summarize"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "highlight_threshold"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "operation_family": {
+            "const": "highlight_threshold"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "join_lookup"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "operation_family": {
+            "const": "join_lookup"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "write_values"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "operation_family": {
+            "const": "write_values"
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

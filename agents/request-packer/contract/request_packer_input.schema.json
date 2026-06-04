@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/agents/request-packer/contract/request_packer_input.schema.json",
+  "title": "RequestPackerInput",
+  "type": "object",
+  "required": [
+    "scenario_id",
+    "request_path",
+    "input_file",
+    "output_file",
+    "judgment"
+  ],
+  "properties": {
+    "scenario_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "request_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "input_file": {
+      "type": "string",
+      "minLength": 1
+    },
+    "output_file": {
+      "type": "string",
+      "minLength": 1
+    },
+    "judgment": {
+      "type": "object",
+      "required": [
+        "request_mode",
+        "reason"
+      ],
+      "properties": {
+        "request_mode": {
+          "enum": [
+            "structured_use_request",
+            "prompt_text"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

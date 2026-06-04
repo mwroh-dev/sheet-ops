@@ -1,0 +1,474 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WorkbookOperationIR",
+  "type": "object",
+  "$defs": {
+    "filter_spec": {
+      "type": "object",
+      "required": [
+        "column",
+        "op",
+        "value"
+      ],
+      "properties": {
+        "column": {
+          "type": "string",
+          "minLength": 1
+        },
+        "op": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "metric_spec": {
+      "type": "object",
+      "required": [
+        "column",
+        "op",
+        "as"
+      ],
+      "properties": {
+        "column": {
+          "type": "string",
+          "minLength": 1
+        },
+        "op": {
+          "enum": [
+            "sum",
+            "count"
+          ]
+        },
+        "as": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "cell_value": {
+      "type": "object",
+      "required": [
+        "cell",
+        "value"
+      ],
+      "properties": {
+        "cell": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value": {
+          "type": [
+            "string",
+            "number",
+            "integer",
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "required": [
+    "execution_kind",
+    "operation_family",
+    "preserve_original"
+  ],
+  "properties": {
+    "execution_kind": {
+      "enum": [
+        "composition",
+        "primitive"
+      ]
+    },
+    "composition_kind": {
+      "enum": [
+        "group_summary",
+        "threshold_highlight",
+        "join_lookup"
+      ]
+    },
+    "operation_family": {
+      "enum": [
+        "group_summarize",
+        "highlight_threshold",
+        "join_lookup",
+        "write_values"
+      ]
+    },
+    "source_sheet": {
+      "type": "string",
+      "minLength": 1
+    },
+    "filters": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/filter_spec"
+      }
+    },
+    "group_by": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "metrics": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/metric_spec"
+      }
+    },
+    "target_sheet": {
+      "type": "string",
+      "minLength": 1
+    },
+    "summary_mode": {
+      "enum": [
+        "values",
+        "formulas"
+      ]
+    },
+    "target_column": {
+      "type": "string",
+      "minLength": 1
+    },
+    "operator": {
+      "enum": [
+        ">",
+        ">=",
+        "<",
+        "<=",
+        "="
+      ]
+    },
+    "threshold": {
+      "type": "number"
+    },
+    "highlight_color": {
+      "type": "string",
+      "minLength": 1
+    },
+    "lookup_sheet": {
+      "type": "string",
+      "minLength": 1
+    },
+    "join_key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "include_source_columns": {
+      "$ref": "#/$defs/non_empty_string_array"
+    },
+    "append_lookup_columns": {
+      "$ref": "#/$defs/non_empty_string_array"
+    },
+    "values": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/cell_value"
+      }
+    },
+    "preserve_original": {
+      "type": "boolean"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "operation_family": {
+            "const": "group_summarize"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "execution_kind": {
+            "const": "composition"
+          },
+          "composition_kind": {
+            "const": "group_summary"
+          }
+        },
+        "required": [
+          "composition_kind",
+          "source_sheet",
+          "group_by",
+          "metrics",
+          "target_sheet",
+          "summary_mode"
+        ],
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "target_column"
+              ]
+            },
+            {
+              "required": [
+                "operator"
+              ]
+            },
+            {
+              "required": [
+                "threshold"
+              ]
+            },
+            {
+              "required": [
+                "highlight_color"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "operation_family": {
+            "const": "highlight_threshold"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "execution_kind": {
+            "const": "composition"
+          },
+          "composition_kind": {
+            "const": "threshold_highlight"
+          }
+        },
+        "required": [
+          "composition_kind",
+          "source_sheet",
+          "target_column",
+          "operator",
+          "threshold",
+          "highlight_color"
+        ],
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "filters"
+              ]
+            },
+            {
+              "required": [
+                "group_by"
+              ]
+            },
+            {
+              "required": [
+                "metrics"
+              ]
+            },
+            {
+              "required": [
+                "target_sheet"
+              ]
+            },
+            {
+              "required": [
+                "summary_mode"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "operation_family": {
+            "const": "join_lookup"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "execution_kind": {
+            "const": "composition"
+          },
+          "composition_kind": {
+            "const": "join_lookup"
+          }
+        },
+        "required": [
+          "composition_kind",
+          "source_sheet",
+          "lookup_sheet",
+          "join_key",
+          "target_sheet",
+          "include_source_columns",
+          "append_lookup_columns"
+        ],
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "filters"
+              ]
+            },
+            {
+              "required": [
+                "group_by"
+              ]
+            },
+            {
+              "required": [
+                "metrics"
+              ]
+            },
+            {
+              "required": [
+                "summary_mode"
+              ]
+            },
+            {
+              "required": [
+                "target_column"
+              ]
+            },
+            {
+              "required": [
+                "operator"
+              ]
+            },
+            {
+              "required": [
+                "threshold"
+              ]
+            },
+            {
+              "required": [
+                "highlight_color"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "operation_family": {
+            "const": "write_values"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "execution_kind": {
+            "const": "primitive"
+          },
+          "preserve_original": {
+            "const": true
+          }
+        },
+        "required": [
+          "target_sheet",
+          "values"
+        ],
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "composition_kind"
+              ]
+            },
+            {
+              "required": [
+                "source_sheet"
+              ]
+            },
+            {
+              "required": [
+                "filters"
+              ]
+            },
+            {
+              "required": [
+                "group_by"
+              ]
+            },
+            {
+              "required": [
+                "metrics"
+              ]
+            },
+            {
+              "required": [
+                "summary_mode"
+              ]
+            },
+            {
+              "required": [
+                "target_column"
+              ]
+            },
+            {
+              "required": [
+                "operator"
+              ]
+            },
+            {
+              "required": [
+                "threshold"
+              ]
+            },
+            {
+              "required": [
+                "highlight_color"
+              ]
+            },
+            {
+              "required": [
+                "lookup_sheet"
+              ]
+            },
+            {
+              "required": [
+                "join_key"
+              ]
+            },
+            {
+              "required": [
+                "include_source_columns"
+              ]
+            },
+            {
+              "required": [
+                "append_lookup_columns"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

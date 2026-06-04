@@ -1,0 +1,22 @@
+{
+  "scenario_id": "join-lookup-example",
+  "request_text": "Match each 주문내역 row with 상품마스터 by 상품코드 and append 원가 and 카테고리 to a new result sheet.",
+  "input_file": "workspace/orders.xlsx",
+  "sheet_name": "주문내역",
+  "output_file": "workspace/orders-lookup.xlsx",
+  "operation": "create_join_lookup_result_sheet",
+  "target_sheet": "결과",
+  "lookup_sheet": "상품마스터",
+  "join_key": "상품코드",
+  "include_source_columns": [
+    "주문번호",
+    "상품코드",
+    "상품명",
+    "수량",
+    "판매가"
+  ],
+  "append_lookup_columns": [
+    "원가",
+    "카테고리"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OrchestratorMetaRecord",
+  "type": "object",
+  "required": [
+    "agent_namespace",
+    "record_id",
+    "version",
+    "summary"
+  ],
+  "properties": {
+    "agent_namespace": {
+      "const": "knowledge/orchestrator/meta"
+    },
+    "record_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "replaces": {
+      "type": "string",
+      "minLength": 1
+    },
+    "updated_after_runs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": false
+}

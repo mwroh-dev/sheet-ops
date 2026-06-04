@@ -1,0 +1,36 @@
+{
+  "name": "write_values",
+  "operation_family": "write_values",
+  "task_operations": [
+    "write_values"
+  ],
+  "inputs": [
+    "input_workbook",
+    "target_sheet",
+    "values"
+  ],
+  "outputs": [
+    "output_workbook",
+    "written_cells"
+  ],
+  "required_facts": [
+    "sheets"
+  ],
+  "verifies": [
+    "source_preserved",
+    "written_values_match"
+  ],
+  "contract_paths": [
+    "contracts/ir/workbook_operation_ir.schema.json",
+    "contracts/verification/verification_result.schema.json"
+  ],
+  "runtime_paths": [
+    "runtime/execute/write_values.go",
+    "runtime/verify/write_values.go"
+  ],
+  "examples": [
+    "examples/write_values/workbook_operation_ir.json"
+  ],
+  "status": "supported",
+  "exposure": "runtime_primitive"
+}

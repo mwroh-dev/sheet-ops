@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/results/verification_review.schema.json",
+  "title": "VerificationReview",
+  "type": "object",
+  "required": ["status", "summary"],
+  "properties": {
+    "status": {
+      "enum": ["pass", "fail", "blocked", "needs_human_checkpoint"]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

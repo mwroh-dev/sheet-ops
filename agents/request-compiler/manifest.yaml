@@ -1,0 +1,7 @@
+agent_id: request-compiler
+role_group: request_boundary
+input_contract: agents/request-compiler/contract/compiler_input.schema.json
+output_contract: agents/request-compiler/contract/normalized_intent.schema.json
+skills: []
+knowledge_namespaces:
+  - knowledge/request-compiler

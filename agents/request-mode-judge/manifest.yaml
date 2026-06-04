@@ -1,0 +1,7 @@
+agent_id: request-mode-judge
+role_group: request_boundary
+input_contract: contracts/requests/request_ref.schema.json
+output_contract: contracts/requests/request_mode_judgment.schema.json
+skills: []
+knowledge_namespaces:
+  - knowledge/request-boundary

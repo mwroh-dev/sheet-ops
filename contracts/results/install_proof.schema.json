@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/results/install_proof.schema.json",
+  "title": "InstallProof",
+  "type": "object",
+  "required": [
+    "bundle_root",
+    "manifest_path",
+    "model_contract_path",
+    "status"
+  ],
+  "properties": {
+    "bundle_root": {
+      "type": "string",
+      "minLength": 1
+    },
+    "manifest_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "model_contract_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "const": "validated"
+    }
+  },
+  "additionalProperties": false
+}

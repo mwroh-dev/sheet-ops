@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/agents/request-compiler/contract/compiler_input.schema.json",
+  "title": "RequestCompilerInput",
+  "type": "object",
+  "required": ["request_source", "workspace", "scenario", "inputs", "requested_output"],
+  "properties": {
+    "request_source": {
+      "type": "object",
+      "properties": {
+        "kind": { "enum": ["prompt_file", "direct_text"] },
+        "path": { "type": "string", "minLength": 1 },
+        "text": { "type": "string", "minLength": 1 }
+      },
+      "required": ["kind"],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": { "const": "prompt_file" }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "required": ["path"],
+            "not": {
+              "required": ["text"]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": { "const": "direct_text" }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "required": ["text"],
+            "not": {
+              "required": ["path"]
+            }
+          }
+        }
+      ]
+    },
+    "workspace": {
+      "type": "object",
+      "required": ["root", "cwd"],
+      "properties": {
+        "root": { "type": "string", "minLength": 1 },
+        "cwd": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "scenario": {
+      "type": "object",
+      "required": ["slug", "work_unit_id"],
+      "properties": {
+        "slug": { "type": "string", "minLength": 1 },
+        "work_unit_id": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "inputs": {
+      "type": "object",
+      "required": ["workbooks"],
+      "properties": {
+        "workbooks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["path", "role"],
+            "properties": {
+              "path": { "type": "string", "minLength": 1 },
+              "role": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "requested_output": {
+      "type": "object",
+      "required": ["output_file"],
+      "properties": {
+        "output_file": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

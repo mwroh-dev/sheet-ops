@@ -1,0 +1,7 @@
+agent_id: use-orchestrator
+role_group: orchestrator
+input_contract: contracts/requests/use_request.schema.json
+output_contract: contracts/evidence/scenario_evidence.schema.json
+skills: []
+knowledge_namespaces:
+  - knowledge/orchestrator

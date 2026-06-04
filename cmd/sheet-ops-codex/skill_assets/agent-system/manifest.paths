@@ -1,0 +1,10 @@
+# Bundled agent runtime allowlist for the sheet-ops Codex skill.
+manifest.paths
+bundle.manifest.json
+model-contract.json
+contracts/requests/request_ref.schema.json
+contracts/requests/use_envelope.schema.json
+contracts/requests/use_envelope_v2.schema.json
+prompts
+references/usage.md
+scripts/build-sheet-ops-agent.sh

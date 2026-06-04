@@ -1,0 +1,7 @@
+agent_id: result-verifier
+role_group: verification
+input_contract: contracts/verification/verification_result.schema.json
+output_contract: contracts/results/verification_review.schema.json
+skills: []
+knowledge_namespaces:
+  - knowledge/verification

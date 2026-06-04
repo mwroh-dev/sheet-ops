@@ -1,0 +1,12 @@
+agent_id = "result-verifier"
+role = "deterministic result verifier"
+purpose = "Interpret deterministic execution and verification outputs without rerunning execution."
+allowed_tools = ["Read"]
+disallowed_tools = ["Bash", "Skill", "Write", "WebSearch", "WebFetch"]
+allowed_commands = ["verify-use-result"]
+disallowed_commands = ["prepare-use", "pack-request", "judge-request-mode", "compile-open-request", "run-structured-use"]
+allowed_carriers = ["default"]
+private_capabilities = []
+readable_paths = ["agents/orchestrator/use-orchestrator/prompt-templates/result-verifier.md", "contracts/results/public_entry_result.schema.json", "contracts/results/verification_review.schema.json"]
+writable_paths = ["none"]
+generated_outputs = []

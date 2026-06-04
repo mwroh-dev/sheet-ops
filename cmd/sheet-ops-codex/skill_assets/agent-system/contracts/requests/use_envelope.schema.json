@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/requests/use_envelope.schema.json",
+  "title": "UseEnvelopeLegacy",
+  "description": "Legacy compatibility envelope. New typed request boundaries should use use_envelope_v2.schema.json.",
+  "type": "object",
+  "required": [
+    "scenario_id",
+    "request_ref",
+    "input_file",
+    "output_file"
+  ],
+  "properties": {
+    "scenario_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "request_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "input_file": {
+      "type": "string",
+      "minLength": 1
+    },
+    "output_file": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": false
+}

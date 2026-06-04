@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.dev/contracts/agents/agent_profile.schema.json",
+  "title": "Sheet Ops Consumer Agent Profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "agent_id",
+    "role",
+    "purpose",
+    "allowed_tools",
+    "disallowed_tools",
+    "allowed_commands",
+    "disallowed_commands",
+    "allowed_carriers",
+    "private_capabilities",
+    "readable_paths",
+    "writable_paths",
+    "generated_outputs"
+  ],
+  "properties": {
+    "agent_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "role": {
+      "type": "string",
+      "minLength": 1
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1
+    },
+    "allowed_tools": {
+      "$ref": "#/$defs/nonEmptyStringArray"
+    },
+    "disallowed_tools": {
+      "$ref": "#/$defs/nonEmptyStringArray"
+    },
+    "allowed_commands": {
+      "$ref": "#/$defs/nonEmptyStringArray"
+    },
+    "disallowed_commands": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "allowed_carriers": {
+      "$ref": "#/$defs/nonEmptyStringArray"
+    },
+    "private_capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "readable_paths": {
+      "$ref": "#/$defs/nonEmptyStringArray"
+    },
+    "writable_paths": {
+      "$ref": "#/$defs/nonEmptyStringArray"
+    },
+    "generated_outputs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "nonEmptyStringArray": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    }
+  }
+}

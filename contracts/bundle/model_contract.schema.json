@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/bundle/model_contract.schema.json",
+  "title": "BundleModelContract",
+  "type": "object",
+  "required": [
+    "orchestrator",
+    "request_compiler",
+    "result_verifier",
+    "repair_advisor"
+  ],
+  "properties": {
+    "orchestrator": {
+      "$ref": "#/$defs/role_contract"
+    },
+    "request_compiler": {
+      "$ref": "#/$defs/role_contract"
+    },
+    "result_verifier": {
+      "$ref": "#/$defs/role_contract"
+    },
+    "repair_advisor": {
+      "$ref": "#/$defs/role_contract"
+    }
+  },
+  "$defs": {
+    "role_contract": {
+      "type": "object",
+      "required": [
+        "reasoning_effort",
+        "carrier",
+        "prompt",
+        "fallback"
+      ],
+      "properties": {
+        "model": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional maintainer override. Omit or set to default to use the Codex CLI default model."
+        },
+        "reasoning_effort": {
+          "enum": ["low", "medium", "high", "xhigh"]
+        },
+        "carrier": {
+          "enum": ["default", "explorer", "worker"]
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fallback": {
+          "const": "forbidden"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

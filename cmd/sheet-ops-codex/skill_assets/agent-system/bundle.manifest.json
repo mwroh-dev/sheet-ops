@@ -1,0 +1,6 @@
+{
+  "bundle_name": "sheet-ops",
+  "surface": "codex_skill_bundled_agent_runtime",
+  "install_scope": "skill_local",
+  "entrypoint": "bin/sheet-ops-agent"
+}

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HighlightThresholdPlan",
+  "type": "object",
+  "required": [
+    "operation",
+    "sheet_name",
+    "target_column",
+    "operator",
+    "threshold",
+    "highlight_color",
+    "preserve_original",
+    "output_file"
+  ],
+  "properties": {
+    "operation": {
+      "const": "highlight_threshold_rows"
+    },
+    "sheet_name": {
+      "type": "string"
+    },
+    "target_column": {
+      "type": "string"
+    },
+    "operator": {
+      "enum": [">", ">=", "<", "<=", "="]
+    },
+    "threshold": {
+      "type": "number"
+    },
+    "highlight_color": {
+      "type": "string"
+    },
+    "preserve_original": {
+      "type": "boolean"
+    },
+    "output_file": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

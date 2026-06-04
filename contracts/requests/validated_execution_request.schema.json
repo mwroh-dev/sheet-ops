@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/requests/validated_execution_request.schema.json",
+  "title": "ValidatedExecutionRequest",
+  "type": "object",
+  "required": [
+    "scenario_id",
+    "execution_kind",
+    "composition_kind",
+    "request_kind",
+    "input_file",
+    "source_sheet",
+    "output_file"
+  ],
+  "properties": {
+    "scenario_id": { "type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "request_kind": {
+      "enum": ["structured_use_request", "prompt_text"]
+    },
+    "request_text": { "type": "string", "minLength": 1 },
+    "input_file": { "type": "string", "minLength": 1 },
+    "source_sheet": { "type": "string", "minLength": 1 },
+    "output_file": { "type": "string", "minLength": 1 },
+    "execution_kind": { "const": "composition" },
+    "composition_kind": { "enum": ["group_summary", "threshold_highlight", "join_lookup"] },
+    "target_sheet": { "type": "string", "minLength": 1 },
+    "summary_mode": { "enum": ["values", "formulas"] },
+    "filters": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["column", "op", "value"],
+        "properties": {
+          "column": { "type": "string", "minLength": 1 },
+          "op": { "type": "string", "minLength": 1 },
+          "value": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "group_by": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "metrics": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["column", "op", "as"],
+        "properties": {
+          "column": { "type": "string", "minLength": 1 },
+          "op": { "enum": ["sum", "count"] },
+          "as": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "target_column": { "type": "string", "minLength": 1 },
+    "operator": { "enum": [">", ">=", "<", "<=", "=", "=="] },
+    "threshold": { "type": "number" },
+    "highlight_color": { "type": "string", "minLength": 1 },
+    "lookup_sheet": { "type": "string", "minLength": 1 },
+    "join_key": { "type": "string", "minLength": 1 },
+    "include_source_columns": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "append_lookup_columns": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "request_kind": { "const": "structured_use_request" } },
+        "required": ["request_kind"]
+      },
+      "then": {
+        "not": {
+          "required": ["request_text"]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "request_kind": { "const": "prompt_text" } },
+        "required": ["request_kind"]
+      },
+      "then": {
+        "required": ["request_text"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "composition_kind": { "const": "group_summary" } },
+        "required": ["composition_kind"]
+      },
+      "then": {
+        "required": ["target_sheet", "summary_mode", "group_by", "metrics"],
+        "not": {
+          "anyOf": [
+            { "required": ["target_column"] },
+            { "required": ["operator"] },
+            { "required": ["threshold"] },
+            { "required": ["highlight_color"] },
+            { "required": ["lookup_sheet"] },
+            { "required": ["join_key"] },
+            { "required": ["include_source_columns"] },
+            { "required": ["append_lookup_columns"] }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "composition_kind": { "const": "threshold_highlight" } },
+        "required": ["composition_kind"]
+      },
+      "then": {
+        "required": ["target_column", "operator", "threshold"],
+        "not": {
+          "anyOf": [
+            { "required": ["target_sheet"] },
+            { "required": ["summary_mode"] },
+            { "required": ["filters"] },
+            { "required": ["group_by"] },
+            { "required": ["metrics"] },
+            { "required": ["lookup_sheet"] },
+            { "required": ["join_key"] },
+            { "required": ["include_source_columns"] },
+            { "required": ["append_lookup_columns"] }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "composition_kind": { "const": "join_lookup" } },
+        "required": ["composition_kind"]
+      },
+      "then": {
+        "required": ["target_sheet", "lookup_sheet", "join_key", "append_lookup_columns"],
+        "not": {
+          "anyOf": [
+            { "required": ["summary_mode"] },
+            { "required": ["filters"] },
+            { "required": ["group_by"] },
+            { "required": ["metrics"] },
+            { "required": ["target_column"] },
+            { "required": ["operator"] },
+            { "required": ["threshold"] },
+            { "required": ["highlight_color"] }
+          ]
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

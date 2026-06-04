@@ -1,0 +1,12 @@
+agent_id = "request-open-compiler"
+role = "open-layer request compiler"
+purpose = "Compile ambiguous human request text into a constrained structured interpretation for the parent consumer."
+allowed_tools = ["Read"]
+disallowed_tools = ["Bash", "Skill", "Write", "WebSearch", "WebFetch"]
+allowed_commands = ["compile-open-request"]
+disallowed_commands = ["prepare-use", "pack-request", "judge-request-mode", "run-structured-use", "verify-use-result"]
+allowed_carriers = ["explorer", "default"]
+private_capabilities = []
+readable_paths = ["agents/orchestrator/use-orchestrator/prompt-templates/request-compiler.md", "contracts/capabilities/records", "contracts/requests/use_request.schema.json"]
+writable_paths = ["none"]
+generated_outputs = []

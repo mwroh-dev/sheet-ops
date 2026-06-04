@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "positioning": "local source-install verifiable workbook execution harness for Codex/Claude agents",
+  "claim_ids": {
+    "deterministic_smoke": "deterministic_fixture_backed_harness_smoke",
+    "live_smoke": "live_codex_delegation_smoke",
+    "render_layer": "render_artifact_emission",
+    "hosted_state": "hosted_multi_tenant_ready",
+    "write_values_exposure": "write_values_public_capability"
+  },
+  "supported_today": [
+    "single human-facing sheet-ops skill entry",
+    "case-local internal dispatcher execution boundary",
+    "public agent capabilities: group_summarize, highlight_threshold, join_lookup",
+    "TaskSpec -> OperationIR -> Execute -> Verify -> Evidence",
+    "deterministic_fixture_backed_harness_smoke",
+    "scenario-level evidence and terminal result artifacts",
+    "render_artifact_emission when renderer tools exist, or explicit unavailable evidence when they do not"
+  ],
+  "preview_limitations": [
+    "live_codex_delegation_smoke is a non-blocking opt-in diagnostic, not a required release gate",
+    "render_artifact_emission records file-open and preview artifact properties; it is not visual quality verification",
+    "hosted_multi_tenant_ready is false; local state retention has not been hardened for hosted privacy isolation",
+    "write_values_public_capability is false; write_values remains an internal runtime primitive until orchestration and e2e coverage exist"
+  ],
+  "follow_up": [
+    "add a separately labeled live Codex delegation smoke with stronger timeout/process supervision",
+    "add visual quality assertions only after renderer availability and nonblank image checks are reliable across supported platforms",
+    "perform state/privacy hardening before making hosted or multi-tenant claims",
+    "promote write_values only after public orchestration and e2e tests exist"
+  ],
+  "forbidden_claims": [
+    "live Codex delegation is always guaranteed",
+    "hosted or multi-tenant ready",
+    "render proves visual quality",
+    "deterministic smoke is a live LLM delegation smoke",
+    "write_values is a public agent capability"
+  ]
+}

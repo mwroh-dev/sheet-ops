@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/verification/render_artifact.schema.json",
+  "title": "RenderArtifact",
+  "type": "object",
+  "required": ["input_workbook", "status", "renderer", "limitation", "checks"],
+  "properties": {
+    "input_workbook": { "type": "string", "minLength": 1 },
+    "status": { "type": "string", "enum": ["rendered", "unavailable", "failed"] },
+    "renderer": {
+      "type": "object",
+      "properties": {
+        "spreadsheet": { "type": "string", "minLength": 1 },
+        "rasterizer": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "pdf_path": { "type": "string", "minLength": 1 },
+    "preview_path": { "type": "string", "minLength": 1 },
+    "page_count": { "type": "integer", "minimum": 0 },
+    "limitation": { "type": "string", "minLength": 1 },
+    "reasons": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "checks": {
+      "type": "object",
+      "required": ["file_opens", "preview_created", "preview_exists", "preview_nonzero_bytes"],
+      "properties": {
+        "file_opens": { "type": "boolean" },
+        "preview_created": { "type": "boolean" },
+        "preview_exists": { "type": "boolean" },
+        "preview_nonzero_bytes": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": { "const": "rendered" }
+        }
+      },
+      "then": {
+        "required": ["pdf_path", "preview_path", "page_count"],
+        "properties": {
+          "page_count": { "type": "integer", "minimum": 1 },
+          "renderer": {
+            "required": ["spreadsheet", "rasterizer"]
+          },
+          "checks": {
+            "properties": {
+              "file_opens": { "const": true },
+              "preview_created": { "const": true },
+              "preview_exists": { "const": true },
+              "preview_nonzero_bytes": { "const": true }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

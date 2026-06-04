@@ -1,0 +1,30 @@
+{
+  "orchestrator": {
+    "model": "default",
+    "reasoning_effort": "high",
+    "carrier": "default",
+    "prompt": "prompts/orchestrator-use.md",
+    "fallback": "forbidden"
+  },
+  "request_compiler": {
+    "model": "default",
+    "reasoning_effort": "high",
+    "carrier": "explorer",
+    "prompt": "prompts/request-compiler.md",
+    "fallback": "forbidden"
+  },
+  "result_verifier": {
+    "model": "default",
+    "reasoning_effort": "high",
+    "carrier": "default",
+    "prompt": "prompts/result-verifier.md",
+    "fallback": "forbidden"
+  },
+  "repair_advisor": {
+    "model": "default",
+    "reasoning_effort": "medium",
+    "carrier": "default",
+    "prompt": "prompts/repair-advisor.md",
+    "fallback": "forbidden"
+  }
+}

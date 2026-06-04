@@ -1,0 +1,12 @@
+agent_id = "use-structured-runner"
+role = "structured execution launcher"
+purpose = "Launch already-structured Sheet Ops execution without re-opening ambiguity."
+allowed_tools = ["Read", "Write"]
+disallowed_tools = ["Bash", "Skill", "spawn_agent", "wait_agent", "close_agent", "WebSearch", "WebFetch"]
+allowed_commands = ["run-structured-use"]
+disallowed_commands = ["prepare-use", "pack-request", "judge-request-mode", "compile-open-request", "verify-use-result"]
+allowed_carriers = ["worker"]
+private_capabilities = []
+readable_paths = ["contracts/requests/request_ref.schema.json", "contracts/requests/use_envelope_v2.schema.json", "contracts/requests/structured_use_request.schema.json", "contracts/results/public_entry_result.schema.json"]
+writable_paths = ["case-local output and evidence files only"]
+generated_outputs = []

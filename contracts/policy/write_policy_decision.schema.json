@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WritePolicyDecision",
+  "type": "object",
+  "required": [
+    "allow",
+    "preserve_original",
+    "approval_required",
+    "reasons"
+  ],
+  "properties": {
+    "allow": {
+      "type": "boolean"
+    },
+    "preserve_original": {
+      "type": "boolean"
+    },
+    "approval_required": {
+      "type": "boolean"
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

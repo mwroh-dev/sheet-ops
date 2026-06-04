@@ -1,0 +1,45 @@
+{
+  "name": "highlight_threshold",
+  "operation_family": "highlight_threshold",
+  "task_operations": [
+    "highlight_threshold_rows"
+  ],
+  "inputs": [
+    "input_workbook",
+    "source_sheet",
+    "target_column",
+    "operator",
+    "threshold",
+    "highlight_color"
+  ],
+  "outputs": [
+    "output_workbook",
+    "source_sheet"
+  ],
+  "required_facts": [
+    "sheets",
+    "headers",
+    "source_rows"
+  ],
+  "verifies": [
+    "source_preserved",
+    "matching_rows_highlighted",
+    "highlight_color_matches"
+  ],
+  "contract_paths": [
+    "contracts/task/task_spec.schema.json",
+    "contracts/ir/workbook_operation_ir.schema.json",
+    "contracts/verification/verification_result.schema.json"
+  ],
+  "runtime_paths": [
+    "runtime/inspect/highlight_threshold.go",
+    "runtime/compiler/workbook_compiler.go",
+    "runtime/execute/highlight_threshold.go",
+    "runtime/verify/highlight_threshold.go"
+  ],
+  "examples": [
+    "examples/highlight_threshold/request.json"
+  ],
+  "status": "supported",
+  "exposure": "public_agent_capability"
+}

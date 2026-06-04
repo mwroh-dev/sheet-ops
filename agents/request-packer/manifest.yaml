@@ -1,0 +1,7 @@
+agent_id: request-packer
+role_group: request_boundary
+input_contract: agents/request-packer/contract/request_packer_input.schema.json
+output_contract: contracts/requests/use_envelope_v2.schema.json
+skills: []
+knowledge_namespaces:
+  - knowledge/request-boundary

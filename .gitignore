@@ -1,0 +1,10 @@
+# Local mutable state created when exercising the release checkout.
+.DS_Store
+/node_modules/
+/coverage/
+/dist/
+/.codex/
+/.sheet-ops-state/
+/.worktrees/
+/artifacts/
+/knowledge/**/records.jsonl

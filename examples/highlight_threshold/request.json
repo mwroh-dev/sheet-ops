@@ -1,0 +1,12 @@
+{
+  "scenario_id": "highlight-threshold-example",
+  "request_text": "Highlight rows where amount is greater than 100000 and preserve the original workbook sheets.",
+  "input_file": "workspace/orders.xlsx",
+  "sheet_name": "Orders",
+  "output_file": "workspace/orders-highlighted.xlsx",
+  "operation": "highlight_threshold_rows",
+  "target_column": "amount",
+  "operator": ">",
+  "threshold": 100000,
+  "highlight_color": "#FFF59D"
+}

@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/results/orchestrator_decision.schema.json",
+  "title": "OrchestratorDecision",
+  "type": "object",
+  "required": [
+    "scenario_id",
+    "decision",
+    "request_compiler_loop_state"
+  ],
+  "properties": {
+    "scenario_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "decision": {
+      "enum": ["execute", "blocked"]
+    },
+    "request_compiler_loop_state": {
+      "$ref": "subagent_loop_state.schema.json"
+    },
+    "validated_execution_request": {
+      "oneOf": [
+        {
+          "$ref": "../requests/validated_execution_request.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "repair_advice": {
+      "oneOf": [
+        {
+          "$ref": "repair_advice.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "decision": {
+            "const": "execute"
+          }
+        }
+      },
+      "then": {
+        "required": ["validated_execution_request"],
+        "properties": {
+          "repair_advice": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "decision": {
+            "const": "blocked"
+          }
+        }
+      },
+      "then": {
+        "required": ["repair_advice"],
+        "properties": {
+          "validated_execution_request": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

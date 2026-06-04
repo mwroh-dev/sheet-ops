@@ -1,0 +1,23 @@
+{
+  "scenario_id": "join-lookup-validated-example",
+  "request_kind": "structured_use_request",
+  "input_file": "workspace/orders.xlsx",
+  "output_file": "workspace/orders-lookup.xlsx",
+  "execution_kind": "composition",
+  "composition_kind": "join_lookup",
+  "source_sheet": "주문내역",
+  "lookup_sheet": "상품마스터",
+  "join_key": "상품코드",
+  "target_sheet": "결과",
+  "include_source_columns": [
+    "주문번호",
+    "상품코드",
+    "상품명",
+    "수량",
+    "판매가"
+  ],
+  "append_lookup_columns": [
+    "원가",
+    "카테고리"
+  ]
+}

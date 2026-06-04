@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "allOf": [
+    { "$ref": "../../../contracts/requests/use_request.schema.json" },
+    {
+      "type": "object",
+      "required": ["operation"]
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "const": "create_summary_sheet"
+          }
+        },
+        "required": ["operation"]
+      },
+      "then": {
+        "required": ["target_sheet", "summary_mode", "filters", "group_by", "metrics"],
+        "properties": {
+          "target_sheet": {
+            "type": "string",
+            "minLength": 1
+          },
+          "filters": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["column", "op", "value"],
+              "properties": {
+                "column": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "op": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "value": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "group_by": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "metrics": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["column", "op", "as"],
+              "properties": {
+                "column": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "op": {
+                  "enum": ["sum", "count"]
+                },
+                "as": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      }
+    }
+  ]
+}

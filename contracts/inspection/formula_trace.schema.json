@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/inspection/formula_trace.schema.json",
+  "title": "FormulaTrace",
+  "type": "object",
+  "required": ["cell", "formula", "status"],
+  "properties": {
+    "cell": { "type": "string", "minLength": 1 },
+    "formula": { "type": "string", "minLength": 1 },
+    "status": { "type": "string", "enum": ["supported", "unsupported"] },
+    "functions": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "unsupported_functions": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "unsupported_syntax": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["structured_reference"] }
+    },
+    "references": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "additionalProperties": false
+}

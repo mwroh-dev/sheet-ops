@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/results/use_terminal_result.schema.json",
+  "title": "UseTerminalResult",
+  "type": "object",
+  "required": [
+    "entry",
+    "status",
+    "scenario_id",
+    "run_id",
+    "session_id",
+    "terminal_state",
+    "message",
+    "output_file",
+    "evidence_path"
+  ],
+  "properties": {
+    "entry": {
+      "const": "use"
+    },
+    "status": {
+      "enum": ["succeeded", "failed"]
+    },
+    "scenario_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "terminal_state": {
+      "type": "string",
+      "minLength": 1
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1
+    },
+    "output_file": {
+      "type": "string"
+    },
+    "evidence_path": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": { "const": "succeeded" }
+        },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "terminal_state": { "const": "TERMINAL_SUCCESS" },
+          "output_file": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": { "const": "failed" }
+        },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "output_file": { "const": "" }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,152 @@
+package useorchestrator
+
+import (
+	"fmt"
+	"path/filepath"
+	"strings"
+
+	runtimeknowledge "github.com/mwroh/sheet-ops/runtime/knowledge"
+	runtimeworkbookcase "github.com/mwroh/sheet-ops/runtime/workbookcase"
+)
+
+type routingContext struct {
+	selectedOperation string
+	routingAuthority  string
+	note              string
+	knowledge         runtimeknowledge.OrchestratorRoutingKnowledge
+}
+
+func NormalizeUseRequest(req UseRequest) UseRequest {
+	effectiveOperation := req.Operation
+	if effectiveOperation == "" && isSummaryRequest(req) {
+		effectiveOperation = runtimeworkbookcase.SummaryOperationName
+	}
+	if effectiveOperation == runtimeworkbookcase.SummaryOperationName {
+		if req.TargetSheet == "" {
+			req.TargetSheet = "요약"
+		}
+		if req.SummaryMode == "" {
+			req.SummaryMode = "values"
+		}
+	}
+	if effectiveOperation == runtimeworkbookcase.JoinLookupOperationName {
+		if req.TargetSheet == "" {
+			req.TargetSheet = "조회결과"
+		}
+	}
+	return req
+}
+
+func loadRoutingContext(req UseRequest) routingContext {
+	knowledge := advisoryRoutingKnowledge()
+	selectedOperation, routingAuthority := resolveRequestedOperation(req)
+	return routingContext{
+		selectedOperation: selectedOperation,
+		routingAuthority:  routingAuthority,
+		note:              buildRoutingNote(selectedOperation, routingAuthority, knowledge),
+		knowledge:         knowledge,
+	}
+}
+
+func advisoryRoutingKnowledge() runtimeknowledge.OrchestratorRoutingKnowledge {
+	knowledge, err := runtimeknowledge.LoadOrchestratorRoutingKnowledge()
+	if err == nil {
+		return knowledge
+	}
+	return runtimeknowledge.OrchestratorRoutingKnowledge{
+		KnowledgePath:  filepath.Join(runtimeknowledge.KnowledgeRoot(), "orchestrator", "episodic", "records.jsonl"),
+		UsedFallback:   true,
+		FallbackReason: fmt.Sprintf("Unable to read orchestrator knowledge (%v); routing will use request signals only.", err),
+	}
+}
+
+func resolveRequestedOperation(req UseRequest) (string, string) {
+	if req.Operation != "" {
+		return req.Operation, "explicit_operation"
+	}
+	if isSummaryRequest(req) {
+		return runtimeworkbookcase.SummaryOperationName, "summary_request_signals"
+	}
+	if isJoinLookupRequest(req) {
+		return runtimeworkbookcase.JoinLookupOperationName, "join_lookup_request_signals"
+	}
+	if isHighlightRequest(req) {
+		return runtimeworkbookcase.HighlightOperationName, "highlight_request_signals"
+	}
+	return "", "unsupported_request_signals"
+}
+
+func isSummaryRequest(req UseRequest) bool {
+	return len(req.Filters) > 0 ||
+		len(req.GroupBy) > 0 ||
+		len(req.Metrics) > 0 ||
+		req.SummaryMode != "" ||
+		strings.Contains(req.RequestText, "요약")
+}
+
+func isHighlightRequest(req UseRequest) bool {
+	return req.TargetColumn != "" ||
+		req.Operator != "" ||
+		req.Threshold != nil ||
+		req.HighlightColor != "" ||
+		(strings.Contains(req.RequestText, "표시") && (strings.Contains(req.RequestText, "보다 큰") || strings.Contains(req.RequestText, "초과") || strings.Contains(req.RequestText, "이상") || strings.Contains(req.RequestText, "미만") || strings.Contains(req.RequestText, "이하")))
+}
+
+func isJoinLookupRequest(req UseRequest) bool {
+	return req.LookupSheet != "" ||
+		req.JoinKey != "" ||
+		len(req.IncludeSourceColumns) > 0 ||
+		len(req.AppendLookupColumns) > 0 ||
+		strings.Contains(req.RequestText, "조인") ||
+		strings.Contains(req.RequestText, "매칭") ||
+		strings.Contains(req.RequestText, "lookup")
+}
+
+func buildRoutingNote(selectedOperation, routingAuthority string, knowledge runtimeknowledge.OrchestratorRoutingKnowledge) string {
+	if knowledge.UsedFallback {
+		switch routingAuthority {
+		case "explicit_operation":
+			return fmt.Sprintf("%s Fallback retained explicit operation %s.", knowledge.FallbackReason, selectedOperation)
+		case "summary_request_signals":
+			return fmt.Sprintf("%s Fallback routed by summary request signals to %s.", knowledge.FallbackReason, selectedOperation)
+		case "join_lookup_request_signals":
+			return fmt.Sprintf("%s Fallback routed by join lookup request signals to %s.", knowledge.FallbackReason, selectedOperation)
+		case "highlight_request_signals":
+			return fmt.Sprintf("%s Fallback routed by highlight request signals to %s.", knowledge.FallbackReason, selectedOperation)
+		default:
+			return fmt.Sprintf("%s Fallback could not infer a supported operation from request signals.", knowledge.FallbackReason)
+		}
+	}
+
+	switch routingAuthority {
+	case "explicit_operation":
+		return fmt.Sprintf(
+			"Loaded %d orchestrator knowledge records; retained explicit operation %s. Knowledge remains advisory only.",
+			knowledge.RecordCount,
+			selectedOperation,
+		)
+	case "summary_request_signals":
+		return fmt.Sprintf(
+			"Loaded %d orchestrator knowledge records; request summary signals still selected %s. Knowledge remains advisory only.",
+			knowledge.RecordCount,
+			selectedOperation,
+		)
+	case "join_lookup_request_signals":
+		return fmt.Sprintf(
+			"Loaded %d orchestrator knowledge records; join lookup request signals still selected %s. Knowledge remains advisory only.",
+			knowledge.RecordCount,
+			selectedOperation,
+		)
+	case "highlight_request_signals":
+		return fmt.Sprintf(
+			"Loaded %d orchestrator knowledge records; highlight request signals still selected %s. Knowledge remains advisory only.",
+			knowledge.RecordCount,
+			selectedOperation,
+		)
+	default:
+		return fmt.Sprintf(
+			"Loaded %d orchestrator knowledge records; request signals did not map to a supported operation. Knowledge remains advisory only.",
+			knowledge.RecordCount,
+		)
+	}
+}

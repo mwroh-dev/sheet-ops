@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/agents/request-compiler/contract/normalized_intent.schema.json",
+  "title": "NormalizedIntent",
+  "type": "object",
+  "required": ["materialization", "ambiguity"],
+  "properties": {
+    "source_sheet_candidates": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "lookup_sheet_candidates": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "group_keys": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "aggregates": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/aggregate" }
+    },
+    "composition_candidates": {
+      "type": "array",
+      "items": { "enum": ["group_summary", "threshold_highlight", "join_lookup"] }
+    },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "target_sheet": { "type": "string", "minLength": 1 },
+        "summary_mode": { "enum": ["values", "formulas"] },
+        "filters": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/filter" }
+        },
+        "group_by": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "metrics": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/aggregate" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "highlight": {
+      "type": "object",
+      "properties": {
+        "target_column": { "type": "string", "minLength": 1 },
+        "operator": { "enum": [">", ">=", "<", "<=", "=", "=="] },
+        "threshold": { "type": "number" },
+        "highlight_color": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "join_lookup": {
+      "type": "object",
+      "properties": {
+        "target_sheet": { "type": "string", "minLength": 1 },
+        "join_key": { "type": "string", "minLength": 1 },
+        "include_source_columns": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "append_lookup_columns": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "additionalProperties": false
+    },
+    "materialization": {
+      "type": "object",
+      "required": ["preserve_original", "output_destination_mode", "write_shape"],
+      "properties": {
+        "preserve_original": { "type": "boolean" },
+        "output_destination_mode": { "enum": ["new_workbook", "same_workbook"] },
+        "write_shape": { "enum": ["new_sheet", "in_place_cells"] }
+      },
+      "additionalProperties": false
+    },
+    "ambiguity": {
+      "type": "object",
+      "required": ["markers", "unresolved_fields", "checkpoint_hints"],
+      "properties": {
+        "markers": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "unresolved_fields": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "checkpoint_hints": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "aggregate": {
+      "type": "object",
+      "required": ["kind", "column"],
+      "properties": {
+        "kind": { "enum": ["sum", "count"] },
+        "column": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "filter": {
+      "type": "object",
+      "required": ["column", "op", "value"],
+      "properties": {
+        "column": { "type": "string", "minLength": 1 },
+        "op": { "type": "string", "minLength": 1 },
+        "value": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
