@@ -59,6 +59,10 @@ goal. It does not claim full workbook generation or broad Excel automation.
   that checks next-period copied sheet evidence, appended employee-hour row
   evidence, pay formula extension evidence, work-code validation evidence, and
   protected formula sheet evidence in the final workbook.
+- `RunOrganismPlan` also includes a project timeline tracker semantic verifier
+  slice that checks next-period task evidence, progress formula extension
+  evidence, timeline status summary evidence, status validation evidence, and
+  protected formula sheet evidence in the final workbook.
 - The open-layer request compiler and orchestrator decision surface now carry
   optional `template_class_plan` hints so organism id, atom sequence, verifier
   specs, and non-claims can survive the request-entry boundary.
@@ -95,10 +99,11 @@ goal. It does not claim full workbook generation or broad Excel automation.
 - Aggregate organism-level verification exists for the first productization
   slice, verifier specs now cover all 21 runtime draft planner organisms, and
   invoice line-item billing, expense reimbursement, purchase order control,
-  monthly budget control, cash flow monitor, attendance register, and timesheet
-  hours log have standalone workbook semantic verifier slices. The remaining
-  organism classes still rely on operation-specific verifier depth plus
-  aggregate sequence evidence for workbook semantics.
+  monthly budget control, cash flow monitor, attendance register, timesheet
+  hours log, and project timeline tracker have standalone workbook semantic
+  verifier slices. The remaining organism classes still rely on
+  operation-specific verifier depth plus aggregate sequence evidence for
+  workbook semantics.
 - Operation planner and template class harness records are mostly advisory
   contracts, not broad autonomous runtime planner execution. The
   `runtime/templateclass` package plans and evaluates evidence, and the
@@ -107,7 +112,7 @@ goal. It does not claim full workbook generation or broad Excel automation.
   workbook facts, but the remaining roadmap organisms do not yet have equivalent
   draft planners.
 - The organism harness currently covers representative productization classes
-  and draft integrations now span all roadmap organisms, but only seven roadmap
+  and draft integrations now span all roadmap organisms, but only eight roadmap
   organisms have standalone final-workbook semantic verifier slices. The
   remaining roadmap organisms still need equivalent semantic fixtures before
   broad 21-organism runtime claims are appropriate.

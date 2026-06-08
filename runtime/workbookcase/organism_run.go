@@ -172,6 +172,8 @@ func verifyOrganismWorkbookSemantics(organismID, outputFile string) []string {
 		return verifyAttendanceWorkbook(outputFile)
 	case "timesheet_hours_log":
 		return verifyTimesheetWorkbook(outputFile)
+	case "project_timeline_tracker":
+		return verifyProjectTimelineWorkbook(outputFile)
 	default:
 		return nil
 	}
@@ -365,6 +367,42 @@ func verifyTimesheetWorkbook(outputFile string) []string {
 		reasons = append(reasons, fmt.Sprintf("timesheet protection semantic check missing Week2 protection: %v", err))
 	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
 		reasons = append(reasons, "timesheet protection semantic check missing Week2 protection options")
+	}
+	return reasons
+}
+
+func verifyProjectTimelineWorkbook(outputFile string) []string {
+	handle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		return []string{fmt.Sprintf("project timeline workbook semantic check failed to open output: %v", err)}
+	}
+	defer func() { _ = handle.Close() }()
+
+	var reasons []string
+	if got, err := handle.GetCellValue("Sprint2", "A4"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("project timeline period-copy semantic check missing Sprint2!A4: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "project timeline period-copy semantic check missing Sprint2!A4 task value")
+	}
+	if got, err := handle.GetCellFormula("Sprint2", "F4"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("project timeline formula semantic check missing Sprint2!F4 formula: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "project timeline formula semantic check missing Sprint2!F4 formula")
+	}
+	if got, err := handle.GetCellValue("TimelineSummary", "A2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("project timeline summary semantic check missing TimelineSummary!A2: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "project timeline summary semantic check missing TimelineSummary!A2 status value")
+	}
+	if validations, err := handle.GetDataValidations("Sprint2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("project timeline validation semantic check missing Sprint2 data validation: %v", err))
+	} else if len(validations) == 0 {
+		reasons = append(reasons, "project timeline validation semantic check missing Sprint2 data validation")
+	}
+	if protection, err := handle.GetSheetProtection("Sprint2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("project timeline protection semantic check missing Sprint2 protection: %v", err))
+	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
+		reasons = append(reasons, "project timeline protection semantic check missing Sprint2 protection options")
 	}
 	return reasons
 }

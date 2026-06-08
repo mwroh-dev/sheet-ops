@@ -537,6 +537,49 @@ func TestVerifyOrganismPlanExecutionChecksTimesheetWorkbookSemantics(t *testing.
 	}
 }
 
+func TestVerifyOrganismPlanExecutionChecksProjectTimelineWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "timeline.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Sprint1"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Sprint1", "A1", &[]any{"task", "start", "end", "status", "task_count", "progress_pct"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Sprint1", "A2", &[]any{"Design", "2026-06-01", "2026-06-05", "todo", 1}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetCellFormula("Sprint1", "F2", "=IF(D2=\"done\",1,0)"); err != nil {
+		t.Fatalf("SetCellFormula(F2): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "project_timeline_tracker",
+		OperationSequence:     []string{"copy_period_sheet", "extend_table_formulas", "add_data_validation", "group_summarize", "protect_formula_cells"},
+		RequiredVerifierSpecs: []string{"project_timeline_tracker_verifier"},
+	}, []string{"copy_period_sheet", "extend_table_formulas", "add_data_validation", "group_summarize", "protect_formula_cells"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "Sprint2") {
+		t.Fatalf("organism verification reasons=%v want missing next sprint timeline evidence", verification.Reasons)
+	}
+}
+
 func TestRunOrganismPlanExecutesLoanSequenceWithNonClaims(t *testing.T) {
 	setRuntimeRoots(t)
 
