@@ -16,10 +16,12 @@ goal. It does not claim full workbook generation or broad Excel automation.
   claiming native pivot support.
 - `executable-organism-coverage.json` covers all 21 round-009 roadmap
   organisms exactly once.
-- All 21 roadmap organisms are at `preview_fixture` tier.
+- All 21 roadmap organisms remain preview-backed by workbookcase evidence.
+- P2 and P3 depth contracts are recorded at `organism_verified_class` tier with
+  explicit acceptance criteria, non-claims, and promotion gates.
 - The knowledge harness validates roadmap coverage, fixture priority alignment,
   advisory authority, supported atom references, absence of planned blockers,
-  and preview evidence presence.
+  preview evidence presence, and verified-class depth contract references.
 - Workbookcase preview fixtures cover p0, p1, p2, and p3 organism priorities.
 - Each phase records a self-retro in `executable-coverage-matrix.md`.
 
@@ -44,7 +46,8 @@ goal. It does not claim full workbook generation or broad Excel automation.
 
 ## Completion Judgment
 
-The advisory ecosystem, runtime bridge, coverage ladder, and representative
-preview fixture coverage are complete for the current 21 roadmap organisms.
-The remaining limits are explicitly documented as future runtime depth, not
-untracked blockers in the requested advisory-to-preview coverage layer.
+The advisory ecosystem, runtime bridge, coverage ladder, representative preview
+fixture coverage, and p2/p3 verified-class depth contracts are complete for the
+current 21 roadmap organisms. The remaining limits are explicitly documented as
+future runtime depth, not untracked blockers in the requested advisory-to-depth
+coverage layer.

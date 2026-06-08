@@ -23,6 +23,9 @@ bundle, or reuse third-party template files.
   organism coverage ladder that separates fixture-backed previews from
   supported-atom plans and planned-atom blockers. The completion audit records
   the current evidence and remaining limits for the advisory-to-preview layer.
+  Verified organism class records define advisory acceptance contracts for
+  deeper p2/p3 coverage without promoting native pivot tables, financial
+  calculators, or organism IDs to public runtime capabilities.
 - `patterns/*.json`: normalized template patterns grouped by user workflow and
   spreadsheet mechanics.
 - `opportunities/*.json`: capability backlog candidates that are intentionally
@@ -94,6 +97,9 @@ Promotion status is owned by Agent C:
 - The executable organism coverage ladder records claim strength for roadmap
   organisms. It does not make organism IDs public capabilities and does not
   replace operation-level verifier coverage.
+- `organism_verified_class` is still advisory. It means representative preview
+  evidence plus explicit acceptance criteria and non-claims exist for a
+  template class; it does not imply full template generation.
 - Atom-builder records are an intermediate planning layer. A supported mirror
   must reference an existing capability record and runtime paths; a planned
   builder must reference an opportunity record and no runtime implementation.

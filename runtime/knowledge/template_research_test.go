@@ -237,6 +237,7 @@ func TestTemplateResearchExecutableOrganismCoverageLadder(t *testing.T) {
 	}
 	seen := map[string]bool{}
 	previewFixtureCount := 0
+	verifiedClassCount := 0
 	plannedBlockerCount := 0
 	for _, organism := range catalog.Organisms {
 		if !roadmapCandidates[organism.OrganismID] {
@@ -267,13 +268,16 @@ func TestTemplateResearchExecutableOrganismCoverageLadder(t *testing.T) {
 			}
 		}
 		switch organism.CoverageTier {
-		case "preview_fixture":
+		case "preview_fixture", "organism_verified_class":
 			previewFixtureCount++
+			if organism.CoverageTier == "organism_verified_class" {
+				verifiedClassCount++
+			}
 			if len(organism.PreviewEvidence) == 0 {
-				t.Fatalf("preview fixture organism %q has no preview evidence", organism.OrganismID)
+				t.Fatalf("%s organism %q has no preview evidence", organism.CoverageTier, organism.OrganismID)
 			}
 			if len(organism.ExecutableSequence) == 0 {
-				t.Fatalf("preview fixture organism %q has no executable sequence", organism.OrganismID)
+				t.Fatalf("%s organism %q has no executable sequence", organism.CoverageTier, organism.OrganismID)
 			}
 		case "supported_atom_plan":
 			if len(organism.ExecutableSequence) == 0 {
@@ -295,7 +299,10 @@ func TestTemplateResearchExecutableOrganismCoverageLadder(t *testing.T) {
 		t.Fatalf("coverage organism count=%d want roadmap candidate count=%d", len(seen), len(roadmapCandidates))
 	}
 	if previewFixtureCount != len(roadmapCandidates) {
-		t.Fatalf("preview fixture organism count=%d want roadmap candidate count=%d", previewFixtureCount, len(roadmapCandidates))
+		t.Fatalf("preview-backed organism count=%d want roadmap candidate count=%d", previewFixtureCount, len(roadmapCandidates))
+	}
+	if verifiedClassCount == 0 {
+		t.Fatalf("verified class organism count=0 want at least one depth contract")
 	}
 	if plannedBlockerCount != 0 {
 		t.Fatalf("planned blocker count=%d want 0 after deterministic preview coverage", plannedBlockerCount)
@@ -303,6 +310,88 @@ func TestTemplateResearchExecutableOrganismCoverageLadder(t *testing.T) {
 	for candidate := range roadmapCandidates {
 		if !seen[candidate] {
 			t.Fatalf("roadmap candidate %q missing from executable coverage ladder", candidate)
+		}
+	}
+}
+
+func TestTemplateResearchVerifiedOrganismClassesValidateDepthContracts(t *testing.T) {
+	root := repoRoot(t)
+	classSchema := compileSchema(t, filepath.Join(root, "contracts", "template_research", "verified_organism_classes.schema.json"))
+	classPath := filepath.Join(root, "knowledge", "template-research", "composition", "verified-organism-classes.json")
+	validateJSONDocumentFromFile(t, classSchema, classPath)
+
+	coverageClasses := loadTemplateResearchCoverageTiers(t, filepath.Join(root, "knowledge", "template-research", "composition", "executable-organism-coverage.json"))
+	supportedAtoms := loadSupportedCapabilityNames(t, filepath.Join(root, "contracts", "capabilities", "capability.schema.json"))
+	opportunityAtoms := loadOpportunityCapabilityNames(t, filepath.Join(root, "knowledge", "template-research", "opportunities", "*.json"))
+
+	raw, err := os.ReadFile(classPath)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", classPath, err)
+	}
+	var catalog struct {
+		Authority string `json:"authority"`
+		Classes   []struct {
+			OrganismID         string   `json:"organism_id"`
+			DepthFocus         string   `json:"depth_focus"`
+			RuntimeAtomIDs     []string `json:"runtime_atom_ids"`
+			OpportunityAtomIDs []string `json:"opportunity_atom_ids"`
+			PreviewEvidence    []string `json:"preview_evidence"`
+			AcceptanceCriteria []string `json:"acceptance_criteria"`
+			ExplicitNonClaims  []string `json:"explicit_non_claims"`
+			PromotionGate      string   `json:"promotion_gate"`
+		} `json:"classes"`
+	}
+	if err := json.Unmarshal(raw, &catalog); err != nil {
+		t.Fatalf("Unmarshal(%s): %v", classPath, err)
+	}
+	if catalog.Authority != "advisory_verified_class" {
+		t.Fatalf("verified class authority=%q want advisory_verified_class", catalog.Authority)
+	}
+	wantOrganisms := map[string]bool{
+		"student_gradebook":          true,
+		"training_completion_matrix": true,
+		"service_ticket_queue":       true,
+		"sales_pipeline_tracker":     true,
+		"maintenance_issue_log":      true,
+		"compliance_action_register": true,
+		"safety_compliance_register": true,
+		"loan_repayment_calculator":  true,
+	}
+	seen := map[string]bool{}
+	for _, class := range catalog.Classes {
+		if !wantOrganisms[class.OrganismID] {
+			t.Fatalf("unexpected verified organism class %q", class.OrganismID)
+		}
+		if seen[class.OrganismID] {
+			t.Fatalf("duplicate verified organism class %q", class.OrganismID)
+		}
+		seen[class.OrganismID] = true
+		if coverageClasses[class.OrganismID] != "organism_verified_class" {
+			t.Fatalf("coverage tier for %q=%q want organism_verified_class", class.OrganismID, coverageClasses[class.OrganismID])
+		}
+		if class.DepthFocus == "" || len(class.PreviewEvidence) == 0 || len(class.AcceptanceCriteria) < 3 || len(class.ExplicitNonClaims) == 0 || class.PromotionGate == "" {
+			t.Fatalf("verified organism class %q has weak depth contract: %+v", class.OrganismID, class)
+		}
+		for _, atom := range class.RuntimeAtomIDs {
+			if !supportedAtoms[atom] {
+				t.Fatalf("verified organism class %q references unsupported runtime atom %q", class.OrganismID, atom)
+			}
+		}
+		for _, atom := range class.OpportunityAtomIDs {
+			if supportedAtoms[atom] {
+				t.Fatalf("verified organism class %q opportunity atom %q is already supported", class.OrganismID, atom)
+			}
+			if !opportunityAtoms[atom] {
+				t.Fatalf("verified organism class %q opportunity atom %q missing opportunity record", class.OrganismID, atom)
+			}
+		}
+	}
+	if len(seen) != len(wantOrganisms) {
+		t.Fatalf("verified organism class count=%d want %d", len(seen), len(wantOrganisms))
+	}
+	for organism := range wantOrganisms {
+		if !seen[organism] {
+			t.Fatalf("verified organism class missing %q", organism)
 		}
 	}
 }
@@ -444,6 +533,28 @@ func loadTemplateResearchOrganismPriorities(t *testing.T, path string) map[strin
 		priorities[organism.OrganismID] = organism.FixturePriority
 	}
 	return priorities
+}
+
+func loadTemplateResearchCoverageTiers(t *testing.T, path string) map[string]string {
+	t.Helper()
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", path, err)
+	}
+	var catalog struct {
+		Organisms []struct {
+			OrganismID   string `json:"organism_id"`
+			CoverageTier string `json:"coverage_tier"`
+		} `json:"organisms"`
+	}
+	if err := json.Unmarshal(raw, &catalog); err != nil {
+		t.Fatalf("Unmarshal(%s): %v", path, err)
+	}
+	tiers := map[string]string{}
+	for _, organism := range catalog.Organisms {
+		tiers[organism.OrganismID] = organism.CoverageTier
+	}
+	return tiers
 }
 
 func loadSupportedCapabilityNames(t *testing.T, schemaPath string) map[string]bool {

@@ -37,6 +37,7 @@
           "type": "string",
           "enum": [
             "preview_fixture",
+            "organism_verified_class",
             "supported_atom_plan",
             "blocked_by_planned_atom",
             "advisory_only_gap"
@@ -72,6 +73,7 @@
           "type": "string",
           "enum": [
             "preview_fixture",
+            "organism_verified_class",
             "supported_atom_plan",
             "blocked_by_planned_atom",
             "advisory_only_gap"

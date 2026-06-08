@@ -475,3 +475,36 @@ The executable coverage ladder now marks all 21 round-009 roadmap organisms as
 - Advisory claim risk: this should be described as executable schedule
   mechanics, not as a supported financial calculator or financial advice
   capability.
+
+## Phase 17 Result
+
+Added `verified-organism-classes.json` and a knowledge harness for p2/p3 depth
+contracts. This adds a higher advisory tier, `organism_verified_class`, for the
+organisms where representative previews are backed by explicit acceptance
+criteria, non-claims, runtime atom references, and promotion gates:
+
+- p2 deterministic summary depth: gradebook, sales pipeline, compliance action,
+  safety compliance
+- p2 matrix/status depth: training completion, service tickets, maintenance
+  issues
+- p3 calculation schedule depth: loan repayment schedule mechanics
+
+The coverage ladder now distinguishes:
+
+- `preview_fixture`: representative workbookcase preview exists
+- `organism_verified_class`: representative preview plus an advisory
+  verified-class depth contract exists
+
+## Phase 17 Self-Retro
+
+- Coverage improved: p2/p3 are no longer only breadth previews. Their summary,
+  matrix/status, and calculation schedule limits are now explicit and
+  harness-validated.
+- Remaining template needs: native pivot tables, arbitrary matrix growth,
+  organism-level runtime verifiers, and amortization correctness remain future
+  work.
+- Verifier strength: the new harness validates the depth contracts and their
+  references, while workbook behavior is still proven by operation-specific
+  preview tests.
+- Advisory claim risk: `organism_verified_class` is not a public capability
+  and must not be described as full template generation.

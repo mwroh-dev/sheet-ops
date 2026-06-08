@@ -9,6 +9,10 @@
       "meaning": "At least one representative organism preview runs through workbookcase using supported atoms and operation-specific verifiers."
     },
     {
+      "tier": "organism_verified_class",
+      "meaning": "Representative previews exist and an advisory verified-class contract defines acceptance criteria, non-claims, and promotion gates for the organism family."
+    },
+    {
       "tier": "supported_atom_plan",
       "meaning": "The organism can be decomposed into currently supported atoms, but no organism preview fixture proves the composition yet."
     },
@@ -168,7 +172,7 @@
     {
       "organism_id": "student_gradebook",
       "fixture_priority": "p2",
-      "coverage_tier": "preview_fixture",
+      "coverage_tier": "organism_verified_class",
       "executable_sequence_atom_ids": ["join_lookup", "extend_table_formulas", "add_data_validation", "protect_formula_cells", "normalize_headers", "group_summarize"],
       "planned_blocker_atom_ids": [],
       "preview_evidence": ["TestStudentGradebookPreviewComposesScoreSummaryAndValidation"],
@@ -179,7 +183,7 @@
     {
       "organism_id": "training_completion_matrix",
       "fixture_priority": "p2",
-      "coverage_tier": "preview_fixture",
+      "coverage_tier": "organism_verified_class",
       "executable_sequence_atom_ids": ["add_data_validation", "protect_formula_cells", "group_summarize", "generate_printable_form"],
       "planned_blocker_atom_ids": [],
       "preview_evidence": ["TestTrainingCompletionMatrixPreviewComposesCompletionSummaryAndPrintableForm"],
@@ -190,7 +194,7 @@
     {
       "organism_id": "service_ticket_queue",
       "fixture_priority": "p2",
-      "coverage_tier": "preview_fixture",
+      "coverage_tier": "organism_verified_class",
       "executable_sequence_atom_ids": ["append_structured_rows", "add_data_validation", "highlight_threshold", "protect_formula_cells", "group_summarize"],
       "planned_blocker_atom_ids": [],
       "preview_evidence": ["TestServiceTicketQueuePreviewComposesAppendAndSLAThreshold"],
@@ -201,7 +205,7 @@
     {
       "organism_id": "sales_pipeline_tracker",
       "fixture_priority": "p2",
-      "coverage_tier": "preview_fixture",
+      "coverage_tier": "organism_verified_class",
       "executable_sequence_atom_ids": ["add_data_validation", "highlight_threshold", "protect_formula_cells", "group_summarize"],
       "planned_blocker_atom_ids": [],
       "preview_evidence": ["TestSalesPipelineTrackerPreviewComposesStageSummaryAndThreshold"],
@@ -212,7 +216,7 @@
     {
       "organism_id": "maintenance_issue_log",
       "fixture_priority": "p2",
-      "coverage_tier": "preview_fixture",
+      "coverage_tier": "organism_verified_class",
       "executable_sequence_atom_ids": ["append_structured_rows", "add_data_validation", "highlight_threshold", "protect_formula_cells", "group_summarize"],
       "planned_blocker_atom_ids": [],
       "preview_evidence": ["TestMaintenanceIssueLogPreviewComposesAppendAndOverdueThreshold"],
@@ -223,7 +227,7 @@
     {
       "organism_id": "compliance_action_register",
       "fixture_priority": "p2",
-      "coverage_tier": "preview_fixture",
+      "coverage_tier": "organism_verified_class",
       "executable_sequence_atom_ids": ["add_data_validation", "highlight_threshold", "protect_formula_cells", "group_summarize", "generate_printable_form"],
       "planned_blocker_atom_ids": [],
       "preview_evidence": ["TestComplianceActionRegisterPreviewComposesStatusSummaryAndPrintableForm"],
@@ -234,7 +238,7 @@
     {
       "organism_id": "safety_compliance_register",
       "fixture_priority": "p2",
-      "coverage_tier": "preview_fixture",
+      "coverage_tier": "organism_verified_class",
       "executable_sequence_atom_ids": ["add_data_validation", "highlight_threshold", "protect_formula_cells", "group_summarize", "generate_printable_form"],
       "planned_blocker_atom_ids": [],
       "preview_evidence": ["TestSafetyComplianceRegisterPreviewComposesScoreThresholdAndPrintableForm"],
@@ -245,7 +249,7 @@
     {
       "organism_id": "loan_repayment_calculator",
       "fixture_priority": "p3",
-      "coverage_tier": "preview_fixture",
+      "coverage_tier": "organism_verified_class",
       "executable_sequence_atom_ids": ["extend_table_formulas", "protect_formula_cells", "group_summarize", "join_lookup"],
       "planned_blocker_atom_ids": [],
       "preview_evidence": ["TestLoanRepaymentCalculatorPreviewComposesFormulaExtensionAndProtection"],
