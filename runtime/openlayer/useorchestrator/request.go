@@ -35,6 +35,9 @@ type UseRequest struct {
 	IncludeSourceColumns []string     `json:"include_source_columns,omitempty"`
 	AppendLookupColumns  []string     `json:"append_lookup_columns,omitempty"`
 	Values               []CellValue  `json:"values,omitempty"`
+	FormulaSourceRow     int          `json:"formula_source_row,omitempty"`
+	TargetRows           []int        `json:"target_rows,omitempty"`
+	FormulaColumns       []string     `json:"formula_columns,omitempty"`
 }
 
 type ValidatedExecutionRequest = runtimevalidate.ValidatedExecutionRequest

@@ -216,6 +216,19 @@ func compileDecision(intent NormalizedIntent) Decision {
 		}
 	}
 
+	if slices.Contains(intent.CompositionCandidates, CompositionCandidateFormulaExtension) && extendFormulasIntentReady(intent) {
+		return Decision{
+			Status:            StatusCompiled,
+			SelectedOperation: "extend_table_formulas",
+			Confidence:        0.98,
+			Notes: []string{
+				"the normalized intent maps cleanly to the supported formula extension runtime operation",
+			},
+			SheetCandidates:   supportedSheetCandidates(intent),
+			StructuralSignals: []string{"formula_extension_request", "preserve_original"},
+		}
+	}
+
 	if slices.Contains(intent.CompositionCandidates, CompositionCandidateJoinLookup) && joinLookupIntentReady(intent) {
 		return Decision{
 			Status:            StatusCompiled,
@@ -369,6 +382,11 @@ func toRuntimeIntent(intent NormalizedIntent) runtimevalidate.NormalizedIntent {
 			IncludeSourceColumns: append([]string(nil), intent.AppendRows.IncludeSourceColumns...),
 			Values:               toRuntimeCellValues(intent.AppendRows.Values),
 		},
+		ExtendFormulas: runtimevalidate.ExtendFormulasIntent{
+			FormulaSourceRow: intent.ExtendFormulas.FormulaSourceRow,
+			TargetRows:       append([]int(nil), intent.ExtendFormulas.TargetRows...),
+			FormulaColumns:   append([]string(nil), intent.ExtendFormulas.FormulaColumns...),
+		},
 		Materialization: runtimevalidate.MaterializationIntent{
 			PreserveOriginal:      intent.Materialization.PreserveOriginal,
 			OutputDestinationMode: intent.Materialization.OutputDestinationMode,
@@ -473,6 +491,13 @@ func appendRowsIntentReady(intent NormalizedIntent) bool {
 	return len(intent.SourceSheetCandidates) > 0 &&
 		len(intent.AppendRows.IncludeSourceColumns) > 0 &&
 		len(intent.AppendRows.Values) > 0
+}
+
+func extendFormulasIntentReady(intent NormalizedIntent) bool {
+	return len(intent.SourceSheetCandidates) > 0 &&
+		intent.ExtendFormulas.FormulaSourceRow > 0 &&
+		len(intent.ExtendFormulas.TargetRows) > 0 &&
+		len(intent.ExtendFormulas.FormulaColumns) > 0
 }
 
 func toRuntimeCellValues(values []CellValue) []runtimevalidate.CellValue {

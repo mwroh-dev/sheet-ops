@@ -46,7 +46,7 @@ func validateSupportedValidatedExecutionRequest(req ValidatedExecutionRequest) e
 		return fmt.Errorf("unsupported validated execution kind %q", req.ExecutionKind)
 	}
 	switch req.CompositionKind {
-	case "structured_row_append":
+	case "structured_row_append", "formula_extension":
 		return nil
 	case "group_summary", "threshold_highlight", "join_lookup":
 		return nil
@@ -83,6 +83,16 @@ func taskSpecFromUseRequest(req UseRequest) runtimetaskspec.TaskSpec {
 			OutputFile:           req.OutputFile,
 			IncludeSourceColumns: append([]string(nil), req.IncludeSourceColumns...),
 			Values:               toTaskSpecCellValues(req.Values),
+		}).TaskSpec
+	case runtimeworkbookcase.ExtendFormulasOperationName:
+		return runtimetaskspec.BuildExtendTableFormulasTask(runtimetaskspec.ExtendTableFormulasRequest{
+			RequestText:      coalesceValidatedRequestText(req.RequestText, "structured formula extension request"),
+			InputFile:        req.InputFile,
+			SourceSheet:      req.SheetName,
+			OutputFile:       req.OutputFile,
+			FormulaSourceRow: req.FormulaSourceRow,
+			TargetRows:       append([]int(nil), req.TargetRows...),
+			FormulaColumns:   append([]string(nil), req.FormulaColumns...),
 		}).TaskSpec
 	case runtimeworkbookcase.SummaryOperationName:
 		return runtimetaskspec.BuildGroupSummarizeTask(runtimetaskspec.UseRequest{
@@ -132,6 +142,16 @@ func taskSpecFromValidatedExecutionRequest(req ValidatedExecutionRequest) (runti
 			OutputFile:           req.OutputFile,
 			IncludeSourceColumns: append([]string(nil), req.IncludeSourceColumns...),
 			Values:               toTaskSpecCellValues(req.Values),
+		}).TaskSpec, nil
+	case "formula_extension":
+		return runtimetaskspec.BuildExtendTableFormulasTask(runtimetaskspec.ExtendTableFormulasRequest{
+			RequestText:      coalesceValidatedRequestText(req.RequestText, "validated formula extension request"),
+			InputFile:        req.InputFile,
+			SourceSheet:      req.SourceSheet,
+			OutputFile:       req.OutputFile,
+			FormulaSourceRow: req.FormulaSourceRow,
+			TargetRows:       append([]int(nil), req.TargetRows...),
+			FormulaColumns:   append([]string(nil), req.FormulaColumns...),
 		}).TaskSpec, nil
 	case "join_lookup":
 		includeSourceColumns, err := defaultJoinSourceColumns(req)
@@ -196,6 +216,8 @@ func validatedRoutingRequestText(req ValidatedExecutionRequest) string {
 	switch req.CompositionKind {
 	case "structured_row_append":
 		return coalesceValidatedRequestText(req.RequestText, "validated append rows request")
+	case "formula_extension":
+		return coalesceValidatedRequestText(req.RequestText, "validated formula extension request")
 	case "join_lookup":
 		return coalesceValidatedRequestText(req.RequestText, "validated join lookup request")
 	case "threshold_highlight":
@@ -209,6 +231,8 @@ func validatedOperation(req ValidatedExecutionRequest) string {
 	switch req.CompositionKind {
 	case "structured_row_append":
 		return runtimeworkbookcase.AppendRowsOperationName
+	case "formula_extension":
+		return runtimeworkbookcase.ExtendFormulasOperationName
 	case "join_lookup":
 		return runtimeworkbookcase.JoinLookupOperationName
 	case "threshold_highlight":
@@ -246,7 +270,7 @@ func defaultJoinSourceColumns(req ValidatedExecutionRequest) ([]string, error) {
 
 func isSupportedOperation(operation string) bool {
 	switch operation {
-	case runtimeworkbookcase.SummaryOperationName, runtimeworkbookcase.HighlightOperationName, runtimeworkbookcase.JoinLookupOperationName, runtimeworkbookcase.AppendRowsOperationName:
+	case runtimeworkbookcase.SummaryOperationName, runtimeworkbookcase.HighlightOperationName, runtimeworkbookcase.JoinLookupOperationName, runtimeworkbookcase.AppendRowsOperationName, runtimeworkbookcase.ExtendFormulasOperationName:
 		return true
 	default:
 		return false

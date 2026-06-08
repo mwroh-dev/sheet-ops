@@ -27,8 +27,9 @@ UseRequest / ValidatedExecutionRequest
 ```
 
 Atom builder records mirror this path for `group_summarize`,
-`highlight_threshold`, `join_lookup`, `append_structured_rows`, and
-`write_values`. They do not add new runtime support by themselves.
+`highlight_threshold`, `join_lookup`, `append_structured_rows`,
+`extend_table_formulas`, and `write_values`. They do not add new runtime
+support by themselves.
 
 ## Promotion Rule
 

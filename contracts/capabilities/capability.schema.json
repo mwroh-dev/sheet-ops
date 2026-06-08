@@ -47,6 +47,7 @@
         "highlight_threshold",
         "join_lookup",
         "append_structured_rows",
+        "extend_table_formulas",
         "write_values"
       ]
     },
@@ -56,6 +57,7 @@
         "highlight_threshold",
         "join_lookup",
         "append_structured_rows",
+        "extend_table_formulas",
         "write_values"
       ]
     },
@@ -158,6 +160,22 @@
         "properties": {
           "operation_family": {
             "const": "append_structured_rows"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "extend_table_formulas"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "operation_family": {
+            "const": "extend_table_formulas"
           }
         }
       }

@@ -34,6 +34,7 @@ And supports:
 - `highlight`
 - `join_lookup`
 - `append_rows`
+- `extend_formulas`
 
 ## Rules
 

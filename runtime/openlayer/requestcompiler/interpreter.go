@@ -154,6 +154,9 @@ func detectCompositionCandidates(requestText string) []string {
 	if isAppendRowsRequestText(requestText) {
 		candidates = appendUnique(candidates, CompositionCandidateStructuredRowAppend)
 	}
+	if isFormulaExtensionRequestText(requestText) {
+		candidates = appendUnique(candidates, CompositionCandidateFormulaExtension)
+	}
 	if isHighlightRequestText(requestText) {
 		candidates = appendUnique(candidates, CompositionCandidateThresholdHighlight)
 	}
@@ -184,6 +187,9 @@ func detectMaterializationIntent(requestText string) MaterializationIntent {
 		intent.WriteShape = WriteShapeNewSheet
 	}
 	if isAppendRowsRequestText(requestText) {
+		intent.WriteShape = WriteShapeInPlaceCells
+	}
+	if isFormulaExtensionRequestText(requestText) {
 		intent.WriteShape = WriteShapeInPlaceCells
 	}
 	if hasPreserveOriginalIntent(requestText) || hasNewOutputFileIntent(requestText) {
@@ -225,6 +231,10 @@ func hasSummaryMetricIntent(requestText string) bool {
 
 func isAppendRowsRequestText(requestText string) bool {
 	return containsAny(requestText, "행 추가", "행을 추가", "row append", "append rows", "add rows")
+}
+
+func isFormulaExtensionRequestText(requestText string) bool {
+	return containsAny(requestText, "수식 확장", "수식을 확장", "formula extension", "extend formulas")
 }
 
 func hasCancellationExclusionIntent(requestText string) bool {

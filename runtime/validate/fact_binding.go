@@ -71,6 +71,16 @@ func BindFacts(admitted admittedIntent, facts runtimeinspect.WorkbookFacts) (bou
 			sourceSheet:          sourceSheet,
 			includeSourceColumns: append([]string(nil), admitted.includeSourceColumns...),
 		}, nil, nil
+	case "formula_extension":
+		sourceSheet, ok := firstExistingSheet(facts, admitted.sourceSheets)
+		if !ok {
+			return blockedFactBinding("unsupported_source_sheet")
+		}
+		return boundIntent{
+			admittedIntent: admitted,
+			facts:          facts,
+			sourceSheet:    sourceSheet,
+		}, nil, nil
 	default:
 		return blockedFactBinding("unsupported_request")
 	}

@@ -8,11 +8,12 @@ import (
 )
 
 const (
-	SummaryOperationName     = "create_summary_sheet"
-	HighlightOperationName   = "highlight_threshold_rows"
-	JoinLookupOperationName  = "create_join_lookup_result_sheet"
-	AppendRowsOperationName  = "append_structured_rows"
-	WriteValuesOperationName = "write_values"
+	SummaryOperationName        = "create_summary_sheet"
+	HighlightOperationName      = "highlight_threshold_rows"
+	JoinLookupOperationName     = "create_join_lookup_result_sheet"
+	AppendRowsOperationName     = "append_structured_rows"
+	ExtendFormulasOperationName = "extend_table_formulas"
+	WriteValuesOperationName    = "write_values"
 )
 
 type FilterSpec = runtimetaskspec.FilterSpec
@@ -119,6 +120,16 @@ type AppendStructuredRowsPlan struct {
 	Values               []runtimetaskspec.CellValue `json:"values"`
 	PreserveOriginal     bool                        `json:"preserve_original"`
 	OutputFile           string                      `json:"output_file"`
+}
+
+type ExtendTableFormulasPlan struct {
+	Operation        string   `json:"operation"`
+	SheetName        string   `json:"sheet_name"`
+	FormulaSourceRow int      `json:"formula_source_row"`
+	TargetRows       []int    `json:"target_rows"`
+	FormulaColumns   []string `json:"formula_columns"`
+	PreserveOriginal bool     `json:"preserve_original"`
+	OutputFile       string   `json:"output_file"`
 }
 
 type WritePolicyDecision struct {

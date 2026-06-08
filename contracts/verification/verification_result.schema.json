@@ -18,6 +18,7 @@
         "create_summary_sheet",
         "create_join_lookup_result_sheet",
         "append_structured_rows",
+        "extend_table_formulas",
         "write_values"
       ]
     },

@@ -107,7 +107,7 @@ func traceReferences(currentSheet string, formula string) []string {
 	references := []string{}
 	seen := map[string]bool{}
 	for _, match := range referencePattern.FindAllStringSubmatchIndex(masked, -1) {
-		if isScientificNotationToken(masked, match[0], match[1]) {
+		if isScientificNotationReferenceToken(masked, match[0], match[1]) {
 			continue
 		}
 		reference := normalizeReference(currentSheet, masked, match)
@@ -130,7 +130,7 @@ func traceUnsupportedSyntax(formula string) []string {
 	return nil
 }
 
-func isScientificNotationToken(value string, start int, end int) bool {
+func isScientificNotationReferenceToken(value string, start int, end int) bool {
 	token := value[start:end]
 	if len(token) < 2 || strings.IndexFunc(token, unicode.IsDigit) == -1 {
 		return false

@@ -49,6 +49,9 @@ type WorkbookOperationIR struct {
 	IncludeSourceColumns []string     `json:"include_source_columns,omitempty"`
 	AppendLookupColumns  []string     `json:"append_lookup_columns,omitempty"`
 	Values               []CellValue  `json:"values,omitempty"`
+	FormulaSourceRow     int          `json:"formula_source_row,omitempty"`
+	TargetRows           []int        `json:"target_rows,omitempty"`
+	FormulaColumns       []string     `json:"formula_columns,omitempty"`
 	PreserveOriginal     bool         `json:"preserve_original"`
 }
 
@@ -237,6 +240,43 @@ func CompileAppendStructuredRowsOperation(task taskspec.AppendStructuredRowsTask
 	}, nil
 }
 
+func CompileExtendTableFormulasOperation(task taskspec.ExtendTableFormulasTask) (WorkbookOperationIR, error) {
+	if task.SourceSheet == "" {
+		return WorkbookOperationIR{}, fmt.Errorf("source sheet must not be empty")
+	}
+	if task.FormulaSourceRow < 1 {
+		return WorkbookOperationIR{}, fmt.Errorf("formula source row must be positive")
+	}
+	if len(task.TargetRows) == 0 {
+		return WorkbookOperationIR{}, fmt.Errorf("target rows must not be empty")
+	}
+	for _, row := range task.TargetRows {
+		if row < 1 {
+			return WorkbookOperationIR{}, fmt.Errorf("target row must be positive")
+		}
+		if row == task.FormulaSourceRow {
+			return WorkbookOperationIR{}, fmt.Errorf("target row must differ from formula source row")
+		}
+	}
+	if len(task.FormulaColumns) == 0 {
+		return WorkbookOperationIR{}, fmt.Errorf("formula columns must not be empty")
+	}
+	if err := validateExtendTableFormulasTaskCompositionBoundary(task.TaskSpec); err != nil {
+		return WorkbookOperationIR{}, err
+	}
+
+	return WorkbookOperationIR{
+		ExecutionKind:    taskspec.ExecutionKindComposition,
+		CompositionKind:  taskspec.CompositionKindFormulaExtension,
+		OperationFamily:  taskspec.OperationFamilyExtendTableFormulas,
+		SourceSheet:      task.SourceSheet,
+		FormulaSourceRow: task.FormulaSourceRow,
+		TargetRows:       cloneInts(task.TargetRows),
+		FormulaColumns:   cloneStrings(task.FormulaColumns),
+		PreserveOriginal: task.PreserveOriginal,
+	}, nil
+}
+
 func validateHighlightTaskCompositionBoundary(spec taskspec.TaskSpec) error {
 	if spec.ExecutionKind != taskspec.ExecutionKindComposition {
 		return fmt.Errorf("highlight task execution_kind=%q want %q", spec.ExecutionKind, taskspec.ExecutionKindComposition)
@@ -272,6 +312,19 @@ func validateAppendStructuredRowsTaskCompositionBoundary(spec taskspec.TaskSpec)
 	}
 	if spec.Operation != taskspec.OperationAppendStructuredRows {
 		return fmt.Errorf("append structured rows task operation=%q want %q", spec.Operation, taskspec.OperationAppendStructuredRows)
+	}
+	return nil
+}
+
+func validateExtendTableFormulasTaskCompositionBoundary(spec taskspec.TaskSpec) error {
+	if spec.ExecutionKind != taskspec.ExecutionKindComposition {
+		return fmt.Errorf("extend table formulas task execution_kind=%q want %q", spec.ExecutionKind, taskspec.ExecutionKindComposition)
+	}
+	if spec.CompositionKind != taskspec.CompositionKindFormulaExtension {
+		return fmt.Errorf("extend table formulas task composition_kind=%q want %q", spec.CompositionKind, taskspec.CompositionKindFormulaExtension)
+	}
+	if spec.Operation != taskspec.OperationExtendTableFormulas {
+		return fmt.Errorf("extend table formulas task operation=%q want %q", spec.Operation, taskspec.OperationExtendTableFormulas)
 	}
 	return nil
 }
@@ -482,6 +535,15 @@ func cloneStrings(values []string) []string {
 		return nil
 	}
 	cloned := make([]string, len(values))
+	copy(cloned, values)
+	return cloned
+}
+
+func cloneInts(values []int) []int {
+	if len(values) == 0 {
+		return nil
+	}
+	cloned := make([]int, len(values))
 	copy(cloned, values)
 	return cloned
 }

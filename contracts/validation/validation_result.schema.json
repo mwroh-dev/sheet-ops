@@ -118,7 +118,7 @@
         "source_sheet": { "type": "string", "minLength": 1 },
         "output_file": { "type": "string", "minLength": 1 },
         "execution_kind": { "const": "composition" },
-        "composition_kind": { "enum": ["group_summary", "threshold_highlight", "join_lookup", "structured_row_append"] },
+        "composition_kind": { "enum": ["group_summary", "threshold_highlight", "join_lookup", "structured_row_append", "formula_extension"] },
         "target_sheet": { "type": "string", "minLength": 1 },
         "summary_mode": { "enum": ["values", "formulas"] },
         "filters": {
@@ -176,6 +176,22 @@
           "type": "array",
           "minItems": 1,
           "items": { "$ref": "#/$defs/cell_value" }
+        },
+        "formula_source_row": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "target_rows": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "integer", "minimum": 1 }
+        },
+        "formula_columns": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
         }
       },
       "allOf": [
@@ -287,6 +303,33 @@
                 { "required": ["lookup_sheet"] },
                 { "required": ["join_key"] },
                 { "required": ["append_lookup_columns"] }
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "composition_kind": { "const": "formula_extension" } },
+            "required": ["composition_kind"]
+          },
+          "then": {
+            "required": ["formula_source_row", "target_rows", "formula_columns"],
+            "not": {
+              "anyOf": [
+                { "required": ["target_sheet"] },
+                { "required": ["summary_mode"] },
+                { "required": ["filters"] },
+                { "required": ["group_by"] },
+                { "required": ["metrics"] },
+                { "required": ["target_column"] },
+                { "required": ["operator"] },
+                { "required": ["threshold"] },
+                { "required": ["highlight_color"] },
+                { "required": ["lookup_sheet"] },
+                { "required": ["join_key"] },
+                { "required": ["include_source_columns"] },
+                { "required": ["append_lookup_columns"] },
+                { "required": ["values"] }
               ]
             }
           }

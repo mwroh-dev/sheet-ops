@@ -1,0 +1,44 @@
+{
+  "name": "extend_table_formulas",
+  "operation_family": "extend_table_formulas",
+  "task_operations": [
+    "extend_table_formulas"
+  ],
+  "inputs": [
+    "input_workbook",
+    "source_sheet",
+    "formula_source_row",
+    "target_rows",
+    "formula_columns"
+  ],
+  "outputs": [
+    "output_workbook",
+    "source_sheet",
+    "formula_cells"
+  ],
+  "required_facts": [
+    "sheets",
+    "formula_cells"
+  ],
+  "verifies": [
+    "source_preserved",
+    "target_formulas_present",
+    "relative_row_references_translated"
+  ],
+  "contract_paths": [
+    "contracts/task/task_spec.schema.json",
+    "contracts/ir/workbook_operation_ir.schema.json",
+    "contracts/verification/verification_result.schema.json"
+  ],
+  "runtime_paths": [
+    "runtime/compiler/workbook_compiler.go",
+    "runtime/execute/extend_table_formulas.go",
+    "runtime/verify/extend_table_formulas.go",
+    "runtime/formula/extend.go"
+  ],
+  "examples": [
+    "examples/extend_table_formulas/request.json"
+  ],
+  "status": "supported",
+  "exposure": "public_agent_capability"
+}

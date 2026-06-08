@@ -250,6 +250,54 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "operation",
+        "sheet_name",
+        "formula_source_row",
+        "target_rows",
+        "formula_columns",
+        "preserve_original",
+        "output_file"
+      ],
+      "properties": {
+        "operation": {
+          "const": "extend_table_formulas"
+        },
+        "sheet_name": {
+          "type": "string"
+        },
+        "formula_source_row": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "target_rows": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "formula_columns": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "preserve_original": {
+          "type": "boolean"
+        },
+        "output_file": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
     }
   ]
 }

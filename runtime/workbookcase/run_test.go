@@ -220,6 +220,74 @@ func TestRunAppendStructuredRowsEndToEnd(t *testing.T) {
 	}
 }
 
+func TestRunExtendTableFormulasEndToEnd(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "line-items.xlsx")
+	outputFile := filepath.Join(tempDir, "line-items-output.xlsx")
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "LineItems"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	header := []any{"sku", "quantity", "unit_price", "line_total"}
+	if err := file.SetSheetRow("LineItems", "A1", &header); err != nil {
+		t.Fatalf("SetSheetRow(header): %v", err)
+	}
+	row2 := []any{"A001", 2, 10}
+	if err := file.SetSheetRow("LineItems", "A2", &row2); err != nil {
+		t.Fatalf("SetSheetRow(row2): %v", err)
+	}
+	if err := file.SetCellFormula("LineItems", "D2", "=B2*C2"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	row3 := []any{"B002", 3, 15}
+	if err := file.SetSheetRow("LineItems", "A3", &row3); err != nil {
+		t.Fatalf("SetSheetRow(row3): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	task := runtimetaskspec.BuildExtendTableFormulasTask(runtimetaskspec.ExtendTableFormulasRequest{
+		RequestText:      "LineItems 시트에서 2행 수식을 3행으로 확장한다.",
+		InputFile:        inputFile,
+		SourceSheet:      "LineItems",
+		OutputFile:       outputFile,
+		FormulaSourceRow: 2,
+		TargetRows:       []int{3},
+		FormulaColumns:   []string{"D"},
+	})
+	result, err := Run(Request{ScenarioID: "workbookcase-extend-formulas", TaskSpec: task.TaskSpec})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if !result.Verification.Pass {
+		t.Fatalf("verification failed: %+v", result.Verification)
+	}
+	if result.Verification.Operation != ExtendFormulasOperationName {
+		t.Fatalf("verification operation=%q want %s", result.Verification.Operation, ExtendFormulasOperationName)
+	}
+	if len(result.Verification.FormulaCells) != 1 {
+		t.Fatalf("formula cells=%v want 1", result.Verification.FormulaCells)
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	got, err := outputHandle.GetCellFormula("LineItems", "D3")
+	if err != nil {
+		t.Fatalf("GetCellFormula D3: %v", err)
+	}
+	if got != "=B3*C3" {
+		t.Fatalf("LineItems!D3 formula=%q want =B3*C3", got)
+	}
+}
+
 func TestRunRejectsUnsafeScenarioIDBeforeCreatingArtifacts(t *testing.T) {
 	artifactRoot := t.TempDir()
 	t.Setenv(ArtifactRootEnv, artifactRoot)

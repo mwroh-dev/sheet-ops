@@ -1,6 +1,6 @@
 {
   "name": "extend_table_formulas",
-  "status": "planned",
+  "status": "supported",
   "evidence_count": 3,
   "source_categories": [
     "Invoice Templates",
@@ -23,5 +23,6 @@
     "invoice",
     "budget",
     "project_gantt"
-  ]
+  ],
+  "notes": "Promoted into the supported public capability registry after Phase 4 row-oriented formula extension contract, executor, verifier, and fixture-backed harness coverage."
 }

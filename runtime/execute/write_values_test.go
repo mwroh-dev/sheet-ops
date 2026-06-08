@@ -196,3 +196,82 @@ func TestRunAppendStructuredRowsPreservesSourceAndVerifiesRows(t *testing.T) {
 		t.Fatalf("output LineItems!B4=%q want 1", gotQty)
 	}
 }
+
+func TestRunExtendTableFormulasPreservesSourceAndVerifiesFormulas(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "line-items.xlsx")
+	outputFile := filepath.Join(tempDir, "line-items-output.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "LineItems"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	header := []any{"sku", "quantity", "unit_price", "line_total", "tax"}
+	if err := file.SetSheetRow("LineItems", "A1", &header); err != nil {
+		t.Fatalf("SetSheetRow(header): %v", err)
+	}
+	row2 := []any{"A001", 2, 10}
+	if err := file.SetSheetRow("LineItems", "A2", &row2); err != nil {
+		t.Fatalf("SetSheetRow(row2): %v", err)
+	}
+	if err := file.SetCellFormula("LineItems", "D2", "=B2*C2"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if err := file.SetCellFormula("LineItems", "E2", "=D2*0.1"); err != nil {
+		t.Fatalf("SetCellFormula(E2): %v", err)
+	}
+	row3 := []any{"B002", 3, 15}
+	if err := file.SetSheetRow("LineItems", "A3", &row3); err != nil {
+		t.Fatalf("SetSheetRow(row3): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	ir := compiler.WorkbookOperationIR{
+		ExecutionKind:    "composition",
+		CompositionKind:  "formula_extension",
+		OperationFamily:  "extend_table_formulas",
+		SourceSheet:      "LineItems",
+		FormulaSourceRow: 2,
+		TargetRows:       []int{3},
+		FormulaColumns:   []string{"D", "E"},
+		PreserveOriginal: true,
+	}
+
+	result, err := RunWorkbookOperation(ir, inputFile, outputFile)
+	if err != nil {
+		t.Fatalf("RunWorkbookOperation: %v", err)
+	}
+	if result.OperationFamily != "extend_table_formulas" {
+		t.Fatalf("operation_family=%q want extend_table_formulas", result.OperationFamily)
+	}
+	if len(result.FormulaCells) != 2 {
+		t.Fatalf("formula cells=%v want 2", result.FormulaCells)
+	}
+	if result.SourceSHA256Before != result.SourceSHA256After {
+		t.Fatal("source hash changed during execution")
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	if got, err := outputHandle.GetCellFormula("LineItems", "D3"); err != nil || got != "=B3*C3" {
+		t.Fatalf("LineItems!D3 formula=%q err=%v want =B3*C3", got, err)
+	}
+	if got, err := outputHandle.GetCellFormula("LineItems", "E3"); err != nil || got != "=D3*0.1" {
+		t.Fatalf("LineItems!E3 formula=%q err=%v want =D3*0.1", got, err)
+	}
+
+	verification, err := runtimeverify.VerifyWorkbookOperation(ir, inputFile, outputFile, result.SourceSHA256Before, result.SourceSHA256After)
+	if err != nil {
+		t.Fatalf("VerifyWorkbookOperation: %v", err)
+	}
+	if !verification.Pass {
+		t.Fatalf("verification failed: %+v", verification)
+	}
+}

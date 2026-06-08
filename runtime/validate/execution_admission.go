@@ -35,6 +35,10 @@ func (validator Validator) AdmitExecution(bound boundIntent) (Result, error) {
 	case "structured_row_append":
 		request.IncludeSourceColumns = append([]string(nil), bound.includeSourceColumns...)
 		request.Values = cloneCellValues(bound.values)
+	case "formula_extension":
+		request.FormulaSourceRow = bound.formulaSourceRow
+		request.TargetRows = cloneInts(bound.targetRows)
+		request.FormulaColumns = append([]string(nil), bound.formulaColumns...)
 	}
 
 	return finalizeResult(Result{

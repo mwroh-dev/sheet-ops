@@ -82,6 +82,12 @@ func normalizeIntent(intent NormalizedIntent) NormalizedIntent {
 	if intent.AppendRows.Values == nil {
 		intent.AppendRows.Values = []CellValue{}
 	}
+	if intent.ExtendFormulas.TargetRows == nil {
+		intent.ExtendFormulas.TargetRows = []int{}
+	}
+	if intent.ExtendFormulas.FormulaColumns == nil {
+		intent.ExtendFormulas.FormulaColumns = []string{}
+	}
 	if intent.Ambiguities != nil {
 		intent.Ambiguity.Markers = append([]string(nil), intent.Ambiguities...)
 	} else if intent.Ambiguity.Markers != nil {

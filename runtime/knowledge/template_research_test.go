@@ -279,7 +279,6 @@ func TestTemplateResearchKeepsUnsupportedCapabilitiesOutOfSupportedRegistry(t *t
 	existing := loadSupportedCapabilityNames(t, capabilitySchemaPath)
 
 	plannedNames := []string{
-		"extend_table_formulas",
 		"copy_period_sheet",
 		"normalize_headers",
 		"create_pivot_summary",

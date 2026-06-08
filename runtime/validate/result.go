@@ -56,6 +56,12 @@ type AppendRowsIntent struct {
 	Values               []CellValue
 }
 
+type ExtendFormulasIntent struct {
+	FormulaSourceRow int
+	TargetRows       []int
+	FormulaColumns   []string
+}
+
 type MaterializationIntent struct {
 	PreserveOriginal      bool
 	OutputDestinationMode string
@@ -78,6 +84,7 @@ type NormalizedIntent struct {
 	Highlight             HighlightIntent
 	JoinLookup            JoinLookupIntent
 	AppendRows            AppendRowsIntent
+	ExtendFormulas        ExtendFormulasIntent
 	Materialization       MaterializationIntent
 	Ambiguity             AmbiguityIntent
 }
@@ -141,6 +148,9 @@ type ValidatedExecutionRequest struct {
 	IncludeSourceColumns []string     `json:"include_source_columns,omitempty"`
 	AppendLookupColumns  []string     `json:"append_lookup_columns,omitempty"`
 	Values               []CellValue  `json:"values,omitempty"`
+	FormulaSourceRow     int          `json:"formula_source_row,omitempty"`
+	TargetRows           []int        `json:"target_rows,omitempty"`
+	FormulaColumns       []string     `json:"formula_columns,omitempty"`
 }
 
 type CellValue struct {
@@ -182,6 +192,9 @@ type admittedIntent struct {
 	includeSourceColumns []string
 	appendLookupColumns  []string
 	values               []CellValue
+	formulaSourceRow     int
+	targetRows           []int
+	formulaColumns       []string
 }
 
 type boundIntent struct {
@@ -197,6 +210,15 @@ func cloneCellValues(values []CellValue) []CellValue {
 		return []CellValue{}
 	}
 	cloned := make([]CellValue, len(values))
+	copy(cloned, values)
+	return cloned
+}
+
+func cloneInts(values []int) []int {
+	if len(values) == 0 {
+		return []int{}
+	}
+	cloned := make([]int, len(values))
 	copy(cloned, values)
 	return cloned
 }

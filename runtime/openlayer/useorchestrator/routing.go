@@ -70,6 +70,9 @@ func resolveRequestedOperation(req UseRequest) (string, string) {
 	if isAppendRowsRequest(req) {
 		return runtimeworkbookcase.AppendRowsOperationName, "append_rows_request_signals"
 	}
+	if isFormulaExtensionRequest(req) {
+		return runtimeworkbookcase.ExtendFormulasOperationName, "formula_extension_request_signals"
+	}
 	if isJoinLookupRequest(req) {
 		return runtimeworkbookcase.JoinLookupOperationName, "join_lookup_request_signals"
 	}
@@ -83,6 +86,16 @@ func isAppendRowsRequest(req UseRequest) bool {
 	return len(req.Values) > 0 ||
 		strings.Contains(req.RequestText, "행 추가") ||
 		strings.Contains(req.RequestText, "append")
+}
+
+func isFormulaExtensionRequest(req UseRequest) bool {
+	return req.FormulaSourceRow > 0 ||
+		len(req.TargetRows) > 0 ||
+		len(req.FormulaColumns) > 0 ||
+		strings.Contains(req.RequestText, "수식 확장") ||
+		strings.Contains(req.RequestText, "수식을 확장") ||
+		strings.Contains(req.RequestText, "formula extension") ||
+		strings.Contains(req.RequestText, "extend formulas")
 }
 
 func isSummaryRequest(req UseRequest) bool {
@@ -122,6 +135,8 @@ func buildRoutingNote(selectedOperation, routingAuthority string, knowledge runt
 			return fmt.Sprintf("%s Fallback routed by join lookup request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		case "append_rows_request_signals":
 			return fmt.Sprintf("%s Fallback routed by append row request signals to %s.", knowledge.FallbackReason, selectedOperation)
+		case "formula_extension_request_signals":
+			return fmt.Sprintf("%s Fallback routed by formula extension request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		case "highlight_request_signals":
 			return fmt.Sprintf("%s Fallback routed by highlight request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		default:

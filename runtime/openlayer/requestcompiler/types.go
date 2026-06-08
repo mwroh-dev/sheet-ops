@@ -5,6 +5,7 @@ const (
 	CompositionCandidateThresholdHighlight  = "threshold_highlight"
 	CompositionCandidateJoinLookup          = "join_lookup"
 	CompositionCandidateStructuredRowAppend = "structured_row_append"
+	CompositionCandidateFormulaExtension    = "formula_extension"
 
 	OutputDestinationModeNewWorkbook  = "new_workbook"
 	OutputDestinationModeSameWorkbook = "same_workbook"
@@ -53,6 +54,12 @@ type JoinLookupIntent struct {
 type AppendRowsIntent struct {
 	IncludeSourceColumns []string    `json:"include_source_columns,omitempty"`
 	Values               []CellValue `json:"values,omitempty"`
+}
+
+type ExtendFormulasIntent struct {
+	FormulaSourceRow int      `json:"formula_source_row,omitempty"`
+	TargetRows       []int    `json:"target_rows,omitempty"`
+	FormulaColumns   []string `json:"formula_columns,omitempty"`
 }
 
 type CellValue struct {
@@ -111,6 +118,7 @@ type NormalizedIntent struct {
 	Highlight             HighlightIntent       `json:"highlight,omitempty"`
 	JoinLookup            JoinLookupIntent      `json:"join_lookup,omitempty"`
 	AppendRows            AppendRowsIntent      `json:"append_rows,omitempty"`
+	ExtendFormulas        ExtendFormulasIntent  `json:"extend_formulas,omitempty"`
 	Materialization       MaterializationIntent `json:"materialization"`
 	Ambiguity             AmbiguityIntent       `json:"ambiguity"`
 	Ambiguities           []string              `json:"-"`

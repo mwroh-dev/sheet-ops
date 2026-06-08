@@ -31,6 +31,8 @@ func AdmitIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIn
 		return admitJoinLookupIntent(intent, decision)
 	case "append_structured_rows":
 		return admitAppendRowsIntent(intent, decision)
+	case "extend_table_formulas":
+		return admitExtendFormulasIntent(intent, decision)
 	default:
 		result, err := finalizeResult(Result{
 			Status: StatusBlocked,
@@ -200,6 +202,41 @@ func admitAppendRowsIntent(intent NormalizedIntent, decision CompilerDecision) (
 		sourceSheets:         preferredSourceSheets(intent, decision),
 		includeSourceColumns: append([]string(nil), intent.AppendRows.IncludeSourceColumns...),
 		values:               cloneCellValues(intent.AppendRows.Values),
+	}, nil, nil
+}
+
+func admitExtendFormulasIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIntent, *Result, error) {
+	if !intent.Materialization.PreserveOriginal ||
+		intent.Materialization.OutputDestinationMode != "new_workbook" ||
+		intent.Materialization.WriteShape != "in_place_cells" {
+		result, err := finalizeResult(Result{
+			Status: StatusBlocked,
+			Blocked: &Blocked{
+				FailedStage: StageIntentAdmission,
+				ReasonCodes: []string{"invalid_materialization"},
+			},
+		})
+		return admittedIntent{}, &result, err
+	}
+
+	if intent.ExtendFormulas.FormulaSourceRow < 1 || len(intent.ExtendFormulas.TargetRows) == 0 || len(intent.ExtendFormulas.FormulaColumns) == 0 {
+		result, err := finalizeResult(Result{
+			Status: StatusBlocked,
+			Blocked: &Blocked{
+				FailedStage: StageIntentAdmission,
+				ReasonCodes: []string{"incomplete_formula_extension_intent"},
+			},
+		})
+		return admittedIntent{}, &result, err
+	}
+
+	return admittedIntent{
+		decision:         decision,
+		compositionKind:  "formula_extension",
+		sourceSheets:     preferredSourceSheets(intent, decision),
+		formulaSourceRow: intent.ExtendFormulas.FormulaSourceRow,
+		targetRows:       cloneInts(intent.ExtendFormulas.TargetRows),
+		formulaColumns:   append([]string(nil), intent.ExtendFormulas.FormulaColumns...),
 	}, nil, nil
 }
 

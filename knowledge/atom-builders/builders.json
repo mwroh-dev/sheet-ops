@@ -70,16 +70,16 @@
     },
     {
       "atom_id": "extend_table_formulas",
-      "status": "planned",
-      "builder_layer": "planned_contract",
-      "input_contract": ["formula source range", "extension target", "reference policy"],
-      "inspection_requirements": ["existing formula pattern", "relative and absolute references", "target range"],
-      "plan_outputs": ["formula expectations", "target formula cells"],
-      "result_outputs": ["extended formula cells", "warnings"],
-      "verification_assertions": ["formulas_extended", "references_compatible", "calculated_values_match"],
-      "capability_record": "",
-      "opportunity_record": "knowledge/template-research/opportunities/extend_table_formulas.json",
-      "runtime_paths": []
+      "status": "supported",
+      "builder_layer": "runtime_mirror",
+      "input_contract": ["source sheet", "formula source row", "target rows", "formula columns"],
+      "inspection_requirements": ["sheet names", "source formula cells", "relative row references"],
+      "plan_outputs": ["formula source row", "target rows", "target formula cells"],
+      "result_outputs": ["output workbook", "extended formula cells"],
+      "verification_assertions": ["source_preserved", "target_formulas_present", "relative_row_references_translated"],
+      "capability_record": "contracts/capabilities/records/extend_table_formulas.yaml",
+      "opportunity_record": "",
+      "runtime_paths": ["runtime/compiler/workbook_compiler.go", "runtime/execute/extend_table_formulas.go", "runtime/verify/extend_table_formulas.go", "runtime/formula/extend.go"]
     },
     {
       "atom_id": "copy_period_sheet",

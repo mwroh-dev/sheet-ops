@@ -57,6 +57,9 @@ type TaskSpec struct {
 	IncludeSourceColumns []string       `json:"include_source_columns,omitempty"`
 	AppendLookupColumns  []string       `json:"append_lookup_columns,omitempty"`
 	Values               []CellValue    `json:"values,omitempty"`
+	FormulaSourceRow     int            `json:"formula_source_row,omitempty"`
+	TargetRows           []int          `json:"target_rows,omitempty"`
+	FormulaColumns       []string       `json:"formula_columns,omitempty"`
 }
 
 type GroupSummarizeTask struct {
@@ -93,6 +96,15 @@ type AppendStructuredRowsTask struct {
 	IncludeSourceColumns []string
 	Values               []CellValue
 	PreserveOriginal     bool
+}
+
+type ExtendTableFormulasTask struct {
+	TaskSpec         TaskSpec
+	SourceSheet      string
+	FormulaSourceRow int
+	TargetRows       []int
+	FormulaColumns   []string
+	PreserveOriginal bool
 }
 
 type UseRequest struct {
@@ -139,20 +151,33 @@ type AppendStructuredRowsRequest struct {
 	Values               []CellValue
 }
 
+type ExtendTableFormulasRequest struct {
+	RequestText      string
+	InputFile        string
+	SourceSheet      string
+	OutputFile       string
+	FormulaSourceRow int
+	TargetRows       []int
+	FormulaColumns   []string
+}
+
 const (
 	ExecutionKindComposition             = "composition"
 	CompositionKindGroupSummary          = "group_summary"
 	CompositionKindThresholdHighlight    = "threshold_highlight"
 	CompositionKindJoinLookup            = "join_lookup"
 	CompositionKindStructuredRowAppend   = "structured_row_append"
+	CompositionKindFormulaExtension      = "formula_extension"
 	OperationCreateSummarySheet          = "create_summary_sheet"
 	OperationHighlightThresholdRows      = "highlight_threshold_rows"
 	OperationCreateJoinLookupResultSheet = "create_join_lookup_result_sheet"
 	OperationAppendStructuredRows        = "append_structured_rows"
+	OperationExtendTableFormulas         = "extend_table_formulas"
 	OperationFamilyGroupSummarize        = "group_summarize"
 	OperationFamilyHighlightThreshold    = "highlight_threshold"
 	OperationFamilyJoinLookup            = "join_lookup"
 	OperationFamilyAppendStructuredRows  = "append_structured_rows"
+	OperationFamilyExtendTableFormulas   = "extend_table_formulas"
 
 	defaultHighlightColumn    = "amount"
 	defaultHighlightOperator  = ">"
@@ -293,6 +318,30 @@ func BuildAppendStructuredRowsTask(req AppendStructuredRowsRequest) AppendStruct
 	}
 }
 
+func BuildExtendTableFormulasTask(req ExtendTableFormulasRequest) ExtendTableFormulasTask {
+	return ExtendTableFormulasTask{
+		TaskSpec: TaskSpec{
+			RequestKind:      "workbook_case",
+			ExecutionKind:    ExecutionKindComposition,
+			CompositionKind:  CompositionKindFormulaExtension,
+			Source:           SourceSpec{Kind: "natural_language"},
+			RequestText:      req.RequestText,
+			InputWorkbook:    req.InputFile,
+			OutputWorkbook:   req.OutputFile,
+			Operation:        OperationExtendTableFormulas,
+			SourceSheet:      req.SourceSheet,
+			FormulaSourceRow: req.FormulaSourceRow,
+			TargetRows:       cloneInts(req.TargetRows),
+			FormulaColumns:   cloneStrings(req.FormulaColumns),
+		},
+		SourceSheet:      req.SourceSheet,
+		FormulaSourceRow: req.FormulaSourceRow,
+		TargetRows:       cloneInts(req.TargetRows),
+		FormulaColumns:   cloneStrings(req.FormulaColumns),
+		PreserveOriginal: true,
+	}
+}
+
 func cloneFilters(values []FilterSpec) []FilterSpec {
 	if len(values) == 0 {
 		return nil
@@ -330,6 +379,15 @@ func cloneStrings(values []string) []string {
 		return nil
 	}
 	cloned := make([]string, len(values))
+	copy(cloned, values)
+	return cloned
+}
+
+func cloneInts(values []int) []int {
+	if len(values) == 0 {
+		return nil
+	}
+	cloned := make([]int, len(values))
 	copy(cloned, values)
 	return cloned
 }

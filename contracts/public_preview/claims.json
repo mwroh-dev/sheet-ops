@@ -11,7 +11,7 @@
   "supported_today": [
     "single human-facing sheet-ops skill entry",
     "case-local internal dispatcher execution boundary",
-    "public agent capabilities: group_summarize, highlight_threshold, join_lookup, append_structured_rows",
+    "public agent capabilities: group_summarize, highlight_threshold, join_lookup, append_structured_rows, extend_table_formulas",
     "TaskSpec -> OperationIR -> Execute -> Verify -> Evidence",
     "deterministic_fixture_backed_harness_smoke",
     "scenario-level evidence and terminal result artifacts",
