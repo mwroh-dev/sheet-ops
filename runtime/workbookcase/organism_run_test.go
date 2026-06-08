@@ -663,6 +663,49 @@ func TestVerifyOrganismPlanExecutionChecksConstructionCostWorkbookSemantics(t *t
 	}
 }
 
+func TestVerifyOrganismPlanExecutionChecksInventoryWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "inventory.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Movements"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Movements", "A1", &[]any{"SKU ID", "Qty In", "Qty Out", "Balance"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Movements", "A2", &[]any{"A001", 10, 0}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetCellFormula("Movements", "D2", "=B2-C2"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "inventory_movement_log",
+		OperationSequence:     []string{"normalize_headers", "append_structured_rows", "join_lookup", "protect_formula_cells", "reconcile_tables"},
+		RequiredVerifierSpecs: []string{"inventory_movement_log_verifier"},
+	}, []string{"normalize_headers", "append_structured_rows", "join_lookup", "protect_formula_cells", "reconcile_tables"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "Movements") {
+		t.Fatalf("organism verification reasons=%v want missing inventory movement evidence", verification.Reasons)
+	}
+}
+
 func TestRunOrganismPlanExecutesLoanSequenceWithNonClaims(t *testing.T) {
 	setRuntimeRoots(t)
 

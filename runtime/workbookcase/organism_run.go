@@ -178,6 +178,8 @@ func verifyOrganismWorkbookSemantics(organismID, outputFile string) []string {
 		return verifyShiftRosterWorkbook(outputFile)
 	case "construction_cost_tracker":
 		return verifyConstructionCostWorkbook(outputFile)
+	case "inventory_movement_log":
+		return verifyInventoryMovementWorkbook(outputFile)
 	default:
 		return nil
 	}
@@ -464,6 +466,37 @@ func verifyConstructionCostWorkbook(outputFile string) []string {
 		reasons = append(reasons, fmt.Sprintf("construction cost protection semantic check missing Costs protection: %v", err))
 	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
 		reasons = append(reasons, "construction cost protection semantic check missing Costs protection options")
+	}
+	return reasons
+}
+
+func verifyInventoryMovementWorkbook(outputFile string) []string {
+	handle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		return []string{fmt.Sprintf("inventory movement workbook semantic check failed to open output: %v", err)}
+	}
+	defer func() { _ = handle.Close() }()
+
+	var reasons []string
+	if got, err := handle.GetCellValue("Movements", "A1"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("inventory header semantic check missing Movements!A1: %v", err))
+	} else if strings.TrimSpace(got) != "sku" {
+		reasons = append(reasons, fmt.Sprintf("inventory header semantic check Movements!A1=%q want sku", got))
+	}
+	if got, err := handle.GetCellValue("MovementsEnriched", "E4"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("inventory lookup semantic check missing MovementsEnriched!E4: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "inventory lookup semantic check missing MovementsEnriched!E4 location value")
+	}
+	if got, err := handle.GetCellValue("InventoryReconciliation", "B4"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("inventory reconciliation semantic check missing InventoryReconciliation!B4: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "inventory reconciliation semantic check missing InventoryReconciliation!B4 sku value")
+	}
+	if protection, err := handle.GetSheetProtection("Movements"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("inventory protection semantic check missing Movements protection: %v", err))
+	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
+		reasons = append(reasons, "inventory protection semantic check missing Movements protection options")
 	}
 	return reasons
 }
