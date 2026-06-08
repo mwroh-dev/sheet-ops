@@ -113,6 +113,12 @@ var plans = []Plan{
 		NonClaims:             []string{"does not auto-grow arbitrary training matrices", "does not infer compliance policy", "does not optimize cross-training coverage"},
 	},
 	{
+		OrganismID:            "service_ticket_queue",
+		OperationSequence:     []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells"},
+		RequiredVerifierSpecs: []string{"service_ticket_queue_verifier"},
+		NonClaims:             []string{"does not route or assign tickets", "does not infer SLA policy", "does not create native queue dashboards"},
+	},
+	{
 		OrganismID:            "loan_repayment_calculator",
 		OperationSequence:     []string{"extend_table_formulas", "protect_formula_cells"},
 		RequiredVerifierSpecs: []string{"loan_repayment_calculator_verifier"},
@@ -153,6 +159,8 @@ func PlanForRequest(requestText string) (Plan, bool) {
 		return planForOrganism("student_gradebook")
 	case containsAny(normalized, "training completion", "training matrix", "training status", "training report"):
 		return planForOrganism("training_completion_matrix")
+	case containsAny(normalized, "service ticket", "ticket status", "open tickets", "overdue tickets", "ticket queue"):
+		return planForOrganism("service_ticket_queue")
 	case containsAny(normalized, "loan", "amortization", "repayment"):
 		return planForOrganism("loan_repayment_calculator")
 	default:

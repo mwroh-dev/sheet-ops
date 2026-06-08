@@ -169,11 +169,14 @@
     },
     {
       "organism_id": "service_ticket_queue",
-      "draft_status": "explicit_request_only",
-      "runtime_entrypoint": "",
-      "evidence_tests": [],
-      "current_limit": "No workbook-facts draft planner for ticket status queues, SLA thresholds, or service summary outputs.",
-      "next_gate": "Add a service-ticket fixture with status pipeline, overdue threshold, and protected summary checks."
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsServiceTicketQueueStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerServiceTicketDraft"
+      ],
+      "current_limit": "Ticket row queue with append, SLA formula extension, status validation, numeric days-open threshold highlighting, status summary, and protected SLA formulas only; does not route tickets or infer SLA policy.",
+      "next_gate": "Add service-ticket fixtures with SLA calendars, assignment/routing, priority-specific thresholds, escalation status transitions, and dashboard summary checks."
     },
     {
       "organism_id": "sales_pipeline_tracker",

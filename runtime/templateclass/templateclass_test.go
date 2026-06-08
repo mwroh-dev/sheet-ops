@@ -200,6 +200,20 @@ func TestPlanForRequestClassifiesTrainingCompletionMatrix(t *testing.T) {
 	}
 }
 
+func TestPlanForRequestClassifiesServiceTicketQueue(t *testing.T) {
+	plan, ok := PlanForRequest("Append service ticket, validate ticket status, flag overdue tickets, summarize open tickets, and protect SLA formulas")
+	if !ok {
+		t.Fatal("PlanForRequest returned ok=false")
+	}
+	if plan.OrganismID != "service_ticket_queue" {
+		t.Fatalf("organism=%q want service_ticket_queue", plan.OrganismID)
+	}
+	wantOps := []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells"}
+	if !sameStrings(plan.OperationSequence, wantOps) {
+		t.Fatalf("operation sequence=%v want %v", plan.OperationSequence, wantOps)
+	}
+}
+
 func TestPlanForRequestRejectsFinancialAdviceClaim(t *testing.T) {
 	plan, ok := PlanForRequest("Give financial advice and certify the amortization correctness of this loan repayment schedule")
 	if !ok {

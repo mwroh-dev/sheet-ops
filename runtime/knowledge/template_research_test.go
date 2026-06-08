@@ -545,6 +545,7 @@ func TestTemplateResearchDraftPlannerCoverageStaysExplicit(t *testing.T) {
 		"inventory_movement_log":     true,
 		"student_gradebook":          true,
 		"training_completion_matrix": true,
+		"service_ticket_queue":       true,
 		"loan_repayment_calculator":  true,
 	}
 	seen := map[string]bool{}

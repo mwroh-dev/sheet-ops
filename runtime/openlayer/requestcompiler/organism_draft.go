@@ -98,6 +98,8 @@ func DraftOrganismExecutionRequest(input OrganismDraftInput) (OrganismExecutionR
 		return draftStudentGradebook(input)
 	case "training_completion_matrix":
 		return draftTrainingCompletionMatrix(input)
+	case "service_ticket_queue":
+		return draftServiceTicketQueue(input)
 	case "loan_repayment_calculator":
 		return draftLoanRepaymentCalculator(input)
 	default:
@@ -891,6 +893,102 @@ func draftCashFlowMonitor(input OrganismDraftInput) (OrganismExecutionRequestDra
 	}, true
 }
 
+func draftServiceTicketQueue(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
+	sheet, ok := findServiceTicketSheet(input.WorkbookFacts)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	inputColumns, formulaColumns := splitInputAndFormulaColumns(sheet)
+	if len(inputColumns) == 0 || len(formulaColumns) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaSourceRow, targetRow, ok := formulaRows(sheet)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumnLetters := make([]string, 0, len(formulaColumns))
+	for _, column := range formulaColumns {
+		if letter, ok := columnLetterForHeader(sheet.Columns, column); ok {
+			formulaColumnLetters = append(formulaColumnLetters, letter)
+		}
+	}
+	if len(formulaColumnLetters) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	statusColumnLetter, ok := columnLetterForHeader(sheet.Columns, "status")
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	threshold := 5.0
+
+	return OrganismExecutionRequestDraft{
+		ScenarioID:  input.ScenarioID,
+		RequestText: input.RequestText,
+		InputFile:   input.InputFile,
+		OutputFile:  input.OutputFile,
+		Steps: []OrganismExecutionStepDraft{
+			{
+				AtomID:               "append_structured_rows",
+				CompositionKind:      "structured_row_append",
+				SourceSheet:          sheet.Name,
+				IncludeSourceColumns: append([]string(nil), inputColumns...),
+				Values: []CellValue{
+					{Cell: "ticket_id", Value: "T-2"},
+					{Cell: "status", Value: "open"},
+					{Cell: "days_open", Value: 8},
+					{Cell: "ticket_count", Value: 1},
+				},
+			},
+			{
+				AtomID:           "extend_table_formulas",
+				CompositionKind:  "formula_extension",
+				SourceSheet:      sheet.Name,
+				FormulaSourceRow: formulaSourceRow,
+				TargetRows:       []int{targetRow},
+				FormulaColumns:   formulaColumnLetters,
+			},
+			{
+				AtomID:          "add_data_validation",
+				CompositionKind: "data_validation",
+				SourceSheet:     sheet.Name,
+				ValidationRule: &DataValidationRule{
+					Ranges:        []string{statusColumnLetter + "2:" + statusColumnLetter + "20"},
+					RuleType:      "list",
+					AllowedValues: []string{"open", "pending", "closed"},
+					AllowBlank:    false,
+				},
+			},
+			{
+				AtomID:          "highlight_threshold",
+				CompositionKind: "threshold_highlight",
+				SourceSheet:     sheet.Name,
+				TargetColumn:    "days_open",
+				Operator:        ">",
+				Threshold:       &threshold,
+				HighlightColor:  "#FFC7CE",
+			},
+			{
+				AtomID:          "group_summarize",
+				CompositionKind: "group_summary",
+				SourceSheet:     sheet.Name,
+				TargetSheet:     "TicketSummary",
+				SummaryMode:     "values",
+				GroupBy:         []string{"status"},
+				Metrics:         []MetricSpec{{Column: "ticket_count", Op: "sum", As: "ticket_total"}},
+			},
+			{
+				AtomID:          "protect_formula_cells",
+				CompositionKind: "formula_protection",
+				SourceSheet:     sheet.Name,
+				ProtectionRule: &FormulaProtectionRule{
+					FormulaRanges: []string{formulaRange(formulaColumnLetters, formulaSourceRow, targetRow)},
+					InputRanges:   []string{"A2:C20", "E2:E20"},
+				},
+			},
+		},
+	}, true
+}
+
 func draftTrainingCompletionMatrix(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
 	sheet, ok := findTrainingCompletionSheet(input.WorkbookFacts)
 	if !ok {
@@ -1522,6 +1620,16 @@ func findTrainingCompletionSheet(facts runtimeinspect.WorkbookFacts) (runtimeins
 	for _, sheet := range facts.Sheets {
 		headers := lowerSet(sheet.Columns)
 		if headers["employee"] && headers["course"] && headers["status"] && headers["completed"] && headers["completion_flag"] {
+			return sheet, true
+		}
+	}
+	return runtimeinspect.SheetFacts{}, false
+}
+
+func findServiceTicketSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect.SheetFacts, bool) {
+	for _, sheet := range facts.Sheets {
+		headers := lowerSet(sheet.Columns)
+		if headers["ticket_id"] && headers["status"] && headers["days_open"] && headers["sla_breach"] && headers["ticket_count"] {
 			return sheet, true
 		}
 	}

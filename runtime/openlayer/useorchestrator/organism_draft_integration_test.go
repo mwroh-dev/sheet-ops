@@ -1251,6 +1251,86 @@ func TestOrchestrateOrganismExecutesRequestCompilerTrainingCompletionDraft(t *te
 	}
 }
 
+func TestOrchestrateOrganismExecutesRequestCompilerServiceTicketDraft(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "tickets.xlsx")
+	outputFile := filepath.Join(tempDir, "tickets-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Tickets"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Tickets", "A1", &[]any{"ticket_id", "status", "days_open", "sla_breach", "ticket_count"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Tickets", "A2", &[]any{"T-1", "open", 2, nil, 1}); err != nil {
+		t.Fatalf("SetSheetRow row: %v", err)
+	}
+	if err := file.SetCellFormula("Tickets", "D2", "=IF(C2>5,1,0)"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	facts, err := runtimeinspect.InspectWorkbookFacts(inputFile)
+	if err != nil {
+		t.Fatalf("InspectWorkbookFacts: %v", err)
+	}
+	requestText := "Append service ticket, validate ticket status, flag overdue tickets, summarize open tickets, and protect SLA formulas"
+	plan := requestcompiler.TemplateClassPlanHintForRequest(requestText)
+	if plan == nil {
+		t.Fatal("missing plan")
+	}
+	draft, ok := requestcompiler.DraftOrganismExecutionRequest(requestcompiler.OrganismDraftInput{
+		ScenarioID:        "service-ticket-organism-draft-integration",
+		RequestText:       requestText,
+		InputFile:         inputFile,
+		OutputFile:        outputFile,
+		WorkbookFacts:     facts,
+		TemplateClassPlan: *plan,
+	})
+	if !ok {
+		t.Fatal("DraftOrganismExecutionRequest ok=false")
+	}
+	raw, err := json.Marshal(draft)
+	if err != nil {
+		t.Fatalf("Marshal draft: %v", err)
+	}
+	var req OrganismExecutionRequest
+	if err := json.Unmarshal(raw, &req); err != nil {
+		t.Fatalf("Unmarshal draft: %v", err)
+	}
+
+	result, err := OrchestrateOrganism(req)
+	if err != nil {
+		t.Fatalf("OrchestrateOrganism: %v", err)
+	}
+	if !result.TemplateClassEvaluation.Pass || !result.OrganismVerification.Pass {
+		t.Fatalf("organism evidence failed: eval=%+v verification=%+v", result.TemplateClassEvaluation, result.OrganismVerification)
+	}
+	if len(result.StepResults) < 4 || len(result.StepResults[3].Verification.HighlightedRows) != 1 || result.StepResults[3].Verification.HighlightedRows[0] != 3 {
+		t.Fatalf("highlight evidence=%+v", result.StepResults)
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	if got, err := outputHandle.GetCellValue("Tickets", "A3"); err != nil || got != "T-2" {
+		t.Fatalf("Tickets!A3=%q err=%v want T-2", got, err)
+	}
+	if got, err := outputHandle.GetCellValue("TicketSummary", "B2"); err != nil || got != "2" {
+		t.Fatalf("TicketSummary!B2=%q err=%v want 2", got, err)
+	}
+	if got, err := outputHandle.GetCellFormula("Tickets", "D3"); err != nil || got != "=IF(C3>5,1,0)" {
+		t.Fatalf("Tickets!D3 formula=%q err=%v want =IF(C3>5,1,0)", got, err)
+	}
+}
+
 func TestOrchestrateOrganismExecutesRequestCompilerLoanDraft(t *testing.T) {
 	tempDir := t.TempDir()
 	inputFile := filepath.Join(tempDir, "loan.xlsx")
