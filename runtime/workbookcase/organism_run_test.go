@@ -229,6 +229,52 @@ func TestVerifyOrganismPlanExecutionFailsWhenAtomEvidenceIsMissing(t *testing.T)
 	}
 }
 
+func TestVerifyOrganismPlanExecutionChecksInvoiceWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "invoice.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "LineItems"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("LineItems", "A1", &[]any{"sku", "quantity", "unit_price", "line_total", "tax"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("LineItems", "A2", &[]any{"A001", 2, 10}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetSheetRow("LineItems", "A3", &[]any{"B002", 3, 15}); err != nil {
+		t.Fatalf("SetSheetRow row3: %v", err)
+	}
+	if err := file.SetCellFormula("LineItems", "D3", "=B3*C3"); err != nil {
+		t.Fatalf("SetCellFormula(D3): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "invoice_line_item_billing",
+		OperationSequence:     []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells", "generate_printable_form"},
+		RequiredVerifierSpecs: []string{"invoice_line_item_billing_verifier"},
+	}, []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells", "generate_printable_form"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "InvoicePrint") {
+		t.Fatalf("organism verification reasons=%v want missing printable invoice evidence", verification.Reasons)
+	}
+}
+
 func TestRunOrganismPlanExecutesLoanSequenceWithNonClaims(t *testing.T) {
 	setRuntimeRoots(t)
 

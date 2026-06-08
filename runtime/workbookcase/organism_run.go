@@ -8,6 +8,7 @@ import (
 	runtimeschema "github.com/mwroh/sheet-ops/runtime/schema"
 	runtimetaskspec "github.com/mwroh/sheet-ops/runtime/taskspec"
 	"github.com/mwroh/sheet-ops/runtime/templateclass"
+	"github.com/xuri/excelize/v2"
 )
 
 type OrganismStep struct {
@@ -150,8 +151,44 @@ func verifyOrganismPlanExecution(plan templateclass.Plan, executed []string, ste
 	if result.PassedStepCount != len(plan.OperationSequence) {
 		result.Reasons = append(result.Reasons, fmt.Sprintf("passed step count %d does not match expected count %d", result.PassedStepCount, len(plan.OperationSequence)))
 	}
+	result.Reasons = append(result.Reasons, verifyOrganismWorkbookSemantics(plan.OrganismID, outputFile)...)
 	result.Pass = len(result.Reasons) == 0
 	return result
+}
+
+func verifyOrganismWorkbookSemantics(organismID, outputFile string) []string {
+	switch organismID {
+	case "invoice_line_item_billing":
+		return verifyInvoiceLineItemWorkbook(outputFile)
+	default:
+		return nil
+	}
+}
+
+func verifyInvoiceLineItemWorkbook(outputFile string) []string {
+	handle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		return []string{fmt.Sprintf("invoice workbook semantic check failed to open output: %v", err)}
+	}
+	defer func() { _ = handle.Close() }()
+
+	var reasons []string
+	if got, err := handle.GetCellValue("LineItems", "A3"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("invoice line item semantic check failed reading LineItems!A3: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "invoice line item semantic check missing appended LineItems!A3 value")
+	}
+	if got, err := handle.GetCellFormula("LineItems", "D3"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("invoice line item semantic check failed reading LineItems!D3 formula: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "invoice line item semantic check missing LineItems!D3 formula")
+	}
+	if got, err := handle.GetCellValue("InvoicePrint", "A1"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("invoice printable semantic check missing InvoicePrint!A1: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "invoice printable semantic check missing InvoicePrint!A1 title")
+	}
+	return reasons
 }
 
 func validateOrganismStepsMatchPlan(plan templateclass.Plan, steps []OrganismStep) error {

@@ -1579,3 +1579,34 @@ coverage:
 - Advisory claim risk: harness coverage must not be described as 21 fully
   tested user workflows. It proves that every runtime draft organism has a
   documented evidence chain and non-claim boundary.
+
+## Phase 52 Result
+
+Added the first standalone workbook semantic organism verifier slice:
+
+- `runtime/workbookcase.verifyOrganismPlanExecution` now calls an
+  organism-specific workbook semantic verifier after aggregate atom sequence
+  and step-pass checks
+- `invoice_line_item_billing` now verifies final workbook evidence directly:
+  appended line item value, extended line-total formula, and printable invoice
+  sheet title
+- a regression test proves that passed atom steps are no longer sufficient for
+  invoice organism verification when the final workbook is missing printable
+  invoice evidence
+- existing invoice request-compiler orchestration still passes with the
+  stronger organism verifier
+
+## Phase 52 Self-Retro
+
+- Coverage improved: runtime verification now has one concrete
+  organism-specific workbook semantic check, not only aggregate sequence and
+  operation-specific verifier evidence.
+- Remaining template needs: this is currently invoice-only. The other 20
+  runtime draft organisms still need analogous workbook semantic checks before
+  claiming broad domain-level organism validation.
+- Verifier strength: invoice verification now inspects final workbook state
+  across row append, formula extension, and printable output in one organism
+  acceptance pass.
+- Advisory claim risk: this must not be described as full semantic verifier
+  coverage for all organisms. It is the first vertical slice and establishes
+  the runtime pattern for expanding domain-specific organism verifiers.
