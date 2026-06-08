@@ -190,8 +190,9 @@ fixture coverage, p2/p3 verified-class depth contracts, and runtime
 productization contracts are complete for the current 21 roadmap organisms.
 The first deterministic template-class planner/evaluator slice now has
 multi-operation organism harness coverage for all five productization classes,
-and all five first productization classes have explicit draft-planner paths.
-The remaining limits are explicitly documented as future runtime implementation
-depth, especially for broad 21-organism standalone semantic verifier coverage,
-domain-specific correctness, and visual/print QA, not untracked blockers in the
+all 21 roadmap organisms have explicit draft-planner paths, and all 21 roadmap
+organisms have standalone final-workbook semantic verifier slices. The
+remaining limits are explicitly documented as future runtime implementation
+depth, especially full template generation, domain-specific correctness,
+matrix/pivot expansion, and visual/print QA, not untracked blockers in the
 requested advisory-to-productization coverage layer.
