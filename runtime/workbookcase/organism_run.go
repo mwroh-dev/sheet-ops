@@ -192,6 +192,8 @@ func verifyOrganismWorkbookSemantics(organismID, outputFile string) []string {
 		return verifyServiceTicketWorkbook(outputFile)
 	case "sales_pipeline_tracker":
 		return verifySalesPipelineWorkbook(outputFile)
+	case "maintenance_issue_log":
+		return verifyMaintenanceIssueWorkbook(outputFile)
 	default:
 		return nil
 	}
@@ -720,6 +722,42 @@ func verifySalesPipelineWorkbook(outputFile string) []string {
 		reasons = append(reasons, fmt.Sprintf("sales pipeline protection semantic check missing Pipeline protection: %v", err))
 	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
 		reasons = append(reasons, "sales pipeline protection semantic check missing Pipeline protection options")
+	}
+	return reasons
+}
+
+func verifyMaintenanceIssueWorkbook(outputFile string) []string {
+	handle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		return []string{fmt.Sprintf("maintenance issue workbook semantic check failed to open output: %v", err)}
+	}
+	defer func() { _ = handle.Close() }()
+
+	var reasons []string
+	if got, err := handle.GetCellValue("Maintenance", "A3"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("maintenance issue append semantic check missing Maintenance!A3: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "maintenance issue append semantic check missing Maintenance!A3 issue id value")
+	}
+	if got, err := handle.GetCellValue("MaintenanceSummary", "B2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("maintenance issue summary semantic check missing MaintenanceSummary!B2: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "maintenance issue summary semantic check missing MaintenanceSummary!B2 action summary value")
+	}
+	if got, err := handle.GetCellFormula("Maintenance", "E3"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("maintenance action formula semantic check missing Maintenance!E3 formula: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "maintenance action formula semantic check missing Maintenance!E3 formula")
+	}
+	if validations, err := handle.GetDataValidations("Maintenance"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("maintenance validation semantic check missing Maintenance data validation: %v", err))
+	} else if len(validations) == 0 {
+		reasons = append(reasons, "maintenance validation semantic check missing Maintenance data validation")
+	}
+	if protection, err := handle.GetSheetProtection("Maintenance"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("maintenance protection semantic check missing Maintenance protection: %v", err))
+	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
+		reasons = append(reasons, "maintenance protection semantic check missing Maintenance protection options")
 	}
 	return reasons
 }
