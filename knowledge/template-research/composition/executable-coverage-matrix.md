@@ -27,12 +27,26 @@ the first execution target is p0 organism coverage.
 
 | Organism | Runtime-Covered Atoms | Missing Runtime Atoms | Immediate Strategy |
 | --- | --- | --- | --- |
-| `invoice_line_item_billing` | `join_lookup`, `group_summarize`, `append_structured_rows`, `extend_table_formulas`, `add_data_validation`, `protect_formula_cells`, `normalize_headers`, `generate_printable_form` | none in current p0 atom list | broaden organism preview before claiming full template generation |
-| `monthly_budget_control` | `group_summarize`, `highlight_threshold`, `extend_table_formulas`, `copy_period_sheet`, `protect_formula_cells`, `roll_forward_period` | none in current p0 atom list | broaden organism preview before claiming full template generation |
-| `cash_flow_monitor` | `group_summarize`, `extend_table_formulas`, `copy_period_sheet`, `protect_formula_cells`, `roll_forward_period` | none in current p0 atom list | broaden organism preview before claiming full template generation |
-| `attendance_register` | `group_summarize`, `copy_period_sheet`, `add_data_validation`, `protect_formula_cells`, `normalize_headers` | none in current p0 atom list | broaden organism preview before claiming full template generation |
-| `timesheet_hours_log` | `group_summarize`, `copy_period_sheet`, `append_structured_rows`, `extend_table_formulas`, `add_data_validation`, `protect_formula_cells` | none in current p0 atom list | broaden organism preview before claiming full template generation |
-| `inventory_movement_log` | `join_lookup`, `group_summarize`, `append_structured_rows`, `protect_formula_cells`, `normalize_headers`, `reconcile_tables` | none in current p0 atom list | broaden organism preview before claiming full template generation |
+| `invoice_line_item_billing` | `join_lookup`, `group_summarize`, `append_structured_rows`, `extend_table_formulas`, `add_data_validation`, `protect_formula_cells`, `normalize_headers`, `generate_printable_form` | none in current p0 atom list | fixture-backed preview exists; do not claim full template generation |
+| `monthly_budget_control` | `group_summarize`, `highlight_threshold`, `extend_table_formulas`, `copy_period_sheet`, `protect_formula_cells`, `roll_forward_period` | none in current p0 atom list | fixture-backed preview exists; do not claim full template generation |
+| `cash_flow_monitor` | `group_summarize`, `extend_table_formulas`, `copy_period_sheet`, `protect_formula_cells`, `roll_forward_period` | none in current p0 atom list | fixture-backed preview exists; do not claim full template generation |
+| `attendance_register` | `group_summarize`, `copy_period_sheet`, `add_data_validation`, `protect_formula_cells`, `normalize_headers` | none in current p0 atom list | fixture-backed preview exists; do not claim full template generation |
+| `timesheet_hours_log` | `group_summarize`, `copy_period_sheet`, `append_structured_rows`, `extend_table_formulas`, `add_data_validation`, `protect_formula_cells` | none in current p0 atom list | fixture-backed preview exists; do not claim full template generation |
+| `inventory_movement_log` | `join_lookup`, `group_summarize`, `append_structured_rows`, `protect_formula_cells`, `normalize_headers`, `reconcile_tables` | none in current p0 atom list | fixture-backed preview exists; do not claim full template generation |
+
+## P0 Organism Preview Coverage
+
+These previews prove representative supported-atom composition for each p0
+organism. They are intentionally not full workbook generators.
+
+| Organism | Fixture-Backed Preview Evidence | Coverage Limit |
+| --- | --- | --- |
+| `invoice_line_item_billing` | append structured rows, extend formulas, add validation, protect formulas, generate printable form | does not prove full invoice layout/design inference |
+| `monthly_budget_control` | group summary and threshold highlight | does not prove period copy, protected summary, or full budget workbook generation in one flow |
+| `cash_flow_monitor` | roll-forward period carry-forward | does not prove full cash-flow dashboard generation |
+| `attendance_register` | copy period sheet, add validation, protect formula cells | does not prove matrix auto-growth or calendar projection |
+| `timesheet_hours_log` | copy period sheet | does not prove full row append, formula extension, and protection in one organism flow |
+| `inventory_movement_log` | normalize headers and reconcile tables | does not prove full stock ledger generation |
 
 ## Phase Checklist
 
@@ -298,3 +312,42 @@ Non-goals for this phase:
   document designer. Visual quality, pagination, merged cells, images, and
   inferred layouts must stay outside supported scope until render/verifier
   coverage exists.
+
+## Phase 12 Result
+
+Broadened p0 organism preview coverage so every p0 organism has fixture-backed
+evidence that at least one representative supported-atom composition executes
+through the workbookcase path:
+
+- `invoice_line_item_billing`: append, formula extension, validation,
+  protection, and printable form generation
+- `monthly_budget_control`: group summary and threshold exception highlighting
+- `cash_flow_monitor`: period roll-forward
+- `attendance_register`: period copy, dropdown validation, and formula-cell
+  protection
+- `timesheet_hours_log`: period copy
+- `inventory_movement_log`: header normalization and table reconciliation
+
+Non-goals for this phase:
+
+- full template generation for all p0 organisms
+- all atom combinations inside each organism
+- all 21 roadmap organisms
+- p2+ `create_pivot_summary`
+- visual/rendered workbook QA beyond operation-specific verifier evidence
+
+## Phase 12 Self-Retro
+
+- P0 coverage improved: there are no remaining p0 atom gaps in the current
+  matrix, and every p0 organism now has at least one executable preview backed
+  by workbook fixtures.
+- Remaining template needs: this is still below L5. The preview layer proves
+  representative composition only; it does not prove full template assembly,
+  all 21 organism coverage, pivot-style analytical summaries, or rich visual
+  document verification.
+- Verifier strength: each preview depends on existing operation-specific
+  verifiers rather than a new organism-level verifier. That keeps runtime
+  claims narrow but leaves organism-level acceptance criteria as future work.
+- Advisory claim risk: organism names must not be interpreted as supported
+  public runtime capabilities. Supported status still comes only from the
+  capability registry, runtime contracts, and verifier-backed operation paths.

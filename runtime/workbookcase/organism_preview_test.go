@@ -8,6 +8,34 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+var p0OrganismPreviewCoverage = map[string]string{
+	"invoice_line_item_billing": "append + formula extension + validation + protection + printable form",
+	"monthly_budget_control":    "group summary + threshold highlight",
+	"cash_flow_monitor":         "period roll-forward",
+	"attendance_register":       "period copy + validation + formula protection",
+	"timesheet_hours_log":       "period copy",
+	"inventory_movement_log":    "header normalization + table reconciliation",
+}
+
+func TestP0OrganismPreviewCoverageIncludesEveryP0Organism(t *testing.T) {
+	want := []string{
+		"invoice_line_item_billing",
+		"monthly_budget_control",
+		"cash_flow_monitor",
+		"attendance_register",
+		"timesheet_hours_log",
+		"inventory_movement_log",
+	}
+	for _, organism := range want {
+		if p0OrganismPreviewCoverage[organism] == "" {
+			t.Fatalf("missing p0 organism preview coverage for %s", organism)
+		}
+	}
+	if len(p0OrganismPreviewCoverage) != len(want) {
+		t.Fatalf("p0 organism preview coverage count=%d want %d", len(p0OrganismPreviewCoverage), len(want))
+	}
+}
+
 func TestInvoiceLineItemBillingPreviewComposesAppendFormulaExtensionValidationAndProtection(t *testing.T) {
 	setRuntimeRoots(t)
 
@@ -240,6 +268,177 @@ func TestTimesheetHoursLogPreviewComposesPeriodCopy(t *testing.T) {
 	}
 	if got, err := outputHandle.GetCellFormula("Week2", "D2"); err != nil || got != "=B2*C2" {
 		t.Fatalf("Week2!D2 formula=%q err=%v want =B2*C2", got, err)
+	}
+}
+
+func TestMonthlyBudgetControlPreviewComposesSummaryAndThreshold(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "budget.xlsx")
+	summaryOutput := filepath.Join(tempDir, "budget-summary.xlsx")
+	finalOutput := filepath.Join(tempDir, "budget-highlighted.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Budget"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	header := []any{"category", "actual", "budget", "variance"}
+	if err := file.SetSheetRow("Budget", "A1", &header); err != nil {
+		t.Fatalf("SetSheetRow(header): %v", err)
+	}
+	for idx, row := range [][]any{{"Travel", 120, 100, 20}, {"Meals", 80, 90, -10}} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("Budget", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow budget %d: %v", idx, err)
+		}
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	summaryTask := runtimetaskspec.BuildGroupSummarizeTask(runtimetaskspec.UseRequest{
+		RequestText: "월 예산 실제 지출을 카테고리별로 요약한다.",
+		InputFile:   inputFile,
+		SourceSheet: "Budget",
+		OutputFile:  summaryOutput,
+		TargetSheet: "BudgetSummary",
+		SummaryMode: "values",
+		GroupBy:     []string{"category"},
+		Metrics:     []runtimetaskspec.MetricSpec{{Column: "actual", Op: "sum", As: "actual_total"}},
+	})
+	summaryResult, err := Run(Request{ScenarioID: "budget-preview-summary", TaskSpec: summaryTask.TaskSpec})
+	if err != nil {
+		t.Fatalf("summary Run: %v", err)
+	}
+	if !summaryResult.Verification.Pass {
+		t.Fatalf("summary verification failed: %+v", summaryResult.Verification)
+	}
+
+	threshold := 0.0
+	highlightTask := runtimetaskspec.BuildHighlightThresholdTask(runtimetaskspec.HighlightThresholdRequest{
+		RequestText:    "예산 초과 variance 행을 표시한다.",
+		InputFile:      summaryOutput,
+		SourceSheet:    "Budget",
+		OutputFile:     finalOutput,
+		Column:         "variance",
+		Operator:       ">",
+		Threshold:      &threshold,
+		HighlightColor: "#FFF59D",
+	})
+	highlightResult, err := Run(Request{ScenarioID: "budget-preview-threshold", TaskSpec: highlightTask.TaskSpec})
+	if err != nil {
+		t.Fatalf("highlight Run: %v", err)
+	}
+	if !highlightResult.Verification.Pass {
+		t.Fatalf("highlight verification failed: %+v", highlightResult.Verification)
+	}
+	if len(highlightResult.Verification.HighlightedRows) != 1 || highlightResult.Verification.HighlightedRows[0] != 2 {
+		t.Fatalf("highlighted rows=%v want [2]", highlightResult.Verification.HighlightedRows)
+	}
+
+	outputHandle, err := excelize.OpenFile(finalOutput)
+	if err != nil {
+		t.Fatalf("Open final output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	if got, err := outputHandle.GetCellValue("BudgetSummary", "B2"); err != nil || got != "120" {
+		t.Fatalf("BudgetSummary!B2=%q err=%v want 120", got, err)
+	}
+}
+
+func TestAttendanceRegisterPreviewComposesCopyValidationAndProtection(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "attendance.xlsx")
+	copyOutput := filepath.Join(tempDir, "attendance-week2.xlsx")
+	validationOutput := filepath.Join(tempDir, "attendance-validated.xlsx")
+	finalOutput := filepath.Join(tempDir, "attendance-protected.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Week1"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	header := []any{"student", "mon", "tue", "present_total"}
+	if err := file.SetSheetRow("Week1", "A1", &header); err != nil {
+		t.Fatalf("SetSheetRow(header): %v", err)
+	}
+	row := []any{"Student A", "P", "A"}
+	if err := file.SetSheetRow("Week1", "A2", &row); err != nil {
+		t.Fatalf("SetSheetRow(row): %v", err)
+	}
+	if err := file.SetCellFormula("Week1", "D2", "=COUNTIF(B2:C2,\"P\")"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	copyTask := runtimetaskspec.BuildCopyPeriodSheetTask(runtimetaskspec.CopyPeriodSheetRequest{
+		RequestText: "Week1 attendance register를 Week2 시트로 복사한다.",
+		InputFile:   inputFile,
+		SourceSheet: "Week1",
+		TargetSheet: "Week2",
+		OutputFile:  copyOutput,
+	})
+	copyResult, err := Run(Request{ScenarioID: "attendance-preview-copy", TaskSpec: copyTask.TaskSpec})
+	if err != nil {
+		t.Fatalf("copy Run: %v", err)
+	}
+	if !copyResult.Verification.Pass {
+		t.Fatalf("copy verification failed: %+v", copyResult.Verification)
+	}
+
+	validationTask := runtimetaskspec.BuildAddDataValidationTask(runtimetaskspec.AddDataValidationRequest{
+		RequestText: "Week2 attendance 입력 범위를 P/A dropdown으로 제한한다.",
+		InputFile:   copyOutput,
+		SourceSheet: "Week2",
+		OutputFile:  validationOutput,
+		ValidationRule: runtimetaskspec.DataValidationRule{
+			Ranges:        []string{"B2:C10"},
+			RuleType:      "list",
+			AllowedValues: []string{"P", "A"},
+			AllowBlank:    false,
+		},
+	})
+	validationResult, err := Run(Request{ScenarioID: "attendance-preview-validation", TaskSpec: validationTask.TaskSpec})
+	if err != nil {
+		t.Fatalf("validation Run: %v", err)
+	}
+	if !validationResult.Verification.Pass {
+		t.Fatalf("validation verification failed: %+v", validationResult.Verification)
+	}
+
+	protectionTask := runtimetaskspec.BuildProtectFormulaCellsTask(runtimetaskspec.ProtectFormulaCellsRequest{
+		RequestText: "Week2 attendance formula column을 보호하고 입력 범위는 편집 가능하게 둔다.",
+		InputFile:   validationOutput,
+		SourceSheet: "Week2",
+		OutputFile:  finalOutput,
+		ProtectionRule: runtimetaskspec.FormulaProtectionRule{
+			FormulaRanges: []string{"D2"},
+			InputRanges:   []string{"B2:C10"},
+		},
+	})
+	protectionResult, err := Run(Request{ScenarioID: "attendance-preview-protection", TaskSpec: protectionTask.TaskSpec})
+	if err != nil {
+		t.Fatalf("protection Run: %v", err)
+	}
+	if !protectionResult.Verification.Pass {
+		t.Fatalf("protection verification failed: %+v", protectionResult.Verification)
+	}
+
+	outputHandle, err := excelize.OpenFile(finalOutput)
+	if err != nil {
+		t.Fatalf("Open final output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	if got, err := outputHandle.GetCellFormula("Week2", "D2"); err != nil || got != "=COUNTIF(B2:C2,\"P\")" {
+		t.Fatalf("Week2!D2 formula=%q err=%v want COUNTIF", got, err)
 	}
 }
 
