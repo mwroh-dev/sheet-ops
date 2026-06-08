@@ -186,6 +186,8 @@ func verifyOrganismWorkbookSemantics(organismID, outputFile string) []string {
 		return verifyWarehouseReorderWorkbook(outputFile)
 	case "student_gradebook":
 		return verifyStudentGradebookWorkbook(outputFile)
+	case "training_completion_matrix":
+		return verifyTrainingCompletionWorkbook(outputFile)
 	default:
 		return nil
 	}
@@ -606,6 +608,42 @@ func verifyStudentGradebookWorkbook(outputFile string) []string {
 		reasons = append(reasons, fmt.Sprintf("student gradebook protection semantic check missing Grades protection: %v", err))
 	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
 		reasons = append(reasons, "student gradebook protection semantic check missing Grades protection options")
+	}
+	return reasons
+}
+
+func verifyTrainingCompletionWorkbook(outputFile string) []string {
+	handle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		return []string{fmt.Sprintf("training completion workbook semantic check failed to open output: %v", err)}
+	}
+	defer func() { _ = handle.Close() }()
+
+	var reasons []string
+	if got, err := handle.GetCellValue("TrainingSummary", "B2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("training completion summary semantic check missing TrainingSummary!B2: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "training completion summary semantic check missing TrainingSummary!B2 completion summary value")
+	}
+	if got, err := handle.GetCellValue("TrainingReport", "A1"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("training completion printable semantic check missing TrainingReport!A1: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "training completion printable semantic check missing TrainingReport!A1 title")
+	}
+	if got, err := handle.GetCellFormula("Training", "E2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("training completion formula semantic check missing Training!E2 formula: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "training completion formula semantic check missing Training!E2 formula")
+	}
+	if validations, err := handle.GetDataValidations("Training"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("training completion validation semantic check missing Training data validation: %v", err))
+	} else if len(validations) == 0 {
+		reasons = append(reasons, "training completion validation semantic check missing Training data validation")
+	}
+	if protection, err := handle.GetSheetProtection("Training"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("training completion protection semantic check missing Training protection: %v", err))
+	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
+		reasons = append(reasons, "training completion protection semantic check missing Training protection options")
 	}
 	return reasons
 }
