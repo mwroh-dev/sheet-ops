@@ -1272,3 +1272,36 @@ Extended the runtime draft planner to `procurement_reconciliation`:
 - Advisory claim risk: procurement support must not be described as full
   three-way matching or invoice approval until PO/receipt/invoice fixtures,
   duplicate-key policy, and approval-transition verifiers exist.
+
+## Phase 43 Result
+
+Extended the runtime draft planner to `training_completion_matrix`:
+
+- `runtime/templateclass` now classifies training-completion requests and
+  limits the executable plan to completion summary, status validation, formula
+  protection, and printable reporting
+- `requestcompiler.DraftOrganismExecutionRequest` detects training tables from
+  employee, course, status, completed, and completion flag headers
+- the draft summarizes numeric completion totals by employee, validates
+  training status, protects completion flag formulas, and generates a printable
+  training completion report
+- open-layer integration proves the draft executes through
+  `OrchestrateOrganism` and produces expected training summary, printable
+  report title, and preserved completion formula evidence
+- `draft-planner-coverage.json` now records training completion matrix as a
+  runtime draft planner, moving the boundary from 15/6 to 16/5
+
+## Phase 43 Self-Retro
+
+- Coverage improved: runtime draft synthesis now covers sixteen roadmap
+  organisms and adds a training/compliance education pattern beyond gradebook
+  scores.
+- Remaining template needs: this draft covers row-table completion reporting,
+  not arbitrary person/course matrix growth, due-date exceptions, compliance
+  review metadata, or cross-training optimization.
+- Verifier strength: classifier, schema, draft, grouped completion summary,
+  status validation, formula protection, printable output, open-layer
+  execution, and organism-level evidence are covered for the slice.
+- Advisory claim risk: training support must remain completion reporting until
+  matrix growth, formula-evaluated completion semantics, and compliance review
+  verifiers exist.

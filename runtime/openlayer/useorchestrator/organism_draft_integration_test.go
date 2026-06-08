@@ -1170,6 +1170,87 @@ func TestOrchestrateOrganismExecutesRequestCompilerGradebookDraft(t *testing.T) 
 	}
 }
 
+func TestOrchestrateOrganismExecutesRequestCompilerTrainingCompletionDraft(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "training.xlsx")
+	outputFile := filepath.Join(tempDir, "training-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Training"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Training", "A1", &[]any{"employee", "course", "status", "completed", "completion_flag"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	for idx, row := range [][]any{{"Alex", "Safety", "complete", 1}, {"Alex", "Privacy", "complete", 1}, {"Blair", "Safety", "missing", 0}} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("Training", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow training %d: %v", idx, err)
+		}
+		rowNum := idx + 2
+		if err := file.SetCellFormula("Training", "E"+cellRowForDraftIntegrationTest(rowNum), "=IF(C"+cellRowForDraftIntegrationTest(rowNum)+"=\"complete\",1,0)"); err != nil {
+			t.Fatalf("SetCellFormula completed row %d: %v", rowNum, err)
+		}
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	facts, err := runtimeinspect.InspectWorkbookFacts(inputFile)
+	if err != nil {
+		t.Fatalf("InspectWorkbookFacts: %v", err)
+	}
+	requestText := "Summarize training completion by employee, validate training status, protect completion formulas, and generate a printable training report"
+	plan := requestcompiler.TemplateClassPlanHintForRequest(requestText)
+	if plan == nil {
+		t.Fatal("missing plan")
+	}
+	draft, ok := requestcompiler.DraftOrganismExecutionRequest(requestcompiler.OrganismDraftInput{
+		ScenarioID:        "training-organism-draft-integration",
+		RequestText:       requestText,
+		InputFile:         inputFile,
+		OutputFile:        outputFile,
+		WorkbookFacts:     facts,
+		TemplateClassPlan: *plan,
+	})
+	if !ok {
+		t.Fatal("DraftOrganismExecutionRequest ok=false")
+	}
+	raw, err := json.Marshal(draft)
+	if err != nil {
+		t.Fatalf("Marshal draft: %v", err)
+	}
+	var req OrganismExecutionRequest
+	if err := json.Unmarshal(raw, &req); err != nil {
+		t.Fatalf("Unmarshal draft: %v", err)
+	}
+
+	result, err := OrchestrateOrganism(req)
+	if err != nil {
+		t.Fatalf("OrchestrateOrganism: %v", err)
+	}
+	if !result.TemplateClassEvaluation.Pass || !result.OrganismVerification.Pass {
+		t.Fatalf("organism evidence failed: eval=%+v verification=%+v", result.TemplateClassEvaluation, result.OrganismVerification)
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	if got, err := outputHandle.GetCellValue("TrainingSummary", "B2"); err != nil || got != "2" {
+		t.Fatalf("TrainingSummary!B2=%q err=%v want 2", got, err)
+	}
+	if got, err := outputHandle.GetCellValue("TrainingReport", "A1"); err != nil || got != "Training Completion" {
+		t.Fatalf("TrainingReport!A1=%q err=%v want Training Completion", got, err)
+	}
+	if got, err := outputHandle.GetCellFormula("Training", "E2"); err != nil || got != "=IF(C2=\"complete\",1,0)" {
+		t.Fatalf("Training!E2 formula=%q err=%v want =IF(C2=\"complete\",1,0)", got, err)
+	}
+}
+
 func TestOrchestrateOrganismExecutesRequestCompilerLoanDraft(t *testing.T) {
 	tempDir := t.TempDir()
 	inputFile := filepath.Join(tempDir, "loan.xlsx")

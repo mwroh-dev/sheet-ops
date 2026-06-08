@@ -107,6 +107,12 @@ var plans = []Plan{
 		NonClaims:             []string{"does not infer grading policy", "does not auto-grow arbitrary matrices", "does not create native Excel pivots"},
 	},
 	{
+		OrganismID:            "training_completion_matrix",
+		OperationSequence:     []string{"group_summarize", "add_data_validation", "protect_formula_cells", "generate_printable_form"},
+		RequiredVerifierSpecs: []string{"training_completion_matrix_verifier"},
+		NonClaims:             []string{"does not auto-grow arbitrary training matrices", "does not infer compliance policy", "does not optimize cross-training coverage"},
+	},
+	{
 		OrganismID:            "loan_repayment_calculator",
 		OperationSequence:     []string{"extend_table_formulas", "protect_formula_cells"},
 		RequiredVerifierSpecs: []string{"loan_repayment_calculator_verifier"},
@@ -145,6 +151,8 @@ func PlanForRequest(requestText string) (Plan, bool) {
 		return planForOrganism("inventory_movement_log")
 	case containsAny(normalized, "gradebook", "student score", "student scores"):
 		return planForOrganism("student_gradebook")
+	case containsAny(normalized, "training completion", "training matrix", "training status", "training report"):
+		return planForOrganism("training_completion_matrix")
 	case containsAny(normalized, "loan", "amortization", "repayment"):
 		return planForOrganism("loan_repayment_calculator")
 	default:

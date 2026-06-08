@@ -186,6 +186,20 @@ func TestPlanForRequestClassifiesProcurementReconciliation(t *testing.T) {
 	}
 }
 
+func TestPlanForRequestClassifiesTrainingCompletionMatrix(t *testing.T) {
+	plan, ok := PlanForRequest("Summarize training completion by employee, validate training status, protect completion formulas, and generate a printable training report")
+	if !ok {
+		t.Fatal("PlanForRequest returned ok=false")
+	}
+	if plan.OrganismID != "training_completion_matrix" {
+		t.Fatalf("organism=%q want training_completion_matrix", plan.OrganismID)
+	}
+	wantOps := []string{"group_summarize", "add_data_validation", "protect_formula_cells", "generate_printable_form"}
+	if !sameStrings(plan.OperationSequence, wantOps) {
+		t.Fatalf("operation sequence=%v want %v", plan.OperationSequence, wantOps)
+	}
+}
+
 func TestPlanForRequestRejectsFinancialAdviceClaim(t *testing.T) {
 	plan, ok := PlanForRequest("Give financial advice and certify the amortization correctness of this loan repayment schedule")
 	if !ok {

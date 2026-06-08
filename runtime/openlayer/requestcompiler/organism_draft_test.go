@@ -1040,6 +1040,78 @@ func TestDraftOrganismExecutionRequestBuildsStudentGradebookStepsFromWorkbookFac
 	}
 }
 
+func TestDraftOrganismExecutionRequestBuildsTrainingCompletionStepsFromWorkbookFacts(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "training.xlsx")
+	outputFile := filepath.Join(tempDir, "training-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Training"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Training", "A1", &[]any{"employee", "course", "status", "completed", "completion_flag"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	for idx, row := range [][]any{{"Alex", "Safety", "complete", 1}, {"Alex", "Privacy", "complete", 1}, {"Blair", "Safety", "missing", 0}} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("Training", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow training %d: %v", idx, err)
+		}
+		rowNum := idx + 2
+		if err := file.SetCellFormula("Training", "E"+cellRowForDraftTest(rowNum), "=IF(C"+cellRowForDraftTest(rowNum)+"=\"complete\",1,0)"); err != nil {
+			t.Fatalf("SetCellFormula completed row %d: %v", rowNum, err)
+		}
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	facts, err := runtimeinspect.InspectWorkbookFacts(inputFile)
+	if err != nil {
+		t.Fatalf("InspectWorkbookFacts: %v", err)
+	}
+	requestText := "Summarize training completion by employee, validate training status, protect completion formulas, and generate a printable training report"
+	plan := TemplateClassPlanHintForRequest(requestText)
+	if plan == nil {
+		t.Fatal("missing plan")
+	}
+
+	req, ok := DraftOrganismExecutionRequest(OrganismDraftInput{
+		ScenarioID:        "training-organism-draft",
+		RequestText:       requestText,
+		InputFile:         inputFile,
+		OutputFile:        outputFile,
+		WorkbookFacts:     facts,
+		TemplateClassPlan: *plan,
+	})
+	if !ok {
+		t.Fatal("DraftOrganismExecutionRequest ok=false")
+	}
+	if len(req.Steps) != 4 {
+		t.Fatalf("steps=%d want 4", len(req.Steps))
+	}
+	if req.Steps[0].AtomID != "group_summarize" || req.Steps[0].TargetSheet != "TrainingSummary" {
+		t.Fatalf("summary step=%+v", req.Steps[0])
+	}
+	if len(req.Steps[0].Metrics) != 1 || req.Steps[0].Metrics[0].Column != "completed" || req.Steps[0].Metrics[0].As != "completed_total" {
+		t.Fatalf("summary metrics=%+v", req.Steps[0].Metrics)
+	}
+	if req.Steps[1].AtomID != "add_data_validation" || req.Steps[1].ValidationRule == nil || req.Steps[1].ValidationRule.Ranges[0] != "C2:C20" {
+		t.Fatalf("validation step=%+v", req.Steps[1])
+	}
+	if req.Steps[2].AtomID != "protect_formula_cells" || req.Steps[2].ProtectionRule == nil || req.Steps[2].ProtectionRule.FormulaRanges[0] != "E2:E4" {
+		t.Fatalf("protection step=%+v", req.Steps[2])
+	}
+	if req.Steps[3].AtomID != "generate_printable_form" || req.Steps[3].TargetSheet != "TrainingReport" || req.Steps[3].TableBinding == nil {
+		t.Fatalf("printable step=%+v", req.Steps[3])
+	}
+	if err := runtimeschema.ValidateStruct(organismExecutionRequestSchemaPathForTest(), req); err != nil {
+		t.Fatalf("draft organism request schema validation: %v", err)
+	}
+}
+
 func TestDraftOrganismExecutionRequestBuildsLoanRepaymentStepsFromWorkbookFacts(t *testing.T) {
 	tempDir := t.TempDir()
 	inputFile := filepath.Join(tempDir, "loan.xlsx")

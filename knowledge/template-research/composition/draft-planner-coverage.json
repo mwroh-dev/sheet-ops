@@ -158,11 +158,14 @@
     },
     {
       "organism_id": "training_completion_matrix",
-      "draft_status": "explicit_request_only",
-      "runtime_entrypoint": "",
-      "evidence_tests": [],
-      "current_limit": "No workbook-facts draft planner for training completion matrix growth or printable completion reports.",
-      "next_gate": "Add a training fixture with completion matrix, score summary, validation, and printable report checks."
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsTrainingCompletionStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerTrainingCompletionDraft"
+      ],
+      "current_limit": "Training row table with numeric completion summary, status validation, protected completion formulas, and printable report only; does not auto-grow arbitrary training matrices.",
+      "next_gate": "Add training fixtures with person/course matrix growth, formula-evaluated completion summaries, due-date exceptions, and compliance review metadata."
     },
     {
       "organism_id": "service_ticket_queue",
