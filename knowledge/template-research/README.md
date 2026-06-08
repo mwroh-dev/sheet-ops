@@ -18,8 +18,8 @@ bundle, or reuse third-party template files.
   strategy.
 - `composition/`: advisory atom, molecule, and organism composition records.
   These include molecule criteria, organism combinations, ecosystem principles,
-  atom-builder audit notes, and runtime bridge rules for code-generation
-  assistance.
+  atom-builder audit notes, runtime bridge rules for code-generation
+  assistance, and non-runtime organism preview harness notes.
 - `patterns/*.json`: normalized template patterns grouped by user workflow and
   spreadsheet mechanics.
 - `opportunities/*.json`: capability backlog candidates that are intentionally
