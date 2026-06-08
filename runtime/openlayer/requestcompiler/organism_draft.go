@@ -106,6 +106,8 @@ func DraftOrganismExecutionRequest(input OrganismDraftInput) (OrganismExecutionR
 		return draftMaintenanceIssueLog(input)
 	case "compliance_action_register":
 		return draftComplianceActionRegister(input)
+	case "safety_compliance_register":
+		return draftSafetyComplianceRegister(input)
 	case "loan_repayment_calculator":
 		return draftLoanRepaymentCalculator(input)
 	default:
@@ -1303,6 +1305,120 @@ func draftComplianceActionRegister(input OrganismDraftInput) (OrganismExecutionR
 	}, true
 }
 
+func draftSafetyComplianceRegister(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
+	sheet, ok := findSafetyComplianceSheet(input.WorkbookFacts)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	inputColumns, formulaColumns := splitInputAndFormulaColumns(sheet)
+	if len(inputColumns) == 0 || len(formulaColumns) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaSourceRow, targetRow, ok := formulaRows(sheet)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumnLetters := make([]string, 0, len(formulaColumns))
+	for _, column := range formulaColumns {
+		if letter, ok := columnLetterForHeader(sheet.Columns, column); ok {
+			formulaColumnLetters = append(formulaColumnLetters, letter)
+		}
+	}
+	if len(formulaColumnLetters) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	statusColumnLetter, ok := columnLetterForHeader(sheet.Columns, "status")
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	threshold := 3.0
+
+	return OrganismExecutionRequestDraft{
+		ScenarioID:  input.ScenarioID,
+		RequestText: input.RequestText,
+		InputFile:   input.InputFile,
+		OutputFile:  input.OutputFile,
+		Steps: []OrganismExecutionStepDraft{
+			{
+				AtomID:               "append_structured_rows",
+				CompositionKind:      "structured_row_append",
+				SourceSheet:          sheet.Name,
+				IncludeSourceColumns: append([]string(nil), inputColumns...),
+				Values: []CellValue{
+					{Cell: "check_id", Value: "S-2"},
+					{Cell: "area", Value: "Warehouse"},
+					{Cell: "status", Value: "incomplete"},
+					{Cell: "risk_score", Value: 5},
+					{Cell: "completed", Value: 0},
+				},
+			},
+			{
+				AtomID:           "extend_table_formulas",
+				CompositionKind:  "formula_extension",
+				SourceSheet:      sheet.Name,
+				FormulaSourceRow: formulaSourceRow,
+				TargetRows:       []int{targetRow},
+				FormulaColumns:   formulaColumnLetters,
+			},
+			{
+				AtomID:          "add_data_validation",
+				CompositionKind: "data_validation",
+				SourceSheet:     sheet.Name,
+				ValidationRule: &DataValidationRule{
+					Ranges:        []string{statusColumnLetter + "2:" + statusColumnLetter + "20"},
+					RuleType:      "list",
+					AllowedValues: []string{"complete", "incomplete", "waived"},
+					AllowBlank:    false,
+				},
+			},
+			{
+				AtomID:          "highlight_threshold",
+				CompositionKind: "threshold_highlight",
+				SourceSheet:     sheet.Name,
+				TargetColumn:    "risk_score",
+				Operator:        ">",
+				Threshold:       &threshold,
+				HighlightColor:  "#FFC7CE",
+			},
+			{
+				AtomID:          "group_summarize",
+				CompositionKind: "group_summary",
+				SourceSheet:     sheet.Name,
+				TargetSheet:     "SafetySummary",
+				SummaryMode:     "values",
+				GroupBy:         []string{"area"},
+				Metrics:         []MetricSpec{{Column: "completed", Op: "sum", As: "completed_total"}},
+			},
+			{
+				AtomID:          "protect_formula_cells",
+				CompositionKind: "formula_protection",
+				SourceSheet:     sheet.Name,
+				ProtectionRule: &FormulaProtectionRule{
+					FormulaRanges: []string{formulaRange(formulaColumnLetters, formulaSourceRow, targetRow)},
+					InputRanges:   []string{"A2:E20"},
+				},
+			},
+			{
+				AtomID:          "generate_printable_form",
+				CompositionKind: "printable_form",
+				SourceSheet:     "SafetySummary",
+				TargetSheet:     "SafetyReport",
+				FormTitle:       "Safety Compliance Report",
+				PrintArea:       "A1:B8",
+				FieldBindings: []FormFieldBinding{
+					{Label: "First Area", SourceSheet: "SafetySummary", SourceCell: "A2", LabelCell: "A2", ValueCell: "B2"},
+				},
+				TableBinding: &FormTableBinding{
+					SourceSheet:   "SafetySummary",
+					SourceColumns: []string{"area", "completed_total"},
+					HeaderStart:   "A4",
+					DataStart:     "A5",
+				},
+			},
+		},
+	}, true
+}
+
 func draftTrainingCompletionMatrix(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
 	sheet, ok := findTrainingCompletionSheet(input.WorkbookFacts)
 	if !ok {
@@ -1974,6 +2090,16 @@ func findComplianceActionSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspe
 	for _, sheet := range facts.Sheets {
 		headers := lowerSet(sheet.Columns)
 		if headers["action_id"] && headers["owner"] && headers["status"] && headers["days_until_due"] && headers["review_required"] && headers["action_count"] {
+			return sheet, true
+		}
+	}
+	return runtimeinspect.SheetFacts{}, false
+}
+
+func findSafetyComplianceSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect.SheetFacts, bool) {
+	for _, sheet := range facts.Sheets {
+		headers := lowerSet(sheet.Columns)
+		if headers["check_id"] && headers["area"] && headers["status"] && headers["risk_score"] && headers["completed"] && headers["action_required"] {
 			return sheet, true
 		}
 	}

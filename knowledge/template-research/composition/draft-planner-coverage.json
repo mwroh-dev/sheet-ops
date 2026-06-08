@@ -213,11 +213,14 @@
     },
     {
       "organism_id": "safety_compliance_register",
-      "draft_status": "explicit_request_only",
-      "runtime_entrypoint": "",
-      "evidence_tests": [],
-      "current_limit": "No workbook-facts draft planner for safety risk scoring, completion summary, or printable safety evidence.",
-      "next_gate": "Add a safety fixture with risk/action rows, score summary, exception thresholds, and printable report checks."
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsSafetyComplianceStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerSafetyComplianceDraft"
+      ],
+      "current_limit": "Safety compliance row register with check append, action-required formula extension, safety status validation, numeric risk threshold highlighting, area completion summary, protected action formulas, and printable safety report only; does not certify safety compliance or replace inspections.",
+      "next_gate": "Add safety fixtures with inspection evidence fields, severity policy, corrective-action owners, due-date windows, completion-rate thresholds, and printable pagination review."
     },
     {
       "organism_id": "loan_repayment_calculator",

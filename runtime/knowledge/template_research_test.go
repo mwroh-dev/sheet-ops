@@ -549,6 +549,7 @@ func TestTemplateResearchDraftPlannerCoverageStaysExplicit(t *testing.T) {
 		"sales_pipeline_tracker":     true,
 		"maintenance_issue_log":      true,
 		"compliance_action_register": true,
+		"safety_compliance_register": true,
 		"loan_repayment_calculator":  true,
 	}
 	seen := map[string]bool{}

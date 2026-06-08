@@ -256,6 +256,20 @@ func TestPlanForRequestClassifiesComplianceActionRegister(t *testing.T) {
 	}
 }
 
+func TestPlanForRequestClassifiesSafetyComplianceRegister(t *testing.T) {
+	plan, ok := PlanForRequest("Append safety compliance check, validate safety status, extend action-required formulas, flag high risk safety items, summarize completion by area, protect action formulas, and generate a printable safety report")
+	if !ok {
+		t.Fatal("PlanForRequest returned ok=false")
+	}
+	if plan.OrganismID != "safety_compliance_register" {
+		t.Fatalf("organism=%q want safety_compliance_register", plan.OrganismID)
+	}
+	wantOps := []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells", "generate_printable_form"}
+	if !sameStrings(plan.OperationSequence, wantOps) {
+		t.Fatalf("operation sequence=%v want %v", plan.OperationSequence, wantOps)
+	}
+}
+
 func TestPlanForRequestRejectsFinancialAdviceClaim(t *testing.T) {
 	plan, ok := PlanForRequest("Give financial advice and certify the amortization correctness of this loan repayment schedule")
 	if !ok {
