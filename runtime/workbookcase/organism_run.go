@@ -194,6 +194,8 @@ func verifyOrganismWorkbookSemantics(organismID, outputFile string) []string {
 		return verifySalesPipelineWorkbook(outputFile)
 	case "maintenance_issue_log":
 		return verifyMaintenanceIssueWorkbook(outputFile)
+	case "compliance_action_register":
+		return verifyComplianceActionWorkbook(outputFile)
 	default:
 		return nil
 	}
@@ -758,6 +760,47 @@ func verifyMaintenanceIssueWorkbook(outputFile string) []string {
 		reasons = append(reasons, fmt.Sprintf("maintenance protection semantic check missing Maintenance protection: %v", err))
 	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
 		reasons = append(reasons, "maintenance protection semantic check missing Maintenance protection options")
+	}
+	return reasons
+}
+
+func verifyComplianceActionWorkbook(outputFile string) []string {
+	handle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		return []string{fmt.Sprintf("compliance action workbook semantic check failed to open output: %v", err)}
+	}
+	defer func() { _ = handle.Close() }()
+
+	var reasons []string
+	if got, err := handle.GetCellValue("Compliance", "A3"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("compliance action append semantic check missing Compliance!A3: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "compliance action append semantic check missing Compliance!A3 action id value")
+	}
+	if got, err := handle.GetCellValue("ComplianceSummary", "B2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("compliance action summary semantic check missing ComplianceSummary!B2: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "compliance action summary semantic check missing ComplianceSummary!B2 action summary value")
+	}
+	if got, err := handle.GetCellFormula("Compliance", "E3"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("compliance review formula semantic check missing Compliance!E3 formula: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "compliance review formula semantic check missing Compliance!E3 formula")
+	}
+	if got, err := handle.GetCellValue("ComplianceRegister", "A1"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("compliance printable semantic check missing ComplianceRegister!A1: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "compliance printable semantic check missing ComplianceRegister!A1 title")
+	}
+	if validations, err := handle.GetDataValidations("Compliance"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("compliance validation semantic check missing Compliance data validation: %v", err))
+	} else if len(validations) == 0 {
+		reasons = append(reasons, "compliance validation semantic check missing Compliance data validation")
+	}
+	if protection, err := handle.GetSheetProtection("Compliance"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("compliance protection semantic check missing Compliance protection: %v", err))
+	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
+		reasons = append(reasons, "compliance protection semantic check missing Compliance protection options")
 	}
 	return reasons
 }
