@@ -544,6 +544,36 @@
         "고위험 또는 overdue 항목이 예외로 표시된다"
       ],
       "rationale": "위험/조치 등록 블록은 상태 파이프라인보다 더 강한 audit/review semantics를 가진다."
+    },
+    {
+      "molecule_id": "calculation_schedule_block",
+      "korean_name": "계산 스케줄 블록",
+      "definition": "입력 파라미터에서 반복 계산 행, 누적 잔액, 종료 조건, 보호된 요약을 생성하는 블록.",
+      "why_this_molecule": "대출 상환표처럼 운영 기간을 복사하는 것이 아니라 계산 가정에서 전체 schedule을 산출하는 workbook은 별도 검증 문제가 있다.",
+      "include_criteria": [
+        "이자율, 기간, 원금 같은 입력 파라미터가 있다",
+        "반복 계산 행이 파라미터에서 생성된다",
+        "누적 잔액 또는 종료 조건이 계산 결과의 핵심이다"
+      ],
+      "exclude_criteria": [
+        "기간 sheet를 복사해 운영 데이터를 누적한다",
+        "단일 셀 계산기이며 반복 schedule이 없다",
+        "누적 잔액이나 종료 조건이 검증 대상이 아니다"
+      ],
+      "used_by_organisms": [
+        "loan_repayment_calculator"
+      ],
+      "required_atoms": [
+        "extend_table_formulas",
+        "protect_formula_cells",
+        "group_summarize"
+      ],
+      "verification_methods": [
+        "입력 파라미터 변경 후 schedule 행의 계산 결과가 갱신된다",
+        "누적 잔액이 기간별 상환 계산과 일치한다",
+        "종료 기간 또는 최종 잔액 조건이 verifier에서 확인된다"
+      ],
+      "rationale": "계산 스케줄은 period roll-forward와 닮았지만, 실제 핵심은 운영 복사가 아니라 formula-generated schedule 검증이다."
     }
   ]
 }

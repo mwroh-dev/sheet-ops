@@ -16,14 +16,20 @@ bundle, or reuse third-party template files.
 - `classification/`: post-research grouping of roadmap candidates by Sheet Ops
   implementation family, fixture priority, capability gap, and verifier
   strategy.
-- `composition/`: molecule-level reusable workbook blocks with include/exclude
-  criteria, used organisms, required atoms, verification methods, and rationale.
+- `composition/`: advisory atom, molecule, and organism composition records.
+  These include molecule criteria, organism combinations, ecosystem principles,
+  atom-builder audit notes, and runtime bridge rules for code-generation
+  assistance.
 - `patterns/*.json`: normalized template patterns grouped by user workflow and
   spreadsheet mechanics.
 - `opportunities/*.json`: capability backlog candidates that are intentionally
   separate from the supported capability registry.
 - `taxonomy.md`: shared labels for domains, visual patterns, data patterns,
   validation patterns, and workflow patterns.
+- `../atom-builders/`: runtime-adjacent advisory records for workbook app
+  primitives, atom-builder mirrors, and plan shapes. These records intentionally
+  mirror existing supported runtime paths and planned opportunity atoms without
+  claiming new support.
 
 ## Collection Rules
 
@@ -37,6 +43,8 @@ bundle, or reuse third-party template files.
   decisions.
 - Do not add unimplemented opportunities to
   `contracts/capabilities/capability.schema.json`.
+- Do not treat atom, molecule, or organism composition records as runtime
+  support claims.
 
 ## Current Seed Scope
 
@@ -76,3 +84,10 @@ Promotion status is owned by Agent C:
 - A capability opportunity needs a concrete workflow and verification strategy.
 - A supported Sheet Ops capability requires separate implementation,
   runtime/schema authority, fixture coverage, and verifier coverage.
+- Supported capability status is decided only by the capability registry,
+  runtime contracts, deterministic execution, and operation-specific verifier
+  coverage. Template research artifacts are advisory until promoted through
+  those release surfaces.
+- Atom-builder records are an intermediate planning layer. A supported mirror
+  must reference an existing capability record and runtime paths; a planned
+  builder must reference an opportunity record and no runtime implementation.

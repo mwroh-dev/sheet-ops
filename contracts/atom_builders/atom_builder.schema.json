@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/atom_builders/atom_builder.schema.json",
+  "title": "AtomBuilderCatalog",
+  "type": "object",
+  "$defs": {
+    "string_array": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "builder": {
+      "type": "object",
+      "required": [
+        "atom_id",
+        "status",
+        "builder_layer",
+        "input_contract",
+        "inspection_requirements",
+        "plan_outputs",
+        "result_outputs",
+        "verification_assertions",
+        "capability_record",
+        "opportunity_record",
+        "runtime_paths"
+      ],
+      "properties": {
+        "atom_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        },
+        "status": {
+          "enum": [
+            "supported",
+            "runtime_primitive",
+            "planned"
+          ]
+        },
+        "builder_layer": {
+          "enum": [
+            "runtime_mirror",
+            "planned_contract"
+          ]
+        },
+        "input_contract": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "inspection_requirements": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "plan_outputs": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "result_outputs": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "verification_assertions": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "capability_record": {
+          "type": "string"
+        },
+        "opportunity_record": {
+          "type": "string"
+        },
+        "runtime_paths": {
+          "$ref": "#/$defs/string_array"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "version",
+    "authority",
+    "summary",
+    "builders"
+  ],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "authority": {
+      "const": "advisory_mirror"
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "builders": {
+      "type": "array",
+      "minItems": 14,
+      "items": {
+        "$ref": "#/$defs/builder"
+      }
+    }
+  },
+  "additionalProperties": false
+}

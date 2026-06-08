@@ -115,26 +115,168 @@ func TestTemplateResearchMoleculesValidateAndReferenceRoadmapOrganisms(t *testin
 	}
 }
 
+func TestTemplateResearchOrganismsValidateAsAdvisoryEcosystem(t *testing.T) {
+	root := repoRoot(t)
+	organismSchema := compileSchema(t, filepath.Join(root, "contracts", "template_research", "organism_catalog.schema.json"))
+	organismPath := filepath.Join(root, "knowledge", "template-research", "composition", "organisms.json")
+	validateJSONDocumentFromFile(t, organismSchema, organismPath)
+
+	roadmapCandidates := loadRoadmapCandidateIDs(t, filepath.Join(root, "knowledge", "template-research", "judgments", "pattern_registry.json"))
+	molecules := loadTemplateResearchMolecules(t, filepath.Join(root, "knowledge", "template-research", "composition", "molecules.json"))
+	supportedAtoms := loadSupportedCapabilityNames(t, filepath.Join(root, "contracts", "capabilities", "capability.schema.json"))
+	opportunityAtoms := loadOpportunityCapabilityNames(t, filepath.Join(root, "knowledge", "template-research", "opportunities", "*.json"))
+
+	raw, err := os.ReadFile(organismPath)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", organismPath, err)
+	}
+	var catalog struct {
+		GeneratedFromRound string `json:"generated_from_round"`
+		Authority          string `json:"authority"`
+		Organisms          []struct {
+			OrganismID       string   `json:"organism_id"`
+			RequiredMolecule []string `json:"required_molecule_ids"`
+			SupportingAtoms  []string `json:"supporting_atom_ids"`
+			PlannedAtoms     []string `json:"planned_or_unsupported_atom_ids"`
+			VerifierFocus    []string `json:"verifier_focus"`
+			AdvisoryStatus   string   `json:"advisory_status"`
+		} `json:"organisms"`
+	}
+	if err := json.Unmarshal(raw, &catalog); err != nil {
+		t.Fatalf("Unmarshal(%s): %v", organismPath, err)
+	}
+	if catalog.GeneratedFromRound != "round-009" {
+		t.Fatalf("organism catalog generated_from_round=%q want round-009", catalog.GeneratedFromRound)
+	}
+	if catalog.Authority != "advisory_only" {
+		t.Fatalf("organism catalog authority=%q want advisory_only", catalog.Authority)
+	}
+
+	seenOrganisms := map[string]bool{}
+	for _, organism := range catalog.Organisms {
+		if organism.AdvisoryStatus != "advisory_only" {
+			t.Fatalf("organism %q advisory_status=%q want advisory_only", organism.OrganismID, organism.AdvisoryStatus)
+		}
+		if len(organism.VerifierFocus) == 0 {
+			t.Fatalf("organism %q has no verifier focus", organism.OrganismID)
+		}
+		if seenOrganisms[organism.OrganismID] {
+			t.Fatalf("organism %q appears more than once", organism.OrganismID)
+		}
+		seenOrganisms[organism.OrganismID] = true
+		if !roadmapCandidates[organism.OrganismID] {
+			t.Fatalf("organism catalog includes non-roadmap candidate %q", organism.OrganismID)
+		}
+		for _, moleculeID := range organism.RequiredMolecule {
+			verificationMethods, ok := molecules[moleculeID]
+			if !ok {
+				t.Fatalf("organism %q references unknown molecule %q", organism.OrganismID, moleculeID)
+			}
+			if len(verificationMethods) == 0 {
+				t.Fatalf("organism %q references molecule %q without verification methods", organism.OrganismID, moleculeID)
+			}
+		}
+		for _, atom := range organism.SupportingAtoms {
+			if !supportedAtoms[atom] && !opportunityAtoms[atom] {
+				t.Fatalf("organism %q references unknown supporting atom %q", organism.OrganismID, atom)
+			}
+		}
+		for _, atom := range organism.PlannedAtoms {
+			if supportedAtoms[atom] {
+				t.Fatalf("organism %q planned atom %q is already supported", organism.OrganismID, atom)
+			}
+			if !opportunityAtoms[atom] {
+				t.Fatalf("organism %q planned atom %q missing opportunity record", organism.OrganismID, atom)
+			}
+		}
+	}
+	if len(seenOrganisms) != len(roadmapCandidates) {
+		t.Fatalf("organism count=%d want roadmap candidate count=%d", len(seenOrganisms), len(roadmapCandidates))
+	}
+	for candidate := range roadmapCandidates {
+		if !seenOrganisms[candidate] {
+			t.Fatalf("roadmap candidate %q missing from organism catalog", candidate)
+		}
+	}
+}
+
+func TestAtomBuilderLayerValidatesRuntimeMirrorAndPlanningContracts(t *testing.T) {
+	root := repoRoot(t)
+	domainSchema := compileSchema(t, filepath.Join(root, "contracts", "workbook_app", "domain_schema.schema.json"))
+	builderSchema := compileSchema(t, filepath.Join(root, "contracts", "atom_builders", "atom_builder.schema.json"))
+	planSchema := compileSchema(t, filepath.Join(root, "contracts", "atom_builders", "builder_plan.schema.json"))
+
+	validateJSONDocumentFromFile(t, domainSchema, filepath.Join(root, "knowledge", "atom-builders", "workbook-app-primitives.json"))
+	builderPath := filepath.Join(root, "knowledge", "atom-builders", "builders.json")
+	validateJSONDocumentFromFile(t, builderSchema, builderPath)
+	validateJSONDocumentFromFile(t, planSchema, filepath.Join(root, "knowledge", "atom-builders", "builder-plan-shapes.json"))
+
+	supportedAtoms := loadSupportedCapabilityNames(t, filepath.Join(root, "contracts", "capabilities", "capability.schema.json"))
+	opportunityAtoms := loadOpportunityCapabilityNames(t, filepath.Join(root, "knowledge", "template-research", "opportunities", "*.json"))
+	raw, err := os.ReadFile(builderPath)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", builderPath, err)
+	}
+	var catalog struct {
+		Authority string `json:"authority"`
+		Builders  []struct {
+			AtomID           string   `json:"atom_id"`
+			Status           string   `json:"status"`
+			RuntimePaths     []string `json:"runtime_paths"`
+			CapabilityRecord string   `json:"capability_record,omitempty"`
+			OpportunityRecord string  `json:"opportunity_record,omitempty"`
+		} `json:"builders"`
+	}
+	if err := json.Unmarshal(raw, &catalog); err != nil {
+		t.Fatalf("Unmarshal(%s): %v", builderPath, err)
+	}
+	if catalog.Authority != "advisory_mirror" {
+		t.Fatalf("atom builder catalog authority=%q want advisory_mirror", catalog.Authority)
+	}
+	seen := map[string]bool{}
+	for _, builder := range catalog.Builders {
+		if seen[builder.AtomID] {
+			t.Fatalf("atom builder %q appears more than once", builder.AtomID)
+		}
+		seen[builder.AtomID] = true
+		switch builder.Status {
+		case "supported", "runtime_primitive":
+			if !supportedAtoms[builder.AtomID] {
+				t.Fatalf("%s builder %q missing from supported capability enum", builder.Status, builder.AtomID)
+			}
+			if builder.CapabilityRecord == "" {
+				t.Fatalf("%s builder %q missing capability record", builder.Status, builder.AtomID)
+			}
+			requireRepoRelativePathsExist(t, root, append([]string{builder.CapabilityRecord}, builder.RuntimePaths...))
+		case "planned":
+			if supportedAtoms[builder.AtomID] {
+				t.Fatalf("planned builder %q must not be in supported capability enum", builder.AtomID)
+			}
+			if !opportunityAtoms[builder.AtomID] {
+				t.Fatalf("planned builder %q missing opportunity record", builder.AtomID)
+			}
+			if builder.OpportunityRecord == "" {
+				t.Fatalf("planned builder %q missing opportunity record path", builder.AtomID)
+			}
+			requireRepoRelativePathsExist(t, root, []string{builder.OpportunityRecord})
+			if len(builder.RuntimePaths) != 0 {
+				t.Fatalf("planned builder %q should not claim runtime paths", builder.AtomID)
+			}
+		default:
+			t.Fatalf("builder %q has unknown status %q", builder.AtomID, builder.Status)
+		}
+	}
+	for atom := range supportedAtoms {
+		if !seen[atom] {
+			t.Fatalf("supported capability %q missing atom builder mirror", atom)
+		}
+	}
+}
+
 func TestTemplateResearchKeepsUnsupportedCapabilitiesOutOfSupportedRegistry(t *testing.T) {
 	root := repoRoot(t)
 	capabilitySchemaPath := filepath.Join(root, "contracts", "capabilities", "capability.schema.json")
-	raw, err := os.ReadFile(capabilitySchemaPath)
-	if err != nil {
-		t.Fatalf("ReadFile(%s): %v", capabilitySchemaPath, err)
-	}
-
-	var document map[string]any
-	if err := json.Unmarshal(raw, &document); err != nil {
-		t.Fatalf("Unmarshal capability schema: %v", err)
-	}
-
-	properties := document["properties"].(map[string]any)
-	name := properties["name"].(map[string]any)
-	enum := name["enum"].([]any)
-	existing := map[string]bool{}
-	for _, value := range enum {
-		existing[value.(string)] = true
-	}
+	existing := loadSupportedCapabilityNames(t, capabilitySchemaPath)
 
 	plannedNames := []string{
 		"append_structured_rows",
@@ -154,7 +296,59 @@ func TestTemplateResearchKeepsUnsupportedCapabilitiesOutOfSupportedRegistry(t *t
 		}
 	}
 
-	opportunityPaths, err := filepath.Glob(filepath.Join(root, "knowledge", "template-research", "opportunities", "*.json"))
+	found := loadOpportunityCapabilityNames(t, filepath.Join(root, "knowledge", "template-research", "opportunities", "*.json"))
+	for _, planned := range plannedNames {
+		if !found[planned] {
+			t.Fatalf("planned capability %q missing opportunity record", planned)
+		}
+	}
+}
+
+func loadTemplateResearchMolecules(t *testing.T, path string) map[string][]string {
+	t.Helper()
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", path, err)
+	}
+	var catalog struct {
+		Molecules []struct {
+			MoleculeID          string   `json:"molecule_id"`
+			VerificationMethods []string `json:"verification_methods"`
+		} `json:"molecules"`
+	}
+	if err := json.Unmarshal(raw, &catalog); err != nil {
+		t.Fatalf("Unmarshal(%s): %v", path, err)
+	}
+	molecules := map[string][]string{}
+	for _, molecule := range catalog.Molecules {
+		molecules[molecule.MoleculeID] = append([]string(nil), molecule.VerificationMethods...)
+	}
+	return molecules
+}
+
+func loadSupportedCapabilityNames(t *testing.T, schemaPath string) map[string]bool {
+	t.Helper()
+	raw, err := os.ReadFile(schemaPath)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", schemaPath, err)
+	}
+	var document map[string]any
+	if err := json.Unmarshal(raw, &document); err != nil {
+		t.Fatalf("Unmarshal(%s): %v", schemaPath, err)
+	}
+	properties := document["properties"].(map[string]any)
+	name := properties["name"].(map[string]any)
+	enum := name["enum"].([]any)
+	names := map[string]bool{}
+	for _, value := range enum {
+		names[value.(string)] = true
+	}
+	return names
+}
+
+func loadOpportunityCapabilityNames(t *testing.T, glob string) map[string]bool {
+	t.Helper()
+	opportunityPaths, err := filepath.Glob(glob)
 	if err != nil {
 		t.Fatalf("Glob(opportunities): %v", err)
 	}
@@ -172,9 +366,17 @@ func TestTemplateResearchKeepsUnsupportedCapabilitiesOutOfSupportedRegistry(t *t
 		}
 		found[record.Name] = true
 	}
-	for _, planned := range plannedNames {
-		if !found[planned] {
-			t.Fatalf("planned capability %q missing opportunity record", planned)
+	return found
+}
+
+func requireRepoRelativePathsExist(t *testing.T, root string, paths []string) {
+	t.Helper()
+	for _, rel := range paths {
+		if filepath.IsAbs(rel) {
+			t.Fatalf("path %q must be repository-relative", rel)
+		}
+		if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(rel))); err != nil {
+			t.Fatalf("required path %q: %v", rel, err)
 		}
 	}
 }

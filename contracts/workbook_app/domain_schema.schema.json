@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/workbook_app/domain_schema.schema.json",
+  "title": "WorkbookAppDomainPrimitives",
+  "type": "object",
+  "$defs": {
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "primitive": {
+      "type": "object",
+      "required": [
+        "primitive_id",
+        "kind",
+        "llm_familiar_pattern",
+        "sheet_ops_mapping",
+        "planner_use",
+        "verifier_use"
+      ],
+      "properties": {
+        "primitive_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        },
+        "kind": {
+          "enum": [
+            "entity_table",
+            "input_form",
+            "summary_view",
+            "document_output",
+            "matrix_grid",
+            "period_sheet",
+            "lookup_master"
+          ]
+        },
+        "llm_familiar_pattern": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sheet_ops_mapping": {
+          "type": "string",
+          "minLength": 1
+        },
+        "planner_use": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "verifier_use": {
+          "$ref": "#/$defs/non_empty_string_array"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "version",
+    "authority",
+    "summary",
+    "primitives"
+  ],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "authority": {
+      "const": "advisory_schema"
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "primitives": {
+      "type": "array",
+      "minItems": 7,
+      "items": {
+        "$ref": "#/$defs/primitive"
+      }
+    }
+  },
+  "additionalProperties": false
+}
