@@ -22,6 +22,13 @@ type OrganismExecutionStepDraft struct {
 	CompositionKind      string                 `json:"composition_kind"`
 	SourceSheet          string                 `json:"source_sheet"`
 	TargetSheet          string                 `json:"target_sheet,omitempty"`
+	SummaryMode          string                 `json:"summary_mode,omitempty"`
+	GroupBy              []string               `json:"group_by,omitempty"`
+	Metrics              []MetricSpec           `json:"metrics,omitempty"`
+	TargetColumn         string                 `json:"target_column,omitempty"`
+	Operator             string                 `json:"operator,omitempty"`
+	Threshold            *float64               `json:"threshold,omitempty"`
+	HighlightColor       string                 `json:"highlight_color,omitempty"`
 	IncludeSourceColumns []string               `json:"include_source_columns,omitempty"`
 	Values               []CellValue            `json:"values,omitempty"`
 	FormulaSourceRow     int                    `json:"formula_source_row,omitempty"`
@@ -29,10 +36,17 @@ type OrganismExecutionStepDraft struct {
 	FormulaColumns       []string               `json:"formula_columns,omitempty"`
 	ValidationRule       *DataValidationRule    `json:"validation_rule,omitempty"`
 	ProtectionRule       *FormulaProtectionRule `json:"protection_rule,omitempty"`
+	CarryForwardMappings []CarryForwardMapping  `json:"carry_forward_mappings,omitempty"`
 	FormTitle            string                 `json:"form_title,omitempty"`
 	PrintArea            string                 `json:"print_area,omitempty"`
 	FieldBindings        []FormFieldBinding     `json:"field_bindings,omitempty"`
 	TableBinding         *FormTableBinding      `json:"table_binding,omitempty"`
+}
+
+type MetricSpec struct {
+	Column string `json:"column"`
+	Op     string `json:"op"`
+	As     string `json:"as"`
 }
 
 type OrganismDraftInput struct {
@@ -48,9 +62,93 @@ func DraftOrganismExecutionRequest(input OrganismDraftInput) (OrganismExecutionR
 	switch input.TemplateClassPlan.OrganismID {
 	case "invoice_line_item_billing":
 		return draftInvoiceLineItemBilling(input)
+	case "monthly_budget_control":
+		return draftMonthlyBudgetControl(input)
 	default:
 		return OrganismExecutionRequestDraft{}, false
 	}
+}
+
+func draftMonthlyBudgetControl(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
+	sheet, ok := findMonthlyBudgetSheet(input.WorkbookFacts)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumns := formulaColumnsForSheet(sheet)
+	if len(formulaColumns) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumnLetters := make([]string, 0, len(formulaColumns))
+	for _, column := range formulaColumns {
+		if letter, ok := columnLetterForHeader(sheet.Columns, column); ok {
+			formulaColumnLetters = append(formulaColumnLetters, letter)
+		}
+	}
+	if len(formulaColumnLetters) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	minFormulaRow, maxFormulaRow, ok := formulaRowBounds(sheet)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	closingColumnLetter, ok := columnLetterForHeader(sheet.Columns, "closing")
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	threshold := 0.0
+	nextSheet := "NextBudget"
+	formulaProtectionRange := formulaRange(formulaColumnLetters, minFormulaRow, maxFormulaRow)
+
+	return OrganismExecutionRequestDraft{
+		ScenarioID:  input.ScenarioID,
+		RequestText: input.RequestText,
+		InputFile:   input.InputFile,
+		OutputFile:  input.OutputFile,
+		Steps: []OrganismExecutionStepDraft{
+			{
+				AtomID:          "group_summarize",
+				CompositionKind: "group_summary",
+				SourceSheet:     sheet.Name,
+				TargetSheet:     "BudgetSummary",
+				SummaryMode:     "values",
+				GroupBy:         []string{"category"},
+				Metrics:         []MetricSpec{{Column: "actual", Op: "sum", As: "actual_total"}},
+			},
+			{
+				AtomID:          "highlight_threshold",
+				CompositionKind: "threshold_highlight",
+				SourceSheet:     sheet.Name,
+				TargetColumn:    "variance",
+				Operator:        ">",
+				Threshold:       &threshold,
+				HighlightColor:  "#FFF59D",
+			},
+			{
+				AtomID:          "copy_period_sheet",
+				CompositionKind: "period_copy",
+				SourceSheet:     sheet.Name,
+				TargetSheet:     nextSheet,
+			},
+			{
+				AtomID:          "roll_forward_period",
+				CompositionKind: "period_roll_forward",
+				SourceSheet:     sheet.Name,
+				TargetSheet:     nextSheet,
+				CarryForwardMappings: []CarryForwardMapping{
+					{FromSheet: sheet.Name, FromCell: closingColumnLetter + strconv.Itoa(minFormulaRow), ToSheet: nextSheet, ToCell: "B" + strconv.Itoa(minFormulaRow+1)},
+				},
+			},
+			{
+				AtomID:          "protect_formula_cells",
+				CompositionKind: "formula_protection",
+				SourceSheet:     nextSheet,
+				ProtectionRule: &FormulaProtectionRule{
+					FormulaRanges: []string{formulaProtectionRange},
+					InputRanges:   []string{"B2:D10"},
+				},
+			},
+		},
+	}, true
 }
 
 func draftInvoiceLineItemBilling(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
@@ -148,6 +246,16 @@ func findInvoiceLineItemSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspec
 	return runtimeinspect.SheetFacts{}, false
 }
 
+func findMonthlyBudgetSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect.SheetFacts, bool) {
+	for _, sheet := range facts.Sheets {
+		headers := lowerSet(sheet.Columns)
+		if headers["category"] && headers["actual"] && headers["budget"] && headers["variance"] && headers["closing"] {
+			return sheet, true
+		}
+	}
+	return runtimeinspect.SheetFacts{}, false
+}
+
 func splitInputAndFormulaColumns(sheet runtimeinspect.SheetFacts) ([]string, []string) {
 	formulaHeaders := map[string]bool{}
 	for _, formula := range sheet.Formulas {
@@ -165,6 +273,20 @@ func splitInputAndFormulaColumns(sheet runtimeinspect.SheetFacts) ([]string, []s
 		inputColumns = append(inputColumns, column)
 	}
 	return inputColumns, formulaColumns
+}
+
+func formulaColumnsForSheet(sheet runtimeinspect.SheetFacts) []string {
+	seen := map[string]bool{}
+	columns := []string{}
+	for _, formula := range sheet.Formulas {
+		header, ok := headerForCell(sheet.Columns, formula.Cell)
+		if !ok || seen[header] {
+			continue
+		}
+		seen[header] = true
+		columns = append(columns, header)
+	}
+	return columns
 }
 
 func formulaRows(sheet runtimeinspect.SheetFacts) (int, int, bool) {
@@ -190,6 +312,27 @@ func formulaRows(sheet runtimeinspect.SheetFacts) (int, int, bool) {
 		targetRow = sourceRow + 1
 	}
 	return sourceRow, targetRow, true
+}
+
+func formulaRowBounds(sheet runtimeinspect.SheetFacts) (int, int, bool) {
+	rows := make([]int, 0, len(sheet.Formulas))
+	seen := map[int]bool{}
+	for _, formula := range sheet.Formulas {
+		_, row, err := excelize.CellNameToCoordinates(formula.Cell)
+		if err != nil {
+			return 0, 0, false
+		}
+		if seen[row] {
+			continue
+		}
+		seen[row] = true
+		rows = append(rows, row)
+	}
+	if len(rows) == 0 {
+		return 0, 0, false
+	}
+	sort.Ints(rows)
+	return rows[0], rows[len(rows)-1], true
 }
 
 func defaultInvoiceValues(columns []string) []CellValue {

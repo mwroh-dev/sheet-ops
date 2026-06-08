@@ -803,3 +803,38 @@ Added the first template-class draft planner:
   robust ambiguity resolution.
 - Advisory claim risk: the draft planner must be described as a first runtime
   slice, not as autonomous template generation.
+
+## Phase 28 Result
+
+Extended the template-class draft planner to `monthly_budget_control`:
+
+- the draft step DTO now carries group summary, threshold highlight,
+  period-copy, roll-forward, and carry-forward mapping fields
+- `requestcompiler.DraftOrganismExecutionRequest` detects a monthly budget
+  sheet from category, actual, budget, variance, and closing headers
+- the budget draft emits the five-step sequence: group summary, threshold
+  highlight, copy period sheet, roll forward closing value, and protect formula
+  cells
+- the planner derives formula protection ranges and a conservative
+  closing-to-next-period input mapping from workbook facts
+- tests validate the draft against
+  `contracts/requests/organism_execution_request.schema.json`
+- an open-layer integration test proves the budget draft JSON can execute
+  through `OrchestrateOrganism` and produce expected workbook evidence in
+  `BudgetSummary` and `NextBudget`
+
+## Phase 28 Self-Retro
+
+- Coverage improved: draft synthesis now covers two productization classes:
+  invoice line-item billing and monthly budget control.
+- Remaining template needs: inventory movement, student gradebook, and loan
+  repayment still require hand-authored explicit organism requests. The budget
+  draft is also narrow: it assumes recognizable headers and a simple closing
+  formula column.
+- Verifier strength: the budget path now has schema validation, open-layer
+  execution, template-class evaluation, organism verification, and output
+  workbook checks. It does not prove financial policy inference, full budget
+  dashboard generation, or native pivot creation.
+- Advisory claim risk: expanding draft synthesis should not be described as
+  broad template automation until each productization class has equivalent
+  planner and verifier depth.
