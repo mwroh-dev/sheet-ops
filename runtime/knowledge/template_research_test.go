@@ -437,8 +437,13 @@ func TestTemplateResearchRuntimeProductizationArtifactsValidate(t *testing.T) {
 	}
 
 	plans := loadRuntimeProductizationPlannerPlans(t, plannerPath)
-	if len(plans) < 5 {
-		t.Fatalf("planner plan count=%d want at least 5", len(plans))
+	if len(plans) != len(runtimeDraftOrganisms) {
+		t.Fatalf("planner plan count=%d want runtime draft organism count=%d", len(plans), len(runtimeDraftOrganisms))
+	}
+	for _, organism := range runtimeDraftOrganisms {
+		if plans[organism].OrganismID == "" {
+			t.Fatalf("planner plan missing runtime draft organism %q", organism)
+		}
 	}
 	for organism, plan := range plans {
 		if coverageTiers[organism] == "" {
@@ -450,6 +455,11 @@ func TestTemplateResearchRuntimeProductizationArtifactsValidate(t *testing.T) {
 		for _, atom := range plan.OperationSequence {
 			if !supportedAtoms[atom] {
 				t.Fatalf("planner plan %q references unsupported atom %q", organism, atom)
+			}
+		}
+		for _, verifierSpecID := range plan.RequiredVerifierSpecs {
+			if !runtimeProductizationVerifierSpecIDExists(verifierSpecs, verifierSpecID) {
+				t.Fatalf("planner plan %q references unknown verifier spec %q", organism, verifierSpecID)
 			}
 		}
 	}
@@ -818,6 +828,15 @@ func loadRuntimeProductizationVerifierSpecs(t *testing.T, path string) map[strin
 		}
 	}
 	return specs
+}
+
+func runtimeProductizationVerifierSpecIDExists(specs map[string]runtimeProductizationVerifierSpec, specID string) bool {
+	for organismID := range specs {
+		if organismID+"_verifier" == specID {
+			return true
+		}
+	}
+	return false
 }
 
 type runtimeProductizationPlannerPlan struct {

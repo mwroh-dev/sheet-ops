@@ -1520,3 +1520,32 @@ Closed the verifier-spec catalog gap after 21/21 draft planner coverage:
 - Advisory claim risk: this must not be described as full semantic validation
   for every domain. It proves that every runtime draft organism has an explicit
   verifier contract; richer per-domain verifier code remains a later gate.
+
+## Phase 50 Result
+
+Closed the operation-planner catalog gap after 21/21 draft planner coverage:
+
+- `runtime/knowledge` now requires `operation-planner.json` to contain exactly
+  one plan for every runtime draft organism from `draft-planner-coverage.json`
+- the harness now checks that every required verifier spec id referenced by an
+  operation plan exists in `organism-verifier-specs.json`
+- `knowledge/template-research/runtime/operation-planner.json` now covers all
+  21 runtime draft planner organisms with classifier signals, supported atom
+  sequences, required verifier spec ids, and fallback policies
+- each plan remains advisory and does not expand public runtime capability
+  claims beyond supported atom execution paths
+
+## Phase 50 Self-Retro
+
+- Coverage improved: the runtime draft layer now has aligned 21/21 planner
+  contracts and 21/21 verifier-spec contracts, reducing drift between
+  `runtime/templateclass`, request compilation, and research runtime artifacts.
+- Remaining template needs: operation plans are still curated advisory records.
+  They do not replace the deterministic classifier code or prove broad prompt
+  understanding for arbitrary user language.
+- Verifier strength: schema validation, supported atom dependency checks,
+  runtime-draft-derived exact coverage, and verifier-spec reference checks are
+  now enforced in one knowledge harness.
+- Advisory claim risk: planner contract coverage must not be described as
+  autonomous planning. It proves that every runtime draft organism has an
+  explicit bounded plan shape and fallback policy.
