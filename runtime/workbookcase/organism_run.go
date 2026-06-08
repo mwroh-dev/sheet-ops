@@ -184,6 +184,8 @@ func verifyOrganismWorkbookSemantics(organismID, outputFile string) []string {
 		return verifyProcurementReconciliationWorkbook(outputFile)
 	case "warehouse_reorder_tracker":
 		return verifyWarehouseReorderWorkbook(outputFile)
+	case "student_gradebook":
+		return verifyStudentGradebookWorkbook(outputFile)
 	default:
 		return nil
 	}
@@ -573,6 +575,37 @@ func verifyWarehouseReorderWorkbook(outputFile string) []string {
 		reasons = append(reasons, fmt.Sprintf("warehouse reorder protection semantic check missing Stock protection: %v", err))
 	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
 		reasons = append(reasons, "warehouse reorder protection semantic check missing Stock protection options")
+	}
+	return reasons
+}
+
+func verifyStudentGradebookWorkbook(outputFile string) []string {
+	handle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		return []string{fmt.Sprintf("student gradebook workbook semantic check failed to open output: %v", err)}
+	}
+	defer func() { _ = handle.Close() }()
+
+	var reasons []string
+	if got, err := handle.GetCellValue("GradeSummary", "B2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("student gradebook summary semantic check missing GradeSummary!B2: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "student gradebook summary semantic check missing GradeSummary!B2 score summary value")
+	}
+	if got, err := handle.GetCellFormula("Grades", "E4"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("student gradebook formula semantic check missing Grades!E4 formula: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "student gradebook formula semantic check missing Grades!E4 formula")
+	}
+	if validations, err := handle.GetDataValidations("Grades"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("student gradebook validation semantic check missing Grades data validation: %v", err))
+	} else if len(validations) == 0 {
+		reasons = append(reasons, "student gradebook validation semantic check missing Grades data validation")
+	}
+	if protection, err := handle.GetSheetProtection("Grades"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("student gradebook protection semantic check missing Grades protection: %v", err))
+	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
+		reasons = append(reasons, "student gradebook protection semantic check missing Grades protection options")
 	}
 	return reasons
 }
