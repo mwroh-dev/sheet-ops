@@ -496,6 +496,100 @@ func TestTemplateResearchRuntimeProductizationArtifactsValidate(t *testing.T) {
 	}
 }
 
+func TestTemplateResearchDraftPlannerCoverageStaysExplicit(t *testing.T) {
+	root := repoRoot(t)
+	coverageSchema := compileSchema(t, filepath.Join(root, "contracts", "template_research", "draft_planner_coverage.schema.json"))
+	coveragePath := filepath.Join(root, "knowledge", "template-research", "composition", "draft-planner-coverage.json")
+	validateJSONDocumentFromFile(t, coverageSchema, coveragePath)
+
+	roadmapCandidates := loadRoadmapCandidateIDs(t, filepath.Join(root, "knowledge", "template-research", "judgments", "pattern_registry.json"))
+	raw, err := os.ReadFile(coveragePath)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", coveragePath, err)
+	}
+	var catalog struct {
+		Authority          string `json:"authority"`
+		GeneratedFromRound string `json:"generated_from_round"`
+		Coverage           []struct {
+			OrganismID        string   `json:"organism_id"`
+			DraftStatus       string   `json:"draft_status"`
+			RuntimeEntrypoint string   `json:"runtime_entrypoint"`
+			EvidenceTests     []string `json:"evidence_tests"`
+			CurrentLimit      string   `json:"current_limit"`
+			NextGate          string   `json:"next_gate"`
+		} `json:"coverage"`
+	}
+	if err := json.Unmarshal(raw, &catalog); err != nil {
+		t.Fatalf("Unmarshal(%s): %v", coveragePath, err)
+	}
+	if catalog.Authority != "runtime_draft_planner_coverage" {
+		t.Fatalf("draft planner coverage authority=%q want runtime_draft_planner_coverage", catalog.Authority)
+	}
+	if catalog.GeneratedFromRound != "round-009" {
+		t.Fatalf("draft planner generated_from_round=%q want round-009", catalog.GeneratedFromRound)
+	}
+
+	wantRuntimeDraft := map[string]bool{
+		"invoice_line_item_billing": true,
+		"monthly_budget_control":    true,
+		"inventory_movement_log":    true,
+		"student_gradebook":         true,
+		"loan_repayment_calculator": true,
+	}
+	seen := map[string]bool{}
+	runtimeDraftCount := 0
+	explicitOnlyCount := 0
+	for _, record := range catalog.Coverage {
+		if !roadmapCandidates[record.OrganismID] {
+			t.Fatalf("draft planner coverage includes non-roadmap organism %q", record.OrganismID)
+		}
+		if seen[record.OrganismID] {
+			t.Fatalf("draft planner coverage includes duplicate organism %q", record.OrganismID)
+		}
+		seen[record.OrganismID] = true
+		if record.CurrentLimit == "" || record.NextGate == "" {
+			t.Fatalf("draft planner coverage %q has weak limit/gate fields: %+v", record.OrganismID, record)
+		}
+		switch record.DraftStatus {
+		case "runtime_draft_planner":
+			runtimeDraftCount++
+			if !wantRuntimeDraft[record.OrganismID] {
+				t.Fatalf("organism %q unexpectedly claims runtime draft planner", record.OrganismID)
+			}
+			if record.RuntimeEntrypoint != "requestcompiler.DraftOrganismExecutionRequest" {
+				t.Fatalf("runtime draft %q entrypoint=%q", record.OrganismID, record.RuntimeEntrypoint)
+			}
+			if len(record.EvidenceTests) < 2 {
+				t.Fatalf("runtime draft %q has weak evidence tests: %+v", record.OrganismID, record.EvidenceTests)
+			}
+		case "explicit_request_only":
+			explicitOnlyCount++
+			if wantRuntimeDraft[record.OrganismID] {
+				t.Fatalf("organism %q should be runtime_draft_planner", record.OrganismID)
+			}
+			if record.RuntimeEntrypoint != "" || len(record.EvidenceTests) != 0 {
+				t.Fatalf("explicit-only organism %q must not claim runtime entrypoint/tests: %+v", record.OrganismID, record)
+			}
+		default:
+			t.Fatalf("organism %q has unknown draft status %q", record.OrganismID, record.DraftStatus)
+		}
+	}
+	if len(seen) != len(roadmapCandidates) {
+		t.Fatalf("draft planner coverage organism count=%d want roadmap candidate count=%d", len(seen), len(roadmapCandidates))
+	}
+	if runtimeDraftCount != len(wantRuntimeDraft) {
+		t.Fatalf("runtime draft count=%d want %d", runtimeDraftCount, len(wantRuntimeDraft))
+	}
+	if explicitOnlyCount != len(roadmapCandidates)-len(wantRuntimeDraft) {
+		t.Fatalf("explicit-only count=%d want %d", explicitOnlyCount, len(roadmapCandidates)-len(wantRuntimeDraft))
+	}
+	for candidate := range roadmapCandidates {
+		if !seen[candidate] {
+			t.Fatalf("roadmap candidate %q missing from draft planner coverage", candidate)
+		}
+	}
+}
+
 func TestAtomBuilderLayerValidatesRuntimeMirrorAndPlanningContracts(t *testing.T) {
 	root := repoRoot(t)
 	domainSchema := compileSchema(t, filepath.Join(root, "contracts", "workbook_app", "domain_schema.schema.json"))

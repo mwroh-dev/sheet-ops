@@ -21,8 +21,11 @@ bundle, or reuse third-party template files.
   atom-builder audit notes, runtime bridge rules for code-generation
   assistance, non-runtime organism preview harness notes, and the executable
   organism coverage ladder that separates fixture-backed previews from
-  supported-atom plans and planned-atom blockers. The completion audit records
-  the current evidence and remaining limits for the advisory-to-preview layer.
+  supported-atom plans and planned-atom blockers. The draft planner coverage
+  artifact records which roadmap organisms have workbook-facts-to-request draft
+  synthesis and which still require explicit requests. The completion audit
+  records the current evidence and remaining limits for the
+  advisory-to-preview layer.
   Verified organism class records define advisory acceptance contracts for
   deeper p2/p3 coverage without promoting native pivot tables, financial
   calculators, or organism IDs to public runtime capabilities.

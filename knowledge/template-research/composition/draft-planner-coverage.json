@@ -1,0 +1,189 @@
+{
+  "authority": "runtime_draft_planner_coverage",
+  "generated_from_round": "round-009",
+  "coverage": [
+    {
+      "organism_id": "invoice_line_item_billing",
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsInvoiceLineItemStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerInvoiceDraft"
+      ],
+      "current_limit": "Fixture-shaped line-item invoice facts only; does not infer arbitrary invoice layout or pagination.",
+      "next_gate": "Add broader invoice fixtures with alternate headers, multiple line rows, and printable layout verification."
+    },
+    {
+      "organism_id": "expense_reimbursement",
+      "draft_status": "explicit_request_only",
+      "runtime_entrypoint": "",
+      "evidence_tests": [],
+      "current_limit": "No workbook-facts draft planner; explicit organism requests or lower-level supported atoms are required.",
+      "next_gate": "Add a reimbursement fixture with receipt rows, approval status, printable output, and protected totals."
+    },
+    {
+      "organism_id": "purchase_order_control",
+      "draft_status": "explicit_request_only",
+      "runtime_entrypoint": "",
+      "evidence_tests": [],
+      "current_limit": "No workbook-facts draft planner for PO line items, status control, and printable purchase order output.",
+      "next_gate": "Add a PO fixture that combines line totals, vendor metadata, status pipeline, and printable form checks."
+    },
+    {
+      "organism_id": "monthly_budget_control",
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsMonthlyBudgetStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerBudgetDraft"
+      ],
+      "current_limit": "Simple monthly budget headers and closing formula only; does not infer budget policy or native pivot summaries.",
+      "next_gate": "Add alternate budget fixtures with planned/actual roll-forward variations and richer threshold verification."
+    },
+    {
+      "organism_id": "cash_flow_monitor",
+      "draft_status": "explicit_request_only",
+      "runtime_entrypoint": "",
+      "evidence_tests": [],
+      "current_limit": "No workbook-facts draft planner for cash-flow period continuity or dashboard semantics.",
+      "next_gate": "Add a cash-flow fixture with opening/closing continuity, period copy, and protected summary evidence."
+    },
+    {
+      "organism_id": "attendance_register",
+      "draft_status": "explicit_request_only",
+      "runtime_entrypoint": "",
+      "evidence_tests": [],
+      "current_limit": "No workbook-facts draft planner for attendance matrix growth or calendar-period handling.",
+      "next_gate": "Add an attendance fixture with period copy, status validation, protected totals, and matrix checks."
+    },
+    {
+      "organism_id": "timesheet_hours_log",
+      "draft_status": "explicit_request_only",
+      "runtime_entrypoint": "",
+      "evidence_tests": [],
+      "current_limit": "No workbook-facts draft planner for timesheet row append, formula extension, and protected hour totals.",
+      "next_gate": "Add a timesheet fixture with employee/date/hour rows, formula propagation, and protected summaries."
+    },
+    {
+      "organism_id": "project_timeline_tracker",
+      "draft_status": "explicit_request_only",
+      "runtime_entrypoint": "",
+      "evidence_tests": [],
+      "current_limit": "No workbook-facts draft planner for timeline projection or status pipeline tracking.",
+      "next_gate": "Add a project timeline fixture with status changes, date ranges, and formula-backed progress checks."
+    },
+    {
+      "organism_id": "shift_roster_planner",
+      "draft_status": "explicit_request_only",
+      "runtime_entrypoint": "",
+      "evidence_tests": [],
+      "current_limit": "No workbook-facts draft planner for shift roster matrix growth or coverage validation.",
+      "next_gate": "Add a shift roster fixture with person/date matrix, validation lists, protected coverage totals, and period copy."
+    },
+    {
+      "organism_id": "construction_cost_tracker",
+      "draft_status": "explicit_request_only",
+      "runtime_entrypoint": "",
+      "evidence_tests": [],
+      "current_limit": "No workbook-facts draft planner for construction cost timeline, line-item totals, and threshold exceptions.",
+      "next_gate": "Add a construction fixture with cost code rows, planned/actual variance, and threshold verification."
+    },
+    {
+      "organism_id": "inventory_movement_log",
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsInventoryMovementStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerInventoryDraft"
+      ],
+      "current_limit": "Known movement headers plus SKU and stock master sheets only; does not resolve duplicate keys or fuzzy reconciliation.",
+      "next_gate": "Add inventory fixtures with alternate movement headers, duplicate SKUs, and reconciliation edge cases."
+    },
+    {
+      "organism_id": "procurement_reconciliation",
+      "draft_status": "explicit_request_only",
+      "runtime_entrypoint": "",
+      "evidence_tests": [],
+      "current_limit": "No workbook-facts draft planner for procurement matching, approval status, and reconciliation outputs.",
+      "next_gate": "Add a procurement fixture with PO/receipt/invoice tables, status pipeline, and reconciliation result checks."
+    },
+    {
+      "organism_id": "warehouse_reorder_tracker",
+      "draft_status": "explicit_request_only",
+      "runtime_entrypoint": "",
+      "evidence_tests": [],
+      "current_limit": "No workbook-facts draft planner for reorder thresholds and warehouse master lookup enrichment.",
+      "next_gate": "Add a reorder fixture with SKU master lookup, low-stock threshold highlighting, and reorder action output."
+    },
+    {
+      "organism_id": "student_gradebook",
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsStudentGradebookStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerGradebookDraft"
+      ],
+      "current_limit": "Deterministic score/status/formula slice only; does not infer grading policy or arbitrary grade matrices.",
+      "next_gate": "Add gradebook fixtures with alternate grading layouts, weighted categories, and matrix growth checks."
+    },
+    {
+      "organism_id": "training_completion_matrix",
+      "draft_status": "explicit_request_only",
+      "runtime_entrypoint": "",
+      "evidence_tests": [],
+      "current_limit": "No workbook-facts draft planner for training completion matrix growth or printable completion reports.",
+      "next_gate": "Add a training fixture with completion matrix, score summary, validation, and printable report checks."
+    },
+    {
+      "organism_id": "service_ticket_queue",
+      "draft_status": "explicit_request_only",
+      "runtime_entrypoint": "",
+      "evidence_tests": [],
+      "current_limit": "No workbook-facts draft planner for ticket status queues, SLA thresholds, or service summary outputs.",
+      "next_gate": "Add a service-ticket fixture with status pipeline, overdue threshold, and protected summary checks."
+    },
+    {
+      "organism_id": "sales_pipeline_tracker",
+      "draft_status": "explicit_request_only",
+      "runtime_entrypoint": "",
+      "evidence_tests": [],
+      "current_limit": "No workbook-facts draft planner for sales stage pipeline or risk/threshold tracking.",
+      "next_gate": "Add a sales pipeline fixture with stage status, weighted value formulas, threshold highlights, and protected summaries."
+    },
+    {
+      "organism_id": "maintenance_issue_log",
+      "draft_status": "explicit_request_only",
+      "runtime_entrypoint": "",
+      "evidence_tests": [],
+      "current_limit": "No workbook-facts draft planner for maintenance issue status, risk/action register, or exception highlighting.",
+      "next_gate": "Add a maintenance fixture with issue rows, risk/action columns, status validation, and overdue thresholds."
+    },
+    {
+      "organism_id": "compliance_action_register",
+      "draft_status": "explicit_request_only",
+      "runtime_entrypoint": "",
+      "evidence_tests": [],
+      "current_limit": "No workbook-facts draft planner for compliance action status, printable register, or protected review summary.",
+      "next_gate": "Add a compliance fixture with action owners, due dates, status pipeline, printable output, and protected summaries."
+    },
+    {
+      "organism_id": "safety_compliance_register",
+      "draft_status": "explicit_request_only",
+      "runtime_entrypoint": "",
+      "evidence_tests": [],
+      "current_limit": "No workbook-facts draft planner for safety risk scoring, completion summary, or printable safety evidence.",
+      "next_gate": "Add a safety fixture with risk/action rows, score summary, exception thresholds, and printable report checks."
+    },
+    {
+      "organism_id": "loan_repayment_calculator",
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsLoanRepaymentStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerLoanDraft"
+      ],
+      "current_limit": "Formula schedule mechanics only; does not provide financial advice, payoff termination proof, or amortization correctness.",
+      "next_gate": "Add loan fixtures with repeated payment rows, payoff termination checks, and explicit financial non-claim verification."
+    }
+  ]
+}

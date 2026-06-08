@@ -934,3 +934,29 @@ Extended the template-class draft planner to `loan_repayment_calculator`:
 - Advisory claim risk: loan support remains formula schedule mechanics only.
   It does not provide financial advice, payoff termination proof, or
   amortization correctness certification.
+
+## Phase 32 Result
+
+Added a draft-planner coverage gate for all 21 roadmap organisms:
+
+- `composition/draft-planner-coverage.json` records each organism's draft
+  status as either `runtime_draft_planner` or `explicit_request_only`
+- the five first productization classes are the only records allowed to claim a
+  runtime draft planner entrypoint
+- the remaining 16 roadmap organisms explicitly carry no runtime entrypoint or
+  evidence tests
+- `runtime/knowledge` now validates the artifact against
+  `draft_planner_coverage.schema.json`, checks roadmap coverage exactly once,
+  and enforces the 5/16 split
+
+## Phase 32 Self-Retro
+
+- Coverage improved: the repository now has machine-checked evidence for the
+  precise draft synthesis frontier instead of relying only on prose.
+- Remaining template needs: the next real runtime expansion is adding draft
+  planners for the explicit-request-only organisms, starting with families that
+  reuse existing supported atoms.
+- Verifier strength: this is a claim-boundary verifier, not a workbook
+  executor. It prevents overclaiming but does not add workbook behavior.
+- Advisory claim risk: any future organism must move from explicit-request-only
+  to runtime-draft only after schema tests and open-layer execution tests exist.

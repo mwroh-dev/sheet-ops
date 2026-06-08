@@ -45,6 +45,8 @@ goal. It does not claim full workbook generation or broad Excel automation.
   into schema-valid explicit organism requests from workbook facts: invoice
   line-item, monthly budget, inventory movement, student gradebook, and loan
   repayment schedule mechanics.
+- Draft planner coverage is now machine-recorded for all 21 roadmap organisms:
+  five have runtime draft planners and sixteen remain explicit-request-only.
 - The knowledge harness validates roadmap coverage, fixture priority alignment,
   advisory authority, supported atom references, absence of planned blockers,
   preview evidence presence, verified-class depth contract references, and
@@ -77,6 +79,10 @@ goal. It does not claim full workbook generation or broad Excel automation.
 - The organism harness currently covers the first five productization classes.
   The remaining roadmap organisms still need equivalent multi-operation
   fixtures before broad 21-organism runtime claims are appropriate.
+- Draft synthesis currently covers the first five productization classes only.
+  The remaining sixteen roadmap organisms are explicitly tracked as
+  explicit-request-only until focused schema and open-layer execution evidence
+  exist.
 - Native Excel pivot artifacts are not supported.
 - Matrix auto-growth, rich visual layout QA, full printable pagination QA, and
   domain-specific schedule semantics remain future runtime work.

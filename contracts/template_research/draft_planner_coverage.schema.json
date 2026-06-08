@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/template_research/draft_planner_coverage.schema.json",
+  "title": "TemplateResearchDraftPlannerCoverage",
+  "type": "object",
+  "required": ["authority", "generated_from_round", "coverage"],
+  "properties": {
+    "authority": {
+      "const": "runtime_draft_planner_coverage"
+    },
+    "generated_from_round": {
+      "const": "round-009"
+    },
+    "coverage": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/coverage_record"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "coverage_record": {
+      "type": "object",
+      "required": [
+        "organism_id",
+        "draft_status",
+        "runtime_entrypoint",
+        "evidence_tests",
+        "current_limit",
+        "next_gate"
+      ],
+      "properties": {
+        "organism_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "draft_status": {
+          "enum": ["runtime_draft_planner", "explicit_request_only"]
+        },
+        "runtime_entrypoint": {
+          "type": "string"
+        },
+        "evidence_tests": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "current_limit": {
+          "type": "string",
+          "minLength": 1
+        },
+        "next_gate": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
