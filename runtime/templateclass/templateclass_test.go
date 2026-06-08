@@ -102,6 +102,20 @@ func TestPlanForRequestClassifiesProjectTimelineTracker(t *testing.T) {
 	}
 }
 
+func TestPlanForRequestClassifiesShiftRosterPlanner(t *testing.T) {
+	plan, ok := PlanForRequest("Copy weekly shift roster, validate shift codes, and protect coverage formulas")
+	if !ok {
+		t.Fatal("PlanForRequest returned ok=false")
+	}
+	if plan.OrganismID != "shift_roster_planner" {
+		t.Fatalf("organism=%q want shift_roster_planner", plan.OrganismID)
+	}
+	wantOps := []string{"copy_period_sheet", "add_data_validation", "protect_formula_cells"}
+	if !sameStrings(plan.OperationSequence, wantOps) {
+		t.Fatalf("operation sequence=%v want %v", plan.OperationSequence, wantOps)
+	}
+}
+
 func TestPlanForRequestClassifiesWarehouseReorderTracker(t *testing.T) {
 	plan, ok := PlanForRequest("Enrich warehouse reorder stock with SKU location, flag low stock, append reorder candidate, validate SKU, and protect reorder formulas")
 	if !ok {

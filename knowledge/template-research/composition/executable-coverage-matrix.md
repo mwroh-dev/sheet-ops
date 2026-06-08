@@ -1175,3 +1175,34 @@ Extended the runtime draft planner to `project_timeline_tracker`:
   execution, and organism-level evidence are covered for the slice.
 - Advisory claim risk: project timeline support must remain task-table control
   until timeline grid projection and dependency movement verifiers exist.
+
+## Phase 40 Result
+
+Extended the runtime draft planner to `shift_roster_planner`:
+
+- `runtime/templateclass` now classifies shift-roster requests and limits the
+  executable plan to period copy, shift-code validation, and formula protection
+- `requestcompiler.DraftOrganismExecutionRequest` detects shift roster
+  workbooks from employee, date, shift, and coverage total headers
+- the draft copies a weekly roster period sheet, validates allowed shift codes
+  on the copied period, and protects copied coverage formulas
+- open-layer integration proves the draft executes through
+  `OrchestrateOrganism` and produces expected copied roster rows and preserved
+  coverage formula evidence
+- `draft-planner-coverage.json` now records shift roster planner as a runtime
+  draft planner, moving the boundary from 12/9 to 13/8
+
+## Phase 40 Self-Retro
+
+- Coverage improved: runtime draft synthesis now covers thirteen roadmap
+  organisms and adds a workforce scheduling pattern distinct from attendance
+  records and timesheet logging.
+- Remaining template needs: this draft covers row/date/shift rosters, not
+  arbitrary person/date matrix growth, staffing optimization, coverage
+  constraints, or roster grid projection.
+- Verifier strength: classifier, schema, draft, period copy, shift-code
+  validation, formula protection, open-layer execution, and organism-level
+  evidence are covered for the slice.
+- Advisory claim risk: shift roster support must stay at workbook control
+  level until matrix growth, coverage constraints, and staffing policy
+  verifiers exist.

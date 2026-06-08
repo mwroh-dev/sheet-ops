@@ -71,6 +71,12 @@ var plans = []Plan{
 		NonClaims:             []string{"does not render a gantt chart", "does not project arbitrary timeline grids", "does not infer project scheduling policy"},
 	},
 	{
+		OrganismID:            "shift_roster_planner",
+		OperationSequence:     []string{"copy_period_sheet", "add_data_validation", "protect_formula_cells"},
+		RequiredVerifierSpecs: []string{"shift_roster_planner_verifier"},
+		NonClaims:             []string{"does not auto-grow arbitrary roster matrices", "does not infer staffing policy", "does not optimize shift coverage"},
+	},
+	{
 		OrganismID:            "warehouse_reorder_tracker",
 		OperationSequence:     []string{"join_lookup", "highlight_threshold", "append_structured_rows", "add_data_validation", "protect_formula_cells"},
 		RequiredVerifierSpecs: []string{"warehouse_reorder_tracker_verifier"},
@@ -115,6 +121,8 @@ func PlanForRequest(requestText string) (Plan, bool) {
 		return planForOrganism("attendance_register")
 	case containsAny(normalized, "project timeline", "timeline period", "task progress", "timeline status", "gantt"):
 		return planForOrganism("project_timeline_tracker")
+	case containsAny(normalized, "shift roster", "roster", "shift code", "shift codes", "coverage formulas"):
+		return planForOrganism("shift_roster_planner")
 	case containsAny(normalized, "reorder", "low stock", "low-stock", "reorder point", "reorder level"):
 		return planForOrganism("warehouse_reorder_tracker")
 	case containsAny(normalized, "inventory", "stock", "sku"):

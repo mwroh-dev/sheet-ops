@@ -82,6 +82,8 @@ func DraftOrganismExecutionRequest(input OrganismDraftInput) (OrganismExecutionR
 		return draftAttendanceRegister(input)
 	case "project_timeline_tracker":
 		return draftProjectTimelineTracker(input)
+	case "shift_roster_planner":
+		return draftShiftRosterPlanner(input)
 	case "timesheet_hours_log":
 		return draftTimesheetHoursLog(input)
 	case "warehouse_reorder_tracker":
@@ -95,6 +97,70 @@ func DraftOrganismExecutionRequest(input OrganismDraftInput) (OrganismExecutionR
 	default:
 		return OrganismExecutionRequestDraft{}, false
 	}
+}
+
+func draftShiftRosterPlanner(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
+	sheet, ok := findShiftRosterSheet(input.WorkbookFacts)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumns := formulaColumnsForSheet(sheet)
+	if len(formulaColumns) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumnLetters := make([]string, 0, len(formulaColumns))
+	for _, column := range formulaColumns {
+		if letter, ok := columnLetterForHeader(sheet.Columns, column); ok {
+			formulaColumnLetters = append(formulaColumnLetters, letter)
+		}
+	}
+	if len(formulaColumnLetters) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	minFormulaRow, maxFormulaRow, ok := formulaRowBounds(sheet)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	shiftColumnLetter, ok := columnLetterForHeader(sheet.Columns, "shift")
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	nextSheet := "Week2"
+
+	return OrganismExecutionRequestDraft{
+		ScenarioID:  input.ScenarioID,
+		RequestText: input.RequestText,
+		InputFile:   input.InputFile,
+		OutputFile:  input.OutputFile,
+		Steps: []OrganismExecutionStepDraft{
+			{
+				AtomID:          "copy_period_sheet",
+				CompositionKind: "period_copy",
+				SourceSheet:     sheet.Name,
+				TargetSheet:     nextSheet,
+			},
+			{
+				AtomID:          "add_data_validation",
+				CompositionKind: "data_validation",
+				SourceSheet:     nextSheet,
+				ValidationRule: &DataValidationRule{
+					Ranges:        []string{shiftColumnLetter + "2:" + shiftColumnLetter + "20"},
+					RuleType:      "list",
+					AllowedValues: []string{"AM", "PM", "OFF"},
+					AllowBlank:    false,
+				},
+			},
+			{
+				AtomID:          "protect_formula_cells",
+				CompositionKind: "formula_protection",
+				SourceSheet:     nextSheet,
+				ProtectionRule: &FormulaProtectionRule{
+					FormulaRanges: []string{formulaRange(formulaColumnLetters, minFormulaRow, maxFormulaRow)},
+					InputRanges:   []string{"A2:C20"},
+				},
+			},
+		},
+	}, true
 }
 
 func draftProjectTimelineTracker(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
@@ -1142,6 +1208,16 @@ func findProjectTimelineSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspec
 	for _, sheet := range facts.Sheets {
 		headers := lowerSet(sheet.Columns)
 		if headers["task"] && headers["start"] && headers["end"] && headers["status"] && headers["task_count"] && headers["progress_pct"] {
+			return sheet, true
+		}
+	}
+	return runtimeinspect.SheetFacts{}, false
+}
+
+func findShiftRosterSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect.SheetFacts, bool) {
+	for _, sheet := range facts.Sheets {
+		headers := lowerSet(sheet.Columns)
+		if headers["employee"] && headers["date"] && headers["shift"] && headers["coverage_total"] {
 			return sheet, true
 		}
 	}

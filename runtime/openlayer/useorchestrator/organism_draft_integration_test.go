@@ -579,6 +579,86 @@ func TestOrchestrateOrganismExecutesRequestCompilerProjectTimelineDraft(t *testi
 	}
 }
 
+func TestOrchestrateOrganismExecutesRequestCompilerShiftRosterDraft(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "roster.xlsx")
+	outputFile := filepath.Join(tempDir, "roster-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Week1"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Week1", "A1", &[]any{"employee", "date", "shift", "coverage_total"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Week1", "A2", &[]any{"Alex", "2026-06-01", "AM"}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetSheetRow("Week1", "A3", &[]any{"Blair", "2026-06-01", "PM"}); err != nil {
+		t.Fatalf("SetSheetRow row3: %v", err)
+	}
+	if err := file.SetCellFormula("Week1", "D2", "=IF(C2=\"OFF\",0,1)"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if err := file.SetCellFormula("Week1", "D3", "=IF(C3=\"OFF\",0,1)"); err != nil {
+		t.Fatalf("SetCellFormula(D3): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	facts, err := runtimeinspect.InspectWorkbookFacts(inputFile)
+	if err != nil {
+		t.Fatalf("InspectWorkbookFacts: %v", err)
+	}
+	requestText := "Copy weekly shift roster, validate shift codes, and protect coverage formulas"
+	plan := requestcompiler.TemplateClassPlanHintForRequest(requestText)
+	if plan == nil {
+		t.Fatal("missing plan")
+	}
+	draft, ok := requestcompiler.DraftOrganismExecutionRequest(requestcompiler.OrganismDraftInput{
+		ScenarioID:        "shift-roster-organism-draft-integration",
+		RequestText:       requestText,
+		InputFile:         inputFile,
+		OutputFile:        outputFile,
+		WorkbookFacts:     facts,
+		TemplateClassPlan: *plan,
+	})
+	if !ok {
+		t.Fatal("DraftOrganismExecutionRequest ok=false")
+	}
+	raw, err := json.Marshal(draft)
+	if err != nil {
+		t.Fatalf("Marshal draft: %v", err)
+	}
+	var req OrganismExecutionRequest
+	if err := json.Unmarshal(raw, &req); err != nil {
+		t.Fatalf("Unmarshal draft: %v", err)
+	}
+
+	result, err := OrchestrateOrganism(req)
+	if err != nil {
+		t.Fatalf("OrchestrateOrganism: %v", err)
+	}
+	if !result.TemplateClassEvaluation.Pass || !result.OrganismVerification.Pass {
+		t.Fatalf("organism evidence failed: eval=%+v verification=%+v", result.TemplateClassEvaluation, result.OrganismVerification)
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	if got, err := outputHandle.GetCellValue("Week2", "A2"); err != nil || got != "Alex" {
+		t.Fatalf("Week2!A2=%q err=%v want Alex", got, err)
+	}
+	if got, err := outputHandle.GetCellFormula("Week2", "D2"); err != nil || got != "=IF(C2=\"OFF\",0,1)" {
+		t.Fatalf("Week2!D2 formula=%q err=%v want =IF(C2=\"OFF\",0,1)", got, err)
+	}
+}
+
 func TestOrchestrateOrganismExecutesRequestCompilerTimesheetDraft(t *testing.T) {
 	tempDir := t.TempDir()
 	inputFile := filepath.Join(tempDir, "timesheet.xlsx")

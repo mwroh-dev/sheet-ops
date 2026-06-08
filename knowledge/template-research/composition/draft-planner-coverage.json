@@ -92,11 +92,14 @@
     },
     {
       "organism_id": "shift_roster_planner",
-      "draft_status": "explicit_request_only",
-      "runtime_entrypoint": "",
-      "evidence_tests": [],
-      "current_limit": "No workbook-facts draft planner for shift roster matrix growth or coverage validation.",
-      "next_gate": "Add a shift roster fixture with person/date matrix, validation lists, protected coverage totals, and period copy."
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsShiftRosterStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerShiftRosterDraft"
+      ],
+      "current_limit": "Row/date/shift roster with period copy, shift-code validation, and protected coverage formulas only; does not auto-grow arbitrary roster matrices or optimize staffing.",
+      "next_gate": "Add shift roster fixtures with person/date matrix growth, coverage summary verification, staffing constraints, and roster grid projection."
     },
     {
       "organism_id": "construction_cost_tracker",
