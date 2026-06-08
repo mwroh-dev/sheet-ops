@@ -46,7 +46,7 @@ goal. It does not claim full workbook generation or broad Excel automation.
   line-item, monthly budget, inventory movement, student gradebook, and loan
   repayment schedule mechanics.
 - Draft planner coverage is now machine-recorded for all 21 roadmap organisms:
-  thirteen have runtime draft planners and eight remain explicit-request-only.
+  fourteen have runtime draft planners and seven remain explicit-request-only.
 - The knowledge harness validates roadmap coverage, fixture priority alignment,
   advisory authority, supported atom references, absence of planned blockers,
   preview evidence presence, verified-class depth contract references, and
@@ -84,7 +84,8 @@ goal. It does not claim full workbook generation or broad Excel automation.
   tracking, expense reimbursement claims, purchase order line-item control, and
   attendance register period-copy/status control, and project timeline task
   table status/progress control, and shift roster period-copy/shift-code
-  control. The remaining eight roadmap
+  control, and construction cost row/variance/overrun control. The remaining
+  seven roadmap
   organisms are explicitly tracked as explicit-request-only until focused schema
   and open-layer execution evidence exist.
 - Native Excel pivot artifacts are not supported.

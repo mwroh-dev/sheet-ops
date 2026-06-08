@@ -1206,3 +1206,35 @@ Extended the runtime draft planner to `shift_roster_planner`:
 - Advisory claim risk: shift roster support must stay at workbook control
   level until matrix growth, coverage constraints, and staffing policy
   verifiers exist.
+
+## Phase 41 Result
+
+Extended the runtime draft planner to `construction_cost_tracker`:
+
+- `runtime/templateclass` now classifies construction-cost requests before the
+  generic budget/variance route and limits the executable plan to row append,
+  formula extension, threshold highlight, and formula protection
+- `requestcompiler.DraftOrganismExecutionRequest` detects construction cost
+  tables from cost code, phase, actual, budget, and variance headers
+- the draft appends a change-order cost row, extends variance formulas, flags
+  numeric actual overruns, and protects variance formulas
+- open-layer integration proves the draft executes through
+  `OrchestrateOrganism` and produces expected appended row, extended variance
+  formula, and highlighted overrun evidence
+- `draft-planner-coverage.json` now records construction cost tracker as a
+  runtime draft planner, moving the boundary from 13/8 to 14/7
+
+## Phase 41 Self-Retro
+
+- Coverage improved: runtime draft synthesis now covers fourteen roadmap
+  organisms and adds a construction/cost-control pattern beyond generic budget
+  variance handling.
+- Remaining template needs: this draft covers cost-code row control, not
+  construction timeline projection, forecast carry-forward, cost phase
+  dashboards, or formula-evaluated variance thresholding.
+- Verifier strength: classifier, schema, draft, row append, formula extension,
+  numeric threshold highlight, formula protection, open-layer execution, and
+  organism-level evidence are covered for the slice.
+- Advisory claim risk: construction support must not be described as forecast
+  or earned-value automation until formula-evaluated variance, phase summaries,
+  and timeline/carry-forward verifiers exist.

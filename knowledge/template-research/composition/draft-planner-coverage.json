@@ -103,11 +103,14 @@
     },
     {
       "organism_id": "construction_cost_tracker",
-      "draft_status": "explicit_request_only",
-      "runtime_entrypoint": "",
-      "evidence_tests": [],
-      "current_limit": "No workbook-facts draft planner for construction cost timeline, line-item totals, and threshold exceptions.",
-      "next_gate": "Add a construction fixture with cost code rows, planned/actual variance, and threshold verification."
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsConstructionCostStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerConstructionCostDraft"
+      ],
+      "current_limit": "Cost-code row table with append, variance formula extension, numeric actual-overrun highlight, and protected formulas only; does not project construction timelines or certify forecasts.",
+      "next_gate": "Add construction fixtures with formula-evaluated variance thresholds, cost phase summaries, forecast carry-forward, and timeline view verification."
     },
     {
       "organism_id": "inventory_movement_log",

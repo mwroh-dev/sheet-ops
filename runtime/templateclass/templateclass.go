@@ -77,6 +77,12 @@ var plans = []Plan{
 		NonClaims:             []string{"does not auto-grow arbitrary roster matrices", "does not infer staffing policy", "does not optimize shift coverage"},
 	},
 	{
+		OrganismID:            "construction_cost_tracker",
+		OperationSequence:     []string{"append_structured_rows", "extend_table_formulas", "highlight_threshold", "protect_formula_cells"},
+		RequiredVerifierSpecs: []string{"construction_cost_tracker_verifier"},
+		NonClaims:             []string{"does not project construction timelines", "does not infer cost-control policy", "does not certify forecast accuracy"},
+	},
+	{
 		OrganismID:            "warehouse_reorder_tracker",
 		OperationSequence:     []string{"join_lookup", "highlight_threshold", "append_structured_rows", "add_data_validation", "protect_formula_cells"},
 		RequiredVerifierSpecs: []string{"warehouse_reorder_tracker_verifier"},
@@ -111,6 +117,8 @@ func PlanForRequest(requestText string) (Plan, bool) {
 		return planForOrganism("expense_reimbursement")
 	case containsAny(normalized, "purchase order", "po status", "po line", "vendor order", "procurement order"):
 		return planForOrganism("purchase_order_control")
+	case containsAny(normalized, "construction cost", "cost row", "cost_code", "forecast formula"):
+		return planForOrganism("construction_cost_tracker")
 	case containsAny(normalized, "budget", "variance", "over-budget", "over budget"):
 		return planForOrganism("monthly_budget_control")
 	case containsAny(normalized, "cash flow", "cash-flow", "opening balance", "closing balance"):

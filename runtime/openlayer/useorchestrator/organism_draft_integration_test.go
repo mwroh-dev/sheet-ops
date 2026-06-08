@@ -659,6 +659,83 @@ func TestOrchestrateOrganismExecutesRequestCompilerShiftRosterDraft(t *testing.T
 	}
 }
 
+func TestOrchestrateOrganismExecutesRequestCompilerConstructionCostDraft(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "construction-cost.xlsx")
+	outputFile := filepath.Join(tempDir, "construction-cost-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Costs"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Costs", "A1", &[]any{"cost_code", "phase", "actual", "budget", "variance"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Costs", "A2", &[]any{"LABOR", "framing", 90, 100}); err != nil {
+		t.Fatalf("SetSheetRow row: %v", err)
+	}
+	if err := file.SetCellFormula("Costs", "E2", "=C2-D2"); err != nil {
+		t.Fatalf("SetCellFormula(E2): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	facts, err := runtimeinspect.InspectWorkbookFacts(inputFile)
+	if err != nil {
+		t.Fatalf("InspectWorkbookFacts: %v", err)
+	}
+	requestText := "Append construction cost row, extend variance formulas, highlight budget overrun, and protect forecast formulas"
+	plan := requestcompiler.TemplateClassPlanHintForRequest(requestText)
+	if plan == nil {
+		t.Fatal("missing plan")
+	}
+	draft, ok := requestcompiler.DraftOrganismExecutionRequest(requestcompiler.OrganismDraftInput{
+		ScenarioID:        "construction-cost-organism-draft-integration",
+		RequestText:       requestText,
+		InputFile:         inputFile,
+		OutputFile:        outputFile,
+		WorkbookFacts:     facts,
+		TemplateClassPlan: *plan,
+	})
+	if !ok {
+		t.Fatal("DraftOrganismExecutionRequest ok=false")
+	}
+	raw, err := json.Marshal(draft)
+	if err != nil {
+		t.Fatalf("Marshal draft: %v", err)
+	}
+	var req OrganismExecutionRequest
+	if err := json.Unmarshal(raw, &req); err != nil {
+		t.Fatalf("Unmarshal draft: %v", err)
+	}
+
+	result, err := OrchestrateOrganism(req)
+	if err != nil {
+		t.Fatalf("OrchestrateOrganism: %v", err)
+	}
+	if !result.TemplateClassEvaluation.Pass || !result.OrganismVerification.Pass {
+		t.Fatalf("organism evidence failed: eval=%+v verification=%+v", result.TemplateClassEvaluation, result.OrganismVerification)
+	}
+	if len(result.StepResults) < 3 || len(result.StepResults[2].Verification.HighlightedRows) != 1 || result.StepResults[2].Verification.HighlightedRows[0] != 3 {
+		t.Fatalf("highlight evidence=%+v", result.StepResults)
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	if got, err := outputHandle.GetCellValue("Costs", "A3"); err != nil || got != "CHANGE" {
+		t.Fatalf("Costs!A3=%q err=%v want CHANGE", got, err)
+	}
+	if got, err := outputHandle.GetCellFormula("Costs", "E3"); err != nil || got != "=C3-D3" {
+		t.Fatalf("Costs!E3 formula=%q err=%v want =C3-D3", got, err)
+	}
+}
+
 func TestOrchestrateOrganismExecutesRequestCompilerTimesheetDraft(t *testing.T) {
 	tempDir := t.TempDir()
 	inputFile := filepath.Join(tempDir, "timesheet.xlsx")

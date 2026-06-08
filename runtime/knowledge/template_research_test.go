@@ -538,6 +538,7 @@ func TestTemplateResearchDraftPlannerCoverageStaysExplicit(t *testing.T) {
 		"attendance_register":       true,
 		"project_timeline_tracker":  true,
 		"shift_roster_planner":      true,
+		"construction_cost_tracker": true,
 		"timesheet_hours_log":       true,
 		"warehouse_reorder_tracker": true,
 		"inventory_movement_log":    true,

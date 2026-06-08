@@ -84,6 +84,8 @@ func DraftOrganismExecutionRequest(input OrganismDraftInput) (OrganismExecutionR
 		return draftProjectTimelineTracker(input)
 	case "shift_roster_planner":
 		return draftShiftRosterPlanner(input)
+	case "construction_cost_tracker":
+		return draftConstructionCostTracker(input)
 	case "timesheet_hours_log":
 		return draftTimesheetHoursLog(input)
 	case "warehouse_reorder_tracker":
@@ -97,6 +99,78 @@ func DraftOrganismExecutionRequest(input OrganismDraftInput) (OrganismExecutionR
 	default:
 		return OrganismExecutionRequestDraft{}, false
 	}
+}
+
+func draftConstructionCostTracker(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
+	sheet, ok := findConstructionCostSheet(input.WorkbookFacts)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	inputColumns, formulaColumns := splitInputAndFormulaColumns(sheet)
+	if len(inputColumns) == 0 || len(formulaColumns) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaSourceRow, targetRow, ok := formulaRows(sheet)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumnLetters := make([]string, 0, len(formulaColumns))
+	for _, column := range formulaColumns {
+		if letter, ok := columnLetterForHeader(sheet.Columns, column); ok {
+			formulaColumnLetters = append(formulaColumnLetters, letter)
+		}
+	}
+	if len(formulaColumnLetters) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	threshold := 100.0
+
+	return OrganismExecutionRequestDraft{
+		ScenarioID:  input.ScenarioID,
+		RequestText: input.RequestText,
+		InputFile:   input.InputFile,
+		OutputFile:  input.OutputFile,
+		Steps: []OrganismExecutionStepDraft{
+			{
+				AtomID:               "append_structured_rows",
+				CompositionKind:      "structured_row_append",
+				SourceSheet:          sheet.Name,
+				IncludeSourceColumns: append([]string(nil), inputColumns...),
+				Values: []CellValue{
+					{Cell: "cost_code", Value: "CHANGE"},
+					{Cell: "phase", Value: "change_order"},
+					{Cell: "actual", Value: 150},
+					{Cell: "budget", Value: 100},
+				},
+			},
+			{
+				AtomID:           "extend_table_formulas",
+				CompositionKind:  "formula_extension",
+				SourceSheet:      sheet.Name,
+				FormulaSourceRow: formulaSourceRow,
+				TargetRows:       []int{targetRow},
+				FormulaColumns:   formulaColumnLetters,
+			},
+			{
+				AtomID:          "highlight_threshold",
+				CompositionKind: "threshold_highlight",
+				SourceSheet:     sheet.Name,
+				TargetColumn:    "actual",
+				Operator:        ">",
+				Threshold:       &threshold,
+				HighlightColor:  "#FFC7CE",
+			},
+			{
+				AtomID:          "protect_formula_cells",
+				CompositionKind: "formula_protection",
+				SourceSheet:     sheet.Name,
+				ProtectionRule: &FormulaProtectionRule{
+					FormulaRanges: []string{formulaRange(formulaColumnLetters, formulaSourceRow, targetRow)},
+					InputRanges:   []string{inputRange(inputColumns, targetRow)},
+				},
+			},
+		},
+	}, true
 }
 
 func draftShiftRosterPlanner(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
@@ -1218,6 +1292,16 @@ func findShiftRosterSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect.Sh
 	for _, sheet := range facts.Sheets {
 		headers := lowerSet(sheet.Columns)
 		if headers["employee"] && headers["date"] && headers["shift"] && headers["coverage_total"] {
+			return sheet, true
+		}
+	}
+	return runtimeinspect.SheetFacts{}, false
+}
+
+func findConstructionCostSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect.SheetFacts, bool) {
+	for _, sheet := range facts.Sheets {
+		headers := lowerSet(sheet.Columns)
+		if headers["cost_code"] && headers["phase"] && headers["actual"] && headers["budget"] && headers["variance"] {
 			return sheet, true
 		}
 	}

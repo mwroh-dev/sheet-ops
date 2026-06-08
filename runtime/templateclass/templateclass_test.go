@@ -116,6 +116,20 @@ func TestPlanForRequestClassifiesShiftRosterPlanner(t *testing.T) {
 	}
 }
 
+func TestPlanForRequestClassifiesConstructionCostTracker(t *testing.T) {
+	plan, ok := PlanForRequest("Append construction cost row, extend variance formulas, highlight budget overrun, and protect forecast formulas")
+	if !ok {
+		t.Fatal("PlanForRequest returned ok=false")
+	}
+	if plan.OrganismID != "construction_cost_tracker" {
+		t.Fatalf("organism=%q want construction_cost_tracker", plan.OrganismID)
+	}
+	wantOps := []string{"append_structured_rows", "extend_table_formulas", "highlight_threshold", "protect_formula_cells"}
+	if !sameStrings(plan.OperationSequence, wantOps) {
+		t.Fatalf("operation sequence=%v want %v", plan.OperationSequence, wantOps)
+	}
+}
+
 func TestPlanForRequestClassifiesWarehouseReorderTracker(t *testing.T) {
 	plan, ok := PlanForRequest("Enrich warehouse reorder stock with SKU location, flag low stock, append reorder candidate, validate SKU, and protect reorder formulas")
 	if !ok {
