@@ -22,6 +22,9 @@ goal. It does not claim full workbook generation or broad Excel automation.
 - Runtime productization contracts now cover organism-level verifier specs,
   operation planner sequences, template class harness scenarios, and advanced
   atom promotion decisions.
+- Organism-level verifier specs now cover all 21 runtime draft planner
+  organisms, so every required verifier spec id emitted by `runtime/templateclass`
+  has an advisory acceptance contract.
 - `runtime/templateclass` provides a deterministic classifier/planner/evidence
   evaluator for the first productization slice.
 - `runtime/workbookcase.RunOrganismPlan` provides multi-operation organism
@@ -66,7 +69,8 @@ goal. It does not claim full workbook generation or broad Excel automation.
 
 - Preview fixtures are representative, not full template generators.
 - Aggregate organism-level verification exists for the first productization
-  slice, but domain-specific organism verifiers do not exist yet. Runtime
+  slice, and verifier specs now cover all 21 runtime draft planner organisms.
+  Domain-specific standalone organism verifiers do not exist yet. Runtime
   evidence still relies on operation-specific verifier depth for workbook
   semantics.
 - Operation planner and template class harness records are mostly advisory

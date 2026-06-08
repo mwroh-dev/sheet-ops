@@ -1490,3 +1490,33 @@ Extended the runtime draft planner to `safety_compliance_register`:
   autonomous template generation. It proves deterministic draft synthesis for
   representative workbook shapes; domain-specific policies, layout depth, and
   richer verifiers remain separate promotion gates.
+
+## Phase 49 Result
+
+Closed the verifier-spec catalog gap after 21/21 draft planner coverage:
+
+- `runtime/knowledge` now derives the required verifier-spec organism set from
+  `draft-planner-coverage.json` instead of hard-coding the first five
+  productization classes
+- `knowledge/template-research/runtime/organism-verifier-specs.json` now
+  contains advisory verifier specs for all 21 runtime draft planner organisms
+- each spec declares at least three acceptance checks, supported atom verifier
+  dependencies, explicit non-claims, and a promotion gate
+- the runtime productization artifact test now fails if any runtime draft
+  organism emits a required verifier spec id without a matching advisory
+  contract
+
+## Phase 49 Self-Retro
+
+- Coverage improved: the 21/21 draft planner layer now has matching 21/21
+  verifier-spec contract coverage, closing the strongest inconsistency between
+  `runtime/templateclass` required verifier ids and research runtime artifacts.
+- Remaining template needs: these are advisory acceptance specs, not standalone
+  domain-specific verifier implementations. Execution still relies on
+  operation-specific verifiers plus aggregate organism evidence.
+- Verifier strength: schema validation, supported atom dependency checks, and
+  runtime-draft-derived expected organism coverage are now enforced in the
+  knowledge harness.
+- Advisory claim risk: this must not be described as full semantic validation
+  for every domain. It proves that every runtime draft organism has an explicit
+  verifier contract; richer per-domain verifier code remains a later gate.

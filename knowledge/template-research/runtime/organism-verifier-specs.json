@@ -1,7 +1,7 @@
 {
   "version": 1,
   "authority": "advisory_runtime_depth",
-  "summary": "Organism-level verifier specs for the first productization slice. These specs aggregate existing atom verifier evidence into document-class acceptance criteria without claiming public organism runtime support.",
+  "summary": "Organism-level verifier specs for all round-009 runtime draft planner organisms. These specs aggregate existing atom verifier evidence into bounded document-class acceptance criteria without claiming broad autonomous template generation.",
   "specs": [
     {
       "spec_id": "invoice_line_item_billing_verifier",
@@ -21,6 +21,38 @@
       "promotion_gate": "Promote only after a single organism-level verifier aggregates all invoice preview atom results and workbook inspections."
     },
     {
+      "spec_id": "expense_reimbursement_verifier",
+      "organism_id": "expense_reimbursement",
+      "acceptance_checks": [
+        "expense rows are appended to the reimbursement item table",
+        "reimbursable-total formulas extend to appended rows",
+        "receipt-status validation, protected reimbursement formulas, and printable claim output are all present"
+      ],
+      "atom_verifier_dependencies": ["append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells", "generate_printable_form"],
+      "non_claims": [
+        "does not enforce company expense policy",
+        "does not approve reimbursements",
+        "does not perform tax advice"
+      ],
+      "promotion_gate": "Promote only after reimbursement fixtures verify appended expenses, receipt validation, formula protection, and printable claim layout together."
+    },
+    {
+      "spec_id": "purchase_order_control_verifier",
+      "organism_id": "purchase_order_control",
+      "acceptance_checks": [
+        "purchase-order line rows are appended to the order table",
+        "line-total formulas extend to appended rows",
+        "PO status validation, protected order formulas, and printable purchase order output are all present"
+      ],
+      "atom_verifier_dependencies": ["append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells", "generate_printable_form"],
+      "non_claims": [
+        "does not approve purchases",
+        "does not infer procurement policy",
+        "does not create vendor contract terms"
+      ],
+      "promotion_gate": "Promote only after purchase-order fixtures verify line append, formula extension, status validation, protected totals, and printable order output together."
+    },
+    {
       "spec_id": "monthly_budget_control_verifier",
       "organism_id": "monthly_budget_control",
       "acceptance_checks": [
@@ -35,6 +67,102 @@
         "does not create native pivot tables"
       ],
       "promotion_gate": "Promote only after a budget fixture verifies summary, threshold, period copy, carry-forward, and protected summary in one flow."
+    },
+    {
+      "spec_id": "cash_flow_monitor_verifier",
+      "organism_id": "cash_flow_monitor",
+      "acceptance_checks": [
+        "cash-flow rows summarize by category or flow type",
+        "opening and closing balance formulas extend or roll forward without reference drift",
+        "copied period sheets and protected balance formulas are present when included in the plan"
+      ],
+      "atom_verifier_dependencies": ["group_summarize", "extend_table_formulas", "copy_period_sheet", "roll_forward_period", "protect_formula_cells"],
+      "non_claims": [
+        "does not create financial advice",
+        "does not infer cash-flow policy",
+        "does not create native pivot tables"
+      ],
+      "promotion_gate": "Promote only after cash-flow fixtures verify summary, formula continuity, period copy, roll-forward mapping, and protected balance cells together."
+    },
+    {
+      "spec_id": "attendance_register_verifier",
+      "organism_id": "attendance_register",
+      "acceptance_checks": [
+        "attendance period sheet is copied when the plan includes period rollover",
+        "attendance status values are constrained by validation",
+        "attendance formulas or totals remain protected on the copied register"
+      ],
+      "atom_verifier_dependencies": ["copy_period_sheet", "add_data_validation", "protect_formula_cells"],
+      "non_claims": [
+        "does not auto-grow arbitrary attendance matrices",
+        "does not infer attendance policy",
+        "does not project calendar schedules"
+      ],
+      "promotion_gate": "Promote only after attendance fixtures verify period copy, status validation, protected totals, and matrix-growth exclusions together."
+    },
+    {
+      "spec_id": "timesheet_hours_log_verifier",
+      "organism_id": "timesheet_hours_log",
+      "acceptance_checks": [
+        "timesheet period sheet is copied and new hour rows are appended",
+        "hour or pay formulas extend to appended rows",
+        "work-code validation and protected total formulas are present"
+      ],
+      "atom_verifier_dependencies": ["copy_period_sheet", "append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells"],
+      "non_claims": [
+        "does not calculate payroll taxes",
+        "does not infer labor policy",
+        "does not certify billable hours"
+      ],
+      "promotion_gate": "Promote only after timesheet fixtures verify period copy, hour row append, formula extension, validation, and protected totals together."
+    },
+    {
+      "spec_id": "project_timeline_tracker_verifier",
+      "organism_id": "project_timeline_tracker",
+      "acceptance_checks": [
+        "timeline period sheet is copied when the plan includes period rollover",
+        "task progress formulas extend and task status values are validated",
+        "status summaries and protected progress formulas are present"
+      ],
+      "atom_verifier_dependencies": ["copy_period_sheet", "extend_table_formulas", "add_data_validation", "group_summarize", "protect_formula_cells"],
+      "non_claims": [
+        "does not render a gantt chart",
+        "does not project arbitrary timeline grids",
+        "does not infer project scheduling policy"
+      ],
+      "promotion_gate": "Promote only after timeline fixtures verify period copy, formula extension, status validation, status summary, and protected progress formulas together."
+    },
+    {
+      "spec_id": "shift_roster_planner_verifier",
+      "organism_id": "shift_roster_planner",
+      "acceptance_checks": [
+        "roster period sheet is copied when the plan includes week rollover",
+        "shift-code values are constrained by validation",
+        "coverage formulas on the roster remain protected"
+      ],
+      "atom_verifier_dependencies": ["copy_period_sheet", "add_data_validation", "protect_formula_cells"],
+      "non_claims": [
+        "does not auto-grow arbitrary roster matrices",
+        "does not infer staffing policy",
+        "does not optimize shift coverage"
+      ],
+      "promotion_gate": "Promote only after roster fixtures verify period copy, shift-code validation, protected coverage formulas, and staffing-policy exclusions together."
+    },
+    {
+      "spec_id": "construction_cost_tracker_verifier",
+      "organism_id": "construction_cost_tracker",
+      "acceptance_checks": [
+        "construction cost rows are appended to the cost table",
+        "variance or forecast formulas extend to appended rows",
+        "cost overrun rows are highlighted and protected formula ranges remain locked"
+      ],
+      "atom_verifier_dependencies": ["append_structured_rows", "extend_table_formulas", "highlight_threshold", "protect_formula_cells"],
+      "non_claims": [
+        "does not project construction timelines",
+        "does not infer cost-control policy",
+        "does not certify forecast accuracy"
+      ],
+      "promotion_gate": "Promote only after construction fixtures verify row append, variance formula extension, threshold highlighting, and protected forecast formulas together."
     },
     {
       "spec_id": "inventory_movement_log_verifier",
@@ -53,6 +181,38 @@
       "promotion_gate": "Promote only after an inventory fixture combines movement append, balance formulas, SKU enrichment, and reconciliation verification."
     },
     {
+      "spec_id": "procurement_reconciliation_verifier",
+      "organism_id": "procurement_reconciliation",
+      "acceptance_checks": [
+        "procurement invoice status values are constrained by validation",
+        "PO and invoice tables reconcile with deterministic match or mismatch output",
+        "review formulas remain protected after reconciliation"
+      ],
+      "atom_verifier_dependencies": ["add_data_validation", "reconcile_tables", "protect_formula_cells"],
+      "non_claims": [
+        "does not perform three-way receipt matching",
+        "does not approve invoices",
+        "does not infer procurement policy"
+      ],
+      "promotion_gate": "Promote only after procurement fixtures verify status validation, PO-to-invoice reconciliation, protected review formulas, and duplicate-key exclusions together."
+    },
+    {
+      "spec_id": "warehouse_reorder_tracker_verifier",
+      "organism_id": "warehouse_reorder_tracker",
+      "acceptance_checks": [
+        "SKU rows are enriched from the warehouse master lookup",
+        "low-stock or reorder rows are highlighted by deterministic thresholds",
+        "reorder candidate rows, SKU validation, and protected reorder formulas are present"
+      ],
+      "atom_verifier_dependencies": ["join_lookup", "highlight_threshold", "append_structured_rows", "add_data_validation", "protect_formula_cells"],
+      "non_claims": [
+        "does not infer warehouse policy",
+        "does not calculate reorder quantity policy",
+        "does not resolve duplicate SKU keys"
+      ],
+      "promotion_gate": "Promote only after warehouse fixtures verify lookup enrichment, low-stock highlighting, candidate append, validation, and protected formulas together."
+    },
+    {
       "spec_id": "student_gradebook_verifier",
       "organism_id": "student_gradebook",
       "acceptance_checks": [
@@ -67,6 +227,102 @@
         "does not create native Excel pivots"
       ],
       "promotion_gate": "Promote only after score summary, validation, protected formulas, and matrix-growth semantics are checked in one organism verifier."
+    },
+    {
+      "spec_id": "training_completion_matrix_verifier",
+      "organism_id": "training_completion_matrix",
+      "acceptance_checks": [
+        "training completion rows summarize by employee or learner",
+        "training status values are constrained by validation",
+        "completion formulas remain protected and printable training report output is present"
+      ],
+      "atom_verifier_dependencies": ["group_summarize", "add_data_validation", "protect_formula_cells", "generate_printable_form"],
+      "non_claims": [
+        "does not auto-grow arbitrary training matrices",
+        "does not infer compliance policy",
+        "does not optimize cross-training coverage"
+      ],
+      "promotion_gate": "Promote only after training fixtures verify completion summary, status validation, protected formulas, printable report output, and matrix-growth exclusions together."
+    },
+    {
+      "spec_id": "service_ticket_queue_verifier",
+      "organism_id": "service_ticket_queue",
+      "acceptance_checks": [
+        "service ticket rows are appended to the queue table",
+        "SLA breach formulas extend to appended rows",
+        "ticket status validation, overdue highlighting, status summary, and protected SLA formulas are present"
+      ],
+      "atom_verifier_dependencies": ["append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells"],
+      "non_claims": [
+        "does not route or assign tickets",
+        "does not infer SLA policy",
+        "does not create native queue dashboards"
+      ],
+      "promotion_gate": "Promote only after ticket fixtures verify row append, SLA formula extension, status validation, overdue highlighting, summary, and protected formulas together."
+    },
+    {
+      "spec_id": "sales_pipeline_tracker_verifier",
+      "organism_id": "sales_pipeline_tracker",
+      "acceptance_checks": [
+        "sales deal rows are appended to the pipeline table",
+        "weighted-value formulas extend to appended rows",
+        "stage validation, large-deal highlighting, stage summary, and protected forecast formulas are present"
+      ],
+      "atom_verifier_dependencies": ["append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells"],
+      "non_claims": [
+        "does not forecast revenue",
+        "does not infer sales process policy",
+        "does not create native pipeline dashboards"
+      ],
+      "promotion_gate": "Promote only after sales fixtures verify deal append, weighted formula extension, stage validation, threshold highlighting, summary, and protected formulas together."
+    },
+    {
+      "spec_id": "maintenance_issue_log_verifier",
+      "organism_id": "maintenance_issue_log",
+      "acceptance_checks": [
+        "maintenance issue rows are appended to the issue log",
+        "action-required formulas extend to appended rows",
+        "issue status validation, risk highlighting, status summary, and protected action formulas are present"
+      ],
+      "atom_verifier_dependencies": ["append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells"],
+      "non_claims": [
+        "does not dispatch maintenance work",
+        "does not infer safety or maintenance policy",
+        "does not schedule technicians"
+      ],
+      "promotion_gate": "Promote only after maintenance fixtures verify issue append, formula extension, status validation, risk highlighting, summary, and protected formulas together."
+    },
+    {
+      "spec_id": "compliance_action_register_verifier",
+      "organism_id": "compliance_action_register",
+      "acceptance_checks": [
+        "compliance action rows are appended to the action register",
+        "review-required formulas extend to appended rows",
+        "action status validation, overdue highlighting, status summary, protected review formulas, and printable register output are present"
+      ],
+      "atom_verifier_dependencies": ["append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells", "generate_printable_form"],
+      "non_claims": [
+        "does not interpret regulations",
+        "does not approve compliance actions",
+        "does not certify audit readiness"
+      ],
+      "promotion_gate": "Promote only after compliance fixtures verify action append, formula extension, status validation, overdue highlighting, summary, protected formulas, and printable output together."
+    },
+    {
+      "spec_id": "safety_compliance_register_verifier",
+      "organism_id": "safety_compliance_register",
+      "acceptance_checks": [
+        "safety check rows are appended to the safety register",
+        "action-required formulas extend to appended rows",
+        "safety status validation, risk highlighting, area completion summary, protected action formulas, and printable report output are present"
+      ],
+      "atom_verifier_dependencies": ["append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells", "generate_printable_form"],
+      "non_claims": [
+        "does not certify safety compliance",
+        "does not infer safety policy",
+        "does not replace safety inspections"
+      ],
+      "promotion_gate": "Promote only after safety fixtures verify check append, formula extension, status validation, risk highlighting, completion summary, protected formulas, and printable output together."
     },
     {
       "spec_id": "loan_repayment_calculator_verifier",

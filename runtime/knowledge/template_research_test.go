@@ -418,15 +418,10 @@ func TestTemplateResearchRuntimeProductizationArtifactsValidate(t *testing.T) {
 	supportedAtoms := loadSupportedCapabilityNames(t, filepath.Join(root, "contracts", "capabilities", "capability.schema.json"))
 	opportunityAtoms := loadOpportunityCapabilityNames(t, filepath.Join(root, "knowledge", "template-research", "opportunities", "*.json"))
 	coverageTiers := loadTemplateResearchCoverageTiers(t, filepath.Join(root, "knowledge", "template-research", "composition", "executable-organism-coverage.json"))
+	runtimeDraftOrganisms := loadTemplateResearchRuntimeDraftOrganisms(t, filepath.Join(root, "knowledge", "template-research", "composition", "draft-planner-coverage.json"))
 
 	verifierSpecs := loadRuntimeProductizationVerifierSpecs(t, verifierPath)
-	for _, organism := range []string{
-		"invoice_line_item_billing",
-		"monthly_budget_control",
-		"inventory_movement_log",
-		"student_gradebook",
-		"loan_repayment_calculator",
-	} {
+	for _, organism := range runtimeDraftOrganisms {
 		spec, ok := verifierSpecs[organism]
 		if !ok {
 			t.Fatalf("organism verifier spec missing %q", organism)
@@ -765,6 +760,30 @@ func loadTemplateResearchCoverageTiers(t *testing.T, path string) map[string]str
 		tiers[organism.OrganismID] = organism.CoverageTier
 	}
 	return tiers
+}
+
+func loadTemplateResearchRuntimeDraftOrganisms(t *testing.T, path string) []string {
+	t.Helper()
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", path, err)
+	}
+	var catalog struct {
+		Coverage []struct {
+			OrganismID  string `json:"organism_id"`
+			DraftStatus string `json:"draft_status"`
+		} `json:"coverage"`
+	}
+	if err := json.Unmarshal(raw, &catalog); err != nil {
+		t.Fatalf("Unmarshal(%s): %v", path, err)
+	}
+	var organisms []string
+	for _, record := range catalog.Coverage {
+		if record.DraftStatus == "runtime_draft_planner" {
+			organisms = append(organisms, record.OrganismID)
+		}
+	}
+	return organisms
 }
 
 type runtimeProductizationVerifierSpec struct {
