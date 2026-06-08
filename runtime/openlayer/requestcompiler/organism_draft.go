@@ -100,6 +100,8 @@ func DraftOrganismExecutionRequest(input OrganismDraftInput) (OrganismExecutionR
 		return draftTrainingCompletionMatrix(input)
 	case "service_ticket_queue":
 		return draftServiceTicketQueue(input)
+	case "sales_pipeline_tracker":
+		return draftSalesPipelineTracker(input)
 	case "loan_repayment_calculator":
 		return draftLoanRepaymentCalculator(input)
 	default:
@@ -989,6 +991,103 @@ func draftServiceTicketQueue(input OrganismDraftInput) (OrganismExecutionRequest
 	}, true
 }
 
+func draftSalesPipelineTracker(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
+	sheet, ok := findSalesPipelineSheet(input.WorkbookFacts)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	inputColumns, formulaColumns := splitInputAndFormulaColumns(sheet)
+	if len(inputColumns) == 0 || len(formulaColumns) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaSourceRow, targetRow, ok := formulaRows(sheet)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumnLetters := make([]string, 0, len(formulaColumns))
+	for _, column := range formulaColumns {
+		if letter, ok := columnLetterForHeader(sheet.Columns, column); ok {
+			formulaColumnLetters = append(formulaColumnLetters, letter)
+		}
+	}
+	if len(formulaColumnLetters) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	stageColumnLetter, ok := columnLetterForHeader(sheet.Columns, "stage")
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	threshold := 10000.0
+
+	return OrganismExecutionRequestDraft{
+		ScenarioID:  input.ScenarioID,
+		RequestText: input.RequestText,
+		InputFile:   input.InputFile,
+		OutputFile:  input.OutputFile,
+		Steps: []OrganismExecutionStepDraft{
+			{
+				AtomID:               "append_structured_rows",
+				CompositionKind:      "structured_row_append",
+				SourceSheet:          sheet.Name,
+				IncludeSourceColumns: append([]string(nil), inputColumns...),
+				Values: []CellValue{
+					{Cell: "deal_id", Value: "D-2"},
+					{Cell: "stage", Value: "proposal"},
+					{Cell: "deal_value", Value: 15000},
+					{Cell: "probability", Value: 0.6},
+					{Cell: "deal_count", Value: 1},
+				},
+			},
+			{
+				AtomID:           "extend_table_formulas",
+				CompositionKind:  "formula_extension",
+				SourceSheet:      sheet.Name,
+				FormulaSourceRow: formulaSourceRow,
+				TargetRows:       []int{targetRow},
+				FormulaColumns:   formulaColumnLetters,
+			},
+			{
+				AtomID:          "add_data_validation",
+				CompositionKind: "data_validation",
+				SourceSheet:     sheet.Name,
+				ValidationRule: &DataValidationRule{
+					Ranges:        []string{stageColumnLetter + "2:" + stageColumnLetter + "20"},
+					RuleType:      "list",
+					AllowedValues: []string{"lead", "qualified", "proposal", "won", "lost"},
+					AllowBlank:    false,
+				},
+			},
+			{
+				AtomID:          "highlight_threshold",
+				CompositionKind: "threshold_highlight",
+				SourceSheet:     sheet.Name,
+				TargetColumn:    "deal_value",
+				Operator:        ">",
+				Threshold:       &threshold,
+				HighlightColor:  "#FFC7CE",
+			},
+			{
+				AtomID:          "group_summarize",
+				CompositionKind: "group_summary",
+				SourceSheet:     sheet.Name,
+				TargetSheet:     "PipelineSummary",
+				SummaryMode:     "values",
+				GroupBy:         []string{"stage"},
+				Metrics:         []MetricSpec{{Column: "deal_count", Op: "sum", As: "deal_total"}},
+			},
+			{
+				AtomID:          "protect_formula_cells",
+				CompositionKind: "formula_protection",
+				SourceSheet:     sheet.Name,
+				ProtectionRule: &FormulaProtectionRule{
+					FormulaRanges: []string{formulaRange(formulaColumnLetters, formulaSourceRow, targetRow)},
+					InputRanges:   []string{"A2:D20", "F2:F20"},
+				},
+			},
+		},
+	}, true
+}
+
 func draftTrainingCompletionMatrix(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
 	sheet, ok := findTrainingCompletionSheet(input.WorkbookFacts)
 	if !ok {
@@ -1630,6 +1729,16 @@ func findServiceTicketSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect.
 	for _, sheet := range facts.Sheets {
 		headers := lowerSet(sheet.Columns)
 		if headers["ticket_id"] && headers["status"] && headers["days_open"] && headers["sla_breach"] && headers["ticket_count"] {
+			return sheet, true
+		}
+	}
+	return runtimeinspect.SheetFacts{}, false
+}
+
+func findSalesPipelineSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect.SheetFacts, bool) {
+	for _, sheet := range facts.Sheets {
+		headers := lowerSet(sheet.Columns)
+		if headers["deal_id"] && headers["stage"] && headers["deal_value"] && headers["probability"] && headers["weighted_value"] && headers["deal_count"] {
 			return sheet, true
 		}
 	}

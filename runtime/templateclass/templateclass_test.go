@@ -214,6 +214,20 @@ func TestPlanForRequestClassifiesServiceTicketQueue(t *testing.T) {
 	}
 }
 
+func TestPlanForRequestClassifiesSalesPipelineTracker(t *testing.T) {
+	plan, ok := PlanForRequest("Append sales pipeline deal, validate sales stage, extend weighted value formulas, flag large deals, summarize pipeline stages, and protect forecast formulas")
+	if !ok {
+		t.Fatal("PlanForRequest returned ok=false")
+	}
+	if plan.OrganismID != "sales_pipeline_tracker" {
+		t.Fatalf("organism=%q want sales_pipeline_tracker", plan.OrganismID)
+	}
+	wantOps := []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells"}
+	if !sameStrings(plan.OperationSequence, wantOps) {
+		t.Fatalf("operation sequence=%v want %v", plan.OperationSequence, wantOps)
+	}
+}
+
 func TestPlanForRequestRejectsFinancialAdviceClaim(t *testing.T) {
 	plan, ok := PlanForRequest("Give financial advice and certify the amortization correctness of this loan repayment schedule")
 	if !ok {

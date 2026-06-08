@@ -180,11 +180,14 @@
     },
     {
       "organism_id": "sales_pipeline_tracker",
-      "draft_status": "explicit_request_only",
-      "runtime_entrypoint": "",
-      "evidence_tests": [],
-      "current_limit": "No workbook-facts draft planner for sales stage pipeline or risk/threshold tracking.",
-      "next_gate": "Add a sales pipeline fixture with stage status, weighted value formulas, threshold highlights, and protected summaries."
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsSalesPipelineStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerSalesPipelineDraft"
+      ],
+      "current_limit": "Sales row pipeline with deal append, weighted-value formula extension, stage validation, numeric deal-value threshold highlighting, stage summary, and protected forecast formulas only; does not forecast revenue or infer sales process policy.",
+      "next_gate": "Add sales pipeline fixtures with stage probability policy, weighted forecast verification, aging/risk fields, close-date windows, and dashboard summary checks."
     },
     {
       "organism_id": "maintenance_issue_log",
