@@ -11,7 +11,8 @@
     "request_mode": {
       "enum": [
         "structured_use_request",
-        "prompt_text"
+        "prompt_text",
+        "organism_execution_request"
       ]
     },
     "reason": {

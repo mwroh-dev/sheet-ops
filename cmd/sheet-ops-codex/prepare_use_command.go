@@ -52,7 +52,7 @@ func newPrepareUseCommand() *cobra.Command {
 
 	cmd.Flags().StringVar(&input.ScenarioID, "scenario-id", "", "Scenario identifier for the use envelope")
 	cmd.Flags().StringVar(&input.RequestRef, "request-ref", "", "Path to the request reference file")
-	cmd.Flags().StringVar(&input.RequestKind, "request-kind", requestmode.ModePromptText, "Typed request kind: prompt_text or structured_use_request")
+	cmd.Flags().StringVar(&input.RequestKind, "request-kind", requestmode.ModePromptText, "Typed request kind: prompt_text, structured_use_request, or organism_execution_request")
 	cmd.Flags().StringVar(&input.InputFile, "input-file", "", "Path to the input workbook")
 	cmd.Flags().StringVar(&input.OutputFile, "output-file", "", "Path to the output workbook")
 	cmd.Flags().StringVar(&input.EnvelopeFile, "envelope-file", "", "Path to write the use-envelope JSON file")

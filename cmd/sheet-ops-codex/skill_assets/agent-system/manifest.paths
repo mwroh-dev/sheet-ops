@@ -3,6 +3,7 @@ manifest.paths
 bundle.manifest.json
 model-contract.json
 contracts/requests/request_ref.schema.json
+contracts/requests/organism_execution_request.schema.json
 contracts/requests/use_envelope.schema.json
 contracts/requests/use_envelope_v2.schema.json
 prompts

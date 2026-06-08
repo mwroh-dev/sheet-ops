@@ -22,6 +22,7 @@ type TelemetryEvent = runtimeworkbookcase.TelemetryEvent
 type RunIDs = runtimeworkbookcase.RunIDs
 type RunPaths = runtimeworkbookcase.RunPaths
 type RunResult = runtimeworkbookcase.RunResult
+type OrganismRunResult = runtimeworkbookcase.OrganismRunResult
 type TemplateClassPlanHint = requestcompiler.TemplateClassPlanHint
 
 type OrchestratorDecision struct {

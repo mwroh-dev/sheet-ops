@@ -75,13 +75,14 @@ Follow-up:
 
 1. Capture the user's workbook request in natural language.
 2. Separate the task facts needed to identify the scenario, request text or request file, input workbook, and output workbook.
-3. If the user already supplied the source sheet, output boundary, and operation shape clearly enough, write a structured `UseRequest` JSON request file and pack it with `--request-kind structured_use_request`. Do not pre-read the workbook through Python, `openpyxl`, ZIP/XML scraping, or other ad hoc inspection just to confirm headers.
+3. If the user already supplied the source sheet, output boundary, and operation shape clearly enough, write a structured `UseRequest` JSON request file and pack it with `--request-kind structured_use_request`. For explicit multi-step template-class organism execution, write an `OrganismExecutionRequest` JSON request file and pack it with `--request-kind organism_execution_request`. Do not pre-read the workbook through Python, `openpyxl`, ZIP/XML scraping, or other ad hoc inspection just to confirm headers.
 4. If additional workbook facts are still needed, use a plain text or markdown request file and pack it with `--request-kind prompt_text` so the internal request-compiler inspects workbook facts in Go.
 5. Derived request, envelope, output, report, and evidence files must be written outside immutable case input folders. In loop-station or any harness that provides an attempt output directory, write the request reference and typed `UseEnvelopeV2` under that attempt output directory. Do not create `use-envelope.json` inside the case input folder.
 6. Hand the envelope to the internal compatibility dispatcher through the
    skill-owned runtime handoff. Do not type or reconstruct an internal command
    in the runner pane. The dispatcher routes typed structured request JSON to
-   `use-structured`; text or markdown requests route to `use-open`. Closed
+   `use-structured`, explicit organism execution requests to the organism
+   execution bridge, and text or markdown requests to `use-open`. Closed
    validated execution requests are for `run-validated` only.
 7. Read the JSON result on stdout.
 8. Inspect the evidence path and output workbook only when the result succeeds.
@@ -140,6 +141,7 @@ Public split workflow:
 3. Let the launcher dispatch the request:
    - `request.kind=prompt_text` goes through `use-open`
    - `request.kind=structured_use_request` goes through `use-structured`
+   - `request.kind=organism_execution_request` goes through explicit organism execution
    - closed validated execution requests belong to `run-validated`
 4. Read the JSON result on stdout.
 5. If the result status is `failed` and `terminal_state` is `BLOCKED_AT_REQUEST_COMPILER`, treat it as a blocked compiler outcome, stop, and inspect the request-compiler artifacts under `.sheet-ops-state/artifacts/work/<work-unit-id>/request-compiler/`. Those artifacts may contain compiler decision details such as `needs_human_checkpoint`.

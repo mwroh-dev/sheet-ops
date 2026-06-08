@@ -737,3 +737,34 @@ orchestrator:
 - Advisory claim risk: this is not autonomous template generation. It is a
   contract-shaped path for explicit multi-step execution backed by the existing
   organism harness.
+
+## Phase 26 Result
+
+Promoted the explicit organism execution bridge to the public envelope
+dispatcher path:
+
+- `request.kind=organism_execution_request` is now accepted by request-ref and
+  request-mode contracts
+- `requestmode.JudgeRequestRef` validates organism execution request files
+  against `organism_execution_request.schema.json`
+- `requestpacker.Pack` can emit a `UseEnvelopeV2` for organism execution
+  requests
+- the `sheet-ops-agent use` compatibility dispatcher loads organism execution
+  requests and calls `executeUseOrganism`
+- skill bundle schemas, manifest allowlist, and usage docs now include the
+  organism execution request route
+
+## Phase 26 Self-Retro
+
+- Coverage improved: explicit organism execution is no longer only an internal
+  Go API. It is reachable through the same typed envelope boundary as the other
+  public request paths.
+- Remaining template needs: this still requires a complete explicit
+  `OrganismExecutionRequest`. The request compiler does not synthesize one
+  from natural language.
+- Verifier strength: focused tests prove request mode judgment, envelope
+  packing, organism request loading, and command package compilation. The
+  earlier organism execution tests still prove runtime behavior.
+- Advisory claim risk: public envelope reachability must not be described as
+  open-ended template generation; it is explicit multi-step execution with
+  existing atom and organism guards.

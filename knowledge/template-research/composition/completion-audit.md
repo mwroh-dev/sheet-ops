@@ -38,6 +38,9 @@ goal. It does not claim full workbook generation or broad Excel automation.
 - The open-layer orchestrator now has an explicit multi-step
   `OrganismExecutionRequest` bridge that converts concrete organism steps into
   `RunOrganismPlan` execution and preserves the organism verification report.
+- The public typed envelope dispatcher now accepts
+  `request.kind=organism_execution_request`, validates the request file, and
+  routes it to the explicit organism execution bridge.
 - The knowledge harness validates roadmap coverage, fixture priority alignment,
   advisory authority, supported atom references, absence of planned blockers,
   preview evidence presence, verified-class depth contract references, and
