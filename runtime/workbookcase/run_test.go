@@ -391,6 +391,56 @@ func TestRunProtectFormulaCellsEndToEnd(t *testing.T) {
 	}
 }
 
+func TestRunCopyPeriodSheetEndToEnd(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "budget.xlsx")
+	outputFile := filepath.Join(tempDir, "budget-output.xlsx")
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Jan"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetCellValue("Jan", "A1", "Period"); err != nil {
+		t.Fatalf("SetCellValue(A1): %v", err)
+	}
+	if err := file.SetCellValue("Jan", "B1", "Jan"); err != nil {
+		t.Fatalf("SetCellValue(B1): %v", err)
+	}
+	if err := file.SetCellFormula("Jan", "C2", "=B2*2"); err != nil {
+		t.Fatalf("SetCellFormula(C2): %v", err)
+	}
+	if err := file.SetCellValue("Jan", "B2", 100); err != nil {
+		t.Fatalf("SetCellValue(B2): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	task := runtimetaskspec.BuildCopyPeriodSheetTask(runtimetaskspec.CopyPeriodSheetRequest{
+		RequestText: "Jan 시트를 Feb 시트로 복사한다.",
+		InputFile:   inputFile,
+		SourceSheet: "Jan",
+		TargetSheet: "Feb",
+		OutputFile:  outputFile,
+	})
+	result, err := Run(Request{ScenarioID: "workbookcase-copy-period", TaskSpec: task.TaskSpec})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if !result.Verification.Pass {
+		t.Fatalf("verification failed: %+v", result.Verification)
+	}
+	if result.Verification.Operation != CopyPeriodSheetOperationName {
+		t.Fatalf("verification operation=%q want %s", result.Verification.Operation, CopyPeriodSheetOperationName)
+	}
+	if result.Verification.SummarySheet != "Feb" {
+		t.Fatalf("summary sheet=%q want Feb", result.Verification.SummarySheet)
+	}
+}
+
 func TestRunRejectsUnsafeScenarioIDBeforeCreatingArtifacts(t *testing.T) {
 	artifactRoot := t.TempDir()
 	t.Setenv(ArtifactRootEnv, artifactRoot)

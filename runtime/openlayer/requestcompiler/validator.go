@@ -242,6 +242,19 @@ func compileDecision(intent NormalizedIntent) Decision {
 		}
 	}
 
+	if slices.Contains(intent.CompositionCandidates, CompositionCandidatePeriodCopy) && periodCopyIntentReady(intent) {
+		return Decision{
+			Status:            StatusCompiled,
+			SelectedOperation: "copy_period_sheet",
+			Confidence:        0.98,
+			Notes: []string{
+				"the normalized intent maps cleanly to the supported period copy runtime operation",
+			},
+			SheetCandidates:   supportedSheetCandidates(intent),
+			StructuralSignals: []string{"period_copy_request", "preserve_original"},
+		}
+	}
+
 	if slices.Contains(intent.CompositionCandidates, CompositionCandidateFormulaProtection) && formulaProtectionIntentReady(intent) {
 		return Decision{
 			Status:            StatusCompiled,
@@ -413,6 +426,9 @@ func toRuntimeIntent(intent NormalizedIntent) runtimevalidate.NormalizedIntent {
 			TargetRows:       append([]int(nil), intent.ExtendFormulas.TargetRows...),
 			FormulaColumns:   append([]string(nil), intent.ExtendFormulas.FormulaColumns...),
 		},
+		PeriodCopy: runtimevalidate.PeriodCopyIntent{
+			TargetSheet: intent.PeriodCopy.TargetSheet,
+		},
 		AddDataValidation: runtimevalidate.AddDataValidationIntent{
 			ValidationRule: runtimevalidate.DataValidationRule{
 				Ranges:        append([]string(nil), intent.AddDataValidation.ValidationRule.Ranges...),
@@ -547,6 +563,11 @@ func dataValidationIntentReady(intent NormalizedIntent) bool {
 		len(rule.Ranges) > 0 &&
 		rule.RuleType == "list" &&
 		len(rule.AllowedValues) > 0
+}
+
+func periodCopyIntentReady(intent NormalizedIntent) bool {
+	return len(intent.SourceSheetCandidates) > 0 &&
+		intent.PeriodCopy.TargetSheet != ""
 }
 
 func formulaProtectionIntentReady(intent NormalizedIntent) bool {

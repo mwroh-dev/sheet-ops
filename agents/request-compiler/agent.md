@@ -35,6 +35,7 @@ And supports:
 - `join_lookup`
 - `append_rows`
 - `extend_formulas`
+- `period_copy`
 - `add_data_validation`
 - `protect_formula_cells`
 

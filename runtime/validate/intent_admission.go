@@ -37,6 +37,8 @@ func AdmitIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIn
 		return admitAddDataValidationIntent(intent, decision)
 	case "protect_formula_cells":
 		return admitProtectFormulaCellsIntent(intent, decision)
+	case "copy_period_sheet":
+		return admitPeriodCopyIntent(intent, decision)
 	default:
 		result, err := finalizeResult(Result{
 			Status: StatusBlocked,
@@ -206,6 +208,31 @@ func admitAppendRowsIntent(intent NormalizedIntent, decision CompilerDecision) (
 		sourceSheets:         preferredSourceSheets(intent, decision),
 		includeSourceColumns: append([]string(nil), intent.AppendRows.IncludeSourceColumns...),
 		values:               cloneCellValues(intent.AppendRows.Values),
+	}, nil, nil
+}
+
+func admitPeriodCopyIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIntent, *Result, error) {
+	if !intent.Materialization.PreserveOriginal ||
+		intent.Materialization.OutputDestinationMode != "new_workbook" ||
+		intent.Materialization.WriteShape != "in_place_cells" {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"invalid_materialization"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	if intent.PeriodCopy.TargetSheet == "" {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"incomplete_period_copy_intent"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	return admittedIntent{
+		decision:        decision,
+		compositionKind: "period_copy",
+		sourceSheets:    preferredSourceSheets(intent, decision),
+		targetSheet:     intent.PeriodCopy.TargetSheet,
 	}, nil, nil
 }
 

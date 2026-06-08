@@ -145,6 +145,7 @@
         "join_lookup",
         "structured_row_append",
         "formula_extension",
+        "period_copy",
         "data_validation",
         "formula_protection"
       ]
@@ -156,6 +157,7 @@
         "join_lookup",
         "append_structured_rows",
         "extend_table_formulas",
+        "copy_period_sheet",
         "add_data_validation",
         "protect_formula_cells",
         "write_values"
@@ -780,6 +782,55 @@
                 "append_lookup_columns"
               ]
             }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "operation_family": {
+            "const": "copy_period_sheet"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "execution_kind": {
+            "const": "composition"
+          },
+          "composition_kind": {
+            "const": "period_copy"
+          },
+          "preserve_original": {
+            "const": true
+          }
+        },
+        "required": [
+          "composition_kind",
+          "source_sheet",
+          "target_sheet"
+        ],
+        "not": {
+          "anyOf": [
+            { "required": ["filters"] },
+            { "required": ["group_by"] },
+            { "required": ["metrics"] },
+            { "required": ["summary_mode"] },
+            { "required": ["target_column"] },
+            { "required": ["operator"] },
+            { "required": ["threshold"] },
+            { "required": ["highlight_color"] },
+            { "required": ["lookup_sheet"] },
+            { "required": ["join_key"] },
+            { "required": ["include_source_columns"] },
+            { "required": ["append_lookup_columns"] },
+            { "required": ["values"] },
+            { "required": ["formula_source_row"] },
+            { "required": ["target_rows"] },
+            { "required": ["formula_columns"] },
+            { "required": ["validation_rule"] },
+            { "required": ["protection_rule"] }
           ]
         }
       }

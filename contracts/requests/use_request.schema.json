@@ -39,6 +39,7 @@
         "create_join_lookup_result_sheet",
         "append_structured_rows",
         "extend_table_formulas",
+        "copy_period_sheet",
         "add_data_validation",
         "protect_formula_cells"
       ]
@@ -590,6 +591,42 @@
             { "required": ["formula_source_row"] },
             { "required": ["target_rows"] },
             { "required": ["formula_columns"] },
+            { "required": ["protection_rule"] }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "const": "copy_period_sheet"
+          }
+        },
+        "required": ["operation"]
+      },
+      "then": {
+        "required": ["target_sheet"],
+        "not": {
+          "anyOf": [
+            { "required": ["summary_mode"] },
+            { "required": ["filters"] },
+            { "required": ["group_by"] },
+            { "required": ["metrics"] },
+            { "required": ["target_column"] },
+            { "required": ["operator"] },
+            { "required": ["threshold"] },
+            { "required": ["highlight_color"] },
+            { "required": ["lookup_sheet"] },
+            { "required": ["join_key"] },
+            { "required": ["include_source_columns"] },
+            { "required": ["append_lookup_columns"] },
+            { "required": ["values"] },
+            { "required": ["formula_source_row"] },
+            { "required": ["target_rows"] },
+            { "required": ["formula_columns"] },
+            { "required": ["validation_rule"] },
             { "required": ["protection_rule"] }
           ]
         }

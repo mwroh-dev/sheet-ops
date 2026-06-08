@@ -48,6 +48,7 @@
         "join_lookup",
         "append_structured_rows",
         "extend_table_formulas",
+        "copy_period_sheet",
         "add_data_validation",
         "protect_formula_cells",
         "write_values"
@@ -60,6 +61,7 @@
         "join_lookup",
         "append_structured_rows",
         "extend_table_formulas",
+        "copy_period_sheet",
         "add_data_validation",
         "protect_formula_cells",
         "write_values"
@@ -196,6 +198,22 @@
         "properties": {
           "operation_family": {
             "const": "add_data_validation"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "copy_period_sheet"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "operation_family": {
+            "const": "copy_period_sheet"
           }
         }
       }

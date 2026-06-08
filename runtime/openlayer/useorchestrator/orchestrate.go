@@ -46,7 +46,7 @@ func validateSupportedValidatedExecutionRequest(req ValidatedExecutionRequest) e
 		return fmt.Errorf("unsupported validated execution kind %q", req.ExecutionKind)
 	}
 	switch req.CompositionKind {
-	case "structured_row_append", "formula_extension", "data_validation", "formula_protection":
+	case "structured_row_append", "formula_extension", "period_copy", "data_validation", "formula_protection":
 		return nil
 	case "group_summary", "threshold_highlight", "join_lookup":
 		return nil
@@ -93,6 +93,14 @@ func taskSpecFromUseRequest(req UseRequest) runtimetaskspec.TaskSpec {
 			FormulaSourceRow: req.FormulaSourceRow,
 			TargetRows:       append([]int(nil), req.TargetRows...),
 			FormulaColumns:   append([]string(nil), req.FormulaColumns...),
+		}).TaskSpec
+	case runtimeworkbookcase.CopyPeriodSheetOperationName:
+		return runtimetaskspec.BuildCopyPeriodSheetTask(runtimetaskspec.CopyPeriodSheetRequest{
+			RequestText: coalesceValidatedRequestText(req.RequestText, "structured period copy request"),
+			InputFile:   req.InputFile,
+			SourceSheet: req.SheetName,
+			TargetSheet: req.TargetSheet,
+			OutputFile:  req.OutputFile,
 		}).TaskSpec
 	case runtimeworkbookcase.AddDataValidationOperationName:
 		return runtimetaskspec.BuildAddDataValidationTask(runtimetaskspec.AddDataValidationRequest{
@@ -168,6 +176,14 @@ func taskSpecFromValidatedExecutionRequest(req ValidatedExecutionRequest) (runti
 			FormulaSourceRow: req.FormulaSourceRow,
 			TargetRows:       append([]int(nil), req.TargetRows...),
 			FormulaColumns:   append([]string(nil), req.FormulaColumns...),
+		}).TaskSpec, nil
+	case "period_copy":
+		return runtimetaskspec.BuildCopyPeriodSheetTask(runtimetaskspec.CopyPeriodSheetRequest{
+			RequestText: coalesceValidatedRequestText(req.RequestText, "validated period copy request"),
+			InputFile:   req.InputFile,
+			SourceSheet: req.SourceSheet,
+			TargetSheet: req.TargetSheet,
+			OutputFile:  req.OutputFile,
 		}).TaskSpec, nil
 	case "data_validation":
 		return runtimetaskspec.BuildAddDataValidationTask(runtimetaskspec.AddDataValidationRequest{
@@ -250,6 +266,8 @@ func validatedRoutingRequestText(req ValidatedExecutionRequest) string {
 		return coalesceValidatedRequestText(req.RequestText, "validated append rows request")
 	case "formula_extension":
 		return coalesceValidatedRequestText(req.RequestText, "validated formula extension request")
+	case "period_copy":
+		return coalesceValidatedRequestText(req.RequestText, "validated period copy request")
 	case "data_validation":
 		return coalesceValidatedRequestText(req.RequestText, "validated data validation request")
 	case "formula_protection":
@@ -269,6 +287,8 @@ func validatedOperation(req ValidatedExecutionRequest) string {
 		return runtimeworkbookcase.AppendRowsOperationName
 	case "formula_extension":
 		return runtimeworkbookcase.ExtendFormulasOperationName
+	case "period_copy":
+		return runtimeworkbookcase.CopyPeriodSheetOperationName
 	case "data_validation":
 		return runtimeworkbookcase.AddDataValidationOperationName
 	case "formula_protection":
@@ -310,7 +330,7 @@ func defaultJoinSourceColumns(req ValidatedExecutionRequest) ([]string, error) {
 
 func isSupportedOperation(operation string) bool {
 	switch operation {
-	case runtimeworkbookcase.SummaryOperationName, runtimeworkbookcase.HighlightOperationName, runtimeworkbookcase.JoinLookupOperationName, runtimeworkbookcase.AppendRowsOperationName, runtimeworkbookcase.ExtendFormulasOperationName, runtimeworkbookcase.AddDataValidationOperationName, runtimeworkbookcase.ProtectFormulaCellsOperationName:
+	case runtimeworkbookcase.SummaryOperationName, runtimeworkbookcase.HighlightOperationName, runtimeworkbookcase.JoinLookupOperationName, runtimeworkbookcase.AppendRowsOperationName, runtimeworkbookcase.ExtendFormulasOperationName, runtimeworkbookcase.CopyPeriodSheetOperationName, runtimeworkbookcase.AddDataValidationOperationName, runtimeworkbookcase.ProtectFormulaCellsOperationName:
 		return true
 	default:
 		return false

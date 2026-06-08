@@ -410,6 +410,90 @@ func TestRunProtectFormulaCellsPreservesSourceAndVerifiesProtection(t *testing.T
 	}
 }
 
+func TestRunCopyPeriodSheetPreservesSourceAndVerifiesCopiedSheet(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "budget.xlsx")
+	outputFile := filepath.Join(tempDir, "budget-output.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Jan"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetCellValue("Jan", "A1", "Period"); err != nil {
+		t.Fatalf("SetCellValue(A1): %v", err)
+	}
+	if err := file.SetCellValue("Jan", "B1", "Jan"); err != nil {
+		t.Fatalf("SetCellValue(B1): %v", err)
+	}
+	if err := file.SetCellValue("Jan", "A2", "Revenue"); err != nil {
+		t.Fatalf("SetCellValue(A2): %v", err)
+	}
+	if err := file.SetCellValue("Jan", "B2", 100); err != nil {
+		t.Fatalf("SetCellValue(B2): %v", err)
+	}
+	if err := file.SetCellFormula("Jan", "C2", "=B2*2"); err != nil {
+		t.Fatalf("SetCellFormula(C2): %v", err)
+	}
+	styleID, err := file.NewStyle(&excelize.Style{Fill: excelize.Fill{Type: "pattern", Color: []string{"#FFF59D"}, Pattern: 1}})
+	if err != nil {
+		t.Fatalf("NewStyle: %v", err)
+	}
+	if err := file.SetCellStyle("Jan", "C2", "C2", styleID); err != nil {
+		t.Fatalf("SetCellStyle(C2): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	ir := compiler.WorkbookOperationIR{
+		ExecutionKind:    "composition",
+		CompositionKind:  "period_copy",
+		OperationFamily:  "copy_period_sheet",
+		SourceSheet:      "Jan",
+		TargetSheet:      "Feb",
+		PreserveOriginal: true,
+	}
+
+	result, err := RunWorkbookOperation(ir, inputFile, outputFile)
+	if err != nil {
+		t.Fatalf("RunWorkbookOperation: %v", err)
+	}
+	if result.OperationFamily != "copy_period_sheet" {
+		t.Fatalf("operation_family=%q want copy_period_sheet", result.OperationFamily)
+	}
+	if result.SourceSHA256Before != result.SourceSHA256After {
+		t.Fatal("source hash changed during execution")
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	if got, err := outputHandle.GetCellValue("Feb", "B1"); err != nil || got != "Jan" {
+		t.Fatalf("Feb!B1=%q err=%v want Jan", got, err)
+	}
+	if got, err := outputHandle.GetCellFormula("Feb", "C2"); err != nil || got != "=B2*2" {
+		t.Fatalf("Feb!C2 formula=%q err=%v want =B2*2", got, err)
+	}
+	if got, err := outputHandle.GetCellValue("Feb", "B2"); err != nil || got != "100" {
+		t.Fatalf("Feb!B2=%q err=%v want 100", got, err)
+	}
+	if sourceStyle, targetStyle := mustCellStyleID(t, outputHandle, "Jan", "C2"), mustCellStyleID(t, outputHandle, "Feb", "C2"); sourceStyle != targetStyle {
+		t.Fatalf("style Jan!C2=%d Feb!C2=%d want same", sourceStyle, targetStyle)
+	}
+
+	verification, err := runtimeverify.VerifyWorkbookOperation(ir, inputFile, outputFile, result.SourceSHA256Before, result.SourceSHA256After)
+	if err != nil {
+		t.Fatalf("VerifyWorkbookOperation: %v", err)
+	}
+	if !verification.Pass {
+		t.Fatalf("verification failed: %+v", verification)
+	}
+}
+
 func testCellLocked(file *excelize.File, sheet, cell string) (bool, error) {
 	styleID, err := file.GetCellStyle(sheet, cell)
 	if err != nil {
@@ -423,4 +507,13 @@ func testCellLocked(file *excelize.File, sheet, cell string) (bool, error) {
 		return true, nil
 	}
 	return style.Protection.Locked, nil
+}
+
+func mustCellStyleID(t *testing.T, file *excelize.File, sheet, cell string) int {
+	t.Helper()
+	styleID, err := file.GetCellStyle(sheet, cell)
+	if err != nil {
+		t.Fatalf("GetCellStyle(%s!%s): %v", sheet, cell, err)
+	}
+	return styleID
 }

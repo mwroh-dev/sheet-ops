@@ -1,0 +1,42 @@
+{
+  "name": "copy_period_sheet",
+  "operation_family": "copy_period_sheet",
+  "task_operations": [
+    "copy_period_sheet"
+  ],
+  "inputs": [
+    "input_workbook",
+    "source_sheet",
+    "target_sheet"
+  ],
+  "outputs": [
+    "output_workbook",
+    "target_sheet"
+  ],
+  "required_facts": [
+    "source_sheet_exists",
+    "target_sheet_absent"
+  ],
+  "verifies": [
+    "source_preserved",
+    "target_sheet_exists",
+    "values_match_source",
+    "formulas_match_source",
+    "styles_match_source"
+  ],
+  "contract_paths": [
+    "contracts/task/task_spec.schema.json",
+    "contracts/ir/workbook_operation_ir.schema.json",
+    "contracts/verification/verification_result.schema.json"
+  ],
+  "runtime_paths": [
+    "runtime/compiler/workbook_compiler.go",
+    "runtime/execute/copy_period_sheet.go",
+    "runtime/verify/copy_period_sheet.go"
+  ],
+  "examples": [
+    "examples/copy_period_sheet/request.json"
+  ],
+  "status": "supported",
+  "exposure": "public_agent_capability"
+}

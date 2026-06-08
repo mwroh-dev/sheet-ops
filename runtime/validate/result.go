@@ -62,6 +62,10 @@ type ExtendFormulasIntent struct {
 	FormulaColumns   []string
 }
 
+type PeriodCopyIntent struct {
+	TargetSheet string
+}
+
 type AddDataValidationIntent struct {
 	ValidationRule DataValidationRule
 }
@@ -106,6 +110,7 @@ type NormalizedIntent struct {
 	JoinLookup            JoinLookupIntent
 	AppendRows            AppendRowsIntent
 	ExtendFormulas        ExtendFormulasIntent
+	PeriodCopy            PeriodCopyIntent
 	AddDataValidation     AddDataValidationIntent
 	ProtectFormulaCells   ProtectFormulaCellsIntent
 	Materialization       MaterializationIntent

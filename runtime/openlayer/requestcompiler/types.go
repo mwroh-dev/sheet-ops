@@ -6,6 +6,7 @@ const (
 	CompositionCandidateJoinLookup          = "join_lookup"
 	CompositionCandidateStructuredRowAppend = "structured_row_append"
 	CompositionCandidateFormulaExtension    = "formula_extension"
+	CompositionCandidatePeriodCopy          = "period_copy"
 	CompositionCandidateDataValidation      = "data_validation"
 	CompositionCandidateFormulaProtection   = "formula_protection"
 
@@ -62,6 +63,10 @@ type ExtendFormulasIntent struct {
 	FormulaSourceRow int      `json:"formula_source_row,omitempty"`
 	TargetRows       []int    `json:"target_rows,omitempty"`
 	FormulaColumns   []string `json:"formula_columns,omitempty"`
+}
+
+type PeriodCopyIntent struct {
+	TargetSheet string `json:"target_sheet,omitempty"`
 }
 
 type AddDataValidationIntent struct {
@@ -142,6 +147,7 @@ type NormalizedIntent struct {
 	JoinLookup            JoinLookupIntent          `json:"join_lookup,omitempty"`
 	AppendRows            AppendRowsIntent          `json:"append_rows,omitempty"`
 	ExtendFormulas        ExtendFormulasIntent      `json:"extend_formulas,omitempty"`
+	PeriodCopy            PeriodCopyIntent          `json:"period_copy,omitempty"`
 	AddDataValidation     AddDataValidationIntent   `json:"add_data_validation,omitempty"`
 	ProtectFormulaCells   ProtectFormulaCellsIntent `json:"protect_formula_cells,omitempty"`
 	Materialization       MaterializationIntent     `json:"materialization"`

@@ -83,16 +83,16 @@
     },
     {
       "atom_id": "copy_period_sheet",
-      "status": "planned",
-      "builder_layer": "planned_contract",
-      "input_contract": ["source period block", "new period label", "input clear policy"],
-      "inspection_requirements": ["source period labels", "input ranges", "formula ranges", "validation rules"],
-      "plan_outputs": ["new period block", "label updates", "cleared inputs", "preserved formulas"],
-      "result_outputs": ["new period sheet or block", "warnings"],
-      "verification_assertions": ["period_created", "labels_updated", "inputs_cleared", "formulas_preserved"],
-      "capability_record": "",
-      "opportunity_record": "knowledge/template-research/opportunities/copy_period_sheet.json",
-      "runtime_paths": []
+      "status": "supported",
+      "builder_layer": "runtime_mirror",
+      "input_contract": ["source sheet", "target sheet"],
+      "inspection_requirements": ["source sheet exists", "target sheet absent"],
+      "plan_outputs": ["target sheet copy", "preserve original output boundary"],
+      "result_outputs": ["new target sheet", "warnings"],
+      "verification_assertions": ["source_preserved", "target_sheet_exists", "values_match_source", "formulas_match_source", "styles_match_source"],
+      "capability_record": "contracts/capabilities/records/copy_period_sheet.yaml",
+      "opportunity_record": "",
+      "runtime_paths": ["runtime/compiler/workbook_compiler.go", "runtime/execute/copy_period_sheet.go", "runtime/verify/copy_period_sheet.go"]
     },
     {
       "atom_id": "roll_forward_period",

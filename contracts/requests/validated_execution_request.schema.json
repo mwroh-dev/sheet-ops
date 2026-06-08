@@ -22,7 +22,7 @@
     "source_sheet": { "type": "string", "minLength": 1 },
     "output_file": { "type": "string", "minLength": 1 },
     "execution_kind": { "const": "composition" },
-    "composition_kind": { "enum": ["group_summary", "threshold_highlight", "join_lookup", "structured_row_append", "formula_extension", "data_validation", "formula_protection"] },
+    "composition_kind": { "enum": ["group_summary", "threshold_highlight", "join_lookup", "structured_row_append", "formula_extension", "period_copy", "data_validation", "formula_protection"] },
     "target_sheet": { "type": "string", "minLength": 1 },
     "summary_mode": { "enum": ["values", "formulas"] },
     "filters": {
@@ -312,6 +312,37 @@
             { "required": ["formula_source_row"] },
             { "required": ["target_rows"] },
             { "required": ["formula_columns"] },
+            { "required": ["protection_rule"] }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "composition_kind": { "const": "period_copy" } },
+        "required": ["composition_kind"]
+      },
+      "then": {
+        "required": ["target_sheet"],
+        "not": {
+          "anyOf": [
+            { "required": ["summary_mode"] },
+            { "required": ["filters"] },
+            { "required": ["group_by"] },
+            { "required": ["metrics"] },
+            { "required": ["target_column"] },
+            { "required": ["operator"] },
+            { "required": ["threshold"] },
+            { "required": ["highlight_color"] },
+            { "required": ["lookup_sheet"] },
+            { "required": ["join_key"] },
+            { "required": ["include_source_columns"] },
+            { "required": ["append_lookup_columns"] },
+            { "required": ["values"] },
+            { "required": ["formula_source_row"] },
+            { "required": ["target_rows"] },
+            { "required": ["formula_columns"] },
+            { "required": ["validation_rule"] },
             { "required": ["protection_rule"] }
           ]
         }

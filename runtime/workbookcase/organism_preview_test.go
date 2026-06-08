@@ -153,3 +153,59 @@ func TestInvoiceLineItemBillingPreviewComposesAppendFormulaExtensionValidationAn
 		t.Fatalf("expected sheet protection options, got %+v", protection)
 	}
 }
+
+func TestTimesheetHoursLogPreviewComposesPeriodCopy(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "timesheet.xlsx")
+	outputFile := filepath.Join(tempDir, "timesheet-week2.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Week1"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	header := []any{"date", "hours", "rate", "pay"}
+	if err := file.SetSheetRow("Week1", "A1", &header); err != nil {
+		t.Fatalf("SetSheetRow(header): %v", err)
+	}
+	row := []any{"2026-06-01", 8, 25}
+	if err := file.SetSheetRow("Week1", "A2", &row); err != nil {
+		t.Fatalf("SetSheetRow(row): %v", err)
+	}
+	if err := file.SetCellFormula("Week1", "D2", "=B2*C2"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	copyTask := runtimetaskspec.BuildCopyPeriodSheetTask(runtimetaskspec.CopyPeriodSheetRequest{
+		RequestText: "Week1 timesheet 구조를 Week2 시트로 복사한다.",
+		InputFile:   inputFile,
+		SourceSheet: "Week1",
+		TargetSheet: "Week2",
+		OutputFile:  outputFile,
+	})
+	copyResult, err := Run(Request{ScenarioID: "timesheet-preview-period-copy", TaskSpec: copyTask.TaskSpec})
+	if err != nil {
+		t.Fatalf("copy Run: %v", err)
+	}
+	if !copyResult.Verification.Pass {
+		t.Fatalf("copy verification failed: %+v", copyResult.Verification)
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	if got, err := outputHandle.GetCellValue("Week2", "A2"); err != nil || got != "2026-06-01" {
+		t.Fatalf("Week2!A2=%q err=%v want 2026-06-01", got, err)
+	}
+	if got, err := outputHandle.GetCellFormula("Week2", "D2"); err != nil || got != "=B2*C2" {
+		t.Fatalf("Week2!D2 formula=%q err=%v want =B2*C2", got, err)
+	}
+}

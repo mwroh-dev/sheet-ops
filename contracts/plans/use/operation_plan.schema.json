@@ -53,6 +53,34 @@
       "required": [
         "operation",
         "sheet_name",
+        "target_sheet",
+        "preserve_original",
+        "output_file"
+      ],
+      "properties": {
+        "operation": {
+          "const": "copy_period_sheet"
+        },
+        "sheet_name": {
+          "type": "string"
+        },
+        "target_sheet": {
+          "type": "string"
+        },
+        "preserve_original": {
+          "type": "boolean"
+        },
+        "output_file": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "operation",
+        "sheet_name",
         "summary_mode",
         "group_by",
         "metrics",

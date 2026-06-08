@@ -13,6 +13,7 @@ const (
 	JoinLookupOperationName          = "create_join_lookup_result_sheet"
 	AppendRowsOperationName          = "append_structured_rows"
 	ExtendFormulasOperationName      = "extend_table_formulas"
+	CopyPeriodSheetOperationName     = "copy_period_sheet"
 	AddDataValidationOperationName   = "add_data_validation"
 	ProtectFormulaCellsOperationName = "protect_formula_cells"
 	WriteValuesOperationName         = "write_values"
@@ -132,6 +133,14 @@ type ExtendTableFormulasPlan struct {
 	FormulaColumns   []string `json:"formula_columns"`
 	PreserveOriginal bool     `json:"preserve_original"`
 	OutputFile       string   `json:"output_file"`
+}
+
+type CopyPeriodSheetPlan struct {
+	Operation        string `json:"operation"`
+	SheetName        string `json:"sheet_name"`
+	TargetSheet      string `json:"target_sheet"`
+	PreserveOriginal bool   `json:"preserve_original"`
+	OutputFile       string `json:"output_file"`
 }
 
 type AddDataValidationPlan struct {

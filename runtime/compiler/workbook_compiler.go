@@ -292,6 +292,29 @@ func CompileExtendTableFormulasOperation(task taskspec.ExtendTableFormulasTask) 
 	}, nil
 }
 
+func CompileCopyPeriodSheetOperation(task taskspec.CopyPeriodSheetTask) (WorkbookOperationIR, error) {
+	if task.SourceSheet == "" {
+		return WorkbookOperationIR{}, fmt.Errorf("source sheet must not be empty")
+	}
+	if task.TargetSheet == "" {
+		return WorkbookOperationIR{}, fmt.Errorf("target sheet must not be empty")
+	}
+	if task.SourceSheet == task.TargetSheet {
+		return WorkbookOperationIR{}, fmt.Errorf("target sheet must differ from source sheet")
+	}
+	if err := validateCopyPeriodSheetTaskCompositionBoundary(task.TaskSpec); err != nil {
+		return WorkbookOperationIR{}, err
+	}
+	return WorkbookOperationIR{
+		ExecutionKind:    taskspec.ExecutionKindComposition,
+		CompositionKind:  taskspec.CompositionKindPeriodCopy,
+		OperationFamily:  taskspec.OperationFamilyCopyPeriodSheet,
+		SourceSheet:      task.SourceSheet,
+		TargetSheet:      task.TargetSheet,
+		PreserveOriginal: task.PreserveOriginal,
+	}, nil
+}
+
 func CompileAddDataValidationOperation(task taskspec.AddDataValidationTask) (WorkbookOperationIR, error) {
 	if task.SourceSheet == "" {
 		return WorkbookOperationIR{}, fmt.Errorf("source sheet must not be empty")
@@ -386,6 +409,19 @@ func validateExtendTableFormulasTaskCompositionBoundary(spec taskspec.TaskSpec) 
 	}
 	if spec.Operation != taskspec.OperationExtendTableFormulas {
 		return fmt.Errorf("extend table formulas task operation=%q want %q", spec.Operation, taskspec.OperationExtendTableFormulas)
+	}
+	return nil
+}
+
+func validateCopyPeriodSheetTaskCompositionBoundary(spec taskspec.TaskSpec) error {
+	if spec.ExecutionKind != taskspec.ExecutionKindComposition {
+		return fmt.Errorf("copy period sheet task execution_kind=%q want %q", spec.ExecutionKind, taskspec.ExecutionKindComposition)
+	}
+	if spec.CompositionKind != taskspec.CompositionKindPeriodCopy {
+		return fmt.Errorf("copy period sheet task composition_kind=%q want %q", spec.CompositionKind, taskspec.CompositionKindPeriodCopy)
+	}
+	if spec.Operation != taskspec.OperationCopyPeriodSheet {
+		return fmt.Errorf("copy period sheet task operation=%q want %q", spec.Operation, taskspec.OperationCopyPeriodSheet)
 	}
 	return nil
 }

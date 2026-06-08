@@ -122,6 +122,13 @@ type ExtendTableFormulasTask struct {
 	PreserveOriginal bool
 }
 
+type CopyPeriodSheetTask struct {
+	TaskSpec         TaskSpec
+	SourceSheet      string
+	TargetSheet      string
+	PreserveOriginal bool
+}
+
 type AddDataValidationTask struct {
 	TaskSpec         TaskSpec
 	SourceSheet      string
@@ -190,6 +197,14 @@ type ExtendTableFormulasRequest struct {
 	FormulaColumns   []string
 }
 
+type CopyPeriodSheetRequest struct {
+	RequestText string
+	InputFile   string
+	SourceSheet string
+	TargetSheet string
+	OutputFile  string
+}
+
 type AddDataValidationRequest struct {
 	RequestText    string
 	InputFile      string
@@ -213,6 +228,7 @@ const (
 	CompositionKindJoinLookup            = "join_lookup"
 	CompositionKindStructuredRowAppend   = "structured_row_append"
 	CompositionKindFormulaExtension      = "formula_extension"
+	CompositionKindPeriodCopy            = "period_copy"
 	CompositionKindDataValidation        = "data_validation"
 	CompositionKindFormulaProtection     = "formula_protection"
 	OperationCreateSummarySheet          = "create_summary_sheet"
@@ -220,6 +236,7 @@ const (
 	OperationCreateJoinLookupResultSheet = "create_join_lookup_result_sheet"
 	OperationAppendStructuredRows        = "append_structured_rows"
 	OperationExtendTableFormulas         = "extend_table_formulas"
+	OperationCopyPeriodSheet             = "copy_period_sheet"
 	OperationAddDataValidation           = "add_data_validation"
 	OperationProtectFormulaCells         = "protect_formula_cells"
 	OperationFamilyGroupSummarize        = "group_summarize"
@@ -227,6 +244,7 @@ const (
 	OperationFamilyJoinLookup            = "join_lookup"
 	OperationFamilyAppendStructuredRows  = "append_structured_rows"
 	OperationFamilyExtendTableFormulas   = "extend_table_formulas"
+	OperationFamilyCopyPeriodSheet       = "copy_period_sheet"
 	OperationFamilyAddDataValidation     = "add_data_validation"
 	OperationFamilyProtectFormulaCells   = "protect_formula_cells"
 
@@ -389,6 +407,26 @@ func BuildExtendTableFormulasTask(req ExtendTableFormulasRequest) ExtendTableFor
 		FormulaSourceRow: req.FormulaSourceRow,
 		TargetRows:       cloneInts(req.TargetRows),
 		FormulaColumns:   cloneStrings(req.FormulaColumns),
+		PreserveOriginal: true,
+	}
+}
+
+func BuildCopyPeriodSheetTask(req CopyPeriodSheetRequest) CopyPeriodSheetTask {
+	return CopyPeriodSheetTask{
+		TaskSpec: TaskSpec{
+			RequestKind:     "workbook_case",
+			ExecutionKind:   ExecutionKindComposition,
+			CompositionKind: CompositionKindPeriodCopy,
+			Source:          SourceSpec{Kind: "natural_language"},
+			RequestText:     req.RequestText,
+			InputWorkbook:   req.InputFile,
+			OutputWorkbook:  req.OutputFile,
+			Operation:       OperationCopyPeriodSheet,
+			SourceSheet:     req.SourceSheet,
+			TargetSheet:     req.TargetSheet,
+		},
+		SourceSheet:      req.SourceSheet,
+		TargetSheet:      req.TargetSheet,
 		PreserveOriginal: true,
 	}
 }

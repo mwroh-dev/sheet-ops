@@ -23,7 +23,7 @@
     },
     "composition_candidates": {
       "type": "array",
-      "items": { "enum": ["group_summary", "threshold_highlight", "join_lookup", "structured_row_append", "formula_extension", "data_validation", "formula_protection"] }
+      "items": { "enum": ["group_summary", "threshold_highlight", "join_lookup", "structured_row_append", "formula_extension", "period_copy", "data_validation", "formula_protection"] }
     },
     "summary": {
       "type": "object",
@@ -100,6 +100,13 @@
           "type": "array",
           "items": { "type": "string", "minLength": 1 }
         }
+      },
+      "additionalProperties": false
+    },
+    "period_copy": {
+      "type": "object",
+      "properties": {
+        "target_sheet": { "type": "string", "minLength": 1 }
       },
       "additionalProperties": false
     },

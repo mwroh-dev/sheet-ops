@@ -73,6 +73,9 @@ func resolveRequestedOperation(req UseRequest) (string, string) {
 	if isFormulaExtensionRequest(req) {
 		return runtimeworkbookcase.ExtendFormulasOperationName, "formula_extension_request_signals"
 	}
+	if isPeriodCopyRequest(req) {
+		return runtimeworkbookcase.CopyPeriodSheetOperationName, "period_copy_request_signals"
+	}
 	if isDataValidationRequest(req) {
 		return runtimeworkbookcase.AddDataValidationOperationName, "data_validation_request_signals"
 	}
@@ -102,6 +105,13 @@ func isFormulaExtensionRequest(req UseRequest) bool {
 		strings.Contains(req.RequestText, "수식을 확장") ||
 		strings.Contains(req.RequestText, "formula extension") ||
 		strings.Contains(req.RequestText, "extend formulas")
+}
+
+func isPeriodCopyRequest(req UseRequest) bool {
+	return req.TargetSheet != "" && (strings.Contains(req.RequestText, "시트 복사") ||
+		strings.Contains(req.RequestText, "period copy") ||
+		strings.Contains(req.RequestText, "copy period") ||
+		strings.Contains(req.RequestText, "copy sheet"))
 }
 
 func isDataValidationRequest(req UseRequest) bool {
@@ -157,6 +167,8 @@ func buildRoutingNote(selectedOperation, routingAuthority string, knowledge runt
 			return fmt.Sprintf("%s Fallback routed by append row request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		case "formula_extension_request_signals":
 			return fmt.Sprintf("%s Fallback routed by formula extension request signals to %s.", knowledge.FallbackReason, selectedOperation)
+		case "period_copy_request_signals":
+			return fmt.Sprintf("%s Fallback routed by period copy request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		case "data_validation_request_signals":
 			return fmt.Sprintf("%s Fallback routed by data validation request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		case "formula_protection_request_signals":
@@ -190,6 +202,12 @@ func buildRoutingNote(selectedOperation, routingAuthority string, knowledge runt
 	case "append_rows_request_signals":
 		return fmt.Sprintf(
 			"Loaded %d orchestrator knowledge records; append row request signals still selected %s. Knowledge remains advisory only.",
+			knowledge.RecordCount,
+			selectedOperation,
+		)
+	case "period_copy_request_signals":
+		return fmt.Sprintf(
+			"Loaded %d orchestrator knowledge records; period copy request signals still selected %s. Knowledge remains advisory only.",
 			knowledge.RecordCount,
 			selectedOperation,
 		)
