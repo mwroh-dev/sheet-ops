@@ -191,11 +191,14 @@
     },
     {
       "organism_id": "maintenance_issue_log",
-      "draft_status": "explicit_request_only",
-      "runtime_entrypoint": "",
-      "evidence_tests": [],
-      "current_limit": "No workbook-facts draft planner for maintenance issue status, risk/action register, or exception highlighting.",
-      "next_gate": "Add a maintenance fixture with issue rows, risk/action columns, status validation, and overdue thresholds."
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsMaintenanceIssueStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerMaintenanceIssueDraft"
+      ],
+      "current_limit": "Maintenance issue row log with issue append, action-required formula extension, status validation, numeric risk threshold highlighting, status summary, and protected action formulas only; does not dispatch work or infer maintenance policy.",
+      "next_gate": "Add maintenance fixtures with owner/action fields, due-date windows, aging thresholds, technician assignment, escalation status transitions, and dashboard summary checks."
     },
     {
       "organism_id": "compliance_action_register",

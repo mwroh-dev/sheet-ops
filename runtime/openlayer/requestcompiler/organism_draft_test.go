@@ -1254,6 +1254,77 @@ func TestDraftOrganismExecutionRequestBuildsSalesPipelineStepsFromWorkbookFacts(
 	}
 }
 
+func TestDraftOrganismExecutionRequestBuildsMaintenanceIssueStepsFromWorkbookFacts(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "maintenance.xlsx")
+	outputFile := filepath.Join(tempDir, "maintenance-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Maintenance"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Maintenance", "A1", &[]any{"issue_id", "status", "days_open", "risk_score", "action_required", "action_count"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Maintenance", "A2", &[]any{"M-1", "open", 2, 2, nil, 1}); err != nil {
+		t.Fatalf("SetSheetRow row: %v", err)
+	}
+	if err := file.SetCellFormula("Maintenance", "E2", "=IF(D2>=4,1,0)"); err != nil {
+		t.Fatalf("SetCellFormula(E2): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	facts, err := runtimeinspect.InspectWorkbookFacts(inputFile)
+	if err != nil {
+		t.Fatalf("InspectWorkbookFacts: %v", err)
+	}
+	requestText := "Append maintenance issue, validate issue status, extend action-required formulas, flag high risk issues, summarize maintenance status, and protect action formulas"
+	plan := TemplateClassPlanHintForRequest(requestText)
+	if plan == nil {
+		t.Fatal("missing plan")
+	}
+
+	req, ok := DraftOrganismExecutionRequest(OrganismDraftInput{
+		ScenarioID:        "maintenance-issue-organism-draft",
+		RequestText:       requestText,
+		InputFile:         inputFile,
+		OutputFile:        outputFile,
+		WorkbookFacts:     facts,
+		TemplateClassPlan: *plan,
+	})
+	if !ok {
+		t.Fatal("DraftOrganismExecutionRequest ok=false")
+	}
+	if len(req.Steps) != 6 {
+		t.Fatalf("steps=%d want 6", len(req.Steps))
+	}
+	if req.Steps[0].AtomID != "append_structured_rows" || req.Steps[0].SourceSheet != "Maintenance" || len(req.Steps[0].Values) != 5 {
+		t.Fatalf("append step=%+v", req.Steps[0])
+	}
+	if req.Steps[1].AtomID != "extend_table_formulas" || req.Steps[1].FormulaSourceRow != 2 || req.Steps[1].TargetRows[0] != 3 || req.Steps[1].FormulaColumns[0] != "E" {
+		t.Fatalf("formula step=%+v", req.Steps[1])
+	}
+	if req.Steps[2].AtomID != "add_data_validation" || req.Steps[2].ValidationRule == nil || req.Steps[2].ValidationRule.Ranges[0] != "B2:B20" {
+		t.Fatalf("validation step=%+v", req.Steps[2])
+	}
+	if req.Steps[3].AtomID != "highlight_threshold" || req.Steps[3].TargetColumn != "risk_score" || req.Steps[3].Threshold == nil || *req.Steps[3].Threshold != 3 {
+		t.Fatalf("threshold step=%+v", req.Steps[3])
+	}
+	if req.Steps[4].AtomID != "group_summarize" || req.Steps[4].TargetSheet != "MaintenanceSummary" || req.Steps[4].Metrics[0].Column != "action_count" {
+		t.Fatalf("summary step=%+v", req.Steps[4])
+	}
+	if req.Steps[5].AtomID != "protect_formula_cells" || req.Steps[5].ProtectionRule == nil || req.Steps[5].ProtectionRule.FormulaRanges[0] != "E2:E3" {
+		t.Fatalf("protection step=%+v", req.Steps[5])
+	}
+	if err := runtimeschema.ValidateStruct(organismExecutionRequestSchemaPathForTest(), req); err != nil {
+		t.Fatalf("draft organism request schema validation: %v", err)
+	}
+}
+
 func TestDraftOrganismExecutionRequestBuildsLoanRepaymentStepsFromWorkbookFacts(t *testing.T) {
 	tempDir := t.TempDir()
 	inputFile := filepath.Join(tempDir, "loan.xlsx")
