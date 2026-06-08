@@ -42,11 +42,14 @@
     },
     {
       "organism_id": "cash_flow_monitor",
-      "draft_status": "explicit_request_only",
-      "runtime_entrypoint": "",
-      "evidence_tests": [],
-      "current_limit": "No workbook-facts draft planner for cash-flow period continuity or dashboard semantics.",
-      "next_gate": "Add a cash-flow fixture with opening/closing continuity, period copy, and protected summary evidence."
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsCashFlowMonitorStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerCashFlowDraft"
+      ],
+      "current_limit": "Simple opening/inflow/outflow/closing workbook facts only; does not infer cash-flow policy or dashboard semantics.",
+      "next_gate": "Add cash-flow fixtures with alternate period layouts, multi-period continuity, and protected dashboard evidence."
     },
     {
       "organism_id": "attendance_register",

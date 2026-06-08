@@ -175,6 +175,90 @@ func TestOrchestrateOrganismExecutesRequestCompilerBudgetDraft(t *testing.T) {
 	}
 }
 
+func TestOrchestrateOrganismExecutesRequestCompilerCashFlowDraft(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "cash-flow.xlsx")
+	outputFile := filepath.Join(tempDir, "cash-flow-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Jan"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Jan", "A1", &[]any{"period", "opening", "inflow", "outflow", "closing"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	for idx, row := range [][]any{{"Jan", 100, 75, 25}, {"Jan", 150, 40, 30}} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("Jan", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow cash %d: %v", idx, err)
+		}
+		rowNum := idx + 2
+		if err := file.SetCellFormula("Jan", "E"+cellRowForDraftIntegrationTest(rowNum), "=B"+cellRowForDraftIntegrationTest(rowNum)+"+C"+cellRowForDraftIntegrationTest(rowNum)+"-D"+cellRowForDraftIntegrationTest(rowNum)); err != nil {
+			t.Fatalf("SetCellFormula closing row %d: %v", rowNum, err)
+		}
+	}
+	if err := file.SetSheetRow("Jan", "A4", &[]any{"Feb", 0, 20, 10}); err != nil {
+		t.Fatalf("SetSheetRow target row: %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	facts, err := runtimeinspect.InspectWorkbookFacts(inputFile)
+	if err != nil {
+		t.Fatalf("InspectWorkbookFacts: %v", err)
+	}
+	requestText := "Track cash flow opening balance, summarize inflows, extend closing formulas, copy period, roll forward closing balance, and protect formulas"
+	plan := requestcompiler.TemplateClassPlanHintForRequest(requestText)
+	if plan == nil {
+		t.Fatal("missing plan")
+	}
+	draft, ok := requestcompiler.DraftOrganismExecutionRequest(requestcompiler.OrganismDraftInput{
+		ScenarioID:        "cash-flow-organism-draft-integration",
+		RequestText:       requestText,
+		InputFile:         inputFile,
+		OutputFile:        outputFile,
+		WorkbookFacts:     facts,
+		TemplateClassPlan: *plan,
+	})
+	if !ok {
+		t.Fatal("DraftOrganismExecutionRequest ok=false")
+	}
+	raw, err := json.Marshal(draft)
+	if err != nil {
+		t.Fatalf("Marshal draft: %v", err)
+	}
+	var req OrganismExecutionRequest
+	if err := json.Unmarshal(raw, &req); err != nil {
+		t.Fatalf("Unmarshal draft: %v", err)
+	}
+
+	result, err := OrchestrateOrganism(req)
+	if err != nil {
+		t.Fatalf("OrchestrateOrganism: %v", err)
+	}
+	if !result.TemplateClassEvaluation.Pass || !result.OrganismVerification.Pass {
+		t.Fatalf("organism evidence failed: eval=%+v verification=%+v", result.TemplateClassEvaluation, result.OrganismVerification)
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	if got, err := outputHandle.GetCellValue("CashFlowSummary", "B2"); err != nil || got != "115" {
+		t.Fatalf("CashFlowSummary!B2=%q err=%v want 115", got, err)
+	}
+	if got, err := outputHandle.GetCellFormula("NextCashFlow", "E4"); err != nil || got != "=B4+C4-D4" {
+		t.Fatalf("NextCashFlow!E4 formula=%q err=%v want =B4+C4-D4", got, err)
+	}
+	if got, err := outputHandle.GetCellValue("NextCashFlow", "B3"); err != nil || got != "150" {
+		t.Fatalf("NextCashFlow!B3=%q err=%v want 150", got, err)
+	}
+}
+
 func TestOrchestrateOrganismExecutesRequestCompilerInventoryDraft(t *testing.T) {
 	tempDir := t.TempDir()
 	inputFile := filepath.Join(tempDir, "inventory.xlsx")

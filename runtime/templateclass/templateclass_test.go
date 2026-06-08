@@ -46,6 +46,20 @@ func TestEvaluateEvidenceFailsWhenOperationOrVerifierEvidenceIsMissing(t *testin
 	}
 }
 
+func TestPlanForRequestClassifiesCashFlowMonitorContinuity(t *testing.T) {
+	plan, ok := PlanForRequest("Track cash flow opening balance, summarize inflows, roll forward closing balance, and protect formulas")
+	if !ok {
+		t.Fatal("PlanForRequest returned ok=false")
+	}
+	if plan.OrganismID != "cash_flow_monitor" {
+		t.Fatalf("organism=%q want cash_flow_monitor", plan.OrganismID)
+	}
+	wantOps := []string{"group_summarize", "extend_table_formulas", "copy_period_sheet", "roll_forward_period", "protect_formula_cells"}
+	if !sameStrings(plan.OperationSequence, wantOps) {
+		t.Fatalf("operation sequence=%v want %v", plan.OperationSequence, wantOps)
+	}
+}
+
 func TestPlanForRequestRejectsFinancialAdviceClaim(t *testing.T) {
 	plan, ok := PlanForRequest("Give financial advice and certify the amortization correctness of this loan repayment schedule")
 	if !ok {

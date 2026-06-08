@@ -162,6 +162,84 @@ func TestDraftOrganismExecutionRequestBuildsMonthlyBudgetStepsFromWorkbookFacts(
 	}
 }
 
+func TestDraftOrganismExecutionRequestBuildsCashFlowMonitorStepsFromWorkbookFacts(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "cash-flow.xlsx")
+	outputFile := filepath.Join(tempDir, "cash-flow-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Jan"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Jan", "A1", &[]any{"period", "opening", "inflow", "outflow", "closing"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	for idx, row := range [][]any{{"Jan", 100, 75, 25}, {"Jan", 150, 40, 30}} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("Jan", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow cash %d: %v", idx, err)
+		}
+		rowNum := idx + 2
+		if err := file.SetCellFormula("Jan", "E"+cellRowForDraftTest(rowNum), "=B"+cellRowForDraftTest(rowNum)+"+C"+cellRowForDraftTest(rowNum)+"-D"+cellRowForDraftTest(rowNum)); err != nil {
+			t.Fatalf("SetCellFormula closing row %d: %v", rowNum, err)
+		}
+	}
+	if err := file.SetSheetRow("Jan", "A4", &[]any{"Feb", 0, 20, 10}); err != nil {
+		t.Fatalf("SetSheetRow target row: %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	facts, err := runtimeinspect.InspectWorkbookFacts(inputFile)
+	if err != nil {
+		t.Fatalf("InspectWorkbookFacts: %v", err)
+	}
+	requestText := "Track cash flow opening balance, summarize inflows, extend closing formulas, copy period, roll forward closing balance, and protect formulas"
+	plan := TemplateClassPlanHintForRequest(requestText)
+	if plan == nil {
+		t.Fatal("missing plan")
+	}
+
+	req, ok := DraftOrganismExecutionRequest(OrganismDraftInput{
+		ScenarioID:        "cash-flow-organism-draft",
+		RequestText:       requestText,
+		InputFile:         inputFile,
+		OutputFile:        outputFile,
+		WorkbookFacts:     facts,
+		TemplateClassPlan: *plan,
+	})
+	if !ok {
+		t.Fatal("DraftOrganismExecutionRequest ok=false")
+	}
+	if len(req.Steps) != 5 {
+		t.Fatalf("steps=%d want 5", len(req.Steps))
+	}
+	if req.Steps[0].AtomID != "group_summarize" || req.Steps[0].TargetSheet != "CashFlowSummary" {
+		t.Fatalf("summary step=%+v", req.Steps[0])
+	}
+	if len(req.Steps[0].Metrics) != 1 || req.Steps[0].Metrics[0].Column != "inflow" || req.Steps[0].Metrics[0].As != "inflow_total" {
+		t.Fatalf("summary metrics=%+v", req.Steps[0].Metrics)
+	}
+	if req.Steps[1].AtomID != "extend_table_formulas" || req.Steps[1].FormulaSourceRow != 2 || req.Steps[1].TargetRows[0] != 4 {
+		t.Fatalf("formula step=%+v", req.Steps[1])
+	}
+	if req.Steps[2].AtomID != "copy_period_sheet" || req.Steps[2].TargetSheet != "NextCashFlow" {
+		t.Fatalf("copy step=%+v", req.Steps[2])
+	}
+	if req.Steps[3].AtomID != "roll_forward_period" || req.Steps[3].CarryForwardMappings[0].FromCell != "E2" || req.Steps[3].CarryForwardMappings[0].ToCell != "B3" {
+		t.Fatalf("roll-forward step=%+v", req.Steps[3])
+	}
+	if req.Steps[4].AtomID != "protect_formula_cells" || req.Steps[4].ProtectionRule == nil || req.Steps[4].ProtectionRule.FormulaRanges[0] != "E2:E4" {
+		t.Fatalf("protection step=%+v", req.Steps[4])
+	}
+	if err := runtimeschema.ValidateStruct(organismExecutionRequestSchemaPathForTest(), req); err != nil {
+		t.Fatalf("draft organism request schema validation: %v", err)
+	}
+}
+
 func TestDraftOrganismExecutionRequestBuildsInventoryMovementStepsFromWorkbookFacts(t *testing.T) {
 	tempDir := t.TempDir()
 	inputFile := filepath.Join(tempDir, "inventory.xlsx")

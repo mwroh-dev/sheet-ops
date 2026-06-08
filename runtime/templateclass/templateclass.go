@@ -35,6 +35,12 @@ var plans = []Plan{
 		NonClaims:             []string{"does not create financial advice", "does not infer budget policy", "does not create native pivot tables"},
 	},
 	{
+		OrganismID:            "cash_flow_monitor",
+		OperationSequence:     []string{"group_summarize", "extend_table_formulas", "copy_period_sheet", "roll_forward_period", "protect_formula_cells"},
+		RequiredVerifierSpecs: []string{"cash_flow_monitor_verifier"},
+		NonClaims:             []string{"does not create financial advice", "does not infer cash-flow policy", "does not create native pivot tables"},
+	},
+	{
 		OrganismID:            "inventory_movement_log",
 		OperationSequence:     []string{"normalize_headers", "append_structured_rows", "join_lookup", "protect_formula_cells", "reconcile_tables"},
 		RequiredVerifierSpecs: []string{"inventory_movement_log_verifier"},
@@ -61,6 +67,8 @@ func PlanForRequest(requestText string) (Plan, bool) {
 		return planForOrganism("invoice_line_item_billing")
 	case containsAny(normalized, "budget", "variance", "over-budget", "over budget"):
 		return planForOrganism("monthly_budget_control")
+	case containsAny(normalized, "cash flow", "cash-flow", "opening balance", "closing balance"):
+		return planForOrganism("cash_flow_monitor")
 	case containsAny(normalized, "inventory", "stock", "sku"):
 		return planForOrganism("inventory_movement_log")
 	case containsAny(normalized, "gradebook", "student score", "student scores"):

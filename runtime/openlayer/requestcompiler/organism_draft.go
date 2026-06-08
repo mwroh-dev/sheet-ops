@@ -72,6 +72,8 @@ func DraftOrganismExecutionRequest(input OrganismDraftInput) (OrganismExecutionR
 		return draftInvoiceLineItemBilling(input)
 	case "monthly_budget_control":
 		return draftMonthlyBudgetControl(input)
+	case "cash_flow_monitor":
+		return draftCashFlowMonitor(input)
 	case "inventory_movement_log":
 		return draftInventoryMovementLog(input)
 	case "student_gradebook":
@@ -81,6 +83,89 @@ func DraftOrganismExecutionRequest(input OrganismDraftInput) (OrganismExecutionR
 	default:
 		return OrganismExecutionRequestDraft{}, false
 	}
+}
+
+func draftCashFlowMonitor(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
+	sheet, ok := findCashFlowSheet(input.WorkbookFacts)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumns := formulaColumnsForSheet(sheet)
+	if len(formulaColumns) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumnLetters := make([]string, 0, len(formulaColumns))
+	for _, column := range formulaColumns {
+		if letter, ok := columnLetterForHeader(sheet.Columns, column); ok {
+			formulaColumnLetters = append(formulaColumnLetters, letter)
+		}
+	}
+	if len(formulaColumnLetters) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	minFormulaRow, maxFormulaRow, ok := formulaRowBounds(sheet)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	targetRow := maxFormulaRow + 1
+	if targetRow > sheet.RowCount {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	closingColumnLetter, ok := columnLetterForHeader(sheet.Columns, "closing")
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	nextSheet := "NextCashFlow"
+
+	return OrganismExecutionRequestDraft{
+		ScenarioID:  input.ScenarioID,
+		RequestText: input.RequestText,
+		InputFile:   input.InputFile,
+		OutputFile:  input.OutputFile,
+		Steps: []OrganismExecutionStepDraft{
+			{
+				AtomID:          "group_summarize",
+				CompositionKind: "group_summary",
+				SourceSheet:     sheet.Name,
+				TargetSheet:     "CashFlowSummary",
+				SummaryMode:     "values",
+				GroupBy:         []string{"period"},
+				Metrics:         []MetricSpec{{Column: "inflow", Op: "sum", As: "inflow_total"}},
+			},
+			{
+				AtomID:           "extend_table_formulas",
+				CompositionKind:  "formula_extension",
+				SourceSheet:      sheet.Name,
+				FormulaSourceRow: minFormulaRow,
+				TargetRows:       []int{targetRow},
+				FormulaColumns:   formulaColumnLetters,
+			},
+			{
+				AtomID:          "copy_period_sheet",
+				CompositionKind: "period_copy",
+				SourceSheet:     sheet.Name,
+				TargetSheet:     nextSheet,
+			},
+			{
+				AtomID:          "roll_forward_period",
+				CompositionKind: "period_roll_forward",
+				SourceSheet:     sheet.Name,
+				TargetSheet:     nextSheet,
+				CarryForwardMappings: []CarryForwardMapping{
+					{FromSheet: sheet.Name, FromCell: closingColumnLetter + strconv.Itoa(minFormulaRow), ToSheet: nextSheet, ToCell: "B" + strconv.Itoa(minFormulaRow+1)},
+				},
+			},
+			{
+				AtomID:          "protect_formula_cells",
+				CompositionKind: "formula_protection",
+				SourceSheet:     nextSheet,
+				ProtectionRule: &FormulaProtectionRule{
+					FormulaRanges: []string{formulaRange(formulaColumnLetters, minFormulaRow, targetRow)},
+					InputRanges:   []string{"B2:D20"},
+				},
+			},
+		},
+	}, true
 }
 
 func draftLoanRepaymentCalculator(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
@@ -491,6 +576,16 @@ func findMonthlyBudgetSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect.
 	for _, sheet := range facts.Sheets {
 		headers := lowerSet(sheet.Columns)
 		if headers["category"] && headers["actual"] && headers["budget"] && headers["variance"] && headers["closing"] {
+			return sheet, true
+		}
+	}
+	return runtimeinspect.SheetFacts{}, false
+}
+
+func findCashFlowSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect.SheetFacts, bool) {
+	for _, sheet := range facts.Sheets {
+		headers := lowerSet(sheet.Columns)
+		if headers["period"] && headers["opening"] && headers["inflow"] && headers["outflow"] && headers["closing"] {
 			return sheet, true
 		}
 	}

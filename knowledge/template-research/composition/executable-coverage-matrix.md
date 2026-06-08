@@ -960,3 +960,32 @@ Added a draft-planner coverage gate for all 21 roadmap organisms:
   executor. It prevents overclaiming but does not add workbook behavior.
 - Advisory claim risk: any future organism must move from explicit-request-only
   to runtime-draft only after schema tests and open-layer execution tests exist.
+
+## Phase 33 Result
+
+Extended the runtime draft planner to `cash_flow_monitor`:
+
+- `runtime/templateclass` now classifies cash-flow continuity requests and
+  expects the sequence: group summary, formula extension, period copy,
+  roll-forward, and formula protection
+- `requestcompiler.DraftOrganismExecutionRequest` detects cash-flow workbooks
+  from period, opening, inflow, outflow, and closing headers
+- the draft emits summary, formula extension, copy-period, carry-forward, and
+  protection steps with workbook-facts-derived formula ranges
+- open-layer integration proves the draft executes through
+  `OrchestrateOrganism` and produces `CashFlowSummary` and `NextCashFlow`
+  workbook evidence
+- `draft-planner-coverage.json` now records cash flow as a runtime draft
+  planner, moving the boundary from 5/16 to 6/15
+
+## Phase 33 Self-Retro
+
+- Coverage improved: runtime draft synthesis now covers six roadmap organisms,
+  including a second period-continuity finance pattern beyond budget.
+- Remaining template needs: the cash-flow draft handles a simple
+  opening/inflow/outflow/closing table. It does not infer cash-flow policy,
+  dashboard layout, or multi-sheet financial statements.
+- Verifier strength: schema, classifier, draft, open-layer execution,
+  organism-level verification, and workbook output checks cover the slice.
+- Advisory claim risk: cash-flow support must remain a narrow continuity
+  planner until alternate period layouts and richer dashboard verifiers exist.
