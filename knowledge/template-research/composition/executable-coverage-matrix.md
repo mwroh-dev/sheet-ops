@@ -1549,3 +1549,33 @@ Closed the operation-planner catalog gap after 21/21 draft planner coverage:
 - Advisory claim risk: planner contract coverage must not be described as
   autonomous planning. It proves that every runtime draft organism has an
   explicit bounded plan shape and fallback policy.
+
+## Phase 51 Result
+
+Closed the template-class harness scenario gap after 21/21 draft planner
+coverage:
+
+- `runtime/knowledge` now requires `template-class-harness.json` to contain
+  exactly one scenario for every runtime draft organism from
+  `draft-planner-coverage.json`
+- the harness guard rejects duplicate organism scenarios and still checks that
+  every scenario references an existing operation planner record
+- `knowledge/template-research/runtime/template-class-harness.json` now covers
+  all 21 runtime draft planner organisms with request shapes, fixed
+  classify-plan-execute-verify-report flow, success evidence, and non-claims
+- this aligns draft planner coverage, verifier specs, operation planner
+  contracts, and harness scenarios at the same 21/21 boundary
+
+## Phase 51 Self-Retro
+
+- Coverage improved: the runtime productization artifact layer now has 21/21
+  coverage across draft planner records, verifier specs, operation planner
+  contracts, and template-class harness scenarios.
+- Remaining template needs: harness scenarios are still advisory acceptance
+  stories. They are not additional executed fixtures and do not prove natural
+  language generalization beyond the deterministic classifier tests.
+- Verifier strength: schema validation, exact runtime-draft-derived coverage,
+  duplicate detection, and planner-reference checks now prevent scenario drift.
+- Advisory claim risk: harness coverage must not be described as 21 fully
+  tested user workflows. It proves that every runtime draft organism has a
+  documented evidence chain and non-claim boundary.

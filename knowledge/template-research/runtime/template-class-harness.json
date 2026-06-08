@@ -1,46 +1,174 @@
 {
   "version": 1,
   "authority": "advisory_harness_contract",
-  "summary": "Template class harness scenarios for request-to-classify-to-plan-to-execute-to-verify flows. These scenarios identify the expected evidence chain but do not create a new runtime execution engine.",
+  "summary": "Template class harness scenarios for all round-009 request-to-classify-to-plan-to-execute-to-verify flows. These scenarios identify the expected evidence chain but do not create a new runtime execution engine.",
   "scenarios": [
     {
       "scenario_id": "invoice_request_to_verified_class",
       "organism_id": "invoice_line_item_billing",
       "request_shape": "Add invoice line items, extend line total formulas, protect formulas, and emit a printable invoice sheet.",
       "flow": ["classify", "plan", "execute", "verify", "report"],
-      "success_evidence": ["organism classifier chooses invoice_line_item_billing", "planner emits supported atom sequence", "workbookcase preview evidence includes append, formulas, validation, protection, printable form"],
+      "success_evidence": ["classifier chooses invoice_line_item_billing", "planner emits invoice supported atom sequence", "execution evidence includes append, formulas, validation, protection, and printable form"],
       "non_claims": ["no inferred layout", "no PDF pagination proof", "no accounting advice"]
+    },
+    {
+      "scenario_id": "expense_request_to_verified_class",
+      "organism_id": "expense_reimbursement",
+      "request_shape": "Append expense reimbursement items, validate receipt status, extend reimbursable totals, protect formulas, and generate a printable claim.",
+      "flow": ["classify", "plan", "execute", "verify", "report"],
+      "success_evidence": ["classifier chooses expense_reimbursement", "planner emits reimbursement supported atom sequence", "execution evidence includes expense append, formula extension, receipt validation, protection, and printable claim"],
+      "non_claims": ["no expense approval", "no company policy enforcement", "no tax advice"]
+    },
+    {
+      "scenario_id": "purchase_order_request_to_verified_class",
+      "organism_id": "purchase_order_control",
+      "request_shape": "Append purchase-order line items, extend order totals, validate PO status, protect formulas, and generate a printable purchase order.",
+      "flow": ["classify", "plan", "execute", "verify", "report"],
+      "success_evidence": ["classifier chooses purchase_order_control", "planner emits purchase-order supported atom sequence", "execution evidence includes line append, formula extension, status validation, protection, and printable PO"],
+      "non_claims": ["no purchase approval", "no procurement policy inference", "no vendor contract terms"]
+    },
+    {
+      "scenario_id": "procurement_reconciliation_request_to_verified_class",
+      "organism_id": "procurement_reconciliation",
+      "request_shape": "Validate invoice status, reconcile procurement PO and invoice amounts, and protect review formulas.",
+      "flow": ["classify", "plan", "execute", "verify", "report"],
+      "success_evidence": ["classifier chooses procurement_reconciliation", "planner emits validation, reconciliation, and protection atoms", "execution evidence includes deterministic mismatch or match reconciliation output"],
+      "non_claims": ["no three-way receipt matching", "no invoice approval", "no procurement policy inference"]
     },
     {
       "scenario_id": "budget_request_to_verified_class",
       "organism_id": "monthly_budget_control",
-      "request_shape": "Summarize monthly budget actuals and flag over-budget variance rows.",
+      "request_shape": "Summarize monthly budget actuals, flag variance, copy period, roll forward closing, and protect formulas.",
       "flow": ["classify", "plan", "execute", "verify", "report"],
-      "success_evidence": ["organism classifier chooses monthly_budget_control", "planner emits summary and threshold atoms", "organism verifier confirms deterministic summary and highlighted exceptions"],
+      "success_evidence": ["classifier chooses monthly_budget_control", "planner emits budget supported atom sequence", "execution evidence includes summary, threshold, period copy, roll-forward, and protection"],
       "non_claims": ["no financial advice", "no native pivot", "no inferred budget policy"]
+    },
+    {
+      "scenario_id": "cash_flow_request_to_verified_class",
+      "organism_id": "cash_flow_monitor",
+      "request_shape": "Track cash flow opening balance, summarize inflows, roll forward closing balance, and protect formulas.",
+      "flow": ["classify", "plan", "execute", "verify", "report"],
+      "success_evidence": ["classifier chooses cash_flow_monitor", "planner emits cash-flow supported atom sequence", "execution evidence includes summary, formula extension, period copy, roll-forward, and protection"],
+      "non_claims": ["no financial advice", "no cash-flow policy inference", "no native pivot"]
+    },
+    {
+      "scenario_id": "attendance_request_to_verified_class",
+      "organism_id": "attendance_register",
+      "request_shape": "Copy attendance register to the next class period, validate attendance status, and protect total formulas.",
+      "flow": ["classify", "plan", "execute", "verify", "report"],
+      "success_evidence": ["classifier chooses attendance_register", "planner emits period copy, validation, and protection atoms", "execution evidence includes copied register, status validation, and protected formulas"],
+      "non_claims": ["no arbitrary attendance matrix growth", "no attendance policy inference", "no calendar projection"]
+    },
+    {
+      "scenario_id": "timesheet_request_to_verified_class",
+      "organism_id": "timesheet_hours_log",
+      "request_shape": "Copy weekly timesheet, append employee hours, validate work code, extend pay formulas, and protect totals.",
+      "flow": ["classify", "plan", "execute", "verify", "report"],
+      "success_evidence": ["classifier chooses timesheet_hours_log", "planner emits timesheet supported atom sequence", "execution evidence includes period copy, row append, formula extension, validation, and protection"],
+      "non_claims": ["no payroll tax calculation", "no labor policy inference", "no billable-hour certification"]
+    },
+    {
+      "scenario_id": "project_timeline_request_to_verified_class",
+      "organism_id": "project_timeline_tracker",
+      "request_shape": "Copy project timeline period, extend task progress formulas, validate task status, summarize timeline status, and protect formulas.",
+      "flow": ["classify", "plan", "execute", "verify", "report"],
+      "success_evidence": ["classifier chooses project_timeline_tracker", "planner emits timeline supported atom sequence", "execution evidence includes copied period, formula extension, status validation, summary, and protection"],
+      "non_claims": ["no gantt rendering", "no arbitrary timeline grid projection", "no scheduling policy inference"]
+    },
+    {
+      "scenario_id": "shift_roster_request_to_verified_class",
+      "organism_id": "shift_roster_planner",
+      "request_shape": "Copy weekly shift roster, validate shift codes, and protect coverage formulas.",
+      "flow": ["classify", "plan", "execute", "verify", "report"],
+      "success_evidence": ["classifier chooses shift_roster_planner", "planner emits roster period copy, validation, and protection atoms", "execution evidence includes copied roster, shift-code validation, and protected coverage formulas"],
+      "non_claims": ["no roster matrix auto-growth", "no staffing policy inference", "no shift optimization"]
+    },
+    {
+      "scenario_id": "construction_cost_request_to_verified_class",
+      "organism_id": "construction_cost_tracker",
+      "request_shape": "Append construction cost row, extend variance formulas, highlight budget overrun, and protect forecast formulas.",
+      "flow": ["classify", "plan", "execute", "verify", "report"],
+      "success_evidence": ["classifier chooses construction_cost_tracker", "planner emits cost-control supported atom sequence", "execution evidence includes row append, formula extension, threshold highlight, and protection"],
+      "non_claims": ["no construction timeline projection", "no cost-control policy inference", "no forecast certification"]
     },
     {
       "scenario_id": "inventory_request_to_verified_class",
       "organism_id": "inventory_movement_log",
       "request_shape": "Normalize inventory movement headers and reconcile movement balances with stock master quantities.",
       "flow": ["classify", "plan", "execute", "verify", "report"],
-      "success_evidence": ["organism classifier chooses inventory_movement_log", "planner requires explicit reconciliation keys", "workbookcase reconciliation evidence reports deterministic buckets"],
+      "success_evidence": ["classifier chooses inventory_movement_log", "planner emits inventory supported atom sequence", "execution evidence includes header normalization, lookup or append evidence, protection, and reconciliation buckets"],
       "non_claims": ["no fuzzy matching", "no duplicate-key resolution", "no warehouse policy inference"]
+    },
+    {
+      "scenario_id": "warehouse_reorder_request_to_verified_class",
+      "organism_id": "warehouse_reorder_tracker",
+      "request_shape": "Enrich warehouse reorder stock with SKU location, flag low stock, append reorder candidate, validate SKU, and protect reorder formulas.",
+      "flow": ["classify", "plan", "execute", "verify", "report"],
+      "success_evidence": ["classifier chooses warehouse_reorder_tracker", "planner emits reorder supported atom sequence", "execution evidence includes lookup enrichment, threshold highlight, candidate append, validation, and protection"],
+      "non_claims": ["no reorder quantity policy", "no duplicate SKU resolution", "no warehouse policy inference"]
     },
     {
       "scenario_id": "gradebook_request_to_verified_class",
       "organism_id": "student_gradebook",
       "request_shape": "Summarize student scores and validate completion status values.",
       "flow": ["classify", "plan", "execute", "verify", "report"],
-      "success_evidence": ["organism classifier chooses student_gradebook", "planner emits group_summarize and add_data_validation", "verified-class contract excludes native pivot and grading policy claims"],
+      "success_evidence": ["classifier chooses student_gradebook", "planner emits gradebook supported atom sequence", "execution evidence includes score summary, validation, formula extension, and protection"],
       "non_claims": ["no grading advice", "no native pivot", "no arbitrary matrix growth"]
+    },
+    {
+      "scenario_id": "training_completion_request_to_verified_class",
+      "organism_id": "training_completion_matrix",
+      "request_shape": "Summarize training completion by employee, validate training status, protect completion formulas, and generate a printable training report.",
+      "flow": ["classify", "plan", "execute", "verify", "report"],
+      "success_evidence": ["classifier chooses training_completion_matrix", "planner emits training supported atom sequence", "execution evidence includes completion summary, validation, protection, and printable report"],
+      "non_claims": ["no arbitrary training matrix growth", "no compliance policy inference", "no cross-training optimization"]
+    },
+    {
+      "scenario_id": "service_ticket_request_to_verified_class",
+      "organism_id": "service_ticket_queue",
+      "request_shape": "Append service ticket, validate ticket status, flag overdue tickets, summarize open tickets, and protect SLA formulas.",
+      "flow": ["classify", "plan", "execute", "verify", "report"],
+      "success_evidence": ["classifier chooses service_ticket_queue", "planner emits ticket queue supported atom sequence", "execution evidence includes ticket append, SLA formula extension, validation, threshold highlight, summary, and protection"],
+      "non_claims": ["no ticket routing", "no SLA policy inference", "no native queue dashboard"]
+    },
+    {
+      "scenario_id": "sales_pipeline_request_to_verified_class",
+      "organism_id": "sales_pipeline_tracker",
+      "request_shape": "Append sales pipeline deal, validate sales stage, extend weighted value formulas, flag large deals, summarize pipeline stages, and protect forecast formulas.",
+      "flow": ["classify", "plan", "execute", "verify", "report"],
+      "success_evidence": ["classifier chooses sales_pipeline_tracker", "planner emits sales pipeline supported atom sequence", "execution evidence includes deal append, formula extension, validation, threshold highlight, summary, and protection"],
+      "non_claims": ["no revenue forecasting", "no sales policy inference", "no CRM automation"]
+    },
+    {
+      "scenario_id": "maintenance_issue_request_to_verified_class",
+      "organism_id": "maintenance_issue_log",
+      "request_shape": "Append maintenance issue, validate issue status, extend action-required formulas, flag high risk issues, summarize maintenance status, and protect action formulas.",
+      "flow": ["classify", "plan", "execute", "verify", "report"],
+      "success_evidence": ["classifier chooses maintenance_issue_log", "planner emits maintenance issue supported atom sequence", "execution evidence includes issue append, formula extension, validation, risk highlight, summary, and protection"],
+      "non_claims": ["no dispatch automation", "no maintenance policy inference", "no technician scheduling"]
+    },
+    {
+      "scenario_id": "compliance_action_request_to_verified_class",
+      "organism_id": "compliance_action_register",
+      "request_shape": "Append compliance action, validate action status, extend review-required formulas, flag overdue actions, summarize compliance status, protect review formulas, and generate a printable action register.",
+      "flow": ["classify", "plan", "execute", "verify", "report"],
+      "success_evidence": ["classifier chooses compliance_action_register", "planner emits compliance action supported atom sequence", "execution evidence includes action append, formula extension, validation, overdue highlight, summary, protection, and printable register"],
+      "non_claims": ["no regulatory interpretation", "no action approval", "no audit readiness certification"]
+    },
+    {
+      "scenario_id": "safety_compliance_request_to_verified_class",
+      "organism_id": "safety_compliance_register",
+      "request_shape": "Append safety compliance check, validate safety status, extend action-required formulas, flag high risk safety items, summarize completion by area, protect action formulas, and generate a printable safety report.",
+      "flow": ["classify", "plan", "execute", "verify", "report"],
+      "success_evidence": ["classifier chooses safety_compliance_register", "planner emits safety compliance supported atom sequence", "execution evidence includes safety check append, formula extension, validation, risk highlight, completion summary, protection, and printable report"],
+      "non_claims": ["no safety compliance certification", "no safety policy inference", "no inspection replacement"]
     },
     {
       "scenario_id": "loan_request_to_verified_class",
       "organism_id": "loan_repayment_calculator",
       "request_shape": "Extend loan payment-row formulas and protect calculated schedule cells.",
       "flow": ["classify", "plan", "execute", "verify", "report"],
-      "success_evidence": ["organism classifier chooses loan_repayment_calculator", "planner emits formula extension and protection atoms", "verified-class contract excludes amortization correctness and financial advice"],
+      "success_evidence": ["classifier chooses loan_repayment_calculator", "planner emits formula extension and protection atoms", "execution evidence includes translated payment formulas and protected calculated cells"],
       "non_claims": ["no financial advice", "no payoff termination verification", "no amortization certification"]
     }
   ]

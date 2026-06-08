@@ -28,6 +28,9 @@ goal. It does not claim full workbook generation or broad Excel automation.
 - Operation planner contracts now cover all 21 runtime draft planner organisms,
   so every runtime-draft organism has an advisory classifier signal set,
   supported atom sequence, required verifier spec id, and fallback policy.
+- Template-class harness scenarios now cover all 21 runtime draft planner
+  organisms, so every organism has an advisory classify-plan-execute-verify-report
+  scenario contract.
 - `runtime/templateclass` provides a deterministic classifier/planner/evidence
   evaluator for the first productization slice.
 - `runtime/workbookcase.RunOrganismPlan` provides multi-operation organism

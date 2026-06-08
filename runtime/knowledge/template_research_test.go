@@ -465,18 +465,28 @@ func TestTemplateResearchRuntimeProductizationArtifactsValidate(t *testing.T) {
 	}
 
 	harnessScenarios := loadRuntimeProductizationHarnessScenarios(t, harnessPath)
-	if len(harnessScenarios) < 5 {
-		t.Fatalf("template class harness scenario count=%d want at least 5", len(harnessScenarios))
+	if len(harnessScenarios) != len(runtimeDraftOrganisms) {
+		t.Fatalf("template class harness scenario count=%d want runtime draft organism count=%d", len(harnessScenarios), len(runtimeDraftOrganisms))
 	}
+	harnessOrganisms := map[string]bool{}
 	for _, scenario := range harnessScenarios {
 		if plans[scenario.OrganismID].OrganismID == "" {
 			t.Fatalf("harness scenario %q references organism %q without planner plan", scenario.ScenarioID, scenario.OrganismID)
 		}
+		if harnessOrganisms[scenario.OrganismID] {
+			t.Fatalf("harness includes duplicate organism %q", scenario.OrganismID)
+		}
+		harnessOrganisms[scenario.OrganismID] = true
 		if len(scenario.Flow) != 5 {
 			t.Fatalf("harness scenario %q flow length=%d want classify/plan/execute/verify/report", scenario.ScenarioID, len(scenario.Flow))
 		}
 		if len(scenario.SuccessEvidence) == 0 || len(scenario.NonClaims) == 0 {
 			t.Fatalf("harness scenario %q has weak evidence/non-claims: %+v", scenario.ScenarioID, scenario)
+		}
+	}
+	for _, organism := range runtimeDraftOrganisms {
+		if !harnessOrganisms[organism] {
+			t.Fatalf("template class harness missing runtime draft organism %q", organism)
 		}
 	}
 
