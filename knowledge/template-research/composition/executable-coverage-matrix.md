@@ -1114,3 +1114,34 @@ Extended the runtime draft planner to `purchase_order_control`:
   execution, and organism-level evidence are covered for the slice.
 - Advisory claim risk: PO support must remain a workbook control pattern until
   approval transitions, vendor metadata, and policy-specific verifiers exist.
+
+## Phase 38 Result
+
+Extended the runtime draft planner to `attendance_register`:
+
+- `runtime/templateclass` now classifies attendance-register requests and
+  limits the executable plan to period copy, status validation, and formula
+  protection
+- `requestcompiler.DraftOrganismExecutionRequest` detects attendance register
+  workbooks from student, date, status, and attendance total headers
+- the draft copies the attendance period sheet, validates allowed attendance
+  statuses on the copied period, and protects copied total formulas
+- open-layer integration proves the draft executes through
+  `OrchestrateOrganism` and produces expected copied roster data and preserved
+  attendance formula evidence
+- `draft-planner-coverage.json` now records attendance register as a runtime
+  draft planner, moving the boundary from 10/11 to 11/10
+
+## Phase 38 Self-Retro
+
+- Coverage improved: runtime draft synthesis now covers eleven roadmap
+  organisms and adds the first attendance/education period-control workflow
+  beyond gradebook score summaries.
+- Remaining template needs: this draft covers row/date/status attendance
+  registers, not arbitrary learner/date matrix growth, calendar projection, or
+  attendance policy interpretation.
+- Verifier strength: classifier, schema, draft, period copy, status validation,
+  formula protection, open-layer execution, and organism-level evidence are
+  covered for the slice.
+- Advisory claim risk: attendance support must not be described as full matrix
+  generation until matrix growth and calendar projection verifiers exist.

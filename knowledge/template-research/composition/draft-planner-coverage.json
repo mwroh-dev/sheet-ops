@@ -59,11 +59,14 @@
     },
     {
       "organism_id": "attendance_register",
-      "draft_status": "explicit_request_only",
-      "runtime_entrypoint": "",
-      "evidence_tests": [],
-      "current_limit": "No workbook-facts draft planner for attendance matrix growth or calendar-period handling.",
-      "next_gate": "Add an attendance fixture with period copy, status validation, protected totals, and matrix checks."
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsAttendanceRegisterStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerAttendanceDraft"
+      ],
+      "current_limit": "Row/date/status attendance register with period copy, status validation, and protected total formulas only; does not auto-grow arbitrary attendance matrices.",
+      "next_gate": "Add attendance fixtures with learner/date matrix growth, calendar projection, status totals, and protected helper regions."
     },
     {
       "organism_id": "timesheet_hours_log",

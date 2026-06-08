@@ -376,6 +376,74 @@ func TestDraftOrganismExecutionRequestBuildsCashFlowMonitorStepsFromWorkbookFact
 	}
 }
 
+func TestDraftOrganismExecutionRequestBuildsAttendanceRegisterStepsFromWorkbookFacts(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "attendance.xlsx")
+	outputFile := filepath.Join(tempDir, "attendance-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Attendance"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Attendance", "A1", &[]any{"student", "date", "status", "attendance_total"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Attendance", "A2", &[]any{"Alice", "2026-06-08", "present"}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetSheetRow("Attendance", "A3", &[]any{"Bob", "2026-06-08", "absent"}); err != nil {
+		t.Fatalf("SetSheetRow row3: %v", err)
+	}
+	if err := file.SetCellFormula("Attendance", "D2", "=IF(C2=\"present\",1,0)"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if err := file.SetCellFormula("Attendance", "D3", "=IF(C3=\"present\",1,0)"); err != nil {
+		t.Fatalf("SetCellFormula(D3): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	facts, err := runtimeinspect.InspectWorkbookFacts(inputFile)
+	if err != nil {
+		t.Fatalf("InspectWorkbookFacts: %v", err)
+	}
+	requestText := "Copy attendance register to the next class period, validate attendance status, and protect total formulas"
+	plan := TemplateClassPlanHintForRequest(requestText)
+	if plan == nil {
+		t.Fatal("missing plan")
+	}
+
+	req, ok := DraftOrganismExecutionRequest(OrganismDraftInput{
+		ScenarioID:        "attendance-organism-draft",
+		RequestText:       requestText,
+		InputFile:         inputFile,
+		OutputFile:        outputFile,
+		WorkbookFacts:     facts,
+		TemplateClassPlan: *plan,
+	})
+	if !ok {
+		t.Fatal("DraftOrganismExecutionRequest ok=false")
+	}
+	if len(req.Steps) != 3 {
+		t.Fatalf("steps=%d want 3", len(req.Steps))
+	}
+	if req.Steps[0].AtomID != "copy_period_sheet" || req.Steps[0].SourceSheet != "Attendance" || req.Steps[0].TargetSheet != "NextAttendance" {
+		t.Fatalf("copy step=%+v", req.Steps[0])
+	}
+	if req.Steps[1].AtomID != "add_data_validation" || req.Steps[1].SourceSheet != "NextAttendance" || req.Steps[1].ValidationRule == nil || req.Steps[1].ValidationRule.Ranges[0] != "C2:C20" {
+		t.Fatalf("validation step=%+v", req.Steps[1])
+	}
+	if req.Steps[2].AtomID != "protect_formula_cells" || req.Steps[2].SourceSheet != "NextAttendance" || req.Steps[2].ProtectionRule == nil || req.Steps[2].ProtectionRule.FormulaRanges[0] != "D2:D3" {
+		t.Fatalf("protection step=%+v", req.Steps[2])
+	}
+	if err := runtimeschema.ValidateStruct(organismExecutionRequestSchemaPathForTest(), req); err != nil {
+		t.Fatalf("draft organism request schema validation: %v", err)
+	}
+}
+
 func TestDraftOrganismExecutionRequestBuildsTimesheetHoursLogStepsFromWorkbookFacts(t *testing.T) {
 	tempDir := t.TempDir()
 	inputFile := filepath.Join(tempDir, "timesheet.xlsx")

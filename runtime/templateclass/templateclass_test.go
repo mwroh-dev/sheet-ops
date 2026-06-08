@@ -74,6 +74,20 @@ func TestPlanForRequestClassifiesTimesheetHoursLog(t *testing.T) {
 	}
 }
 
+func TestPlanForRequestClassifiesAttendanceRegister(t *testing.T) {
+	plan, ok := PlanForRequest("Copy attendance register to the next class period, validate attendance status, and protect total formulas")
+	if !ok {
+		t.Fatal("PlanForRequest returned ok=false")
+	}
+	if plan.OrganismID != "attendance_register" {
+		t.Fatalf("organism=%q want attendance_register", plan.OrganismID)
+	}
+	wantOps := []string{"copy_period_sheet", "add_data_validation", "protect_formula_cells"}
+	if !sameStrings(plan.OperationSequence, wantOps) {
+		t.Fatalf("operation sequence=%v want %v", plan.OperationSequence, wantOps)
+	}
+}
+
 func TestPlanForRequestClassifiesWarehouseReorderTracker(t *testing.T) {
 	plan, ok := PlanForRequest("Enrich warehouse reorder stock with SKU location, flag low stock, append reorder candidate, validate SKU, and protect reorder formulas")
 	if !ok {

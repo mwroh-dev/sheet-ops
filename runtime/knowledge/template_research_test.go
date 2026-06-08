@@ -535,6 +535,7 @@ func TestTemplateResearchDraftPlannerCoverageStaysExplicit(t *testing.T) {
 		"purchase_order_control":    true,
 		"monthly_budget_control":    true,
 		"cash_flow_monitor":         true,
+		"attendance_register":       true,
 		"timesheet_hours_log":       true,
 		"warehouse_reorder_tracker": true,
 		"inventory_movement_log":    true,

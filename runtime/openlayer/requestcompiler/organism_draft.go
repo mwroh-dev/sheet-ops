@@ -78,6 +78,8 @@ func DraftOrganismExecutionRequest(input OrganismDraftInput) (OrganismExecutionR
 		return draftMonthlyBudgetControl(input)
 	case "cash_flow_monitor":
 		return draftCashFlowMonitor(input)
+	case "attendance_register":
+		return draftAttendanceRegister(input)
 	case "timesheet_hours_log":
 		return draftTimesheetHoursLog(input)
 	case "warehouse_reorder_tracker":
@@ -91,6 +93,70 @@ func DraftOrganismExecutionRequest(input OrganismDraftInput) (OrganismExecutionR
 	default:
 		return OrganismExecutionRequestDraft{}, false
 	}
+}
+
+func draftAttendanceRegister(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
+	sheet, ok := findAttendanceRegisterSheet(input.WorkbookFacts)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumns := formulaColumnsForSheet(sheet)
+	if len(formulaColumns) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumnLetters := make([]string, 0, len(formulaColumns))
+	for _, column := range formulaColumns {
+		if letter, ok := columnLetterForHeader(sheet.Columns, column); ok {
+			formulaColumnLetters = append(formulaColumnLetters, letter)
+		}
+	}
+	if len(formulaColumnLetters) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	minFormulaRow, maxFormulaRow, ok := formulaRowBounds(sheet)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	statusColumnLetter, ok := columnLetterForHeader(sheet.Columns, "status")
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	nextSheet := "NextAttendance"
+
+	return OrganismExecutionRequestDraft{
+		ScenarioID:  input.ScenarioID,
+		RequestText: input.RequestText,
+		InputFile:   input.InputFile,
+		OutputFile:  input.OutputFile,
+		Steps: []OrganismExecutionStepDraft{
+			{
+				AtomID:          "copy_period_sheet",
+				CompositionKind: "period_copy",
+				SourceSheet:     sheet.Name,
+				TargetSheet:     nextSheet,
+			},
+			{
+				AtomID:          "add_data_validation",
+				CompositionKind: "data_validation",
+				SourceSheet:     nextSheet,
+				ValidationRule: &DataValidationRule{
+					Ranges:        []string{statusColumnLetter + "2:" + statusColumnLetter + "20"},
+					RuleType:      "list",
+					AllowedValues: []string{"present", "absent", "excused"},
+					AllowBlank:    false,
+				},
+			},
+			{
+				AtomID:          "protect_formula_cells",
+				CompositionKind: "formula_protection",
+				SourceSheet:     nextSheet,
+				ProtectionRule: &FormulaProtectionRule{
+					FormulaRanges: []string{formulaRange(formulaColumnLetters, minFormulaRow, maxFormulaRow)},
+					InputRanges:   []string{"A2:C20"},
+				},
+			},
+		},
+	}, true
 }
 
 func draftPurchaseOrderControl(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
@@ -969,6 +1035,16 @@ func findTimesheetHoursSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect
 	for _, sheet := range facts.Sheets {
 		headers := lowerSet(sheet.Columns)
 		if headers["date"] && headers["employee"] && headers["work_code"] && headers["hours"] && headers["rate"] && headers["pay"] {
+			return sheet, true
+		}
+	}
+	return runtimeinspect.SheetFacts{}, false
+}
+
+func findAttendanceRegisterSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect.SheetFacts, bool) {
+	for _, sheet := range facts.Sheets {
+		headers := lowerSet(sheet.Columns)
+		if headers["student"] && headers["date"] && headers["status"] && headers["attendance_total"] {
 			return sheet, true
 		}
 	}
