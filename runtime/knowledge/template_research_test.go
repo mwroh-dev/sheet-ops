@@ -236,6 +236,8 @@ func TestTemplateResearchExecutableOrganismCoverageLadder(t *testing.T) {
 		t.Fatalf("coverage authority=%q want advisory_coverage_only", catalog.Authority)
 	}
 	seen := map[string]bool{}
+	previewFixtureCount := 0
+	plannedBlockerCount := 0
 	for _, organism := range catalog.Organisms {
 		if !roadmapCandidates[organism.OrganismID] {
 			t.Fatalf("coverage includes non-roadmap organism %q", organism.OrganismID)
@@ -256,6 +258,7 @@ func TestTemplateResearchExecutableOrganismCoverageLadder(t *testing.T) {
 			}
 		}
 		for _, atom := range organism.PlannedBlockers {
+			plannedBlockerCount++
 			if supportedAtoms[atom] {
 				t.Fatalf("organism %q planned blocker %q is already supported", organism.OrganismID, atom)
 			}
@@ -265,6 +268,7 @@ func TestTemplateResearchExecutableOrganismCoverageLadder(t *testing.T) {
 		}
 		switch organism.CoverageTier {
 		case "preview_fixture":
+			previewFixtureCount++
 			if len(organism.PreviewEvidence) == 0 {
 				t.Fatalf("preview fixture organism %q has no preview evidence", organism.OrganismID)
 			}
@@ -289,6 +293,12 @@ func TestTemplateResearchExecutableOrganismCoverageLadder(t *testing.T) {
 	}
 	if len(seen) != len(roadmapCandidates) {
 		t.Fatalf("coverage organism count=%d want roadmap candidate count=%d", len(seen), len(roadmapCandidates))
+	}
+	if previewFixtureCount != len(roadmapCandidates) {
+		t.Fatalf("preview fixture organism count=%d want roadmap candidate count=%d", previewFixtureCount, len(roadmapCandidates))
+	}
+	if plannedBlockerCount != 0 {
+		t.Fatalf("planned blocker count=%d want 0 after deterministic preview coverage", plannedBlockerCount)
 	}
 	for candidate := range roadmapCandidates {
 		if !seen[candidate] {

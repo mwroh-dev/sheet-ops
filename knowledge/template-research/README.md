@@ -21,7 +21,8 @@ bundle, or reuse third-party template files.
   atom-builder audit notes, runtime bridge rules for code-generation
   assistance, non-runtime organism preview harness notes, and the executable
   organism coverage ladder that separates fixture-backed previews from
-  supported-atom plans and planned-atom blockers.
+  supported-atom plans and planned-atom blockers. The completion audit records
+  the current evidence and remaining limits for the advisory-to-preview layer.
 - `patterns/*.json`: normalized template patterns grouped by user workflow and
   spreadsheet mechanics.
 - `opportunities/*.json`: capability backlog candidates that are intentionally
