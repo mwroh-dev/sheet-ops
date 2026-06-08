@@ -164,6 +164,8 @@ func verifyOrganismWorkbookSemantics(organismID, outputFile string) []string {
 		return verifyExpenseReimbursementWorkbook(outputFile)
 	case "purchase_order_control":
 		return verifyPurchaseOrderWorkbook(outputFile)
+	case "monthly_budget_control":
+		return verifyMonthlyBudgetWorkbook(outputFile)
 	default:
 		return nil
 	}
@@ -243,6 +245,32 @@ func verifyPurchaseOrderWorkbook(outputFile string) []string {
 		reasons = append(reasons, fmt.Sprintf("purchase order printable semantic check missing PurchaseOrderPrint!A1: %v", err))
 	} else if strings.TrimSpace(got) == "" {
 		reasons = append(reasons, "purchase order printable semantic check missing PurchaseOrderPrint!A1 title")
+	}
+	return reasons
+}
+
+func verifyMonthlyBudgetWorkbook(outputFile string) []string {
+	handle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		return []string{fmt.Sprintf("monthly budget workbook semantic check failed to open output: %v", err)}
+	}
+	defer func() { _ = handle.Close() }()
+
+	var reasons []string
+	if got, err := handle.GetCellValue("BudgetSummary", "B2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("monthly budget semantic check missing BudgetSummary!B2: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "monthly budget semantic check missing BudgetSummary!B2 summary value")
+	}
+	if got, err := handle.GetCellValue("NextBudget", "B3"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("monthly budget roll-forward semantic check missing NextBudget!B3: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "monthly budget roll-forward semantic check missing NextBudget!B3 value")
+	}
+	if got, err := handle.GetCellFormula("NextBudget", "E2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("monthly budget formula semantic check missing NextBudget!E2 formula: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "monthly budget formula semantic check missing NextBudget!E2 formula")
 	}
 	return reasons
 }
