@@ -1,0 +1,12 @@
+{
+  "scenario_id": "protect-formula-cells-example",
+  "request_text": "Protect formula cells D2:D20 and leave A2:C20 editable in the LineItems sheet.",
+  "input_file": "invoice.xlsx",
+  "sheet_name": "LineItems",
+  "output_file": "invoice-protected.xlsx",
+  "operation": "protect_formula_cells",
+  "protection_rule": {
+    "formula_ranges": ["D2:D20"],
+    "input_ranges": ["A2:C20"]
+  }
+}

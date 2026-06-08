@@ -20,6 +20,7 @@
         "append_structured_rows",
         "extend_table_formulas",
         "add_data_validation",
+        "protect_formula_cells",
         "write_values"
       ]
     },

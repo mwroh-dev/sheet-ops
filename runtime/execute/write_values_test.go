@@ -332,3 +332,95 @@ func TestRunAddDataValidationPreservesSourceAndVerifiesRule(t *testing.T) {
 		t.Fatalf("verification failed: %+v", verification)
 	}
 }
+
+func TestRunProtectFormulaCellsPreservesSourceAndVerifiesProtection(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "invoice.xlsx")
+	outputFile := filepath.Join(tempDir, "invoice-output.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "LineItems"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	header := []any{"sku", "quantity", "unit_price", "line_total"}
+	if err := file.SetSheetRow("LineItems", "A1", &header); err != nil {
+		t.Fatalf("SetSheetRow(header): %v", err)
+	}
+	row := []any{"A001", 2, 10}
+	if err := file.SetSheetRow("LineItems", "A2", &row); err != nil {
+		t.Fatalf("SetSheetRow(row): %v", err)
+	}
+	if err := file.SetCellFormula("LineItems", "D2", "=B2*C2"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	ir := compiler.WorkbookOperationIR{
+		ExecutionKind:   "composition",
+		CompositionKind: "formula_protection",
+		OperationFamily: "protect_formula_cells",
+		SourceSheet:     "LineItems",
+		ProtectionRule: &compiler.FormulaProtectionRule{
+			FormulaRanges: []string{"D2"},
+			InputRanges:   []string{"A2:C10"},
+		},
+		PreserveOriginal: true,
+	}
+
+	result, err := RunWorkbookOperation(ir, inputFile, outputFile)
+	if err != nil {
+		t.Fatalf("RunWorkbookOperation: %v", err)
+	}
+	if result.OperationFamily != "protect_formula_cells" {
+		t.Fatalf("operation_family=%q want protect_formula_cells", result.OperationFamily)
+	}
+	if result.SourceSHA256Before != result.SourceSHA256After {
+		t.Fatal("source hash changed during execution")
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	protection, err := outputHandle.GetSheetProtection("LineItems")
+	if err != nil {
+		t.Fatalf("GetSheetProtection: %v", err)
+	}
+	if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
+		t.Fatalf("sheet protection not enabled enough: %+v", protection)
+	}
+	if locked, err := testCellLocked(outputHandle, "LineItems", "D2"); err != nil || !locked {
+		t.Fatalf("D2 locked=%v err=%v want true", locked, err)
+	}
+	if locked, err := testCellLocked(outputHandle, "LineItems", "A2"); err != nil || locked {
+		t.Fatalf("A2 locked=%v err=%v want false", locked, err)
+	}
+
+	verification, err := runtimeverify.VerifyWorkbookOperation(ir, inputFile, outputFile, result.SourceSHA256Before, result.SourceSHA256After)
+	if err != nil {
+		t.Fatalf("VerifyWorkbookOperation: %v", err)
+	}
+	if !verification.Pass {
+		t.Fatalf("verification failed: %+v", verification)
+	}
+}
+
+func testCellLocked(file *excelize.File, sheet, cell string) (bool, error) {
+	styleID, err := file.GetCellStyle(sheet, cell)
+	if err != nil {
+		return false, err
+	}
+	style, err := file.GetStyle(styleID)
+	if err != nil {
+		return false, err
+	}
+	if style.Protection == nil {
+		return true, nil
+	}
+	return style.Protection.Locked, nil
+}

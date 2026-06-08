@@ -8,7 +8,7 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-func TestInvoiceLineItemBillingPreviewComposesAppendFormulaExtensionAndValidation(t *testing.T) {
+func TestInvoiceLineItemBillingPreviewComposesAppendFormulaExtensionValidationAndProtection(t *testing.T) {
 	setRuntimeRoots(t)
 
 	tempDir := t.TempDir()
@@ -16,6 +16,7 @@ func TestInvoiceLineItemBillingPreviewComposesAppendFormulaExtensionAndValidatio
 	appendOutput := filepath.Join(tempDir, "invoice-appended.xlsx")
 	finalOutput := filepath.Join(tempDir, "invoice-final.xlsx")
 	validationOutput := filepath.Join(tempDir, "invoice-validated.xlsx")
+	protectedOutput := filepath.Join(tempDir, "invoice-protected.xlsx")
 
 	file := excelize.NewFile()
 	defer func() { _ = file.Close() }()
@@ -98,9 +99,27 @@ func TestInvoiceLineItemBillingPreviewComposesAppendFormulaExtensionAndValidatio
 		t.Fatalf("validation verification failed: %+v", validationResult.Verification)
 	}
 
-	outputHandle, err := excelize.OpenFile(validationOutput)
+	protectionTask := runtimetaskspec.BuildProtectFormulaCellsTask(runtimetaskspec.ProtectFormulaCellsRequest{
+		RequestText: "청구서 계산 수식은 보호하고 line item 입력 범위는 편집 가능하게 둔다.",
+		InputFile:   validationOutput,
+		SourceSheet: "LineItems",
+		OutputFile:  protectedOutput,
+		ProtectionRule: runtimetaskspec.FormulaProtectionRule{
+			FormulaRanges: []string{"D2:E3"},
+			InputRanges:   []string{"A2:C10"},
+		},
+	})
+	protectionResult, err := Run(Request{ScenarioID: "invoice-preview-protection", TaskSpec: protectionTask.TaskSpec})
 	if err != nil {
-		t.Fatalf("Open validation output: %v", err)
+		t.Fatalf("protection Run: %v", err)
+	}
+	if !protectionResult.Verification.Pass {
+		t.Fatalf("protection verification failed: %+v", protectionResult.Verification)
+	}
+
+	outputHandle, err := excelize.OpenFile(protectedOutput)
+	if err != nil {
+		t.Fatalf("Open protected output: %v", err)
 	}
 	defer func() { _ = outputHandle.Close() }()
 	if got, err := outputHandle.GetCellValue("LineItems", "A3"); err != nil || got != "B002" {
@@ -125,5 +144,12 @@ func TestInvoiceLineItemBillingPreviewComposesAppendFormulaExtensionAndValidatio
 	}
 	if !foundValidation {
 		t.Fatalf("expected list validation on LineItems!A2:A10, got %+v", validations)
+	}
+	protection, err := outputHandle.GetSheetProtection("LineItems")
+	if err != nil {
+		t.Fatalf("GetSheetProtection: %v", err)
+	}
+	if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
+		t.Fatalf("expected sheet protection options, got %+v", protection)
 	}
 }

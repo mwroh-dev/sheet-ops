@@ -35,6 +35,8 @@ func AdmitIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIn
 		return admitExtendFormulasIntent(intent, decision)
 	case "add_data_validation":
 		return admitAddDataValidationIntent(intent, decision)
+	case "protect_formula_cells":
+		return admitProtectFormulaCellsIntent(intent, decision)
 	default:
 		result, err := finalizeResult(Result{
 			Status: StatusBlocked,
@@ -204,6 +206,31 @@ func admitAppendRowsIntent(intent NormalizedIntent, decision CompilerDecision) (
 		sourceSheets:         preferredSourceSheets(intent, decision),
 		includeSourceColumns: append([]string(nil), intent.AppendRows.IncludeSourceColumns...),
 		values:               cloneCellValues(intent.AppendRows.Values),
+	}, nil, nil
+}
+
+func admitProtectFormulaCellsIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIntent, *Result, error) {
+	if !intent.Materialization.PreserveOriginal ||
+		intent.Materialization.OutputDestinationMode != "new_workbook" ||
+		intent.Materialization.WriteShape != "in_place_cells" {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"invalid_materialization"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	if len(intent.ProtectFormulaCells.ProtectionRule.FormulaRanges) == 0 {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"incomplete_formula_protection_intent"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	return admittedIntent{
+		decision:        decision,
+		compositionKind: "formula_protection",
+		sourceSheets:    preferredSourceSheets(intent, decision),
+		protectionRule:  cloneFormulaProtectionRule(intent.ProtectFormulaCells.ProtectionRule),
 	}, nil, nil
 }
 

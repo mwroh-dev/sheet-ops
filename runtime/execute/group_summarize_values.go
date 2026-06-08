@@ -49,6 +49,8 @@ func RunWorkbookOperation(ir compiler.WorkbookOperationIR, inputWorkbook, output
 		return RunExtendTableFormulas(ir, inputWorkbook, outputWorkbook)
 	case "add_data_validation":
 		return RunAddDataValidation(ir, inputWorkbook, outputWorkbook)
+	case "protect_formula_cells":
+		return RunProtectFormulaCells(ir, inputWorkbook, outputWorkbook)
 	case "write_values":
 		return RunWriteValues(ir, inputWorkbook, outputWorkbook)
 	default:

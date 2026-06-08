@@ -339,6 +339,58 @@ func TestRunAddDataValidationEndToEnd(t *testing.T) {
 	}
 }
 
+func TestRunProtectFormulaCellsEndToEnd(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "invoice.xlsx")
+	outputFile := filepath.Join(tempDir, "invoice-output.xlsx")
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "LineItems"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	header := []any{"sku", "quantity", "unit_price", "line_total"}
+	if err := file.SetSheetRow("LineItems", "A1", &header); err != nil {
+		t.Fatalf("SetSheetRow(header): %v", err)
+	}
+	row := []any{"A001", 2, 10}
+	if err := file.SetSheetRow("LineItems", "A2", &row); err != nil {
+		t.Fatalf("SetSheetRow(row): %v", err)
+	}
+	if err := file.SetCellFormula("LineItems", "D2", "=B2*C2"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	task := runtimetaskspec.BuildProtectFormulaCellsTask(runtimetaskspec.ProtectFormulaCellsRequest{
+		RequestText: "LineItems 계산 수식 셀은 보호하고 입력 셀은 편집 가능하게 둔다.",
+		InputFile:   inputFile,
+		SourceSheet: "LineItems",
+		OutputFile:  outputFile,
+		ProtectionRule: runtimetaskspec.FormulaProtectionRule{
+			FormulaRanges: []string{"D2"},
+			InputRanges:   []string{"A2:C10"},
+		},
+	})
+	result, err := Run(Request{ScenarioID: "workbookcase-protect-formulas", TaskSpec: task.TaskSpec})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if !result.Verification.Pass {
+		t.Fatalf("verification failed: %+v", result.Verification)
+	}
+	if result.Verification.Operation != ProtectFormulaCellsOperationName {
+		t.Fatalf("verification operation=%q want %s", result.Verification.Operation, ProtectFormulaCellsOperationName)
+	}
+	if len(result.Verification.FormulaCells) != 1 || result.Verification.FormulaCells[0] != "D2" {
+		t.Fatalf("formula cells=%v want [D2]", result.Verification.FormulaCells)
+	}
+}
+
 func TestRunRejectsUnsafeScenarioIDBeforeCreatingArtifacts(t *testing.T) {
 	artifactRoot := t.TempDir()
 	t.Setenv(ArtifactRootEnv, artifactRoot)

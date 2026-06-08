@@ -14,8 +14,8 @@ the first execution target is p0 organism coverage.
 | `append_structured_rows` | supported | capability record, TaskSpec/IR, executor, verifier, fixtures |
 | `extend_table_formulas` | supported | capability record, TaskSpec/IR, executor, verifier, fixtures |
 | `add_data_validation` | supported | explicit list/dropdown scope: capability record, TaskSpec/IR, executor, verifier, fixtures |
+| `protect_formula_cells` | supported | explicit formula/input range scope: capability record, TaskSpec/IR, executor, verifier, fixtures |
 | `write_values` | runtime primitive | primitive only, not public agent capability |
-| `protect_formula_cells` | planned | broad p0 blocker, needs scoped protection semantics |
 | `copy_period_sheet` | planned | budget/cash/timesheet blocker |
 | `roll_forward_period` | planned | budget/cash continuity blocker |
 | `normalize_headers` | planned | invoice/attendance/inventory ambiguity blocker |
@@ -27,12 +27,12 @@ the first execution target is p0 organism coverage.
 
 | Organism | Runtime-Covered Atoms | Missing Runtime Atoms | Immediate Strategy |
 | --- | --- | --- | --- |
-| `invoice_line_item_billing` | `join_lookup`, `group_summarize`, `append_structured_rows`, `extend_table_formulas`, `add_data_validation` | `generate_printable_form`, `protect_formula_cells`, `normalize_headers` | protect formula cells next, then printable form |
-| `monthly_budget_control` | `group_summarize`, `highlight_threshold`, `extend_table_formulas` | `copy_period_sheet`, `roll_forward_period`, `protect_formula_cells` | period copy before roll-forward |
-| `cash_flow_monitor` | `group_summarize`, `extend_table_formulas` | `copy_period_sheet`, `roll_forward_period`, `protect_formula_cells` | reuse budget period fixture after period copy exists |
-| `attendance_register` | `group_summarize`, `add_data_validation` | `copy_period_sheet`, `protect_formula_cells`, `normalize_headers` | header normalization first, then period copy |
-| `timesheet_hours_log` | `group_summarize`, `append_structured_rows`, `extend_table_formulas`, `add_data_validation` | `copy_period_sheet`, `protect_formula_cells` | reuse invoice row-growth mechanics, then period copy/protection |
-| `inventory_movement_log` | `join_lookup`, `group_summarize`, `append_structured_rows` | `reconcile_tables`, `normalize_headers`, `protect_formula_cells` | normalize headers before reconciliation |
+| `invoice_line_item_billing` | `join_lookup`, `group_summarize`, `append_structured_rows`, `extend_table_formulas`, `add_data_validation`, `protect_formula_cells` | `generate_printable_form`, `normalize_headers` | printable form or normalize headers next |
+| `monthly_budget_control` | `group_summarize`, `highlight_threshold`, `extend_table_formulas`, `protect_formula_cells` | `copy_period_sheet`, `roll_forward_period` | period copy before roll-forward |
+| `cash_flow_monitor` | `group_summarize`, `extend_table_formulas`, `protect_formula_cells` | `copy_period_sheet`, `roll_forward_period` | reuse budget period fixture after period copy exists |
+| `attendance_register` | `group_summarize`, `add_data_validation`, `protect_formula_cells` | `copy_period_sheet`, `normalize_headers` | header normalization first, then period copy |
+| `timesheet_hours_log` | `group_summarize`, `append_structured_rows`, `extend_table_formulas`, `add_data_validation`, `protect_formula_cells` | `copy_period_sheet` | period copy/protection sequencing is next |
+| `inventory_movement_log` | `join_lookup`, `group_summarize`, `append_structured_rows`, `protect_formula_cells` | `reconcile_tables`, `normalize_headers` | normalize headers before reconciliation |
 
 ## Phase Checklist
 
@@ -86,3 +86,39 @@ Non-goals for this phase:
 - Advisory claim risk: numeric bounds, date windows, formula-backed lists, and
   referential integrity remain excluded from supported scope and must stay in
   opportunity/backlog language.
+
+## Phase 6 Result
+
+Promoted `protect_formula_cells` with a deliberately narrow first supported
+scope:
+
+- same-workbook output copy
+- explicit source sheet
+- explicit formula ranges
+- optional explicit input ranges
+- sheet protection enabled
+- preserve original workbook
+- verifier checks formula cells are locked, input cells are unlocked, sheet
+  protection options are present, and source hash is preserved
+
+Non-goals for this phase:
+
+- automatic formula discovery
+- complex named/protected ranges
+- role-based or collaborative permissions
+- workbook-level protection
+- visual proof of Excel protection UI
+
+## Phase 6 Self-Retro
+
+- P0 gaps reduced: all p0 organisms no longer depend on formula protection as
+  an unsupported atom for explicit-range cases.
+- Remaining template needs: period copy/roll-forward is now the largest p0
+  cross-cutting blocker; `normalize_headers`, `reconcile_tables`, and
+  `generate_printable_form` still block specific organism families.
+- Verifier strength: the verifier directly inspects cell protection styles,
+  sheet protection options, formulas in protected cells, and source hash
+  preservation. It does not prove user-facing Excel edit rejection behavior.
+- Advisory claim risk: automatic discovery of formula regions must not be
+  implied. Callers must supply formula/input ranges until a discovery verifier
+  exists.

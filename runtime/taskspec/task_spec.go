@@ -38,36 +38,43 @@ type DataValidationRule struct {
 	AllowBlank    bool     `json:"allow_blank"`
 }
 
+type FormulaProtectionRule struct {
+	FormulaRanges []string `json:"formula_ranges"`
+	InputRanges   []string `json:"input_ranges,omitempty"`
+	Password      string   `json:"password,omitempty"`
+}
+
 type SourceSpec struct {
 	Kind string `json:"kind"`
 	Path string `json:"path,omitempty"`
 }
 
 type TaskSpec struct {
-	RequestKind          string              `json:"request_kind"`
-	ExecutionKind        string              `json:"execution_kind"`
-	CompositionKind      string              `json:"composition_kind,omitempty"`
-	Source               SourceSpec          `json:"source"`
-	RequestText          string              `json:"request_text,omitempty"`
-	InputWorkbook        string              `json:"input_workbook"`
-	OutputWorkbook       string              `json:"output_workbook"`
-	Operation            string              `json:"operation"`
-	SourceSheet          string              `json:"source_sheet"`
-	TargetSheet          string              `json:"target_sheet,omitempty"`
-	Filters              []FilterSpec        `json:"filters,omitempty"`
-	GroupBy              []string            `json:"group_by,omitempty"`
-	Metrics              []MetricSpec        `json:"metrics,omitempty"`
-	SummaryMode          string              `json:"summary_mode,omitempty"`
-	ThresholdRule        *ThresholdRule      `json:"threshold_rule,omitempty"`
-	LookupSheet          string              `json:"lookup_sheet,omitempty"`
-	JoinKey              string              `json:"join_key,omitempty"`
-	IncludeSourceColumns []string            `json:"include_source_columns,omitempty"`
-	AppendLookupColumns  []string            `json:"append_lookup_columns,omitempty"`
-	Values               []CellValue         `json:"values,omitempty"`
-	FormulaSourceRow     int                 `json:"formula_source_row,omitempty"`
-	TargetRows           []int               `json:"target_rows,omitempty"`
-	FormulaColumns       []string            `json:"formula_columns,omitempty"`
-	ValidationRule       *DataValidationRule `json:"validation_rule,omitempty"`
+	RequestKind          string                 `json:"request_kind"`
+	ExecutionKind        string                 `json:"execution_kind"`
+	CompositionKind      string                 `json:"composition_kind,omitempty"`
+	Source               SourceSpec             `json:"source"`
+	RequestText          string                 `json:"request_text,omitempty"`
+	InputWorkbook        string                 `json:"input_workbook"`
+	OutputWorkbook       string                 `json:"output_workbook"`
+	Operation            string                 `json:"operation"`
+	SourceSheet          string                 `json:"source_sheet"`
+	TargetSheet          string                 `json:"target_sheet,omitempty"`
+	Filters              []FilterSpec           `json:"filters,omitempty"`
+	GroupBy              []string               `json:"group_by,omitempty"`
+	Metrics              []MetricSpec           `json:"metrics,omitempty"`
+	SummaryMode          string                 `json:"summary_mode,omitempty"`
+	ThresholdRule        *ThresholdRule         `json:"threshold_rule,omitempty"`
+	LookupSheet          string                 `json:"lookup_sheet,omitempty"`
+	JoinKey              string                 `json:"join_key,omitempty"`
+	IncludeSourceColumns []string               `json:"include_source_columns,omitempty"`
+	AppendLookupColumns  []string               `json:"append_lookup_columns,omitempty"`
+	Values               []CellValue            `json:"values,omitempty"`
+	FormulaSourceRow     int                    `json:"formula_source_row,omitempty"`
+	TargetRows           []int                  `json:"target_rows,omitempty"`
+	FormulaColumns       []string               `json:"formula_columns,omitempty"`
+	ValidationRule       *DataValidationRule    `json:"validation_rule,omitempty"`
+	ProtectionRule       *FormulaProtectionRule `json:"protection_rule,omitempty"`
 }
 
 type GroupSummarizeTask struct {
@@ -119,6 +126,13 @@ type AddDataValidationTask struct {
 	TaskSpec         TaskSpec
 	SourceSheet      string
 	ValidationRule   DataValidationRule
+	PreserveOriginal bool
+}
+
+type ProtectFormulaCellsTask struct {
+	TaskSpec         TaskSpec
+	SourceSheet      string
+	ProtectionRule   FormulaProtectionRule
 	PreserveOriginal bool
 }
 
@@ -184,6 +198,14 @@ type AddDataValidationRequest struct {
 	ValidationRule DataValidationRule
 }
 
+type ProtectFormulaCellsRequest struct {
+	RequestText    string
+	InputFile      string
+	SourceSheet    string
+	OutputFile     string
+	ProtectionRule FormulaProtectionRule
+}
+
 const (
 	ExecutionKindComposition             = "composition"
 	CompositionKindGroupSummary          = "group_summary"
@@ -192,18 +214,21 @@ const (
 	CompositionKindStructuredRowAppend   = "structured_row_append"
 	CompositionKindFormulaExtension      = "formula_extension"
 	CompositionKindDataValidation        = "data_validation"
+	CompositionKindFormulaProtection     = "formula_protection"
 	OperationCreateSummarySheet          = "create_summary_sheet"
 	OperationHighlightThresholdRows      = "highlight_threshold_rows"
 	OperationCreateJoinLookupResultSheet = "create_join_lookup_result_sheet"
 	OperationAppendStructuredRows        = "append_structured_rows"
 	OperationExtendTableFormulas         = "extend_table_formulas"
 	OperationAddDataValidation           = "add_data_validation"
+	OperationProtectFormulaCells         = "protect_formula_cells"
 	OperationFamilyGroupSummarize        = "group_summarize"
 	OperationFamilyHighlightThreshold    = "highlight_threshold"
 	OperationFamilyJoinLookup            = "join_lookup"
 	OperationFamilyAppendStructuredRows  = "append_structured_rows"
 	OperationFamilyExtendTableFormulas   = "extend_table_formulas"
 	OperationFamilyAddDataValidation     = "add_data_validation"
+	OperationFamilyProtectFormulaCells   = "protect_formula_cells"
 
 	defaultHighlightColumn    = "amount"
 	defaultHighlightOperator  = ">"
@@ -388,6 +413,26 @@ func BuildAddDataValidationTask(req AddDataValidationRequest) AddDataValidationT
 	}
 }
 
+func BuildProtectFormulaCellsTask(req ProtectFormulaCellsRequest) ProtectFormulaCellsTask {
+	return ProtectFormulaCellsTask{
+		TaskSpec: TaskSpec{
+			RequestKind:     "workbook_case",
+			ExecutionKind:   ExecutionKindComposition,
+			CompositionKind: CompositionKindFormulaProtection,
+			Source:          SourceSpec{Kind: "natural_language"},
+			RequestText:     req.RequestText,
+			InputWorkbook:   req.InputFile,
+			OutputWorkbook:  req.OutputFile,
+			Operation:       OperationProtectFormulaCells,
+			SourceSheet:     req.SourceSheet,
+			ProtectionRule:  cloneFormulaProtectionRule(req.ProtectionRule),
+		},
+		SourceSheet:      req.SourceSheet,
+		ProtectionRule:   *cloneFormulaProtectionRule(req.ProtectionRule),
+		PreserveOriginal: true,
+	}
+}
+
 func cloneFilters(values []FilterSpec) []FilterSpec {
 	if len(values) == 0 {
 		return nil
@@ -442,5 +487,12 @@ func cloneDataValidationRule(value DataValidationRule) *DataValidationRule {
 	cloned := value
 	cloned.Ranges = cloneStrings(value.Ranges)
 	cloned.AllowedValues = cloneStrings(value.AllowedValues)
+	return &cloned
+}
+
+func cloneFormulaProtectionRule(value FormulaProtectionRule) *FormulaProtectionRule {
+	cloned := value
+	cloned.FormulaRanges = cloneStrings(value.FormulaRanges)
+	cloned.InputRanges = cloneStrings(value.InputRanges)
 	return &cloned
 }

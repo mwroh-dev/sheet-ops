@@ -8,13 +8,14 @@ import (
 )
 
 const (
-	SummaryOperationName           = "create_summary_sheet"
-	HighlightOperationName         = "highlight_threshold_rows"
-	JoinLookupOperationName        = "create_join_lookup_result_sheet"
-	AppendRowsOperationName        = "append_structured_rows"
-	ExtendFormulasOperationName    = "extend_table_formulas"
-	AddDataValidationOperationName = "add_data_validation"
-	WriteValuesOperationName       = "write_values"
+	SummaryOperationName             = "create_summary_sheet"
+	HighlightOperationName           = "highlight_threshold_rows"
+	JoinLookupOperationName          = "create_join_lookup_result_sheet"
+	AppendRowsOperationName          = "append_structured_rows"
+	ExtendFormulasOperationName      = "extend_table_formulas"
+	AddDataValidationOperationName   = "add_data_validation"
+	ProtectFormulaCellsOperationName = "protect_formula_cells"
+	WriteValuesOperationName         = "write_values"
 )
 
 type FilterSpec = runtimetaskspec.FilterSpec
@@ -139,6 +140,14 @@ type AddDataValidationPlan struct {
 	ValidationRule   runtimetaskspec.DataValidationRule `json:"validation_rule"`
 	PreserveOriginal bool                               `json:"preserve_original"`
 	OutputFile       string                             `json:"output_file"`
+}
+
+type ProtectFormulaCellsPlan struct {
+	Operation        string                                `json:"operation"`
+	SheetName        string                                `json:"sheet_name"`
+	ProtectionRule   runtimetaskspec.FormulaProtectionRule `json:"protection_rule"`
+	PreserveOriginal bool                                  `json:"preserve_original"`
+	OutputFile       string                                `json:"output_file"`
 }
 
 type WritePolicyDecision struct {

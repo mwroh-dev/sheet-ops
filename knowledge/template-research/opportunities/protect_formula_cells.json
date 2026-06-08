@@ -1,6 +1,6 @@
 {
   "name": "protect_formula_cells",
-  "status": "planned",
+  "status": "supported",
   "evidence_count": 1,
   "source_categories": [
     "Invoice Templates"
@@ -14,7 +14,7 @@
   "concrete_workflows": [
     "protect invoice totals while editing line item inputs"
   ],
-  "verification_strategy": "Inspect sheet protection metadata and confirm formula cells are locked while input cells remain editable.",
+  "verification_strategy": "Inspect sheet protection metadata and confirm explicitly declared formula cells are locked while declared input cells remain editable. Automatic formula discovery, complex protected ranges, and collaborative permission policies remain future opportunity scope.",
   "related_patterns": [
     "invoice"
   ]

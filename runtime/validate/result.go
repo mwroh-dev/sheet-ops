@@ -66,11 +66,21 @@ type AddDataValidationIntent struct {
 	ValidationRule DataValidationRule
 }
 
+type ProtectFormulaCellsIntent struct {
+	ProtectionRule FormulaProtectionRule
+}
+
 type DataValidationRule struct {
 	Ranges        []string `json:"ranges"`
 	RuleType      string   `json:"rule_type"`
 	AllowedValues []string `json:"allowed_values,omitempty"`
 	AllowBlank    bool     `json:"allow_blank"`
+}
+
+type FormulaProtectionRule struct {
+	FormulaRanges []string `json:"formula_ranges"`
+	InputRanges   []string `json:"input_ranges,omitempty"`
+	Password      string   `json:"password,omitempty"`
 }
 
 type MaterializationIntent struct {
@@ -97,6 +107,7 @@ type NormalizedIntent struct {
 	AppendRows            AppendRowsIntent
 	ExtendFormulas        ExtendFormulasIntent
 	AddDataValidation     AddDataValidationIntent
+	ProtectFormulaCells   ProtectFormulaCellsIntent
 	Materialization       MaterializationIntent
 	Ambiguity             AmbiguityIntent
 }
@@ -137,33 +148,34 @@ type Blocked struct {
 }
 
 type ValidatedExecutionRequest struct {
-	ScenarioID           string              `json:"scenario_id"`
-	RequestKind          string              `json:"request_kind"`
-	RequestText          string              `json:"request_text,omitempty"`
-	InputFile            string              `json:"input_file"`
-	SourceSheet          string              `json:"source_sheet"`
-	OutputFile           string              `json:"output_file"`
-	ExecutionKind        string              `json:"execution_kind"`
-	CompositionKind      string              `json:"composition_kind,omitempty"`
-	PrimitiveKind        string              `json:"primitive_kind,omitempty"`
-	TargetSheet          string              `json:"target_sheet,omitempty"`
-	SummaryMode          string              `json:"summary_mode,omitempty"`
-	Filters              []FilterSpec        `json:"filters,omitempty"`
-	GroupBy              []string            `json:"group_by,omitempty"`
-	Metrics              []MetricSpec        `json:"metrics,omitempty"`
-	TargetColumn         string              `json:"target_column,omitempty"`
-	Operator             string              `json:"operator,omitempty"`
-	Threshold            *float64            `json:"threshold,omitempty"`
-	HighlightColor       string              `json:"highlight_color,omitempty"`
-	LookupSheet          string              `json:"lookup_sheet,omitempty"`
-	JoinKey              string              `json:"join_key,omitempty"`
-	IncludeSourceColumns []string            `json:"include_source_columns,omitempty"`
-	AppendLookupColumns  []string            `json:"append_lookup_columns,omitempty"`
-	Values               []CellValue         `json:"values,omitempty"`
-	FormulaSourceRow     int                 `json:"formula_source_row,omitempty"`
-	TargetRows           []int               `json:"target_rows,omitempty"`
-	FormulaColumns       []string            `json:"formula_columns,omitempty"`
-	ValidationRule       *DataValidationRule `json:"validation_rule,omitempty"`
+	ScenarioID           string                 `json:"scenario_id"`
+	RequestKind          string                 `json:"request_kind"`
+	RequestText          string                 `json:"request_text,omitempty"`
+	InputFile            string                 `json:"input_file"`
+	SourceSheet          string                 `json:"source_sheet"`
+	OutputFile           string                 `json:"output_file"`
+	ExecutionKind        string                 `json:"execution_kind"`
+	CompositionKind      string                 `json:"composition_kind,omitempty"`
+	PrimitiveKind        string                 `json:"primitive_kind,omitempty"`
+	TargetSheet          string                 `json:"target_sheet,omitempty"`
+	SummaryMode          string                 `json:"summary_mode,omitempty"`
+	Filters              []FilterSpec           `json:"filters,omitempty"`
+	GroupBy              []string               `json:"group_by,omitempty"`
+	Metrics              []MetricSpec           `json:"metrics,omitempty"`
+	TargetColumn         string                 `json:"target_column,omitempty"`
+	Operator             string                 `json:"operator,omitempty"`
+	Threshold            *float64               `json:"threshold,omitempty"`
+	HighlightColor       string                 `json:"highlight_color,omitempty"`
+	LookupSheet          string                 `json:"lookup_sheet,omitempty"`
+	JoinKey              string                 `json:"join_key,omitempty"`
+	IncludeSourceColumns []string               `json:"include_source_columns,omitempty"`
+	AppendLookupColumns  []string               `json:"append_lookup_columns,omitempty"`
+	Values               []CellValue            `json:"values,omitempty"`
+	FormulaSourceRow     int                    `json:"formula_source_row,omitempty"`
+	TargetRows           []int                  `json:"target_rows,omitempty"`
+	FormulaColumns       []string               `json:"formula_columns,omitempty"`
+	ValidationRule       *DataValidationRule    `json:"validation_rule,omitempty"`
+	ProtectionRule       *FormulaProtectionRule `json:"protection_rule,omitempty"`
 }
 
 type CellValue struct {
@@ -209,6 +221,7 @@ type admittedIntent struct {
 	targetRows           []int
 	formulaColumns       []string
 	validationRule       DataValidationRule
+	protectionRule       FormulaProtectionRule
 }
 
 type boundIntent struct {
@@ -243,6 +256,14 @@ func cloneDataValidationRule(value DataValidationRule) DataValidationRule {
 		RuleType:      value.RuleType,
 		AllowedValues: append([]string(nil), value.AllowedValues...),
 		AllowBlank:    value.AllowBlank,
+	}
+}
+
+func cloneFormulaProtectionRule(value FormulaProtectionRule) FormulaProtectionRule {
+	return FormulaProtectionRule{
+		FormulaRanges: append([]string(nil), value.FormulaRanges...),
+		InputRanges:   append([]string(nil), value.InputRanges...),
+		Password:      value.Password,
 	}
 }
 

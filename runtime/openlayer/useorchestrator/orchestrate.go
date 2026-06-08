@@ -46,7 +46,7 @@ func validateSupportedValidatedExecutionRequest(req ValidatedExecutionRequest) e
 		return fmt.Errorf("unsupported validated execution kind %q", req.ExecutionKind)
 	}
 	switch req.CompositionKind {
-	case "structured_row_append", "formula_extension", "data_validation":
+	case "structured_row_append", "formula_extension", "data_validation", "formula_protection":
 		return nil
 	case "group_summary", "threshold_highlight", "join_lookup":
 		return nil
@@ -101,6 +101,14 @@ func taskSpecFromUseRequest(req UseRequest) runtimetaskspec.TaskSpec {
 			SourceSheet:    req.SheetName,
 			OutputFile:     req.OutputFile,
 			ValidationRule: toTaskSpecDataValidationRule(req.ValidationRule),
+		}).TaskSpec
+	case runtimeworkbookcase.ProtectFormulaCellsOperationName:
+		return runtimetaskspec.BuildProtectFormulaCellsTask(runtimetaskspec.ProtectFormulaCellsRequest{
+			RequestText:    coalesceValidatedRequestText(req.RequestText, "structured formula protection request"),
+			InputFile:      req.InputFile,
+			SourceSheet:    req.SheetName,
+			OutputFile:     req.OutputFile,
+			ProtectionRule: toTaskSpecFormulaProtectionRule(req.ProtectionRule),
 		}).TaskSpec
 	case runtimeworkbookcase.SummaryOperationName:
 		return runtimetaskspec.BuildGroupSummarizeTask(runtimetaskspec.UseRequest{
@@ -169,6 +177,14 @@ func taskSpecFromValidatedExecutionRequest(req ValidatedExecutionRequest) (runti
 			OutputFile:     req.OutputFile,
 			ValidationRule: toTaskSpecDataValidationRule(req.ValidationRule),
 		}).TaskSpec, nil
+	case "formula_protection":
+		return runtimetaskspec.BuildProtectFormulaCellsTask(runtimetaskspec.ProtectFormulaCellsRequest{
+			RequestText:    coalesceValidatedRequestText(req.RequestText, "validated formula protection request"),
+			InputFile:      req.InputFile,
+			SourceSheet:    req.SourceSheet,
+			OutputFile:     req.OutputFile,
+			ProtectionRule: toTaskSpecFormulaProtectionRule(req.ProtectionRule),
+		}).TaskSpec, nil
 	case "join_lookup":
 		includeSourceColumns, err := defaultJoinSourceColumns(req)
 		if err != nil {
@@ -236,6 +252,8 @@ func validatedRoutingRequestText(req ValidatedExecutionRequest) string {
 		return coalesceValidatedRequestText(req.RequestText, "validated formula extension request")
 	case "data_validation":
 		return coalesceValidatedRequestText(req.RequestText, "validated data validation request")
+	case "formula_protection":
+		return coalesceValidatedRequestText(req.RequestText, "validated formula protection request")
 	case "join_lookup":
 		return coalesceValidatedRequestText(req.RequestText, "validated join lookup request")
 	case "threshold_highlight":
@@ -253,6 +271,8 @@ func validatedOperation(req ValidatedExecutionRequest) string {
 		return runtimeworkbookcase.ExtendFormulasOperationName
 	case "data_validation":
 		return runtimeworkbookcase.AddDataValidationOperationName
+	case "formula_protection":
+		return runtimeworkbookcase.ProtectFormulaCellsOperationName
 	case "join_lookup":
 		return runtimeworkbookcase.JoinLookupOperationName
 	case "threshold_highlight":
@@ -290,7 +310,7 @@ func defaultJoinSourceColumns(req ValidatedExecutionRequest) ([]string, error) {
 
 func isSupportedOperation(operation string) bool {
 	switch operation {
-	case runtimeworkbookcase.SummaryOperationName, runtimeworkbookcase.HighlightOperationName, runtimeworkbookcase.JoinLookupOperationName, runtimeworkbookcase.AppendRowsOperationName, runtimeworkbookcase.ExtendFormulasOperationName, runtimeworkbookcase.AddDataValidationOperationName:
+	case runtimeworkbookcase.SummaryOperationName, runtimeworkbookcase.HighlightOperationName, runtimeworkbookcase.JoinLookupOperationName, runtimeworkbookcase.AppendRowsOperationName, runtimeworkbookcase.ExtendFormulasOperationName, runtimeworkbookcase.AddDataValidationOperationName, runtimeworkbookcase.ProtectFormulaCellsOperationName:
 		return true
 	default:
 		return false
@@ -317,6 +337,17 @@ func toTaskSpecDataValidationRule(rule *DataValidationRule) runtimetaskspec.Data
 		RuleType:      rule.RuleType,
 		AllowedValues: append([]string(nil), rule.AllowedValues...),
 		AllowBlank:    rule.AllowBlank,
+	}
+}
+
+func toTaskSpecFormulaProtectionRule(rule *FormulaProtectionRule) runtimetaskspec.FormulaProtectionRule {
+	if rule == nil {
+		return runtimetaskspec.FormulaProtectionRule{}
+	}
+	return runtimetaskspec.FormulaProtectionRule{
+		FormulaRanges: append([]string(nil), rule.FormulaRanges...),
+		InputRanges:   append([]string(nil), rule.InputRanges...),
+		Password:      rule.Password,
 	}
 }
 

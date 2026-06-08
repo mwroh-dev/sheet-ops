@@ -11,7 +11,7 @@
   "supported_today": [
     "single human-facing sheet-ops skill entry",
     "case-local internal dispatcher execution boundary",
-    "public agent capabilities: group_summarize, highlight_threshold, join_lookup, append_structured_rows, extend_table_formulas, add_data_validation",
+    "public agent capabilities: group_summarize, highlight_threshold, join_lookup, append_structured_rows, extend_table_formulas, add_data_validation, protect_formula_cells",
     "TaskSpec -> OperationIR -> Execute -> Verify -> Evidence",
     "deterministic_fixture_backed_harness_smoke",
     "scenario-level evidence and terminal result artifacts",
@@ -28,7 +28,8 @@
     "add visual quality assertions only after renderer availability and nonblank image checks are reliable across supported platforms",
     "perform state/privacy hardening before making hosted or multi-tenant claims",
     "promote future atoms only after public orchestration and e2e tests exist",
-    "extend add_data_validation beyond explicit list/dropdown rules only after operation-specific verifiers exist"
+    "extend add_data_validation beyond explicit list/dropdown rules only after operation-specific verifiers exist",
+    "extend protect_formula_cells beyond explicit formula/input ranges only after discovery and permission verifiers exist"
   ],
   "forbidden_claims": [
     "live Codex delegation is always guaranteed",

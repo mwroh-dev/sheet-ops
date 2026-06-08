@@ -282,7 +282,6 @@ func TestTemplateResearchKeepsUnsupportedCapabilitiesOutOfSupportedRegistry(t *t
 		"copy_period_sheet",
 		"normalize_headers",
 		"create_pivot_summary",
-		"protect_formula_cells",
 		"reconcile_tables",
 		"generate_printable_form",
 		"roll_forward_period",

@@ -24,6 +24,12 @@ type DataValidationRule struct {
 	AllowBlank    bool     `json:"allow_blank"`
 }
 
+type FormulaProtectionRule struct {
+	FormulaRanges []string `json:"formula_ranges"`
+	InputRanges   []string `json:"input_ranges,omitempty"`
+	Password      string   `json:"password,omitempty"`
+}
+
 type WorkbookInspection struct {
 	InputWorkbook     string                  `json:"input_workbook"`
 	SheetNames        []string                `json:"sheet_names"`
@@ -38,29 +44,30 @@ type WorkbookInspection struct {
 }
 
 type WorkbookOperationIR struct {
-	ExecutionKind        string              `json:"execution_kind"`
-	CompositionKind      string              `json:"composition_kind,omitempty"`
-	OperationFamily      string              `json:"operation_family"`
-	SourceSheet          string              `json:"source_sheet"`
-	Filters              []FilterSpec        `json:"filters,omitempty"`
-	GroupBy              []string            `json:"group_by,omitempty"`
-	Metrics              []MetricSpec        `json:"metrics,omitempty"`
-	TargetSheet          string              `json:"target_sheet,omitempty"`
-	SummaryMode          string              `json:"summary_mode,omitempty"`
-	TargetColumn         string              `json:"target_column,omitempty"`
-	Operator             string              `json:"operator,omitempty"`
-	Threshold            *float64            `json:"threshold,omitempty"`
-	HighlightColor       string              `json:"highlight_color,omitempty"`
-	LookupSheet          string              `json:"lookup_sheet,omitempty"`
-	JoinKey              string              `json:"join_key,omitempty"`
-	IncludeSourceColumns []string            `json:"include_source_columns,omitempty"`
-	AppendLookupColumns  []string            `json:"append_lookup_columns,omitempty"`
-	Values               []CellValue         `json:"values,omitempty"`
-	FormulaSourceRow     int                 `json:"formula_source_row,omitempty"`
-	TargetRows           []int               `json:"target_rows,omitempty"`
-	FormulaColumns       []string            `json:"formula_columns,omitempty"`
-	ValidationRule       *DataValidationRule `json:"validation_rule,omitempty"`
-	PreserveOriginal     bool                `json:"preserve_original"`
+	ExecutionKind        string                 `json:"execution_kind"`
+	CompositionKind      string                 `json:"composition_kind,omitempty"`
+	OperationFamily      string                 `json:"operation_family"`
+	SourceSheet          string                 `json:"source_sheet"`
+	Filters              []FilterSpec           `json:"filters,omitempty"`
+	GroupBy              []string               `json:"group_by,omitempty"`
+	Metrics              []MetricSpec           `json:"metrics,omitempty"`
+	TargetSheet          string                 `json:"target_sheet,omitempty"`
+	SummaryMode          string                 `json:"summary_mode,omitempty"`
+	TargetColumn         string                 `json:"target_column,omitempty"`
+	Operator             string                 `json:"operator,omitempty"`
+	Threshold            *float64               `json:"threshold,omitempty"`
+	HighlightColor       string                 `json:"highlight_color,omitempty"`
+	LookupSheet          string                 `json:"lookup_sheet,omitempty"`
+	JoinKey              string                 `json:"join_key,omitempty"`
+	IncludeSourceColumns []string               `json:"include_source_columns,omitempty"`
+	AppendLookupColumns  []string               `json:"append_lookup_columns,omitempty"`
+	Values               []CellValue            `json:"values,omitempty"`
+	FormulaSourceRow     int                    `json:"formula_source_row,omitempty"`
+	TargetRows           []int                  `json:"target_rows,omitempty"`
+	FormulaColumns       []string               `json:"formula_columns,omitempty"`
+	ValidationRule       *DataValidationRule    `json:"validation_rule,omitempty"`
+	ProtectionRule       *FormulaProtectionRule `json:"protection_rule,omitempty"`
+	PreserveOriginal     bool                   `json:"preserve_original"`
 }
 
 func InspectWorkbook(inputWorkbook, sourceSheet string, filters []FilterSpec, groupBy []string, metrics []MetricSpec) (WorkbookInspection, error) {
@@ -311,6 +318,26 @@ func CompileAddDataValidationOperation(task taskspec.AddDataValidationTask) (Wor
 	}, nil
 }
 
+func CompileProtectFormulaCellsOperation(task taskspec.ProtectFormulaCellsTask) (WorkbookOperationIR, error) {
+	if task.SourceSheet == "" {
+		return WorkbookOperationIR{}, fmt.Errorf("source sheet must not be empty")
+	}
+	if len(task.ProtectionRule.FormulaRanges) == 0 {
+		return WorkbookOperationIR{}, fmt.Errorf("formula ranges must not be empty")
+	}
+	if err := validateProtectFormulaCellsTaskCompositionBoundary(task.TaskSpec); err != nil {
+		return WorkbookOperationIR{}, err
+	}
+	return WorkbookOperationIR{
+		ExecutionKind:    taskspec.ExecutionKindComposition,
+		CompositionKind:  taskspec.CompositionKindFormulaProtection,
+		OperationFamily:  taskspec.OperationFamilyProtectFormulaCells,
+		SourceSheet:      task.SourceSheet,
+		ProtectionRule:   cloneFormulaProtectionRule(task.ProtectionRule),
+		PreserveOriginal: task.PreserveOriginal,
+	}, nil
+}
+
 func validateHighlightTaskCompositionBoundary(spec taskspec.TaskSpec) error {
 	if spec.ExecutionKind != taskspec.ExecutionKindComposition {
 		return fmt.Errorf("highlight task execution_kind=%q want %q", spec.ExecutionKind, taskspec.ExecutionKindComposition)
@@ -372,6 +399,19 @@ func validateAddDataValidationTaskCompositionBoundary(spec taskspec.TaskSpec) er
 	}
 	if spec.Operation != taskspec.OperationAddDataValidation {
 		return fmt.Errorf("add data validation task operation=%q want %q", spec.Operation, taskspec.OperationAddDataValidation)
+	}
+	return nil
+}
+
+func validateProtectFormulaCellsTaskCompositionBoundary(spec taskspec.TaskSpec) error {
+	if spec.ExecutionKind != taskspec.ExecutionKindComposition {
+		return fmt.Errorf("protect formula cells task execution_kind=%q want %q", spec.ExecutionKind, taskspec.ExecutionKindComposition)
+	}
+	if spec.CompositionKind != taskspec.CompositionKindFormulaProtection {
+		return fmt.Errorf("protect formula cells task composition_kind=%q want %q", spec.CompositionKind, taskspec.CompositionKindFormulaProtection)
+	}
+	if spec.Operation != taskspec.OperationProtectFormulaCells {
+		return fmt.Errorf("protect formula cells task operation=%q want %q", spec.Operation, taskspec.OperationProtectFormulaCells)
 	}
 	return nil
 }
@@ -601,5 +641,13 @@ func cloneDataValidationRule(value taskspec.DataValidationRule) *DataValidationR
 		RuleType:      value.RuleType,
 		AllowedValues: cloneStrings(value.AllowedValues),
 		AllowBlank:    value.AllowBlank,
+	}
+}
+
+func cloneFormulaProtectionRule(value taskspec.FormulaProtectionRule) *FormulaProtectionRule {
+	return &FormulaProtectionRule{
+		FormulaRanges: cloneStrings(value.FormulaRanges),
+		InputRanges:   cloneStrings(value.InputRanges),
+		Password:      value.Password,
 	}
 }

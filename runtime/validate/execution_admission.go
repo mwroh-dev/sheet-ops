@@ -42,6 +42,9 @@ func (validator Validator) AdmitExecution(bound boundIntent) (Result, error) {
 	case "data_validation":
 		rule := cloneDataValidationRule(bound.validationRule)
 		request.ValidationRule = &rule
+	case "formula_protection":
+		rule := cloneFormulaProtectionRule(bound.protectionRule)
+		request.ProtectionRule = &rule
 	}
 
 	return finalizeResult(Result{

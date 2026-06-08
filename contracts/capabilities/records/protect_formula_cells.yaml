@@ -1,0 +1,43 @@
+{
+  "name": "protect_formula_cells",
+  "operation_family": "protect_formula_cells",
+  "task_operations": [
+    "protect_formula_cells"
+  ],
+  "inputs": [
+    "input_workbook",
+    "source_sheet",
+    "protection_rule"
+  ],
+  "outputs": [
+    "output_workbook",
+    "source_sheet",
+    "protected_formula_cells"
+  ],
+  "required_facts": [
+    "sheets",
+    "formula_ranges",
+    "input_ranges"
+  ],
+  "verifies": [
+    "source_preserved",
+    "formula_cells_locked",
+    "input_cells_unlocked",
+    "sheet_protection_enabled"
+  ],
+  "contract_paths": [
+    "contracts/task/task_spec.schema.json",
+    "contracts/ir/workbook_operation_ir.schema.json",
+    "contracts/verification/verification_result.schema.json"
+  ],
+  "runtime_paths": [
+    "runtime/compiler/workbook_compiler.go",
+    "runtime/execute/protect_formula_cells.go",
+    "runtime/verify/protect_formula_cells.go"
+  ],
+  "examples": [
+    "examples/protect_formula_cells/request.json"
+  ],
+  "status": "supported",
+  "exposure": "public_agent_capability"
+}

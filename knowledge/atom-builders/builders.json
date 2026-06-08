@@ -148,16 +148,16 @@
     },
     {
       "atom_id": "protect_formula_cells",
-      "status": "planned",
-      "builder_layer": "planned_contract",
-      "input_contract": ["formula ranges", "input ranges", "lock policy"],
+      "status": "supported",
+      "builder_layer": "runtime_mirror",
+      "input_contract": ["source sheet", "formula ranges", "input ranges", "optional password"],
       "inspection_requirements": ["formula cells", "editable input cells", "existing protection settings"],
       "plan_outputs": ["locked formula ranges", "editable input ranges", "sheet protection settings"],
-      "result_outputs": ["protected ranges", "warnings"],
-      "verification_assertions": ["formula_cells_protected", "input_cells_editable", "protection_settings_present"],
-      "capability_record": "",
-      "opportunity_record": "knowledge/template-research/opportunities/protect_formula_cells.json",
-      "runtime_paths": []
+      "result_outputs": ["protected formula cells", "sheet protection settings", "warnings"],
+      "verification_assertions": ["source_preserved", "formula_cells_locked", "input_cells_unlocked", "sheet_protection_enabled"],
+      "capability_record": "contracts/capabilities/records/protect_formula_cells.yaml",
+      "opportunity_record": "",
+      "runtime_paths": ["runtime/compiler/workbook_compiler.go", "runtime/execute/protect_formula_cells.go", "runtime/verify/protect_formula_cells.go"]
     },
     {
       "atom_id": "reconcile_tables",

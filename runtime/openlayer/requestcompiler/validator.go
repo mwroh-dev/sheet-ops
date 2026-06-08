@@ -242,6 +242,19 @@ func compileDecision(intent NormalizedIntent) Decision {
 		}
 	}
 
+	if slices.Contains(intent.CompositionCandidates, CompositionCandidateFormulaProtection) && formulaProtectionIntentReady(intent) {
+		return Decision{
+			Status:            StatusCompiled,
+			SelectedOperation: "protect_formula_cells",
+			Confidence:        0.98,
+			Notes: []string{
+				"the normalized intent maps cleanly to the supported formula protection runtime operation",
+			},
+			SheetCandidates:   supportedSheetCandidates(intent),
+			StructuralSignals: []string{"formula_protection_request", "preserve_original"},
+		}
+	}
+
 	if slices.Contains(intent.CompositionCandidates, CompositionCandidateJoinLookup) && joinLookupIntentReady(intent) {
 		return Decision{
 			Status:            StatusCompiled,
@@ -408,6 +421,13 @@ func toRuntimeIntent(intent NormalizedIntent) runtimevalidate.NormalizedIntent {
 				AllowBlank:    intent.AddDataValidation.ValidationRule.AllowBlank,
 			},
 		},
+		ProtectFormulaCells: runtimevalidate.ProtectFormulaCellsIntent{
+			ProtectionRule: runtimevalidate.FormulaProtectionRule{
+				FormulaRanges: append([]string(nil), intent.ProtectFormulaCells.ProtectionRule.FormulaRanges...),
+				InputRanges:   append([]string(nil), intent.ProtectFormulaCells.ProtectionRule.InputRanges...),
+				Password:      intent.ProtectFormulaCells.ProtectionRule.Password,
+			},
+		},
 		Materialization: runtimevalidate.MaterializationIntent{
 			PreserveOriginal:      intent.Materialization.PreserveOriginal,
 			OutputDestinationMode: intent.Materialization.OutputDestinationMode,
@@ -527,6 +547,11 @@ func dataValidationIntentReady(intent NormalizedIntent) bool {
 		len(rule.Ranges) > 0 &&
 		rule.RuleType == "list" &&
 		len(rule.AllowedValues) > 0
+}
+
+func formulaProtectionIntentReady(intent NormalizedIntent) bool {
+	return len(intent.SourceSheetCandidates) > 0 &&
+		len(intent.ProtectFormulaCells.ProtectionRule.FormulaRanges) > 0
 }
 
 func toRuntimeCellValues(values []CellValue) []runtimevalidate.CellValue {

@@ -52,7 +52,12 @@
           "$ref": "#/$defs/non_empty_string_array"
         },
         "planned_or_unsupported_atom_ids": {
-          "$ref": "#/$defs/non_empty_string_array"
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         },
         "verifier_focus": {
           "$ref": "#/$defs/non_empty_string_array"

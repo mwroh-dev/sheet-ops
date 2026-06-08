@@ -76,6 +76,9 @@ func resolveRequestedOperation(req UseRequest) (string, string) {
 	if isDataValidationRequest(req) {
 		return runtimeworkbookcase.AddDataValidationOperationName, "data_validation_request_signals"
 	}
+	if isFormulaProtectionRequest(req) {
+		return runtimeworkbookcase.ProtectFormulaCellsOperationName, "formula_protection_request_signals"
+	}
 	if isJoinLookupRequest(req) {
 		return runtimeworkbookcase.JoinLookupOperationName, "join_lookup_request_signals"
 	}
@@ -106,6 +109,13 @@ func isDataValidationRequest(req UseRequest) bool {
 		strings.Contains(req.RequestText, "데이터 검증") ||
 		strings.Contains(req.RequestText, "dropdown") ||
 		strings.Contains(req.RequestText, "data validation")
+}
+
+func isFormulaProtectionRequest(req UseRequest) bool {
+	return req.ProtectionRule != nil ||
+		strings.Contains(req.RequestText, "수식 보호") ||
+		strings.Contains(req.RequestText, "formula protection") ||
+		strings.Contains(req.RequestText, "protect formula")
 }
 
 func isSummaryRequest(req UseRequest) bool {
@@ -149,6 +159,8 @@ func buildRoutingNote(selectedOperation, routingAuthority string, knowledge runt
 			return fmt.Sprintf("%s Fallback routed by formula extension request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		case "data_validation_request_signals":
 			return fmt.Sprintf("%s Fallback routed by data validation request signals to %s.", knowledge.FallbackReason, selectedOperation)
+		case "formula_protection_request_signals":
+			return fmt.Sprintf("%s Fallback routed by formula protection request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		case "highlight_request_signals":
 			return fmt.Sprintf("%s Fallback routed by highlight request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		default:
@@ -178,6 +190,12 @@ func buildRoutingNote(selectedOperation, routingAuthority string, knowledge runt
 	case "append_rows_request_signals":
 		return fmt.Sprintf(
 			"Loaded %d orchestrator knowledge records; append row request signals still selected %s. Knowledge remains advisory only.",
+			knowledge.RecordCount,
+			selectedOperation,
+		)
+	case "formula_protection_request_signals":
+		return fmt.Sprintf(
+			"Loaded %d orchestrator knowledge records; formula protection request signals still selected %s. Knowledge remains advisory only.",
 			knowledge.RecordCount,
 			selectedOperation,
 		)

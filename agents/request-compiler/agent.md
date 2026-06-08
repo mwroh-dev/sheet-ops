@@ -36,6 +36,7 @@ And supports:
 - `append_rows`
 - `extend_formulas`
 - `add_data_validation`
+- `protect_formula_cells`
 
 ## Rules
 

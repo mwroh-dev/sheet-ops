@@ -17,6 +17,7 @@ a runner-pane command.
 - `append_structured_rows`: use when the request asks to append complete new rows into an existing table while preserving the source workbook and table headers.
 - `extend_table_formulas`: use when the request asks to copy existing row formulas into specified target rows while preserving relative row references.
 - `add_data_validation`: use when the request asks to add explicit list/dropdown validation rules to declared ranges while preserving the source workbook.
+- `protect_formula_cells`: use when the request asks to lock explicit formula ranges, leave declared input ranges editable, and protect the sheet while preserving the source workbook.
 
 These records have `status: supported` and `exposure: public_agent_capability`.
 Before selecting a capability, read the matching machine-readable record in
@@ -38,6 +39,7 @@ Before selecting a capability, read the matching machine-readable record in
 | User asks to add complete new table rows with provided field values | Supported public capability | Select `append_structured_rows` after reading the registry record. |
 | User asks to extend row formulas into specific target rows | Supported public capability | Select `extend_table_formulas` after reading the registry record. |
 | User asks to add dropdown/list validation to specific ranges with allowed values | Supported public capability | Select `add_data_validation` after reading the registry record. |
+| User asks to protect formula cells and keep input cells editable with explicit ranges | Supported public capability | Select `protect_formula_cells` after reading the registry record. |
 | Runtime needs to write literal cells inside a verified lower-level path | Internal primitive | Use `write_values` only through runtime-owned flows, not as a public request capability. |
 | Release smoke uses fixture-backed specialist decisions | Deterministic smoke | Treat as the required public harness gate, not live LLM delegation. |
 | Live Codex is available and the caller opts in | Live smoke | Run only as a non-blocking diagnostic. |

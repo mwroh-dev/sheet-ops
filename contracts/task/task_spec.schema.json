@@ -163,6 +163,24 @@
       },
       "additionalProperties": false
     },
+    "formula_protection_rule": {
+      "type": "object",
+      "required": [
+        "formula_ranges"
+      ],
+      "properties": {
+        "formula_ranges": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "input_ranges": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "password": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
     "non_empty_string_array": {
       "type": "array",
       "minItems": 1,
@@ -196,7 +214,8 @@
         "join_lookup",
         "structured_row_append",
         "formula_extension",
-        "data_validation"
+        "data_validation",
+        "formula_protection"
       ]
     },
     "source": {
@@ -221,7 +240,8 @@
         "create_join_lookup_result_sheet",
         "append_structured_rows",
         "extend_table_formulas",
-        "add_data_validation"
+        "add_data_validation",
+        "protect_formula_cells"
       ]
     },
     "source_sheet": {
@@ -302,6 +322,9 @@
     },
     "validation_rule": {
       "$ref": "#/$defs/data_validation_rule"
+    },
+    "protection_rule": {
+      "$ref": "#/$defs/formula_protection_rule"
     }
   },
   "allOf": [
@@ -683,7 +706,50 @@
             { "required": ["values"] },
             { "required": ["formula_source_row"] },
             { "required": ["target_rows"] },
-            { "required": ["formula_columns"] }
+            { "required": ["formula_columns"] },
+            { "required": ["protection_rule"] }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "operation": {
+            "const": "protect_formula_cells"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "execution_kind": {
+            "const": "composition"
+          },
+          "composition_kind": {
+            "const": "formula_protection"
+          }
+        },
+        "required": [
+          "composition_kind",
+          "protection_rule"
+        ],
+        "not": {
+          "anyOf": [
+            { "required": ["target_sheet"] },
+            { "required": ["filters"] },
+            { "required": ["group_by"] },
+            { "required": ["metrics"] },
+            { "required": ["summary_mode"] },
+            { "required": ["threshold_rule"] },
+            { "required": ["lookup_sheet"] },
+            { "required": ["join_key"] },
+            { "required": ["include_source_columns"] },
+            { "required": ["append_lookup_columns"] },
+            { "required": ["values"] },
+            { "required": ["formula_source_row"] },
+            { "required": ["target_rows"] },
+            { "required": ["formula_columns"] },
+            { "required": ["validation_rule"] }
           ]
         }
       }
