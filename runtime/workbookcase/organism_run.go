@@ -174,6 +174,8 @@ func verifyOrganismWorkbookSemantics(organismID, outputFile string) []string {
 		return verifyTimesheetWorkbook(outputFile)
 	case "project_timeline_tracker":
 		return verifyProjectTimelineWorkbook(outputFile)
+	case "shift_roster_planner":
+		return verifyShiftRosterWorkbook(outputFile)
 	default:
 		return nil
 	}
@@ -403,6 +405,37 @@ func verifyProjectTimelineWorkbook(outputFile string) []string {
 		reasons = append(reasons, fmt.Sprintf("project timeline protection semantic check missing Sprint2 protection: %v", err))
 	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
 		reasons = append(reasons, "project timeline protection semantic check missing Sprint2 protection options")
+	}
+	return reasons
+}
+
+func verifyShiftRosterWorkbook(outputFile string) []string {
+	handle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		return []string{fmt.Sprintf("shift roster workbook semantic check failed to open output: %v", err)}
+	}
+	defer func() { _ = handle.Close() }()
+
+	var reasons []string
+	if got, err := handle.GetCellValue("Week2", "A2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("shift roster period-copy semantic check missing Week2!A2: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "shift roster period-copy semantic check missing Week2!A2 employee value")
+	}
+	if got, err := handle.GetCellFormula("Week2", "D2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("shift roster coverage formula semantic check missing Week2!D2 formula: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "shift roster coverage formula semantic check missing Week2!D2 formula")
+	}
+	if validations, err := handle.GetDataValidations("Week2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("shift roster validation semantic check missing Week2 data validation: %v", err))
+	} else if len(validations) == 0 {
+		reasons = append(reasons, "shift roster validation semantic check missing Week2 data validation")
+	}
+	if protection, err := handle.GetSheetProtection("Week2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("shift roster protection semantic check missing Week2 protection: %v", err))
+	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
+		reasons = append(reasons, "shift roster protection semantic check missing Week2 protection options")
 	}
 	return reasons
 }
