@@ -176,6 +176,8 @@ func verifyOrganismWorkbookSemantics(organismID, outputFile string) []string {
 		return verifyProjectTimelineWorkbook(outputFile)
 	case "shift_roster_planner":
 		return verifyShiftRosterWorkbook(outputFile)
+	case "construction_cost_tracker":
+		return verifyConstructionCostWorkbook(outputFile)
 	default:
 		return nil
 	}
@@ -436,6 +438,32 @@ func verifyShiftRosterWorkbook(outputFile string) []string {
 		reasons = append(reasons, fmt.Sprintf("shift roster protection semantic check missing Week2 protection: %v", err))
 	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
 		reasons = append(reasons, "shift roster protection semantic check missing Week2 protection options")
+	}
+	return reasons
+}
+
+func verifyConstructionCostWorkbook(outputFile string) []string {
+	handle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		return []string{fmt.Sprintf("construction cost workbook semantic check failed to open output: %v", err)}
+	}
+	defer func() { _ = handle.Close() }()
+
+	var reasons []string
+	if got, err := handle.GetCellValue("Costs", "A3"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("construction cost append semantic check missing Costs!A3: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "construction cost append semantic check missing Costs!A3 cost code value")
+	}
+	if got, err := handle.GetCellFormula("Costs", "E3"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("construction cost variance formula semantic check missing Costs!E3 formula: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "construction cost variance formula semantic check missing Costs!E3 formula")
+	}
+	if protection, err := handle.GetSheetProtection("Costs"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("construction cost protection semantic check missing Costs protection: %v", err))
+	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
+		reasons = append(reasons, "construction cost protection semantic check missing Costs protection options")
 	}
 	return reasons
 }

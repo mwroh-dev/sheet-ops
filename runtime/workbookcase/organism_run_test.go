@@ -621,6 +621,48 @@ func TestVerifyOrganismPlanExecutionChecksShiftRosterWorkbookSemantics(t *testin
 	}
 }
 
+func TestVerifyOrganismPlanExecutionChecksConstructionCostWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "construction-cost.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Costs"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Costs", "A1", &[]any{"cost_code", "phase", "actual", "budget", "variance"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Costs", "A2", &[]any{"LABOR", "framing", 90, 100}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetCellFormula("Costs", "E2", "=C2-D2"); err != nil {
+		t.Fatalf("SetCellFormula(E2): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "construction_cost_tracker",
+		OperationSequence:     []string{"append_structured_rows", "extend_table_formulas", "highlight_threshold", "protect_formula_cells"},
+		RequiredVerifierSpecs: []string{"construction_cost_tracker_verifier"},
+	}, []string{"append_structured_rows", "extend_table_formulas", "highlight_threshold", "protect_formula_cells"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "Costs") {
+		t.Fatalf("organism verification reasons=%v want missing construction cost evidence", verification.Reasons)
+	}
+}
+
 func TestRunOrganismPlanExecutesLoanSequenceWithNonClaims(t *testing.T) {
 	setRuntimeRoots(t)
 
