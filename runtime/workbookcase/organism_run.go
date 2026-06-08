@@ -198,6 +198,8 @@ func verifyOrganismWorkbookSemantics(organismID, outputFile string) []string {
 		return verifyComplianceActionWorkbook(outputFile)
 	case "safety_compliance_register":
 		return verifySafetyComplianceWorkbook(outputFile)
+	case "loan_repayment_calculator":
+		return verifyLoanRepaymentWorkbook(outputFile)
 	default:
 		return nil
 	}
@@ -844,6 +846,32 @@ func verifySafetyComplianceWorkbook(outputFile string) []string {
 		reasons = append(reasons, fmt.Sprintf("safety protection semantic check missing Safety protection: %v", err))
 	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
 		reasons = append(reasons, "safety protection semantic check missing Safety protection options")
+	}
+	return reasons
+}
+
+func verifyLoanRepaymentWorkbook(outputFile string) []string {
+	handle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		return []string{fmt.Sprintf("loan repayment workbook semantic check failed to open output: %v", err)}
+	}
+	defer func() { _ = handle.Close() }()
+
+	var reasons []string
+	for _, cell := range []string{"C3", "D3", "E3"} {
+		got, err := handle.GetCellFormula("Schedule", cell)
+		if err != nil {
+			reasons = append(reasons, fmt.Sprintf("loan repayment formula semantic check missing Schedule!%s formula: %v", cell, err))
+			continue
+		}
+		if strings.TrimSpace(got) == "" {
+			reasons = append(reasons, fmt.Sprintf("loan repayment formula semantic check missing Schedule!%s formula", cell))
+		}
+	}
+	if protection, err := handle.GetSheetProtection("Schedule"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("loan repayment protection semantic check missing Schedule protection: %v", err))
+	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
+		reasons = append(reasons, "loan repayment protection semantic check missing Schedule protection options")
 	}
 	return reasons
 }

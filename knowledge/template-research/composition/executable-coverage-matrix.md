@@ -2185,3 +2185,33 @@ Extended standalone workbook semantic organism verification to
 - Advisory claim risk: this remains bounded to deterministic workbook evidence
   and does not certify safety compliance, infer safety policy, or replace
   safety inspections.
+
+## Phase 72 Result
+
+Extended standalone workbook semantic organism verification to
+`loan_repayment_calculator`:
+
+- `runtime/workbookcase.verifyOrganismPlanExecution` now dispatches to a loan
+  repayment workbook semantic verifier
+- the verifier checks final workbook evidence for interest, principal, and
+  balance formula continuity on the next schedule row plus protected formula
+  sheet options
+- a regression test proves that passed atom steps are no longer sufficient for
+  loan repayment organism verification when the final workbook is missing
+  schedule formula evidence
+- the existing loan request-compiler orchestration still passes with the
+  stronger organism verifier
+
+## Phase 72 Self-Retro
+
+- Coverage improved: standalone workbook semantic verifier coverage now spans
+  all 21 round-009 roadmap organisms.
+- Remaining template needs: broad template generation, rich layout QA, native
+  pivot output, matrix auto-growth, and domain-specific policy correctness
+  remain future layers beyond this semantic verifier milestone.
+- Verifier strength: loan verification now inspects final workbook state across
+  interest, principal, balance formula extension, and sheet protection in one
+  organism acceptance pass.
+- Advisory claim risk: this remains bounded to deterministic workbook evidence
+  and does not prove amortization correctness, provide financial advice, or
+  certify payoff schedules.
