@@ -48,6 +48,9 @@ goal. It does not claim full workbook generation or broad Excel automation.
 - `RunOrganismPlan` also includes a monthly budget semantic verifier slice that
   checks deterministic summary output, roll-forward cell output, and copied
   period formula evidence in the final workbook.
+- `RunOrganismPlan` also includes a cash-flow monitor semantic verifier slice
+  that checks deterministic inflow summary output, roll-forward opening balance
+  output, and copied/extended closing formula evidence in the final workbook.
 - The open-layer request compiler and orchestrator decision surface now carry
   optional `template_class_plan` hints so organism id, atom sequence, verifier
   specs, and non-claims can survive the request-entry boundary.
@@ -83,10 +86,11 @@ goal. It does not claim full workbook generation or broad Excel automation.
 - Preview fixtures are representative, not full template generators.
 - Aggregate organism-level verification exists for the first productization
   slice, verifier specs now cover all 21 runtime draft planner organisms, and
-  invoice line-item billing, expense reimbursement, purchase order control, and
-  monthly budget control have standalone workbook semantic verifier slices. The
-  remaining organism classes still rely on operation-specific verifier depth
-  plus aggregate sequence evidence for workbook semantics.
+  invoice line-item billing, expense reimbursement, purchase order control,
+  monthly budget control, and cash flow monitor have standalone workbook
+  semantic verifier slices. The remaining organism classes still rely on
+  operation-specific verifier depth plus aggregate sequence evidence for
+  workbook semantics.
 - Operation planner and template class harness records are mostly advisory
   contracts, not broad autonomous runtime planner execution. The
   `runtime/templateclass` package plans and evaluates evidence, and the
@@ -94,9 +98,11 @@ goal. It does not claim full workbook generation or broad Excel automation.
   steps. The five first productization slices synthesize draft requests from
   workbook facts, but the remaining roadmap organisms do not yet have equivalent
   draft planners.
-- The organism harness currently covers the first five productization classes.
-  The remaining roadmap organisms still need equivalent multi-operation
-  fixtures before broad 21-organism runtime claims are appropriate.
+- The organism harness currently covers representative productization classes
+  and draft integrations now span all roadmap organisms, but only five roadmap
+  organisms have standalone final-workbook semantic verifier slices. The
+  remaining roadmap organisms still need equivalent semantic fixtures before
+  broad 21-organism runtime claims are appropriate.
 - Draft synthesis currently covers the first five productization classes,
   cash-flow continuity, weekly timesheet row logging, warehouse reorder
   tracking, expense reimbursement claims, purchase order line-item control,
@@ -125,6 +131,6 @@ The first deterministic template-class planner/evaluator slice now has
 multi-operation organism harness coverage for all five productization classes,
 and all five first productization classes have explicit draft-planner paths.
 The remaining limits are explicitly documented as future runtime implementation
-depth, especially for broad 21-organism harness coverage, broader request draft
-synthesis, and true domain-specific organism verifiers, not untracked blockers
-in the requested advisory-to-productization coverage layer.
+depth, especially for broad 21-organism standalone semantic verifier coverage,
+domain-specific correctness, and visual/print QA, not untracked blockers in the
+requested advisory-to-productization coverage layer.

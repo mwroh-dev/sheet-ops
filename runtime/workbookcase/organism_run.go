@@ -166,6 +166,8 @@ func verifyOrganismWorkbookSemantics(organismID, outputFile string) []string {
 		return verifyPurchaseOrderWorkbook(outputFile)
 	case "monthly_budget_control":
 		return verifyMonthlyBudgetWorkbook(outputFile)
+	case "cash_flow_monitor":
+		return verifyCashFlowWorkbook(outputFile)
 	default:
 		return nil
 	}
@@ -271,6 +273,32 @@ func verifyMonthlyBudgetWorkbook(outputFile string) []string {
 		reasons = append(reasons, fmt.Sprintf("monthly budget formula semantic check missing NextBudget!E2 formula: %v", err))
 	} else if strings.TrimSpace(got) == "" {
 		reasons = append(reasons, "monthly budget formula semantic check missing NextBudget!E2 formula")
+	}
+	return reasons
+}
+
+func verifyCashFlowWorkbook(outputFile string) []string {
+	handle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		return []string{fmt.Sprintf("cash flow workbook semantic check failed to open output: %v", err)}
+	}
+	defer func() { _ = handle.Close() }()
+
+	var reasons []string
+	if got, err := handle.GetCellValue("CashFlowSummary", "B2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("cash flow semantic check missing CashFlowSummary!B2: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "cash flow semantic check missing CashFlowSummary!B2 inflow summary value")
+	}
+	if got, err := handle.GetCellValue("NextCashFlow", "B3"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("cash flow roll-forward semantic check missing NextCashFlow!B3: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "cash flow roll-forward semantic check missing NextCashFlow!B3 opening value")
+	}
+	if got, err := handle.GetCellFormula("NextCashFlow", "E4"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("cash flow formula semantic check missing NextCashFlow!E4 formula: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "cash flow formula semantic check missing NextCashFlow!E4 formula")
 	}
 	return reasons
 }
