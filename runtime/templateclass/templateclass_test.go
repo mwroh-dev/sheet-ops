@@ -88,6 +88,20 @@ func TestPlanForRequestClassifiesAttendanceRegister(t *testing.T) {
 	}
 }
 
+func TestPlanForRequestClassifiesProjectTimelineTracker(t *testing.T) {
+	plan, ok := PlanForRequest("Copy project timeline period, extend task progress formulas, validate task status, summarize timeline status, and protect formulas")
+	if !ok {
+		t.Fatal("PlanForRequest returned ok=false")
+	}
+	if plan.OrganismID != "project_timeline_tracker" {
+		t.Fatalf("organism=%q want project_timeline_tracker", plan.OrganismID)
+	}
+	wantOps := []string{"copy_period_sheet", "extend_table_formulas", "add_data_validation", "group_summarize", "protect_formula_cells"}
+	if !sameStrings(plan.OperationSequence, wantOps) {
+		t.Fatalf("operation sequence=%v want %v", plan.OperationSequence, wantOps)
+	}
+}
+
 func TestPlanForRequestClassifiesWarehouseReorderTracker(t *testing.T) {
 	plan, ok := PlanForRequest("Enrich warehouse reorder stock with SKU location, flag low stock, append reorder candidate, validate SKU, and protect reorder formulas")
 	if !ok {

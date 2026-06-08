@@ -81,11 +81,14 @@
     },
     {
       "organism_id": "project_timeline_tracker",
-      "draft_status": "explicit_request_only",
-      "runtime_entrypoint": "",
-      "evidence_tests": [],
-      "current_limit": "No workbook-facts draft planner for timeline projection or status pipeline tracking.",
-      "next_gate": "Add a project timeline fixture with status changes, date ranges, and formula-backed progress checks."
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsProjectTimelineStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerProjectTimelineDraft"
+      ],
+      "current_limit": "Task table timeline slice with period copy, progress formula extension, status validation, status summary, and formula protection only; does not render Gantt/timeline grids.",
+      "next_gate": "Add project timeline fixtures with real date-to-grid projection, dependency shifts, new task insertion, and timeline view verification."
     },
     {
       "organism_id": "shift_roster_planner",

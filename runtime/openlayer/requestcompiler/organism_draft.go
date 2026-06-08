@@ -80,6 +80,8 @@ func DraftOrganismExecutionRequest(input OrganismDraftInput) (OrganismExecutionR
 		return draftCashFlowMonitor(input)
 	case "attendance_register":
 		return draftAttendanceRegister(input)
+	case "project_timeline_tracker":
+		return draftProjectTimelineTracker(input)
 	case "timesheet_hours_log":
 		return draftTimesheetHoursLog(input)
 	case "warehouse_reorder_tracker":
@@ -93,6 +95,91 @@ func DraftOrganismExecutionRequest(input OrganismDraftInput) (OrganismExecutionR
 	default:
 		return OrganismExecutionRequestDraft{}, false
 	}
+}
+
+func draftProjectTimelineTracker(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
+	sheet, ok := findProjectTimelineSheet(input.WorkbookFacts)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumns := formulaColumnsForSheet(sheet)
+	if len(formulaColumns) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumnLetters := make([]string, 0, len(formulaColumns))
+	for _, column := range formulaColumns {
+		if letter, ok := columnLetterForHeader(sheet.Columns, column); ok {
+			formulaColumnLetters = append(formulaColumnLetters, letter)
+		}
+	}
+	if len(formulaColumnLetters) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	minFormulaRow, maxFormulaRow, ok := formulaRowBounds(sheet)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	targetRow := maxFormulaRow + 1
+	if targetRow > sheet.RowCount {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	statusColumnLetter, ok := columnLetterForHeader(sheet.Columns, "status")
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	nextSheet := "Sprint2"
+
+	return OrganismExecutionRequestDraft{
+		ScenarioID:  input.ScenarioID,
+		RequestText: input.RequestText,
+		InputFile:   input.InputFile,
+		OutputFile:  input.OutputFile,
+		Steps: []OrganismExecutionStepDraft{
+			{
+				AtomID:          "copy_period_sheet",
+				CompositionKind: "period_copy",
+				SourceSheet:     sheet.Name,
+				TargetSheet:     nextSheet,
+			},
+			{
+				AtomID:           "extend_table_formulas",
+				CompositionKind:  "formula_extension",
+				SourceSheet:      nextSheet,
+				FormulaSourceRow: minFormulaRow,
+				TargetRows:       []int{targetRow},
+				FormulaColumns:   formulaColumnLetters,
+			},
+			{
+				AtomID:          "add_data_validation",
+				CompositionKind: "data_validation",
+				SourceSheet:     nextSheet,
+				ValidationRule: &DataValidationRule{
+					Ranges:        []string{statusColumnLetter + "2:" + statusColumnLetter + "20"},
+					RuleType:      "list",
+					AllowedValues: []string{"todo", "in_progress", "done"},
+					AllowBlank:    false,
+				},
+			},
+			{
+				AtomID:          "group_summarize",
+				CompositionKind: "group_summary",
+				SourceSheet:     nextSheet,
+				TargetSheet:     "TimelineSummary",
+				SummaryMode:     "values",
+				GroupBy:         []string{"status"},
+				Metrics:         []MetricSpec{{Column: "task_count", Op: "sum", As: "task_total"}},
+			},
+			{
+				AtomID:          "protect_formula_cells",
+				CompositionKind: "formula_protection",
+				SourceSheet:     nextSheet,
+				ProtectionRule: &FormulaProtectionRule{
+					FormulaRanges: []string{formulaRange(formulaColumnLetters, minFormulaRow, targetRow)},
+					InputRanges:   []string{"A2:D20"},
+				},
+			},
+		},
+	}, true
 }
 
 func draftAttendanceRegister(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
@@ -1045,6 +1132,16 @@ func findAttendanceRegisterSheet(facts runtimeinspect.WorkbookFacts) (runtimeins
 	for _, sheet := range facts.Sheets {
 		headers := lowerSet(sheet.Columns)
 		if headers["student"] && headers["date"] && headers["status"] && headers["attendance_total"] {
+			return sheet, true
+		}
+	}
+	return runtimeinspect.SheetFacts{}, false
+}
+
+func findProjectTimelineSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect.SheetFacts, bool) {
+	for _, sheet := range facts.Sheets {
+		headers := lowerSet(sheet.Columns)
+		if headers["task"] && headers["start"] && headers["end"] && headers["status"] && headers["task_count"] && headers["progress_pct"] {
 			return sheet, true
 		}
 	}

@@ -493,6 +493,92 @@ func TestOrchestrateOrganismExecutesRequestCompilerAttendanceDraft(t *testing.T)
 	}
 }
 
+func TestOrchestrateOrganismExecutesRequestCompilerProjectTimelineDraft(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "timeline.xlsx")
+	outputFile := filepath.Join(tempDir, "timeline-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Sprint1"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Sprint1", "A1", &[]any{"task", "start", "end", "status", "task_count", "progress_pct"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Sprint1", "A2", &[]any{"Design", "2026-06-01", "2026-06-05", "todo", 1}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetSheetRow("Sprint1", "A3", &[]any{"Build", "2026-06-06", "2026-06-12", "in_progress", 1}); err != nil {
+		t.Fatalf("SetSheetRow row3: %v", err)
+	}
+	if err := file.SetSheetRow("Sprint1", "A4", &[]any{"Test", "2026-06-13", "2026-06-15", "done", 1}); err != nil {
+		t.Fatalf("SetSheetRow row4: %v", err)
+	}
+	if err := file.SetCellFormula("Sprint1", "F2", "=IF(D2=\"done\",1,0)"); err != nil {
+		t.Fatalf("SetCellFormula(F2): %v", err)
+	}
+	if err := file.SetCellFormula("Sprint1", "F3", "=IF(D3=\"done\",1,0)"); err != nil {
+		t.Fatalf("SetCellFormula(F3): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	facts, err := runtimeinspect.InspectWorkbookFacts(inputFile)
+	if err != nil {
+		t.Fatalf("InspectWorkbookFacts: %v", err)
+	}
+	requestText := "Copy project timeline period, extend task progress formulas, validate task status, summarize timeline status, and protect formulas"
+	plan := requestcompiler.TemplateClassPlanHintForRequest(requestText)
+	if plan == nil {
+		t.Fatal("missing plan")
+	}
+	draft, ok := requestcompiler.DraftOrganismExecutionRequest(requestcompiler.OrganismDraftInput{
+		ScenarioID:        "project-timeline-organism-draft-integration",
+		RequestText:       requestText,
+		InputFile:         inputFile,
+		OutputFile:        outputFile,
+		WorkbookFacts:     facts,
+		TemplateClassPlan: *plan,
+	})
+	if !ok {
+		t.Fatal("DraftOrganismExecutionRequest ok=false")
+	}
+	raw, err := json.Marshal(draft)
+	if err != nil {
+		t.Fatalf("Marshal draft: %v", err)
+	}
+	var req OrganismExecutionRequest
+	if err := json.Unmarshal(raw, &req); err != nil {
+		t.Fatalf("Unmarshal draft: %v", err)
+	}
+
+	result, err := OrchestrateOrganism(req)
+	if err != nil {
+		t.Fatalf("OrchestrateOrganism: %v", err)
+	}
+	if !result.TemplateClassEvaluation.Pass || !result.OrganismVerification.Pass {
+		t.Fatalf("organism evidence failed: eval=%+v verification=%+v", result.TemplateClassEvaluation, result.OrganismVerification)
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	if got, err := outputHandle.GetCellValue("Sprint2", "A4"); err != nil || got != "Test" {
+		t.Fatalf("Sprint2!A4=%q err=%v want Test", got, err)
+	}
+	if got, err := outputHandle.GetCellFormula("Sprint2", "F4"); err != nil || got != "=IF(D4=\"done\",1,0)" {
+		t.Fatalf("Sprint2!F4 formula=%q err=%v want =IF(D4=\"done\",1,0)", got, err)
+	}
+	if got, err := outputHandle.GetCellValue("TimelineSummary", "A2"); err != nil || got != "todo" {
+		t.Fatalf("TimelineSummary!A2=%q err=%v want todo", got, err)
+	}
+}
+
 func TestOrchestrateOrganismExecutesRequestCompilerTimesheetDraft(t *testing.T) {
 	tempDir := t.TempDir()
 	inputFile := filepath.Join(tempDir, "timesheet.xlsx")
