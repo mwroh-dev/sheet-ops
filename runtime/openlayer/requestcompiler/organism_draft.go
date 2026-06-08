@@ -29,14 +29,22 @@ type OrganismExecutionStepDraft struct {
 	Operator             string                 `json:"operator,omitempty"`
 	Threshold            *float64               `json:"threshold,omitempty"`
 	HighlightColor       string                 `json:"highlight_color,omitempty"`
+	LookupSheet          string                 `json:"lookup_sheet,omitempty"`
+	JoinKey              string                 `json:"join_key,omitempty"`
 	IncludeSourceColumns []string               `json:"include_source_columns,omitempty"`
+	AppendLookupColumns  []string               `json:"append_lookup_columns,omitempty"`
 	Values               []CellValue            `json:"values,omitempty"`
 	FormulaSourceRow     int                    `json:"formula_source_row,omitempty"`
 	TargetRows           []int                  `json:"target_rows,omitempty"`
 	FormulaColumns       []string               `json:"formula_columns,omitempty"`
 	ValidationRule       *DataValidationRule    `json:"validation_rule,omitempty"`
 	ProtectionRule       *FormulaProtectionRule `json:"protection_rule,omitempty"`
+	HeaderRow            int                    `json:"header_row,omitempty"`
+	HeaderMappings       []HeaderMapping        `json:"header_mappings,omitempty"`
 	CarryForwardMappings []CarryForwardMapping  `json:"carry_forward_mappings,omitempty"`
+	LeftKey              string                 `json:"left_key,omitempty"`
+	RightKey             string                 `json:"right_key,omitempty"`
+	CompareMappings      []CompareMapping       `json:"compare_mappings,omitempty"`
 	FormTitle            string                 `json:"form_title,omitempty"`
 	PrintArea            string                 `json:"print_area,omitempty"`
 	FieldBindings        []FormFieldBinding     `json:"field_bindings,omitempty"`
@@ -64,9 +72,106 @@ func DraftOrganismExecutionRequest(input OrganismDraftInput) (OrganismExecutionR
 		return draftInvoiceLineItemBilling(input)
 	case "monthly_budget_control":
 		return draftMonthlyBudgetControl(input)
+	case "inventory_movement_log":
+		return draftInventoryMovementLog(input)
 	default:
 		return OrganismExecutionRequestDraft{}, false
 	}
+}
+
+func draftInventoryMovementLog(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
+	movementSheet, ok := findInventoryMovementSheet(input.WorkbookFacts)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	if _, ok := findSheetWithHeaders(input.WorkbookFacts, "sku", "location"); !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	if _, ok := findSheetWithHeaders(input.WorkbookFacts, "sku", "on_hand"); !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumns := formulaColumnsForSheet(movementSheet)
+	if len(formulaColumns) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumnLetters := make([]string, 0, len(formulaColumns))
+	for _, column := range formulaColumns {
+		if letter, ok := columnLetterForHeader(movementSheet.Columns, column); ok {
+			formulaColumnLetters = append(formulaColumnLetters, letter)
+		}
+	}
+	if len(formulaColumnLetters) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	minFormulaRow, maxFormulaRow, ok := formulaRowBounds(movementSheet)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	normalizedColumns := []string{"sku", "quantity_in", "quantity_out", "balance"}
+
+	return OrganismExecutionRequestDraft{
+		ScenarioID:  input.ScenarioID,
+		RequestText: input.RequestText,
+		InputFile:   input.InputFile,
+		OutputFile:  input.OutputFile,
+		Steps: []OrganismExecutionStepDraft{
+			{
+				AtomID:          "normalize_headers",
+				CompositionKind: "header_normalization",
+				SourceSheet:     movementSheet.Name,
+				HeaderRow:       1,
+				HeaderMappings: []HeaderMapping{
+					{From: "SKU ID", To: "sku"},
+					{From: "Qty In", To: "quantity_in"},
+					{From: "Qty Out", To: "quantity_out"},
+					{From: "Balance", To: "balance"},
+				},
+			},
+			{
+				AtomID:               "append_structured_rows",
+				CompositionKind:      "structured_row_append",
+				SourceSheet:          movementSheet.Name,
+				IncludeSourceColumns: append([]string(nil), normalizedColumns...),
+				Values: []CellValue{
+					{Cell: "sku", Value: "C003"},
+					{Cell: "quantity_in", Value: 2},
+					{Cell: "quantity_out", Value: 0},
+					{Cell: "balance", Value: 2},
+				},
+			},
+			{
+				AtomID:               "join_lookup",
+				CompositionKind:      "join_lookup",
+				SourceSheet:          movementSheet.Name,
+				LookupSheet:          "SKU",
+				TargetSheet:          "MovementsEnriched",
+				JoinKey:              "sku",
+				IncludeSourceColumns: append([]string(nil), normalizedColumns...),
+				AppendLookupColumns:  []string{"location"},
+			},
+			{
+				AtomID:          "protect_formula_cells",
+				CompositionKind: "formula_protection",
+				SourceSheet:     movementSheet.Name,
+				ProtectionRule: &FormulaProtectionRule{
+					FormulaRanges: []string{formulaRange(formulaColumnLetters, minFormulaRow, maxFormulaRow)},
+					InputRanges:   []string{"A2:C20"},
+				},
+			},
+			{
+				AtomID:          "reconcile_tables",
+				CompositionKind: "table_reconciliation",
+				SourceSheet:     "MovementsEnriched",
+				LookupSheet:     "StockMaster",
+				TargetSheet:     "InventoryReconciliation",
+				LeftKey:         "sku",
+				RightKey:        "sku",
+				CompareMappings: []CompareMapping{
+					{LeftColumn: "balance", RightColumn: "on_hand", As: "balance"},
+				},
+			},
+		},
+	}, true
 }
 
 func draftMonthlyBudgetControl(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
@@ -250,6 +355,33 @@ func findMonthlyBudgetSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect.
 	for _, sheet := range facts.Sheets {
 		headers := lowerSet(sheet.Columns)
 		if headers["category"] && headers["actual"] && headers["budget"] && headers["variance"] && headers["closing"] {
+			return sheet, true
+		}
+	}
+	return runtimeinspect.SheetFacts{}, false
+}
+
+func findInventoryMovementSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect.SheetFacts, bool) {
+	for _, sheet := range facts.Sheets {
+		headers := lowerSet(sheet.Columns)
+		if headers["sku id"] && headers["qty in"] && headers["qty out"] && headers["balance"] {
+			return sheet, true
+		}
+	}
+	return runtimeinspect.SheetFacts{}, false
+}
+
+func findSheetWithHeaders(facts runtimeinspect.WorkbookFacts, requiredHeaders ...string) (runtimeinspect.SheetFacts, bool) {
+	for _, sheet := range facts.Sheets {
+		headers := lowerSet(sheet.Columns)
+		missing := false
+		for _, required := range requiredHeaders {
+			if !headers[strings.ToLower(required)] {
+				missing = true
+				break
+			}
+		}
+		if !missing {
 			return sheet, true
 		}
 	}

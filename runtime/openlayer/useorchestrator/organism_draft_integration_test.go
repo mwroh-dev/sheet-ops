@@ -175,6 +175,111 @@ func TestOrchestrateOrganismExecutesRequestCompilerBudgetDraft(t *testing.T) {
 	}
 }
 
+func TestOrchestrateOrganismExecutesRequestCompilerInventoryDraft(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "inventory.xlsx")
+	outputFile := filepath.Join(tempDir, "inventory-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Movements"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Movements", "A1", &[]any{"SKU ID", "Qty In", "Qty Out", "Balance"}); err != nil {
+		t.Fatalf("SetSheetRow movements header: %v", err)
+	}
+	for idx, row := range [][]any{{"A001", 10, 0}, {"B002", 3, 1}} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("Movements", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow movement %d: %v", idx, err)
+		}
+		rowNum := idx + 2
+		if err := file.SetCellFormula("Movements", "D"+cellRowForDraftIntegrationTest(rowNum), "=B"+cellRowForDraftIntegrationTest(rowNum)+"-C"+cellRowForDraftIntegrationTest(rowNum)); err != nil {
+			t.Fatalf("SetCellFormula balance row %d: %v", rowNum, err)
+		}
+	}
+	if _, err := file.NewSheet("SKU"); err != nil {
+		t.Fatalf("NewSheet SKU: %v", err)
+	}
+	if err := file.SetSheetRow("SKU", "A1", &[]any{"sku", "location"}); err != nil {
+		t.Fatalf("SetSheetRow SKU header: %v", err)
+	}
+	for idx, row := range [][]any{{"A001", "Aisle 1"}, {"B002", "Aisle 2"}, {"C003", "Aisle 3"}} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("SKU", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow SKU %d: %v", idx, err)
+		}
+	}
+	if _, err := file.NewSheet("StockMaster"); err != nil {
+		t.Fatalf("NewSheet StockMaster: %v", err)
+	}
+	if err := file.SetSheetRow("StockMaster", "A1", &[]any{"sku", "on_hand"}); err != nil {
+		t.Fatalf("SetSheetRow stock header: %v", err)
+	}
+	for idx, row := range [][]any{{"A001", 10}, {"B002", 2}, {"C003", 2}} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("StockMaster", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow stock %d: %v", idx, err)
+		}
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	facts, err := runtimeinspect.InspectWorkbookFacts(inputFile)
+	if err != nil {
+		t.Fatalf("InspectWorkbookFacts: %v", err)
+	}
+	requestText := "Normalize inventory movement headers, append SKU movement, lookup SKU metadata, protect balance formulas, and reconcile stock master"
+	plan := requestcompiler.TemplateClassPlanHintForRequest(requestText)
+	if plan == nil {
+		t.Fatal("missing plan")
+	}
+	draft, ok := requestcompiler.DraftOrganismExecutionRequest(requestcompiler.OrganismDraftInput{
+		ScenarioID:        "inventory-organism-draft-integration",
+		RequestText:       requestText,
+		InputFile:         inputFile,
+		OutputFile:        outputFile,
+		WorkbookFacts:     facts,
+		TemplateClassPlan: *plan,
+	})
+	if !ok {
+		t.Fatal("DraftOrganismExecutionRequest ok=false")
+	}
+	raw, err := json.Marshal(draft)
+	if err != nil {
+		t.Fatalf("Marshal draft: %v", err)
+	}
+	var req OrganismExecutionRequest
+	if err := json.Unmarshal(raw, &req); err != nil {
+		t.Fatalf("Unmarshal draft: %v", err)
+	}
+
+	result, err := OrchestrateOrganism(req)
+	if err != nil {
+		t.Fatalf("OrchestrateOrganism: %v", err)
+	}
+	if !result.TemplateClassEvaluation.Pass || !result.OrganismVerification.Pass {
+		t.Fatalf("organism evidence failed: eval=%+v verification=%+v", result.TemplateClassEvaluation, result.OrganismVerification)
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	if got, err := outputHandle.GetCellValue("Movements", "A1"); err != nil || got != "sku" {
+		t.Fatalf("Movements!A1=%q err=%v want sku", got, err)
+	}
+	if got, err := outputHandle.GetCellValue("MovementsEnriched", "E4"); err != nil || got != "Aisle 3" {
+		t.Fatalf("MovementsEnriched!E4=%q err=%v want Aisle 3", got, err)
+	}
+	if got, err := outputHandle.GetCellValue("InventoryReconciliation", "B4"); err != nil || got != "C003" {
+		t.Fatalf("InventoryReconciliation!B4=%q err=%v want C003", got, err)
+	}
+}
+
 func cellRowForDraftIntegrationTest(row int) string {
 	return strconv.Itoa(row)
 }

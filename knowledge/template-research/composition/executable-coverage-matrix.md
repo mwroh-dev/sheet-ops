@@ -838,3 +838,38 @@ Extended the template-class draft planner to `monthly_budget_control`:
 - Advisory claim risk: expanding draft synthesis should not be described as
   broad template automation until each productization class has equivalent
   planner and verifier depth.
+
+## Phase 29 Result
+
+Extended the template-class draft planner to `inventory_movement_log`:
+
+- the draft step DTO now carries lookup, header normalization, and table
+  reconciliation fields
+- `requestcompiler.DraftOrganismExecutionRequest` detects an inventory
+  movement sheet from raw movement headers and requires SKU metadata plus stock
+  master sheets
+- the inventory draft emits the five-step sequence: normalize headers, append
+  structured movement row, join SKU lookup metadata, protect balance formulas,
+  and reconcile movement balances to stock master
+- the planner derives formula protection ranges from workbook formula facts and
+  uses explicit normalized field names for downstream steps after header
+  normalization
+- tests validate the draft against
+  `contracts/requests/organism_execution_request.schema.json`
+- an open-layer integration test proves the inventory draft JSON can execute
+  through `OrchestrateOrganism` and produce expected workbook evidence in
+  `Movements`, `MovementsEnriched`, and `InventoryReconciliation`
+
+## Phase 29 Self-Retro
+
+- Coverage improved: draft synthesis now covers three productization classes:
+  invoice line-item billing, monthly budget control, and inventory movement
+  log.
+- Remaining template needs: student gradebook and loan repayment still require
+  hand-authored explicit organism requests. The inventory draft assumes a
+  known raw header vocabulary and simple SKU/stock master sheets.
+- Verifier strength: the inventory path covers schema validation, open-layer
+  execution, template-class evaluation, organism verification, lookup output,
+  header normalization, and reconciliation output checks.
+- Advisory claim risk: this does not infer warehouse policy, resolve duplicate
+  SKU keys, perform fuzzy matching, or certify stock accounting correctness.
