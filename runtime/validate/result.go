@@ -84,6 +84,13 @@ type RollForwardPeriodIntent struct {
 	CarryForwardMappings []CarryForwardMapping
 }
 
+type ReconcileTablesIntent struct {
+	TargetSheet     string
+	LeftKey         string
+	RightKey        string
+	CompareMappings []CompareMapping
+}
+
 type DataValidationRule struct {
 	Ranges        []string `json:"ranges"`
 	RuleType      string   `json:"rule_type"`
@@ -107,6 +114,12 @@ type CarryForwardMapping struct {
 	FromCell  string `json:"from_cell"`
 	ToSheet   string `json:"to_sheet,omitempty"`
 	ToCell    string `json:"to_cell"`
+}
+
+type CompareMapping struct {
+	LeftColumn  string `json:"left_column"`
+	RightColumn string `json:"right_column"`
+	As          string `json:"as,omitempty"`
 }
 
 type MaterializationIntent struct {
@@ -137,6 +150,7 @@ type NormalizedIntent struct {
 	ProtectFormulaCells   ProtectFormulaCellsIntent
 	NormalizeHeaders      NormalizeHeadersIntent
 	RollForwardPeriod     RollForwardPeriodIntent
+	ReconcileTables       ReconcileTablesIntent
 	Materialization       MaterializationIntent
 	Ambiguity             AmbiguityIntent
 }
@@ -208,6 +222,9 @@ type ValidatedExecutionRequest struct {
 	HeaderRow            int                    `json:"header_row,omitempty"`
 	HeaderMappings       []HeaderMapping        `json:"header_mappings,omitempty"`
 	CarryForwardMappings []CarryForwardMapping  `json:"carry_forward_mappings,omitempty"`
+	LeftKey              string                 `json:"left_key,omitempty"`
+	RightKey             string                 `json:"right_key,omitempty"`
+	CompareMappings      []CompareMapping       `json:"compare_mappings,omitempty"`
 }
 
 type CellValue struct {
@@ -257,6 +274,9 @@ type admittedIntent struct {
 	headerRow            int
 	headerMappings       []HeaderMapping
 	carryForwardMappings []CarryForwardMapping
+	leftKey              string
+	rightKey             string
+	compareMappings      []CompareMapping
 }
 
 type boundIntent struct {
@@ -316,6 +336,15 @@ func cloneCarryForwardMappings(values []CarryForwardMapping) []CarryForwardMappi
 		return []CarryForwardMapping{}
 	}
 	cloned := make([]CarryForwardMapping, len(values))
+	copy(cloned, values)
+	return cloned
+}
+
+func cloneCompareMappings(values []CompareMapping) []CompareMapping {
+	if len(values) == 0 {
+		return []CompareMapping{}
+	}
+	cloned := make([]CompareMapping, len(values))
 	copy(cloned, values)
 	return cloned
 }

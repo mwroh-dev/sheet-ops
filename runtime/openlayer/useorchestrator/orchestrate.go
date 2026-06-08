@@ -46,7 +46,7 @@ func validateSupportedValidatedExecutionRequest(req ValidatedExecutionRequest) e
 		return fmt.Errorf("unsupported validated execution kind %q", req.ExecutionKind)
 	}
 	switch req.CompositionKind {
-	case "structured_row_append", "formula_extension", "period_copy", "data_validation", "formula_protection", "header_normalization", "period_roll_forward":
+	case "structured_row_append", "formula_extension", "period_copy", "data_validation", "formula_protection", "header_normalization", "period_roll_forward", "table_reconciliation":
 		return nil
 	case "group_summary", "threshold_highlight", "join_lookup":
 		return nil
@@ -110,6 +110,18 @@ func taskSpecFromUseRequest(req UseRequest) runtimetaskspec.TaskSpec {
 			TargetSheet:          req.TargetSheet,
 			OutputFile:           req.OutputFile,
 			CarryForwardMappings: toTaskSpecCarryForwardMappings(req.CarryForwardMappings),
+		}).TaskSpec
+	case runtimeworkbookcase.ReconcileTablesOperationName:
+		return runtimetaskspec.BuildReconcileTablesTask(runtimetaskspec.ReconcileTablesRequest{
+			RequestText:     coalesceValidatedRequestText(req.RequestText, "structured table reconciliation request"),
+			InputFile:       req.InputFile,
+			SourceSheet:     req.SheetName,
+			LookupSheet:     req.LookupSheet,
+			TargetSheet:     req.TargetSheet,
+			OutputFile:      req.OutputFile,
+			LeftKey:         req.LeftKey,
+			RightKey:        req.RightKey,
+			CompareMappings: toTaskSpecCompareMappings(req.CompareMappings),
 		}).TaskSpec
 	case runtimeworkbookcase.AddDataValidationOperationName:
 		return runtimetaskspec.BuildAddDataValidationTask(runtimetaskspec.AddDataValidationRequest{
@@ -253,6 +265,18 @@ func taskSpecFromValidatedExecutionRequest(req ValidatedExecutionRequest) (runti
 			IncludeSourceColumns: includeSourceColumns,
 			AppendLookupColumns:  append([]string(nil), req.AppendLookupColumns...),
 		}).TaskSpec, nil
+	case "table_reconciliation":
+		return runtimetaskspec.BuildReconcileTablesTask(runtimetaskspec.ReconcileTablesRequest{
+			RequestText:     coalesceValidatedRequestText(req.RequestText, "validated table reconciliation request"),
+			InputFile:       req.InputFile,
+			SourceSheet:     req.SourceSheet,
+			LookupSheet:     req.LookupSheet,
+			OutputFile:      req.OutputFile,
+			TargetSheet:     req.TargetSheet,
+			LeftKey:         req.LeftKey,
+			RightKey:        req.RightKey,
+			CompareMappings: toTaskSpecCompareMappings(req.CompareMappings),
+		}).TaskSpec, nil
 	case "threshold_highlight":
 		return runtimetaskspec.BuildHighlightThresholdTask(runtimetaskspec.HighlightThresholdRequest{
 			RequestText:    coalesceValidatedRequestText(req.RequestText, "validated threshold highlight request"),
@@ -310,6 +334,8 @@ func validatedRoutingRequestText(req ValidatedExecutionRequest) string {
 		return coalesceValidatedRequestText(req.RequestText, "validated formula protection request")
 	case "join_lookup":
 		return coalesceValidatedRequestText(req.RequestText, "validated join lookup request")
+	case "table_reconciliation":
+		return coalesceValidatedRequestText(req.RequestText, "validated table reconciliation request")
 	case "threshold_highlight":
 		return coalesceValidatedRequestText(req.RequestText, "validated threshold highlight request")
 	default:
@@ -335,6 +361,8 @@ func validatedOperation(req ValidatedExecutionRequest) string {
 		return runtimeworkbookcase.NormalizeHeadersOperationName
 	case "join_lookup":
 		return runtimeworkbookcase.JoinLookupOperationName
+	case "table_reconciliation":
+		return runtimeworkbookcase.ReconcileTablesOperationName
 	case "threshold_highlight":
 		return runtimeworkbookcase.HighlightOperationName
 	default:
@@ -370,7 +398,7 @@ func defaultJoinSourceColumns(req ValidatedExecutionRequest) ([]string, error) {
 
 func isSupportedOperation(operation string) bool {
 	switch operation {
-	case runtimeworkbookcase.SummaryOperationName, runtimeworkbookcase.HighlightOperationName, runtimeworkbookcase.JoinLookupOperationName, runtimeworkbookcase.AppendRowsOperationName, runtimeworkbookcase.ExtendFormulasOperationName, runtimeworkbookcase.CopyPeriodSheetOperationName, runtimeworkbookcase.AddDataValidationOperationName, runtimeworkbookcase.ProtectFormulaCellsOperationName, runtimeworkbookcase.NormalizeHeadersOperationName, runtimeworkbookcase.RollForwardPeriodOperationName:
+	case runtimeworkbookcase.SummaryOperationName, runtimeworkbookcase.HighlightOperationName, runtimeworkbookcase.JoinLookupOperationName, runtimeworkbookcase.AppendRowsOperationName, runtimeworkbookcase.ExtendFormulasOperationName, runtimeworkbookcase.CopyPeriodSheetOperationName, runtimeworkbookcase.AddDataValidationOperationName, runtimeworkbookcase.ProtectFormulaCellsOperationName, runtimeworkbookcase.NormalizeHeadersOperationName, runtimeworkbookcase.RollForwardPeriodOperationName, runtimeworkbookcase.ReconcileTablesOperationName:
 		return true
 	default:
 		return false
@@ -433,6 +461,21 @@ func toTaskSpecCarryForwardMappings(values []CarryForwardMapping) []runtimetasks
 			FromCell:  value.FromCell,
 			ToSheet:   value.ToSheet,
 			ToCell:    value.ToCell,
+		})
+	}
+	return converted
+}
+
+func toTaskSpecCompareMappings(values []CompareMapping) []runtimetaskspec.CompareMapping {
+	if len(values) == 0 {
+		return nil
+	}
+	converted := make([]runtimetaskspec.CompareMapping, 0, len(values))
+	for _, value := range values {
+		converted = append(converted, runtimetaskspec.CompareMapping{
+			LeftColumn:  value.LeftColumn,
+			RightColumn: value.RightColumn,
+			As:          value.As,
 		})
 	}
 	return converted

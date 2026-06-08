@@ -56,6 +56,12 @@ type CarryForwardMapping struct {
 	ToCell    string `json:"to_cell"`
 }
 
+type CompareMapping struct {
+	LeftColumn  string `json:"left_column"`
+	RightColumn string `json:"right_column"`
+	As          string `json:"as,omitempty"`
+}
+
 type SourceSpec struct {
 	Kind string `json:"kind"`
 	Path string `json:"path,omitempty"`
@@ -79,8 +85,11 @@ type TaskSpec struct {
 	ThresholdRule        *ThresholdRule         `json:"threshold_rule,omitempty"`
 	LookupSheet          string                 `json:"lookup_sheet,omitempty"`
 	JoinKey              string                 `json:"join_key,omitempty"`
+	LeftKey              string                 `json:"left_key,omitempty"`
+	RightKey             string                 `json:"right_key,omitempty"`
 	IncludeSourceColumns []string               `json:"include_source_columns,omitempty"`
 	AppendLookupColumns  []string               `json:"append_lookup_columns,omitempty"`
+	CompareMappings      []CompareMapping       `json:"compare_mappings,omitempty"`
 	Values               []CellValue            `json:"values,omitempty"`
 	FormulaSourceRow     int                    `json:"formula_source_row,omitempty"`
 	TargetRows           []int                  `json:"target_rows,omitempty"`
@@ -172,6 +181,17 @@ type RollForwardPeriodTask struct {
 	TargetSheet          string
 	CarryForwardMappings []CarryForwardMapping
 	PreserveOriginal     bool
+}
+
+type ReconcileTablesTask struct {
+	TaskSpec         TaskSpec
+	SourceSheet      string
+	LookupSheet      string
+	TargetSheet      string
+	LeftKey          string
+	RightKey         string
+	CompareMappings  []CompareMapping
+	PreserveOriginal bool
 }
 
 type UseRequest struct {
@@ -270,6 +290,18 @@ type RollForwardPeriodRequest struct {
 	CarryForwardMappings []CarryForwardMapping
 }
 
+type ReconcileTablesRequest struct {
+	RequestText     string
+	InputFile       string
+	SourceSheet     string
+	LookupSheet     string
+	TargetSheet     string
+	OutputFile      string
+	LeftKey         string
+	RightKey        string
+	CompareMappings []CompareMapping
+}
+
 const (
 	ExecutionKindComposition             = "composition"
 	CompositionKindGroupSummary          = "group_summary"
@@ -282,6 +314,7 @@ const (
 	CompositionKindFormulaProtection     = "formula_protection"
 	CompositionKindHeaderNormalization   = "header_normalization"
 	CompositionKindPeriodRollForward     = "period_roll_forward"
+	CompositionKindTableReconciliation   = "table_reconciliation"
 	OperationCreateSummarySheet          = "create_summary_sheet"
 	OperationHighlightThresholdRows      = "highlight_threshold_rows"
 	OperationCreateJoinLookupResultSheet = "create_join_lookup_result_sheet"
@@ -292,6 +325,7 @@ const (
 	OperationProtectFormulaCells         = "protect_formula_cells"
 	OperationNormalizeHeaders            = "normalize_headers"
 	OperationRollForwardPeriod           = "roll_forward_period"
+	OperationReconcileTables             = "reconcile_tables"
 	OperationFamilyGroupSummarize        = "group_summarize"
 	OperationFamilyHighlightThreshold    = "highlight_threshold"
 	OperationFamilyJoinLookup            = "join_lookup"
@@ -302,6 +336,7 @@ const (
 	OperationFamilyProtectFormulaCells   = "protect_formula_cells"
 	OperationFamilyNormalizeHeaders      = "normalize_headers"
 	OperationFamilyRollForwardPeriod     = "roll_forward_period"
+	OperationFamilyReconcileTables       = "reconcile_tables"
 
 	defaultHighlightColumn    = "amount"
 	defaultHighlightOperator  = ">"
@@ -574,6 +609,34 @@ func BuildRollForwardPeriodTask(req RollForwardPeriodRequest) RollForwardPeriodT
 	}
 }
 
+func BuildReconcileTablesTask(req ReconcileTablesRequest) ReconcileTablesTask {
+	return ReconcileTablesTask{
+		TaskSpec: TaskSpec{
+			RequestKind:     "workbook_case",
+			ExecutionKind:   ExecutionKindComposition,
+			CompositionKind: CompositionKindTableReconciliation,
+			Source:          SourceSpec{Kind: "natural_language"},
+			RequestText:     req.RequestText,
+			InputWorkbook:   req.InputFile,
+			OutputWorkbook:  req.OutputFile,
+			Operation:       OperationReconcileTables,
+			SourceSheet:     req.SourceSheet,
+			TargetSheet:     req.TargetSheet,
+			LookupSheet:     req.LookupSheet,
+			LeftKey:         req.LeftKey,
+			RightKey:        req.RightKey,
+			CompareMappings: cloneCompareMappings(req.CompareMappings),
+		},
+		SourceSheet:      req.SourceSheet,
+		LookupSheet:      req.LookupSheet,
+		TargetSheet:      req.TargetSheet,
+		LeftKey:          req.LeftKey,
+		RightKey:         req.RightKey,
+		CompareMappings:  cloneCompareMappings(req.CompareMappings),
+		PreserveOriginal: true,
+	}
+}
+
 func cloneFilters(values []FilterSpec) []FilterSpec {
 	if len(values) == 0 {
 		return nil
@@ -652,6 +715,15 @@ func cloneCarryForwardMappings(values []CarryForwardMapping) []CarryForwardMappi
 		return nil
 	}
 	cloned := make([]CarryForwardMapping, len(values))
+	copy(cloned, values)
+	return cloned
+}
+
+func cloneCompareMappings(values []CompareMapping) []CompareMapping {
+	if len(values) == 0 {
+		return nil
+	}
+	cloned := make([]CompareMapping, len(values))
 	copy(cloned, values)
 	return cloned
 }

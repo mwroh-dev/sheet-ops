@@ -18,8 +18,8 @@ the first execution target is p0 organism coverage.
 | `protect_formula_cells` | supported | explicit formula/input range scope: capability record, TaskSpec/IR, executor, verifier, fixtures |
 | `normalize_headers` | supported | explicit header-row mapping scope: capability record, TaskSpec/IR, executor, verifier, fixtures |
 | `roll_forward_period` | supported | explicit closing-to-opening cell mapping scope: capability record, TaskSpec/IR, executor, verifier, fixtures |
+| `reconcile_tables` | supported | explicit key and compare mapping scope: capability record, TaskSpec/IR, executor, verifier, fixtures |
 | `write_values` | runtime primitive | primitive only, not public agent capability |
-| `reconcile_tables` | planned | inventory reconciliation blocker |
 | `create_pivot_summary` | planned | p2+ summary depth blocker |
 | `generate_printable_form` | planned | invoice document-output blocker |
 
@@ -32,7 +32,7 @@ the first execution target is p0 organism coverage.
 | `cash_flow_monitor` | `group_summarize`, `extend_table_formulas`, `copy_period_sheet`, `protect_formula_cells`, `roll_forward_period` | none in current p0 atom list | broaden organism preview before claiming full template generation |
 | `attendance_register` | `group_summarize`, `copy_period_sheet`, `add_data_validation`, `protect_formula_cells`, `normalize_headers` | none in current p0 atom list | broaden organism preview before claiming full template generation |
 | `timesheet_hours_log` | `group_summarize`, `copy_period_sheet`, `append_structured_rows`, `extend_table_formulas`, `add_data_validation`, `protect_formula_cells` | none in current p0 atom list | broaden organism preview before claiming full template generation |
-| `inventory_movement_log` | `join_lookup`, `group_summarize`, `append_structured_rows`, `protect_formula_cells`, `normalize_headers` | `reconcile_tables` | reconciliation next |
+| `inventory_movement_log` | `join_lookup`, `group_summarize`, `append_structured_rows`, `protect_formula_cells`, `normalize_headers`, `reconcile_tables` | none in current p0 atom list | broaden organism preview before claiming full template generation |
 
 ## Phase Checklist
 
@@ -220,10 +220,45 @@ Non-goals for this phase:
 
 - P0 gaps reduced: `monthly_budget_control` and `cash_flow_monitor` no longer
   depend on roll-forward as an unsupported atom for explicit mapping cases.
-- Remaining p0 template needs: `generate_printable_form` blocks invoice-style
-  document output, and `reconcile_tables` blocks inventory movement proof.
+- Remaining p0 template needs at the end of Phase 9: `generate_printable_form`
+  blocked invoice-style document output, and `reconcile_tables` blocked
+  inventory movement proof.
 - Verifier strength: the verifier checks source hash preservation, carried
   closing-to-opening values, non-mapped cell values, and non-mapped formulas.
 - Advisory claim risk: this is carry-forward continuity, not full period
   generation. Callers must create/copy the target period sheet separately until
   a richer verifier exists.
+
+## Phase 10 Result
+
+Promoted `reconcile_tables` with a deliberately narrow first supported scope:
+
+- explicit source and lookup sheets
+- explicit left/right key columns
+- explicit compare mappings
+- new reconciliation result sheet
+- deterministic buckets: `matched`, `left_only`, `right_only`,
+  `value_mismatch`
+- preserve original workbook and unchanged source/lookup sheets
+
+Non-goals for this phase:
+
+- fuzzy key matching
+- duplicate-key resolution
+- numeric tolerances or rounding policies
+- composite keys
+- many-to-many reconciliation
+- external file reconciliation
+
+## Phase 10 Self-Retro
+
+- P0 gaps reduced: `inventory_movement_log` no longer depends on reconciliation
+  as an unsupported atom for explicit key/value comparison cases.
+- Remaining p0 template need: `generate_printable_form` still blocks
+  invoice-style document output.
+- Verifier strength: the verifier recomputes expected reconciliation rows from
+  the input workbook, checks source hash preservation, checks source/lookup
+  sheet preservation, and compares matched/missing/mismatch rows.
+- Advisory claim risk: this is row-level reconciliation, not general audit
+  automation. Ambiguous keys, duplicate keys, tolerances, and fuzzy matching
+  must stay outside supported scope until separate verifiers exist.

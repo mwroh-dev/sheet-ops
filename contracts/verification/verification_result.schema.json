@@ -24,7 +24,8 @@
         "protect_formula_cells",
         "normalize_headers",
         "roll_forward_period",
-        "write_values"
+        "write_values",
+        "reconcile_tables"
       ]
     },
     "highlighted_rows": {
@@ -64,14 +65,29 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["level", "name", "pass"],
+        "required": [
+          "level",
+          "name",
+          "pass"
+        ],
         "properties": {
-          "level": { "type": "integer", "minimum": 1, "maximum": 7 },
-          "name": { "type": "string", "minLength": 1 },
-          "pass": { "type": "boolean" },
+          "level": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "pass": {
+            "type": "boolean"
+          },
           "reasons": {
             "type": "array",
-            "items": { "type": "string" }
+            "items": {
+              "type": "string"
+            }
           }
         },
         "additionalProperties": false

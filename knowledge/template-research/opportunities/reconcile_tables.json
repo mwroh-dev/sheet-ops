@@ -1,9 +1,10 @@
 {
   "name": "reconcile_tables",
-  "status": "research_only",
-  "evidence_count": 1,
+  "status": "supported",
+  "evidence_count": 2,
   "source_categories": [
-    "Budget Templates"
+    "Budget Templates",
+    "Inventory and procurement controls"
   ],
   "representative_why": "Users need to compare planned, actual, and imported data sets to find mismatches.",
   "representative_how": [
@@ -12,10 +13,12 @@
     "report missing or mismatched rows"
   ],
   "concrete_workflows": [
-    "compare planned budget categories with actual expense exports"
+    "compare planned budget categories with actual expense exports",
+    "compare inventory movement balances with stock master on-hand values"
   ],
-  "verification_strategy": "Use paired fixture sheets with known missing, matched, and mismatched rows and verify the reconciliation output.",
+  "verification_strategy": "Supported scope verifies explicit left/right key matching, explicit compare mappings, matched rows, left-only rows, right-only rows, value mismatches, source preservation, and lookup sheet preservation. Fuzzy matching, duplicate-key resolution, tolerances, and many-to-many reconciliation remain outside supported scope.",
   "related_patterns": [
     "budget"
-  ]
+  ],
+  "notes": "Promoted into the supported public capability registry after Phase 10 runtime contract, executor, verifier, workbookcase, and open-layer structured request coverage."
 }

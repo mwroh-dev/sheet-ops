@@ -1,0 +1,19 @@
+{
+  "scenario_id": "reconcile-tables-example",
+  "request_text": "Movements balance와 StockMaster on_hand를 sku 기준으로 대조한다.",
+  "input_file": "examples/reconcile_tables/inventory.xlsx",
+  "sheet_name": "Movements",
+  "lookup_sheet": "StockMaster",
+  "output_file": "examples/reconcile_tables/inventory-reconciled.xlsx",
+  "operation": "reconcile_tables",
+  "target_sheet": "Reconciliation",
+  "left_key": "sku",
+  "right_key": "sku",
+  "compare_mappings": [
+    {
+      "left_column": "balance",
+      "right_column": "on_hand",
+      "as": "balance"
+    }
+  ]
+}

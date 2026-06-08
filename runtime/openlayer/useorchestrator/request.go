@@ -43,6 +43,9 @@ type UseRequest struct {
 	HeaderRow            int                    `json:"header_row,omitempty"`
 	HeaderMappings       []HeaderMapping        `json:"header_mappings,omitempty"`
 	CarryForwardMappings []CarryForwardMapping  `json:"carry_forward_mappings,omitempty"`
+	LeftKey              string                 `json:"left_key,omitempty"`
+	RightKey             string                 `json:"right_key,omitempty"`
+	CompareMappings      []CompareMapping       `json:"compare_mappings,omitempty"`
 }
 
 type ValidatedExecutionRequest = runtimevalidate.ValidatedExecutionRequest
@@ -51,6 +54,7 @@ type DataValidationRule = runtimevalidate.DataValidationRule
 type FormulaProtectionRule = runtimevalidate.FormulaProtectionRule
 type HeaderMapping = runtimevalidate.HeaderMapping
 type CarryForwardMapping = runtimevalidate.CarryForwardMapping
+type CompareMapping = runtimevalidate.CompareMapping
 
 func LoadRequest(path string) (UseRequest, error) {
 	var req UseRequest

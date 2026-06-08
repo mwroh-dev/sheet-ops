@@ -294,6 +294,19 @@ func compileDecision(intent NormalizedIntent) Decision {
 		}
 	}
 
+	if slices.Contains(intent.CompositionCandidates, CompositionCandidateTableReconciliation) && reconcileTablesIntentReady(intent) {
+		return Decision{
+			Status:            StatusCompiled,
+			SelectedOperation: "reconcile_tables",
+			Confidence:        0.98,
+			Notes: []string{
+				"the normalized intent maps cleanly to the supported explicit table reconciliation runtime operation",
+			},
+			SheetCandidates:   supportedSheetCandidates(intent),
+			StructuralSignals: []string{"table_reconciliation_request", "preserve_original"},
+		}
+	}
+
 	if slices.Contains(intent.CompositionCandidates, CompositionCandidateJoinLookup) && joinLookupIntentReady(intent) {
 		return Decision{
 			Status:            StatusCompiled,
@@ -478,6 +491,12 @@ func toRuntimeIntent(intent NormalizedIntent) runtimevalidate.NormalizedIntent {
 			TargetSheet:          intent.RollForwardPeriod.TargetSheet,
 			CarryForwardMappings: toRuntimeCarryForwardMappings(intent.RollForwardPeriod.CarryForwardMappings),
 		},
+		ReconcileTables: runtimevalidate.ReconcileTablesIntent{
+			TargetSheet:     intent.ReconcileTables.TargetSheet,
+			LeftKey:         intent.ReconcileTables.LeftKey,
+			RightKey:        intent.ReconcileTables.RightKey,
+			CompareMappings: toRuntimeCompareMappings(intent.ReconcileTables.CompareMappings),
+		},
 		Materialization: runtimevalidate.MaterializationIntent{
 			PreserveOriginal:      intent.Materialization.PreserveOriginal,
 			OutputDestinationMode: intent.Materialization.OutputDestinationMode,
@@ -620,6 +639,14 @@ func rollForwardPeriodIntentReady(intent NormalizedIntent) bool {
 		len(intent.RollForwardPeriod.CarryForwardMappings) > 0
 }
 
+func reconcileTablesIntentReady(intent NormalizedIntent) bool {
+	return len(intent.SourceSheetCandidates) > 0 &&
+		len(intent.LookupSheetCandidates) > 0 &&
+		strings.TrimSpace(intent.ReconcileTables.LeftKey) != "" &&
+		strings.TrimSpace(intent.ReconcileTables.RightKey) != "" &&
+		len(intent.ReconcileTables.CompareMappings) > 0
+}
+
 func toRuntimeHeaderMappings(values []HeaderMapping) []runtimevalidate.HeaderMapping {
 	if len(values) == 0 {
 		return []runtimevalidate.HeaderMapping{}
@@ -642,6 +669,21 @@ func toRuntimeCarryForwardMappings(values []CarryForwardMapping) []runtimevalida
 			FromCell:  value.FromCell,
 			ToSheet:   value.ToSheet,
 			ToCell:    value.ToCell,
+		})
+	}
+	return converted
+}
+
+func toRuntimeCompareMappings(values []CompareMapping) []runtimevalidate.CompareMapping {
+	if len(values) == 0 {
+		return []runtimevalidate.CompareMapping{}
+	}
+	converted := make([]runtimevalidate.CompareMapping, 0, len(values))
+	for _, value := range values {
+		converted = append(converted, runtimevalidate.CompareMapping{
+			LeftColumn:  value.LeftColumn,
+			RightColumn: value.RightColumn,
+			As:          value.As,
 		})
 	}
 	return converted

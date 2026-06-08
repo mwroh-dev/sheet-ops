@@ -275,6 +275,71 @@ func TestInventoryMovementLogPreviewComposesHeaderNormalization(t *testing.T) {
 	}
 }
 
+func TestInventoryMovementLogPreviewComposesTableReconciliation(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "inventory.xlsx")
+	outputFile := filepath.Join(tempDir, "inventory-reconciled.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Movements"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	movementHeader := []any{"sku", "balance"}
+	if err := file.SetSheetRow("Movements", "A1", &movementHeader); err != nil {
+		t.Fatalf("SetSheetRow movement header: %v", err)
+	}
+	for idx, row := range [][]any{{"A001", 10}, {"B002", 5}, {"C003", 2}} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("Movements", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow movement %d: %v", idx, err)
+		}
+	}
+	if _, err := file.NewSheet("StockMaster"); err != nil {
+		t.Fatalf("NewSheet StockMaster: %v", err)
+	}
+	masterHeader := []any{"sku", "on_hand"}
+	if err := file.SetSheetRow("StockMaster", "A1", &masterHeader); err != nil {
+		t.Fatalf("SetSheetRow master header: %v", err)
+	}
+	for idx, row := range [][]any{{"A001", 10}, {"B002", 7}, {"D004", 1}} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("StockMaster", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow master %d: %v", idx, err)
+		}
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	reconcileTask := runtimetaskspec.BuildReconcileTablesTask(runtimetaskspec.ReconcileTablesRequest{
+		RequestText: "inventory movement log의 balance를 stock master on_hand와 대조한다.",
+		InputFile:   inputFile,
+		SourceSheet: "Movements",
+		LookupSheet: "StockMaster",
+		TargetSheet: "Reconciliation",
+		OutputFile:  outputFile,
+		LeftKey:     "sku",
+		RightKey:    "sku",
+		CompareMappings: []runtimetaskspec.CompareMapping{
+			{LeftColumn: "balance", RightColumn: "on_hand", As: "balance"},
+		},
+	})
+	result, err := Run(Request{ScenarioID: "inventory-preview-reconcile-tables", TaskSpec: reconcileTask.TaskSpec})
+	if err != nil {
+		t.Fatalf("reconcile Run: %v", err)
+	}
+	if !result.Verification.Pass {
+		t.Fatalf("reconcile verification failed: %+v", result.Verification)
+	}
+	if result.Verification.SummaryRows != 4 {
+		t.Fatalf("summary rows=%d want 4", result.Verification.SummaryRows)
+	}
+}
+
 func TestCashFlowMonitorPreviewComposesRollForwardPeriod(t *testing.T) {
 	setRuntimeRoots(t)
 

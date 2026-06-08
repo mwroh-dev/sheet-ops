@@ -321,9 +321,7 @@
         "normalize_headers",
         "protect_formula_cells"
       ],
-      "planned_or_unsupported_atom_ids": [
-        "reconcile_tables"
-      ],
+      "planned_or_unsupported_atom_ids": [],
       "verifier_focus": [
         "movement rows change SKU balance",
         "lookup enrichment matches SKU master",
@@ -352,9 +350,7 @@
         "add_data_validation",
         "protect_formula_cells"
       ],
-      "planned_or_unsupported_atom_ids": [
-        "reconcile_tables"
-      ],
+      "planned_or_unsupported_atom_ids": [],
       "verifier_focus": [
         "matched missing and mismatched buckets are correct",
         "normalized keys match across sources",

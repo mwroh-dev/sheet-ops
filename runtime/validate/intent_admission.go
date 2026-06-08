@@ -41,6 +41,8 @@ func AdmitIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIn
 		return admitNormalizeHeadersIntent(intent, decision)
 	case "roll_forward_period":
 		return admitRollForwardPeriodIntent(intent, decision)
+	case "reconcile_tables":
+		return admitReconcileTablesIntent(intent, decision)
 	case "copy_period_sheet":
 		return admitPeriodCopyIntent(intent, decision)
 	default:
@@ -53,6 +55,37 @@ func AdmitIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIn
 		})
 		return admittedIntent{}, &result, err
 	}
+}
+
+func admitReconcileTablesIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIntent, *Result, error) {
+	if !intent.Materialization.PreserveOriginal ||
+		intent.Materialization.OutputDestinationMode != "new_workbook" ||
+		intent.Materialization.WriteShape != "new_sheet" {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"invalid_materialization"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	if strings.TrimSpace(intent.ReconcileTables.LeftKey) == "" ||
+		strings.TrimSpace(intent.ReconcileTables.RightKey) == "" ||
+		len(intent.ReconcileTables.CompareMappings) == 0 {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"incomplete_reconciliation_intent"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	return admittedIntent{
+		decision:        decision,
+		compositionKind: "table_reconciliation",
+		sourceSheets:    preferredSourceSheets(intent, decision),
+		lookupSheets:    append([]string(nil), intent.LookupSheetCandidates...),
+		targetSheet:     coalesceString(intent.ReconcileTables.TargetSheet, "Reconciliation"),
+		leftKey:         intent.ReconcileTables.LeftKey,
+		rightKey:        intent.ReconcileTables.RightKey,
+		compareMappings: cloneCompareMappings(intent.ReconcileTables.CompareMappings),
+	}, nil, nil
 }
 
 func admitRollForwardPeriodIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIntent, *Result, error) {

@@ -102,6 +102,113 @@ func TestRunWriteValuesPreservesSourceAndVerifiesCells(t *testing.T) {
 	}
 }
 
+func TestRunReconcileTablesCreatesMatchedMissingAndMismatchRows(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "inventory.xlsx")
+	outputFile := filepath.Join(tempDir, "inventory-output.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Movements"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	movementHeader := []any{"sku", "balance"}
+	if err := file.SetSheetRow("Movements", "A1", &movementHeader); err != nil {
+		t.Fatalf("SetSheetRow movement header: %v", err)
+	}
+	for idx, row := range [][]any{
+		{"A001", 10},
+		{"B002", 5},
+		{"C003", 2},
+	} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("Movements", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow movement %d: %v", idx, err)
+		}
+	}
+	if _, err := file.NewSheet("StockMaster"); err != nil {
+		t.Fatalf("NewSheet StockMaster: %v", err)
+	}
+	masterHeader := []any{"sku", "on_hand"}
+	if err := file.SetSheetRow("StockMaster", "A1", &masterHeader); err != nil {
+		t.Fatalf("SetSheetRow master header: %v", err)
+	}
+	for idx, row := range [][]any{
+		{"A001", 10},
+		{"B002", 7},
+		{"D004", 1},
+	} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("StockMaster", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow master %d: %v", idx, err)
+		}
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	ir := compiler.WorkbookOperationIR{
+		ExecutionKind:   "composition",
+		CompositionKind: "table_reconciliation",
+		OperationFamily: "reconcile_tables",
+		SourceSheet:     "Movements",
+		LookupSheet:     "StockMaster",
+		TargetSheet:     "Reconciliation",
+		LeftKey:         "sku",
+		RightKey:        "sku",
+		CompareMappings: []compiler.CompareMapping{
+			{LeftColumn: "balance", RightColumn: "on_hand", As: "balance"},
+		},
+		PreserveOriginal: true,
+	}
+	result, err := RunWorkbookOperation(ir, inputFile, outputFile)
+	if err != nil {
+		t.Fatalf("RunWorkbookOperation: %v", err)
+	}
+	if result.OperationFamily != "reconcile_tables" {
+		t.Fatalf("operation_family=%q want reconcile_tables", result.OperationFamily)
+	}
+	if got, want := result.SummaryRows, 4; got != want {
+		t.Fatalf("summary_rows=%d want %d", got, want)
+	}
+
+	verification, err := runtimeverify.VerifyWorkbookOperation(ir, inputFile, outputFile, result.SourceSHA256Before, result.SourceSHA256After)
+	if err != nil {
+		t.Fatalf("VerifyWorkbookOperation: %v", err)
+	}
+	if !verification.Pass {
+		t.Fatalf("verification failed: %+v", verification)
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	rows, err := outputHandle.GetRows("Reconciliation")
+	if err != nil {
+		t.Fatalf("GetRows Reconciliation: %v", err)
+	}
+	wantRows := [][]string{
+		{"status", "key", "left_row", "right_row", "field", "left_value", "right_value"},
+		{"matched", "A001", "2", "2", "", "", ""},
+		{"value_mismatch", "B002", "3", "3", "balance", "5", "7"},
+		{"left_only", "C003", "4", "", "", "", ""},
+		{"right_only", "D004", "", "4", "", "", ""},
+	}
+	if len(rows) != len(wantRows) {
+		t.Fatalf("row count=%d want %d rows=%v", len(rows), len(wantRows), rows)
+	}
+	for rowIndex := range wantRows {
+		for columnIndex := range wantRows[rowIndex] {
+			if valueAt(rows[rowIndex], columnIndex) != wantRows[rowIndex][columnIndex] {
+				t.Fatalf("row %d column %d=%q want %q", rowIndex+1, columnIndex+1, valueAt(rows[rowIndex], columnIndex), wantRows[rowIndex][columnIndex])
+			}
+		}
+	}
+}
+
 func TestRunAppendStructuredRowsPreservesSourceAndVerifiesRows(t *testing.T) {
 	tempDir := t.TempDir()
 	inputFile := filepath.Join(tempDir, "input.xlsx")

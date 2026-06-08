@@ -17,7 +17,7 @@
 | `create_pivot_summary` | planned | source table, dimensions, measures, output anchor | group rows into pivot-like summary, preserve source | summary table or pivot-like output | grouped totals match source, dimensions are complete |
 | `add_data_validation` | supported for explicit list/dropdown rules | source sheet, target ranges, list rule type, allowed values, allow blank | build list validation rules for declared ranges | validation rules on input ranges | source workbook preserved, validation rule present, allowed values match |
 | `protect_formula_cells` | supported for explicit ranges | source sheet, formula ranges, input ranges, optional password | separate locked formula cells from editable inputs | protected formula cells and sheet protection settings | source workbook preserved, formula cells locked, input cells unlocked, sheet protection enabled |
-| `reconcile_tables` | planned | left/right sources, key mapping, match rules | normalize keys, match rows, bucket missing and mismatched records | reconciliation result table | matched/missing/mismatch buckets match expected cases |
+| `reconcile_tables` | supported for explicit key and compare mappings | source sheet, lookup sheet, target sheet, left/right key columns, compare mappings | match unique nonblank keys, compare declared fields, bucket matched/missing/mismatched records | reconciliation result table | source and lookup preserved, reconciliation rows match expected buckets |
 | `generate_printable_form` | planned | metadata, line items, totals, output region | materialize reviewable document layout from structured data | printable/reviewable region | required fields populated, totals match source |
 
 ## 적용 규칙

@@ -57,6 +57,8 @@ func RunWorkbookOperation(ir compiler.WorkbookOperationIR, inputWorkbook, output
 		return RunNormalizeHeaders(ir, inputWorkbook, outputWorkbook)
 	case "roll_forward_period":
 		return RunRollForwardPeriod(ir, inputWorkbook, outputWorkbook)
+	case "reconcile_tables":
+		return RunReconcileTables(ir, inputWorkbook, outputWorkbook)
 	case "write_values":
 		return RunWriteValues(ir, inputWorkbook, outputWorkbook)
 	default:

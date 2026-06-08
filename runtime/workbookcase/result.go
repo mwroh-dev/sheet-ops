@@ -18,6 +18,7 @@ const (
 	ProtectFormulaCellsOperationName = "protect_formula_cells"
 	NormalizeHeadersOperationName    = "normalize_headers"
 	RollForwardPeriodOperationName   = "roll_forward_period"
+	ReconcileTablesOperationName     = "reconcile_tables"
 	WriteValuesOperationName         = "write_values"
 )
 
@@ -177,6 +178,18 @@ type RollForwardPeriodPlan struct {
 	CarryForwardMappings []runtimetaskspec.CarryForwardMapping `json:"carry_forward_mappings"`
 	PreserveOriginal     bool                                  `json:"preserve_original"`
 	OutputFile           string                                `json:"output_file"`
+}
+
+type ReconcileTablesPlan struct {
+	Operation        string                           `json:"operation"`
+	SheetName        string                           `json:"sheet_name"`
+	LookupSheet      string                           `json:"lookup_sheet"`
+	TargetSheet      string                           `json:"target_sheet"`
+	LeftKey          string                           `json:"left_key"`
+	RightKey         string                           `json:"right_key"`
+	CompareMappings  []runtimetaskspec.CompareMapping `json:"compare_mappings"`
+	PreserveOriginal bool                             `json:"preserve_original"`
+	OutputFile       string                           `json:"output_file"`
 }
 
 type WritePolicyDecision struct {

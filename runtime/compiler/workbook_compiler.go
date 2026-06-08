@@ -42,6 +42,12 @@ type CarryForwardMapping struct {
 	ToCell    string `json:"to_cell"`
 }
 
+type CompareMapping struct {
+	LeftColumn  string `json:"left_column"`
+	RightColumn string `json:"right_column"`
+	As          string `json:"as,omitempty"`
+}
+
 type WorkbookInspection struct {
 	InputWorkbook     string                  `json:"input_workbook"`
 	SheetNames        []string                `json:"sheet_names"`
@@ -71,8 +77,11 @@ type WorkbookOperationIR struct {
 	HighlightColor       string                 `json:"highlight_color,omitempty"`
 	LookupSheet          string                 `json:"lookup_sheet,omitempty"`
 	JoinKey              string                 `json:"join_key,omitempty"`
+	LeftKey              string                 `json:"left_key,omitempty"`
+	RightKey             string                 `json:"right_key,omitempty"`
 	IncludeSourceColumns []string               `json:"include_source_columns,omitempty"`
 	AppendLookupColumns  []string               `json:"append_lookup_columns,omitempty"`
+	CompareMappings      []CompareMapping       `json:"compare_mappings,omitempty"`
 	Values               []CellValue            `json:"values,omitempty"`
 	FormulaSourceRow     int                    `json:"formula_source_row,omitempty"`
 	TargetRows           []int                  `json:"target_rows,omitempty"`
@@ -469,6 +478,59 @@ func CompileRollForwardPeriodOperation(task taskspec.RollForwardPeriodTask) (Wor
 	}, nil
 }
 
+func CompileReconcileTablesOperation(task taskspec.ReconcileTablesTask) (WorkbookOperationIR, error) {
+	if task.SourceSheet == "" {
+		return WorkbookOperationIR{}, fmt.Errorf("source sheet must not be empty")
+	}
+	if task.LookupSheet == "" {
+		return WorkbookOperationIR{}, fmt.Errorf("lookup sheet must not be empty")
+	}
+	if task.TargetSheet == "" {
+		return WorkbookOperationIR{}, fmt.Errorf("target sheet must not be empty")
+	}
+	if task.TargetSheet == task.SourceSheet || task.TargetSheet == task.LookupSheet {
+		return WorkbookOperationIR{}, fmt.Errorf("target sheet must differ from source and lookup sheets")
+	}
+	if strings.TrimSpace(task.LeftKey) == "" {
+		return WorkbookOperationIR{}, fmt.Errorf("left key must not be empty")
+	}
+	if strings.TrimSpace(task.RightKey) == "" {
+		return WorkbookOperationIR{}, fmt.Errorf("right key must not be empty")
+	}
+	if len(task.CompareMappings) == 0 {
+		return WorkbookOperationIR{}, fmt.Errorf("compare mappings must not be empty")
+	}
+	if err := validateReconcileTablesTaskCompositionBoundary(task.TaskSpec); err != nil {
+		return WorkbookOperationIR{}, err
+	}
+	mappings := make([]CompareMapping, 0, len(task.CompareMappings))
+	for _, mapping := range task.CompareMappings {
+		if strings.TrimSpace(mapping.LeftColumn) == "" {
+			return WorkbookOperationIR{}, fmt.Errorf("compare mapping left_column must not be empty")
+		}
+		if strings.TrimSpace(mapping.RightColumn) == "" {
+			return WorkbookOperationIR{}, fmt.Errorf("compare mapping right_column must not be empty")
+		}
+		as := mapping.As
+		if strings.TrimSpace(as) == "" {
+			as = mapping.LeftColumn
+		}
+		mappings = append(mappings, CompareMapping{LeftColumn: mapping.LeftColumn, RightColumn: mapping.RightColumn, As: as})
+	}
+	return WorkbookOperationIR{
+		ExecutionKind:    taskspec.ExecutionKindComposition,
+		CompositionKind:  taskspec.CompositionKindTableReconciliation,
+		OperationFamily:  taskspec.OperationFamilyReconcileTables,
+		SourceSheet:      task.SourceSheet,
+		LookupSheet:      task.LookupSheet,
+		TargetSheet:      task.TargetSheet,
+		LeftKey:          task.LeftKey,
+		RightKey:         task.RightKey,
+		CompareMappings:  mappings,
+		PreserveOriginal: task.PreserveOriginal,
+	}, nil
+}
+
 func validateHighlightTaskCompositionBoundary(spec taskspec.TaskSpec) error {
 	if spec.ExecutionKind != taskspec.ExecutionKindComposition {
 		return fmt.Errorf("highlight task execution_kind=%q want %q", spec.ExecutionKind, taskspec.ExecutionKindComposition)
@@ -582,6 +644,19 @@ func validateRollForwardPeriodTaskCompositionBoundary(spec taskspec.TaskSpec) er
 	}
 	if spec.Operation != taskspec.OperationRollForwardPeriod {
 		return fmt.Errorf("roll forward period task operation=%q want %q", spec.Operation, taskspec.OperationRollForwardPeriod)
+	}
+	return nil
+}
+
+func validateReconcileTablesTaskCompositionBoundary(spec taskspec.TaskSpec) error {
+	if spec.ExecutionKind != taskspec.ExecutionKindComposition {
+		return fmt.Errorf("reconcile tables task execution_kind=%q want %q", spec.ExecutionKind, taskspec.ExecutionKindComposition)
+	}
+	if spec.CompositionKind != taskspec.CompositionKindTableReconciliation {
+		return fmt.Errorf("reconcile tables task composition_kind=%q want %q", spec.CompositionKind, taskspec.CompositionKindTableReconciliation)
+	}
+	if spec.Operation != taskspec.OperationReconcileTables {
+		return fmt.Errorf("reconcile tables task operation=%q want %q", spec.Operation, taskspec.OperationReconcileTables)
 	}
 	return nil
 }

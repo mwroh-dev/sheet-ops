@@ -600,6 +600,73 @@ func TestRunRollForwardPeriodEndToEnd(t *testing.T) {
 	}
 }
 
+func TestRunReconcileTablesEndToEnd(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "inventory.xlsx")
+	outputFile := filepath.Join(tempDir, "inventory-output.xlsx")
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Movements"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	movementHeader := []any{"sku", "balance"}
+	if err := file.SetSheetRow("Movements", "A1", &movementHeader); err != nil {
+		t.Fatalf("SetSheetRow movement header: %v", err)
+	}
+	for idx, row := range [][]any{{"A001", 10}, {"B002", 5}, {"C003", 2}} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("Movements", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow movement %d: %v", idx, err)
+		}
+	}
+	if _, err := file.NewSheet("StockMaster"); err != nil {
+		t.Fatalf("NewSheet StockMaster: %v", err)
+	}
+	masterHeader := []any{"sku", "on_hand"}
+	if err := file.SetSheetRow("StockMaster", "A1", &masterHeader); err != nil {
+		t.Fatalf("SetSheetRow master header: %v", err)
+	}
+	for idx, row := range [][]any{{"A001", 10}, {"B002", 7}, {"D004", 1}} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("StockMaster", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow master %d: %v", idx, err)
+		}
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	task := runtimetaskspec.BuildReconcileTablesTask(runtimetaskspec.ReconcileTablesRequest{
+		RequestText: "Movements balance와 StockMaster on_hand를 sku 기준으로 대조한다.",
+		InputFile:   inputFile,
+		SourceSheet: "Movements",
+		LookupSheet: "StockMaster",
+		TargetSheet: "Reconciliation",
+		OutputFile:  outputFile,
+		LeftKey:     "sku",
+		RightKey:    "sku",
+		CompareMappings: []runtimetaskspec.CompareMapping{
+			{LeftColumn: "balance", RightColumn: "on_hand", As: "balance"},
+		},
+	})
+	result, err := Run(Request{ScenarioID: "workbookcase-reconcile-tables", TaskSpec: task.TaskSpec})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if !result.Verification.Pass {
+		t.Fatalf("verification failed: %+v", result.Verification)
+	}
+	if result.Verification.Operation != ReconcileTablesOperationName {
+		t.Fatalf("verification operation=%q want %s", result.Verification.Operation, ReconcileTablesOperationName)
+	}
+	if result.Verification.SummaryRows != 4 {
+		t.Fatalf("summary rows=%d want 4", result.Verification.SummaryRows)
+	}
+}
+
 func TestRunRejectsUnsafeScenarioIDBeforeCreatingArtifacts(t *testing.T) {
 	artifactRoot := t.TempDir()
 	t.Setenv(ArtifactRootEnv, artifactRoot)

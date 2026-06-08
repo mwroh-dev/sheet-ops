@@ -57,6 +57,27 @@ func BindFacts(admitted admittedIntent, facts runtimeinspect.WorkbookFacts) (bou
 			lookupSheet:          lookupSheet,
 			includeSourceColumns: includeSourceColumns,
 		}, nil, nil
+	case "table_reconciliation":
+		sourceSheet, ok := firstExistingSheet(facts, admitted.sourceSheets)
+		if !ok {
+			return blockedFactBinding("unsupported_source_sheet")
+		}
+		lookupSheet, ok := firstExistingLookupSheet(facts, admitted.lookupSheets, sourceSheet)
+		if !ok {
+			return blockedFactBinding("unsupported_lookup_sheet")
+		}
+		if missingColumns := missingWorkbookColumns(facts, sourceSheet, requiredReconciliationSourceColumns(admitted)); len(missingColumns) > 0 {
+			return blockedFactBinding("missing_required_columns")
+		}
+		if missingColumns := missingWorkbookColumns(facts, lookupSheet, requiredReconciliationLookupColumns(admitted)); len(missingColumns) > 0 {
+			return blockedFactBinding("missing_required_columns")
+		}
+		return boundIntent{
+			admittedIntent: admitted,
+			facts:          facts,
+			sourceSheet:    sourceSheet,
+			lookupSheet:    lookupSheet,
+		}, nil, nil
 	case "structured_row_append":
 		sourceSheet, ok := firstExistingSheet(facts, admitted.sourceSheets)
 		if !ok {
@@ -180,6 +201,22 @@ func requiredJoinSourceColumns(admitted admittedIntent) []string {
 func requiredJoinLookupColumns(admitted admittedIntent) []string {
 	columns := []string{admitted.joinKey}
 	columns = append(columns, admitted.appendLookupColumns...)
+	return columns
+}
+
+func requiredReconciliationSourceColumns(admitted admittedIntent) []string {
+	columns := []string{admitted.leftKey}
+	for _, mapping := range admitted.compareMappings {
+		columns = append(columns, mapping.LeftColumn)
+	}
+	return columns
+}
+
+func requiredReconciliationLookupColumns(admitted admittedIntent) []string {
+	columns := []string{admitted.rightKey}
+	for _, mapping := range admitted.compareMappings {
+		columns = append(columns, mapping.RightColumn)
+	}
 	return columns
 }
 

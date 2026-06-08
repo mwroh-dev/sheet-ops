@@ -53,7 +53,8 @@
         "protect_formula_cells",
         "normalize_headers",
         "roll_forward_period",
-        "write_values"
+        "write_values",
+        "reconcile_tables"
       ]
     },
     "operation_family": {
@@ -68,7 +69,8 @@
         "protect_formula_cells",
         "normalize_headers",
         "roll_forward_period",
-        "write_values"
+        "write_values",
+        "reconcile_tables"
       ]
     },
     "task_operations": {
@@ -282,6 +284,22 @@
         "properties": {
           "operation_family": {
             "const": "write_values"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "reconcile_tables"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "operation_family": {
+            "const": "reconcile_tables"
           }
         }
       }

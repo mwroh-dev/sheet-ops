@@ -79,6 +79,9 @@ func resolveRequestedOperation(req UseRequest) (string, string) {
 	if isPeriodRollForwardRequest(req) {
 		return runtimeworkbookcase.RollForwardPeriodOperationName, "period_roll_forward_request_signals"
 	}
+	if isReconcileTablesRequest(req) {
+		return runtimeworkbookcase.ReconcileTablesOperationName, "table_reconciliation_request_signals"
+	}
 	if isDataValidationRequest(req) {
 		return runtimeworkbookcase.AddDataValidationOperationName, "data_validation_request_signals"
 	}
@@ -132,6 +135,15 @@ func isDataValidationRequest(req UseRequest) bool {
 		strings.Contains(req.RequestText, "데이터 검증") ||
 		strings.Contains(req.RequestText, "dropdown") ||
 		strings.Contains(req.RequestText, "data validation")
+}
+
+func isReconcileTablesRequest(req UseRequest) bool {
+	return len(req.CompareMappings) > 0 ||
+		req.LeftKey != "" ||
+		req.RightKey != "" ||
+		strings.Contains(req.RequestText, "대조") ||
+		strings.Contains(req.RequestText, "reconcile") ||
+		strings.Contains(req.RequestText, "reconciliation")
 }
 
 func isFormulaProtectionRequest(req UseRequest) bool {
@@ -191,6 +203,8 @@ func buildRoutingNote(selectedOperation, routingAuthority string, knowledge runt
 			return fmt.Sprintf("%s Fallback routed by period copy request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		case "period_roll_forward_request_signals":
 			return fmt.Sprintf("%s Fallback routed by period roll-forward request signals to %s.", knowledge.FallbackReason, selectedOperation)
+		case "table_reconciliation_request_signals":
+			return fmt.Sprintf("%s Fallback routed by table reconciliation request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		case "data_validation_request_signals":
 			return fmt.Sprintf("%s Fallback routed by data validation request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		case "formula_protection_request_signals":
@@ -244,6 +258,12 @@ func buildRoutingNote(selectedOperation, routingAuthority string, knowledge runt
 	case "period_roll_forward_request_signals":
 		return fmt.Sprintf(
 			"Loaded %d orchestrator knowledge records; period roll-forward request signals still selected %s. Knowledge remains advisory only.",
+			knowledge.RecordCount,
+			selectedOperation,
+		)
+	case "table_reconciliation_request_signals":
+		return fmt.Sprintf(
+			"Loaded %d orchestrator knowledge records; table reconciliation request signals still selected %s. Knowledge remains advisory only.",
 			knowledge.RecordCount,
 			selectedOperation,
 		)

@@ -32,6 +32,12 @@ func (validator Validator) AdmitExecution(bound boundIntent) (Result, error) {
 			request.IncludeSourceColumns = append([]string(nil), bound.includeSourceColumns...)
 		}
 		request.AppendLookupColumns = append([]string(nil), bound.appendLookupColumns...)
+	case "table_reconciliation":
+		request.TargetSheet = bound.targetSheet
+		request.LookupSheet = bound.lookupSheet
+		request.LeftKey = bound.leftKey
+		request.RightKey = bound.rightKey
+		request.CompareMappings = cloneCompareMappings(bound.compareMappings)
 	case "structured_row_append":
 		request.IncludeSourceColumns = append([]string(nil), bound.includeSourceColumns...)
 		request.Values = cloneCellValues(bound.values)

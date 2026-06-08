@@ -454,38 +454,45 @@
     },
     {
       "atom_id": "reconcile_tables",
-      "status": "planned",
-      "builder_layer": "planned_contract",
+      "status": "supported",
+      "builder_layer": "runtime_mirror",
       "input_contract": [
-        "left table",
-        "right table",
-        "key mapping",
-        "match rules"
+        "source sheet",
+        "lookup sheet",
+        "target sheet",
+        "left key",
+        "right key",
+        "compare mappings"
       ],
       "inspection_requirements": [
-        "left headers",
-        "right headers",
+        "source headers",
+        "lookup headers",
         "key columns",
+        "compare columns",
         "duplicate keys"
       ],
       "plan_outputs": [
         "matched bucket",
-        "missing bucket",
-        "mismatched bucket",
-        "summary rows"
+        "left-only bucket",
+        "right-only bucket",
+        "value-mismatch bucket"
       ],
       "result_outputs": [
-        "reconciliation result table",
-        "warnings"
+        "reconciliation result table"
       ],
       "verification_assertions": [
-        "matched_rows_correct",
-        "missing_rows_correct",
-        "mismatch_rows_correct"
+        "source_preserved",
+        "lookup_sheet_preserved",
+        "reconciliation_rows_match",
+        "matched_missing_mismatch_buckets_match"
       ],
-      "capability_record": "",
-      "opportunity_record": "knowledge/template-research/opportunities/reconcile_tables.json",
-      "runtime_paths": []
+      "capability_record": "contracts/capabilities/records/reconcile_tables.yaml",
+      "opportunity_record": "",
+      "runtime_paths": [
+        "runtime/compiler/workbook_compiler.go",
+        "runtime/execute/reconcile_tables.go",
+        "runtime/verify/reconcile_tables.go"
+      ]
     },
     {
       "atom_id": "generate_printable_form",

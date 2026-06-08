@@ -11,6 +11,7 @@ const (
 	CompositionCandidateFormulaProtection   = "formula_protection"
 	CompositionCandidateHeaderNormalization = "header_normalization"
 	CompositionCandidatePeriodRollForward   = "period_roll_forward"
+	CompositionCandidateTableReconciliation = "table_reconciliation"
 
 	OutputDestinationModeNewWorkbook  = "new_workbook"
 	OutputDestinationModeSameWorkbook = "same_workbook"
@@ -89,6 +90,13 @@ type RollForwardPeriodIntent struct {
 	CarryForwardMappings []CarryForwardMapping `json:"carry_forward_mappings,omitempty"`
 }
 
+type ReconcileTablesIntent struct {
+	TargetSheet     string           `json:"target_sheet,omitempty"`
+	LeftKey         string           `json:"left_key,omitempty"`
+	RightKey        string           `json:"right_key,omitempty"`
+	CompareMappings []CompareMapping `json:"compare_mappings,omitempty"`
+}
+
 type DataValidationRule struct {
 	Ranges        []string `json:"ranges"`
 	RuleType      string   `json:"rule_type"`
@@ -112,6 +120,12 @@ type CarryForwardMapping struct {
 	FromCell  string `json:"from_cell"`
 	ToSheet   string `json:"to_sheet,omitempty"`
 	ToCell    string `json:"to_cell"`
+}
+
+type CompareMapping struct {
+	LeftColumn  string `json:"left_column"`
+	RightColumn string `json:"right_column"`
+	As          string `json:"as,omitempty"`
 }
 
 type CellValue struct {
@@ -176,6 +190,7 @@ type NormalizedIntent struct {
 	ProtectFormulaCells   ProtectFormulaCellsIntent `json:"protect_formula_cells,omitempty"`
 	NormalizeHeaders      NormalizeHeadersIntent    `json:"normalize_headers,omitempty"`
 	RollForwardPeriod     RollForwardPeriodIntent   `json:"roll_forward_period,omitempty"`
+	ReconcileTables       ReconcileTablesIntent     `json:"reconcile_tables,omitempty"`
 	Materialization       MaterializationIntent     `json:"materialization"`
 	Ambiguity             AmbiguityIntent           `json:"ambiguity"`
 	Ambiguities           []string                  `json:"-"`
