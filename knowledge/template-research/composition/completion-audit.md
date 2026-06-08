@@ -28,6 +28,10 @@ goal. It does not claim full workbook generation or broad Excel automation.
   harness slices for the five first productization classes: invoice line item
   billing, monthly budget control, inventory movement log, student gradebook,
   and loan repayment schedule mechanics.
+- `RunOrganismPlan` now emits an organism-level verification result artifact
+  that records expected atoms, executed atoms, passed step counts, verifier spec
+  id, output workbook, and failure reasons before `templateclass` accepts the
+  runtime claim.
 - The knowledge harness validates roadmap coverage, fixture priority alignment,
   advisory authority, supported atom references, absence of planned blockers,
   preview evidence presence, verified-class depth contract references, and
@@ -46,8 +50,10 @@ goal. It does not claim full workbook generation or broad Excel automation.
 ## Remaining Limits
 
 - Preview fixtures are representative, not full template generators.
-- Organism-level verifiers do not exist yet; previews rely on
-  operation-specific verifiers.
+- Aggregate organism-level verification exists for the first productization
+  slice, but domain-specific organism verifiers do not exist yet. Runtime
+  evidence still relies on operation-specific verifier depth for workbook
+  semantics.
 - Operation planner and template class harness records are advisory contracts,
   not autonomous runtime planner execution. The `runtime/templateclass` package
   plans and evaluates evidence, but it does not execute workbook operations.
@@ -69,5 +75,5 @@ The first deterministic template-class planner/evaluator slice now has
 multi-operation organism harness coverage for all five productization classes.
 The remaining limits are explicitly documented as future runtime implementation
 depth, especially for broad 21-organism harness coverage and true
-organism-level verifiers, not untracked blockers in the requested
+domain-specific organism verifiers, not untracked blockers in the requested
 advisory-to-productization coverage layer.

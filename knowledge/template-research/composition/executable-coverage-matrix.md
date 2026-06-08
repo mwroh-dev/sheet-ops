@@ -648,3 +648,33 @@ schedule mechanics.
 - Advisory claim risk: budget support excludes financial policy inference and
   native pivots; inventory support excludes warehouse policy inference,
   duplicate-key resolution, and fuzzy reconciliation.
+
+## Phase 23 Result
+
+Added an organism-level verification report boundary to the multi-operation
+runtime harness:
+
+- `RunOrganismPlan` now builds an `OrganismVerificationResult` after all
+  operation-specific verifiers pass
+- the report records organism id, verifier spec id, expected atom sequence,
+  executed atom sequence, step count, passed step count, output workbook, and
+  failure reasons
+- the report is validated against
+  `contracts/verification/organism_verification_result.schema.json`
+- `templateclass.EvaluateEvidence` receives the organism verifier pass only
+  from this report, rather than from an unconditional true value
+
+## Phase 23 Self-Retro
+
+- Coverage improved: template-class runtime claims now have a separate
+  organism verification artifact instead of relying only on inline harness
+  control flow.
+- Remaining template needs: this is still an aggregate sequence verifier. It
+  does not yet inspect domain-specific workbook semantics beyond the underlying
+  atom verifiers.
+- Verifier strength: the report independently checks expected atom order,
+  executed atom order, passed step count, and required verifier spec presence.
+  It does not yet produce organism-specific checks such as invoice pagination,
+  grading policy, warehouse duplicate resolution, or amortization correctness.
+- Advisory claim risk: the new report strengthens runtime evidence but must
+  not be described as full organism generation or domain correctness.

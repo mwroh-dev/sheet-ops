@@ -1,12 +1,14 @@
 package workbookcase
 
 import (
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
 
 	runtimetaskspec "github.com/mwroh/sheet-ops/runtime/taskspec"
+	"github.com/mwroh/sheet-ops/runtime/templateclass"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -147,6 +149,18 @@ func TestRunOrganismPlanExecutesInvoiceSequenceAndEvaluatesTemplateClassEvidence
 	if len(result.StepResults) != 5 {
 		t.Fatalf("step results=%d want 5", len(result.StepResults))
 	}
+	if !result.OrganismVerification.Pass {
+		t.Fatalf("organism verification failed: %+v", result.OrganismVerification)
+	}
+	if result.OrganismVerification.VerifierSpecID != "invoice_line_item_billing_verifier" {
+		t.Fatalf("organism verifier spec=%q want invoice_line_item_billing_verifier", result.OrganismVerification.VerifierSpecID)
+	}
+	if len(result.OrganismVerification.ExecutedAtomIDs) != 5 {
+		t.Fatalf("organism executed atoms=%v want 5 atoms", result.OrganismVerification.ExecutedAtomIDs)
+	}
+	if _, err := os.Stat(result.OrganismVerificationPath); err != nil {
+		t.Fatalf("organism verification artifact missing: %v", err)
+	}
 
 	outputHandle, err := excelize.OpenFile(outputFile)
 	if err != nil {
@@ -195,6 +209,23 @@ func TestRunOrganismPlanRejectsStepsThatDoNotMatchTemplateClassPlan(t *testing.T
 	}
 	if !strings.Contains(err.Error(), "does not match template class plan") {
 		t.Fatalf("err=%q want template class plan mismatch", err)
+	}
+}
+
+func TestVerifyOrganismPlanExecutionFailsWhenAtomEvidenceIsMissing(t *testing.T) {
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "invoice_line_item_billing",
+		OperationSequence:     []string{"append_structured_rows", "extend_table_formulas"},
+		RequiredVerifierSpecs: []string{"invoice_line_item_billing_verifier"},
+	}, []string{"append_structured_rows"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+	}, "invoice.xlsx")
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "missing executed atom") {
+		t.Fatalf("organism verification reasons=%v want missing executed atom", verification.Reasons)
 	}
 }
 

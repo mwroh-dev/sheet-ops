@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OrganismVerificationResult",
+  "type": "object",
+  "required": [
+    "pass",
+    "organism_id",
+    "verifier_spec_id",
+    "expected_atom_ids",
+    "executed_atom_ids",
+    "step_count",
+    "passed_step_count",
+    "output_file",
+    "reasons"
+  ],
+  "properties": {
+    "pass": {
+      "type": "boolean"
+    },
+    "organism_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "verifier_spec_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expected_atom_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "executed_atom_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "step_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "passed_step_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "output_file": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}
