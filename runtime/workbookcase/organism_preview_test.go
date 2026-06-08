@@ -37,6 +37,10 @@ var p2OrganismPreviewCoverage = map[string]string{
 	"safety_compliance_register": "score threshold + printable form",
 }
 
+var p3OrganismPreviewCoverage = map[string]string{
+	"loan_repayment_calculator": "formula extension + protected summary",
+}
+
 func TestP0OrganismPreviewCoverageIncludesEveryP0Organism(t *testing.T) {
 	want := []string{
 		"invoice_line_item_billing",
@@ -93,6 +97,20 @@ func TestP2OrganismPreviewCoverageIncludesEveryP2Organism(t *testing.T) {
 	}
 	if len(p2OrganismPreviewCoverage) != len(want) {
 		t.Fatalf("p2 organism preview coverage count=%d want %d", len(p2OrganismPreviewCoverage), len(want))
+	}
+}
+
+func TestP3OrganismPreviewCoverageIncludesEveryP3Organism(t *testing.T) {
+	want := []string{
+		"loan_repayment_calculator",
+	}
+	for _, organism := range want {
+		if p3OrganismPreviewCoverage[organism] == "" {
+			t.Fatalf("missing p3 organism preview coverage for %s", organism)
+		}
+	}
+	if len(p3OrganismPreviewCoverage) != len(want) {
+		t.Fatalf("p3 organism preview coverage count=%d want %d", len(p3OrganismPreviewCoverage), len(want))
 	}
 }
 
@@ -1343,6 +1361,78 @@ func TestSafetyComplianceRegisterPreviewComposesScoreThresholdAndPrintableForm(t
 		},
 	})
 	runPreviewTask(t, "safety-preview-printable-form", printableTask.TaskSpec)
+}
+
+func TestLoanRepaymentCalculatorPreviewComposesFormulaExtensionAndProtection(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "loan.xlsx")
+	formulaOutput := filepath.Join(tempDir, "loan-formulas.xlsx")
+	finalOutput := filepath.Join(tempDir, "loan-protected.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Schedule"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Schedule", "A1", &[]any{"period", "payment", "interest", "principal", "balance"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Schedule", "A2", &[]any{1, 100, nil, nil, 1000}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetCellFormula("Schedule", "C2", "=E2*0.01"); err != nil {
+		t.Fatalf("SetCellFormula(C2): %v", err)
+	}
+	if err := file.SetCellFormula("Schedule", "D2", "=B2-C2"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if err := file.SetCellFormula("Schedule", "E2", "=1000-D2"); err != nil {
+		t.Fatalf("SetCellFormula(E2): %v", err)
+	}
+	if err := file.SetSheetRow("Schedule", "A3", &[]any{2, 100}); err != nil {
+		t.Fatalf("SetSheetRow row3: %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	formulaTask := runtimetaskspec.BuildExtendTableFormulasTask(runtimetaskspec.ExtendTableFormulasRequest{
+		RequestText:      "loan repayment schedule 계산 공식을 다음 payment row로 확장한다.",
+		InputFile:        inputFile,
+		SourceSheet:      "Schedule",
+		OutputFile:       formulaOutput,
+		FormulaSourceRow: 2,
+		TargetRows:       []int{3},
+		FormulaColumns:   []string{"C", "D", "E"},
+	})
+	runPreviewTask(t, "loan-preview-formulas", formulaTask.TaskSpec)
+
+	protectionTask := runtimetaskspec.BuildProtectFormulaCellsTask(runtimetaskspec.ProtectFormulaCellsRequest{
+		RequestText: "loan repayment schedule 계산 cells를 보호하고 payment 입력은 열어둔다.",
+		InputFile:   formulaOutput,
+		SourceSheet: "Schedule",
+		OutputFile:  finalOutput,
+		ProtectionRule: runtimetaskspec.FormulaProtectionRule{
+			FormulaRanges: []string{"C2:E3"},
+			InputRanges:   []string{"B2:B20"},
+		},
+	})
+	runPreviewTask(t, "loan-preview-protection", protectionTask.TaskSpec)
+
+	outputHandle, err := excelize.OpenFile(finalOutput)
+	if err != nil {
+		t.Fatalf("Open final output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	if got, err := outputHandle.GetCellFormula("Schedule", "C3"); err != nil || got != "=E3*0.01" {
+		t.Fatalf("Schedule!C3 formula=%q err=%v want =E3*0.01", got, err)
+	}
+	if got, err := outputHandle.GetCellFormula("Schedule", "D3"); err != nil || got != "=B3-C3" {
+		t.Fatalf("Schedule!D3 formula=%q err=%v want =B3-C3", got, err)
+	}
 }
 
 func TestInventoryMovementLogPreviewComposesHeaderNormalization(t *testing.T) {

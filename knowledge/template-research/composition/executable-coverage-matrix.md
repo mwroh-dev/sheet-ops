@@ -451,3 +451,27 @@ supported atom.
 - Advisory claim risk: this phase intentionally avoids pretending that
   deterministic summary sheets are full Excel pivot tables. Any future native
   pivot support needs a separate capability, verifier, and fixture path.
+
+## Phase 16 Result
+
+Added the p3 `loan_repayment_calculator` preview fixture:
+
+- extend repeated payment-row formulas across interest, principal, and balance
+  columns
+- protect calculated schedule cells while leaving payment input cells editable
+
+The executable coverage ladder now marks all 21 round-009 roadmap organisms as
+`preview_fixture`.
+
+## Phase 16 Self-Retro
+
+- Coverage improved: there are no remaining roadmap organisms stuck at
+  `supported_atom_plan` or `blocked_by_planned_atom`.
+- Remaining template needs: the loan preview does not prove amortization
+  correctness, payoff termination, cumulative balance semantics, or a dedicated
+  `calculation_schedule_block` verifier.
+- Verifier strength: the evidence is formula extension plus formula-cell
+  protection, not a domain-specific loan calculator verifier.
+- Advisory claim risk: this should be described as executable schedule
+  mechanics, not as a supported financial calculator or financial advice
+  capability.

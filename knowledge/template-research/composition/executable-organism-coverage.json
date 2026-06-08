@@ -245,12 +245,12 @@
     {
       "organism_id": "loan_repayment_calculator",
       "fixture_priority": "p3",
-      "coverage_tier": "supported_atom_plan",
+      "coverage_tier": "preview_fixture",
       "executable_sequence_atom_ids": ["extend_table_formulas", "protect_formula_cells", "group_summarize", "join_lookup"],
       "planned_blocker_atom_ids": [],
-      "preview_evidence": [],
-      "coverage_claim": "Formula extension, protected summary, lookup enrichment, and simple summaries are supported, but loan schedule semantics are not independently verified.",
-      "remaining_gaps": ["calculation_schedule_block has no dedicated organism-level verifier", "termination condition and cumulative balance checks are not supported as a separate atom", "no organism preview fixture"],
+      "preview_evidence": ["TestLoanRepaymentCalculatorPreviewComposesFormulaExtensionAndProtection"],
+      "coverage_claim": "Representative loan schedule formula extension and protected calculation cells are executable.",
+      "remaining_gaps": ["calculation_schedule_block has no dedicated organism-level verifier", "termination condition and cumulative balance checks are not supported as a separate atom", "lookup enrichment and summaries are supported but not in this preview"],
       "next_promotion_gate": "Create a loan fixture that verifies repeated payment formulas, cumulative balance, payoff termination, and protected summary behavior."
     }
   ]
