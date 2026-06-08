@@ -190,6 +190,8 @@ func verifyOrganismWorkbookSemantics(organismID, outputFile string) []string {
 		return verifyTrainingCompletionWorkbook(outputFile)
 	case "service_ticket_queue":
 		return verifyServiceTicketWorkbook(outputFile)
+	case "sales_pipeline_tracker":
+		return verifySalesPipelineWorkbook(outputFile)
 	default:
 		return nil
 	}
@@ -682,6 +684,42 @@ func verifyServiceTicketWorkbook(outputFile string) []string {
 		reasons = append(reasons, fmt.Sprintf("service ticket protection semantic check missing Tickets protection: %v", err))
 	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
 		reasons = append(reasons, "service ticket protection semantic check missing Tickets protection options")
+	}
+	return reasons
+}
+
+func verifySalesPipelineWorkbook(outputFile string) []string {
+	handle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		return []string{fmt.Sprintf("sales pipeline workbook semantic check failed to open output: %v", err)}
+	}
+	defer func() { _ = handle.Close() }()
+
+	var reasons []string
+	if got, err := handle.GetCellValue("Pipeline", "A3"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("sales pipeline append semantic check missing Pipeline!A3: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "sales pipeline append semantic check missing Pipeline!A3 deal id value")
+	}
+	if got, err := handle.GetCellValue("PipelineSummary", "B2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("sales pipeline summary semantic check missing PipelineSummary!B2: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "sales pipeline summary semantic check missing PipelineSummary!B2 stage summary value")
+	}
+	if got, err := handle.GetCellFormula("Pipeline", "E3"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("sales pipeline weighted formula semantic check missing Pipeline!E3 formula: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "sales pipeline weighted formula semantic check missing Pipeline!E3 formula")
+	}
+	if validations, err := handle.GetDataValidations("Pipeline"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("sales pipeline validation semantic check missing Pipeline data validation: %v", err))
+	} else if len(validations) == 0 {
+		reasons = append(reasons, "sales pipeline validation semantic check missing Pipeline data validation")
+	}
+	if protection, err := handle.GetSheetProtection("Pipeline"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("sales pipeline protection semantic check missing Pipeline protection: %v", err))
+	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
+		reasons = append(reasons, "sales pipeline protection semantic check missing Pipeline protection options")
 	}
 	return reasons
 }

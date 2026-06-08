@@ -94,6 +94,10 @@ goal. It does not claim full workbook generation or broad Excel automation.
   slice that checks appended ticket evidence, SLA formula evidence, ticket
   summary evidence, ticket-status validation evidence, and protected SLA formula
   evidence in the final workbook.
+- `RunOrganismPlan` also includes a sales pipeline tracker semantic verifier
+  slice that checks appended deal evidence, weighted forecast formula evidence,
+  pipeline stage summary evidence, stage validation evidence, and protected
+  forecast formula evidence in the final workbook.
 - The open-layer request compiler and orchestrator decision surface now carry
   optional `template_class_plan` hints so organism id, atom sequence, verifier
   specs, and non-claims can survive the request-entry boundary.
@@ -140,7 +144,7 @@ goal. It does not claim full workbook generation or broad Excel automation.
   workbook facts, but the remaining roadmap organisms do not yet have equivalent
   draft planners.
 - The organism harness currently covers representative productization classes
-  and draft integrations now span all roadmap organisms, but only sixteen
+  and draft integrations now span all roadmap organisms, but only seventeen
   roadmap organisms have standalone final-workbook semantic verifier slices. The
   remaining roadmap organisms still need equivalent semantic fixtures before
   broad 21-organism runtime claims are appropriate.

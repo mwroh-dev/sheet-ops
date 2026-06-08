@@ -927,6 +927,50 @@ func TestVerifyOrganismPlanExecutionChecksServiceTicketWorkbookSemantics(t *test
 	}
 }
 
+func TestVerifyOrganismPlanExecutionChecksSalesPipelineWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "sales.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Pipeline"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Pipeline", "A1", &[]any{"deal_id", "stage", "deal_value", "probability", "weighted_value", "deal_count"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Pipeline", "A2", &[]any{"D-1", "proposal", 5000, 0.5, nil, 1}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetCellFormula("Pipeline", "E2", "=C2*D2"); err != nil {
+		t.Fatalf("SetCellFormula(E2): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "sales_pipeline_tracker",
+		OperationSequence:     []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells"},
+		RequiredVerifierSpecs: []string{"sales_pipeline_tracker_verifier"},
+	}, []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "PipelineSummary") {
+		t.Fatalf("organism verification reasons=%v want missing sales pipeline summary evidence", verification.Reasons)
+	}
+}
+
 func TestRunOrganismPlanExecutesLoanSequenceWithNonClaims(t *testing.T) {
 	setRuntimeRoots(t)
 
