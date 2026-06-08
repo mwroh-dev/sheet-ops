@@ -33,6 +33,7 @@ And supports:
 - `summary`
 - `highlight`
 - `join_lookup`
+- `append_rows`
 
 ## Rules
 

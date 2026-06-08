@@ -203,6 +203,19 @@ func compileDecision(intent NormalizedIntent) Decision {
 		return blockedDecision(intent, blockedSignals(intent), "the normalized intent does not map to a supported runtime operation")
 	}
 
+	if slices.Contains(intent.CompositionCandidates, CompositionCandidateStructuredRowAppend) && appendRowsIntentReady(intent) {
+		return Decision{
+			Status:            StatusCompiled,
+			SelectedOperation: "append_structured_rows",
+			Confidence:        0.98,
+			Notes: []string{
+				"the normalized intent maps cleanly to the supported structured row append runtime operation",
+			},
+			SheetCandidates:   supportedSheetCandidates(intent),
+			StructuralSignals: []string{"append_structured_rows_request", "preserve_original"},
+		}
+	}
+
 	if slices.Contains(intent.CompositionCandidates, CompositionCandidateJoinLookup) && joinLookupIntentReady(intent) {
 		return Decision{
 			Status:            StatusCompiled,
@@ -352,6 +365,10 @@ func toRuntimeIntent(intent NormalizedIntent) runtimevalidate.NormalizedIntent {
 			IncludeSourceColumns: append([]string(nil), intent.JoinLookup.IncludeSourceColumns...),
 			AppendLookupColumns:  append([]string(nil), intent.JoinLookup.AppendLookupColumns...),
 		},
+		AppendRows: runtimevalidate.AppendRowsIntent{
+			IncludeSourceColumns: append([]string(nil), intent.AppendRows.IncludeSourceColumns...),
+			Values:               toRuntimeCellValues(intent.AppendRows.Values),
+		},
 		Materialization: runtimevalidate.MaterializationIntent{
 			PreserveOriginal:      intent.Materialization.PreserveOriginal,
 			OutputDestinationMode: intent.Materialization.OutputDestinationMode,
@@ -450,6 +467,26 @@ func joinLookupIntentReady(intent NormalizedIntent) bool {
 		len(intent.LookupSheetCandidates) > 0 &&
 		strings.TrimSpace(intent.JoinLookup.JoinKey) != "" &&
 		len(intent.JoinLookup.AppendLookupColumns) > 0
+}
+
+func appendRowsIntentReady(intent NormalizedIntent) bool {
+	return len(intent.SourceSheetCandidates) > 0 &&
+		len(intent.AppendRows.IncludeSourceColumns) > 0 &&
+		len(intent.AppendRows.Values) > 0
+}
+
+func toRuntimeCellValues(values []CellValue) []runtimevalidate.CellValue {
+	if len(values) == 0 {
+		return []runtimevalidate.CellValue{}
+	}
+	converted := make([]runtimevalidate.CellValue, 0, len(values))
+	for _, value := range values {
+		converted = append(converted, runtimevalidate.CellValue{
+			Cell:  value.Cell,
+			Value: value.Value,
+		})
+	}
+	return converted
 }
 
 func summaryGroupBy(intent NormalizedIntent) []string {

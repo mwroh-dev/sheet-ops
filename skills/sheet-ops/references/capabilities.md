@@ -14,6 +14,7 @@ a runner-pane command.
 - `group_summarize`: use when the request asks to summarize rows by keys, such as "summarize revenue by region".
 - `highlight_threshold`: use when the request asks to highlight rows or cells over, under, or equal to a threshold.
 - `join_lookup`: use when the request asks to merge or append lookup-sheet data by key.
+- `append_structured_rows`: use when the request asks to append complete new rows into an existing table while preserving the source workbook and table headers.
 
 These records have `status: supported` and `exposure: public_agent_capability`.
 Before selecting a capability, read the matching machine-readable record in
@@ -32,6 +33,7 @@ Before selecting a capability, read the matching machine-readable record in
 | User asks to summarize, group, aggregate, or create a summary sheet | Supported public capability | Select `group_summarize` after reading the registry record. |
 | User asks to highlight values over/under/equal to a threshold | Supported public capability | Select `highlight_threshold` after reading the registry record. |
 | User asks to merge lookup data by key | Supported public capability | Select `join_lookup` after reading the registry record. |
+| User asks to add complete new table rows with provided field values | Supported public capability | Select `append_structured_rows` after reading the registry record. |
 | Runtime needs to write literal cells inside a verified lower-level path | Internal primitive | Use `write_values` only through runtime-owned flows, not as a public request capability. |
 | Release smoke uses fixture-backed specialist decisions | Deterministic smoke | Treat as the required public harness gate, not live LLM delegation. |
 | Live Codex is available and the caller opts in | Live smoke | Run only as a non-blocking diagnostic. |

@@ -1,6 +1,6 @@
 {
   "name": "append_structured_rows",
-  "status": "planned",
+  "status": "supported",
   "evidence_count": 1,
   "source_categories": [
     "Invoice Templates"
@@ -17,5 +17,6 @@
   "verification_strategy": "Verify row count increases, formulas remain present in calculated columns, and totals include the appended rows.",
   "related_patterns": [
     "invoice"
-  ]
+  ],
+  "notes": "Promoted into the supported public capability registry after Phase 3 runtime contract, executor, verifier, and fixture-backed harness coverage."
 }

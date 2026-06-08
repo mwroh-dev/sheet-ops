@@ -57,6 +57,20 @@ func BindFacts(admitted admittedIntent, facts runtimeinspect.WorkbookFacts) (bou
 			lookupSheet:          lookupSheet,
 			includeSourceColumns: includeSourceColumns,
 		}, nil, nil
+	case "structured_row_append":
+		sourceSheet, ok := firstExistingSheet(facts, admitted.sourceSheets)
+		if !ok {
+			return blockedFactBinding("unsupported_source_sheet")
+		}
+		if missingColumns := missingWorkbookColumns(facts, sourceSheet, admitted.includeSourceColumns); len(missingColumns) > 0 {
+			return blockedFactBinding("missing_required_columns")
+		}
+		return boundIntent{
+			admittedIntent:       admitted,
+			facts:                facts,
+			sourceSheet:          sourceSheet,
+			includeSourceColumns: append([]string(nil), admitted.includeSourceColumns...),
+		}, nil, nil
 	default:
 		return blockedFactBinding("unsupported_request")
 	}

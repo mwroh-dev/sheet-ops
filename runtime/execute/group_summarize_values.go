@@ -43,6 +43,8 @@ func RunWorkbookOperation(ir compiler.WorkbookOperationIR, inputWorkbook, output
 		return RunHighlightThreshold(ir, inputWorkbook, outputWorkbook)
 	case "join_lookup":
 		return RunJoinLookup(ir, inputWorkbook, outputWorkbook)
+	case "append_structured_rows":
+		return RunAppendStructuredRows(ir, inputWorkbook, outputWorkbook)
 	case "write_values":
 		return RunWriteValues(ir, inputWorkbook, outputWorkbook)
 	default:

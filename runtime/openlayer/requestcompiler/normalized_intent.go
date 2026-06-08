@@ -76,6 +76,12 @@ func normalizeIntent(intent NormalizedIntent) NormalizedIntent {
 	if intent.JoinLookup.AppendLookupColumns == nil {
 		intent.JoinLookup.AppendLookupColumns = []string{}
 	}
+	if intent.AppendRows.IncludeSourceColumns == nil {
+		intent.AppendRows.IncludeSourceColumns = []string{}
+	}
+	if intent.AppendRows.Values == nil {
+		intent.AppendRows.Values = []CellValue{}
+	}
 	if intent.Ambiguities != nil {
 		intent.Ambiguity.Markers = append([]string(nil), intent.Ambiguities...)
 	} else if intent.Ambiguity.Markers != nil {

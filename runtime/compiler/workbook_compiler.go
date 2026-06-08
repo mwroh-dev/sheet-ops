@@ -208,6 +208,35 @@ func CompileJoinLookupOperation(task taskspec.JoinLookupTask) (WorkbookOperation
 	}, nil
 }
 
+func CompileAppendStructuredRowsOperation(task taskspec.AppendStructuredRowsTask) (WorkbookOperationIR, error) {
+	if task.SourceSheet == "" {
+		return WorkbookOperationIR{}, fmt.Errorf("source sheet must not be empty")
+	}
+	if len(task.IncludeSourceColumns) == 0 {
+		return WorkbookOperationIR{}, fmt.Errorf("include source columns must not be empty")
+	}
+	if len(task.Values) == 0 {
+		return WorkbookOperationIR{}, fmt.Errorf("values must not be empty")
+	}
+	if err := validateAppendStructuredRowsTaskCompositionBoundary(task.TaskSpec); err != nil {
+		return WorkbookOperationIR{}, err
+	}
+	values := make([]CellValue, 0, len(task.Values))
+	for _, value := range task.Values {
+		values = append(values, CellValue{Cell: value.Cell, Value: value.Value})
+	}
+
+	return WorkbookOperationIR{
+		ExecutionKind:        taskspec.ExecutionKindComposition,
+		CompositionKind:      taskspec.CompositionKindStructuredRowAppend,
+		OperationFamily:      taskspec.OperationFamilyAppendStructuredRows,
+		SourceSheet:          task.SourceSheet,
+		IncludeSourceColumns: cloneStrings(task.IncludeSourceColumns),
+		Values:               values,
+		PreserveOriginal:     task.PreserveOriginal,
+	}, nil
+}
+
 func validateHighlightTaskCompositionBoundary(spec taskspec.TaskSpec) error {
 	if spec.ExecutionKind != taskspec.ExecutionKindComposition {
 		return fmt.Errorf("highlight task execution_kind=%q want %q", spec.ExecutionKind, taskspec.ExecutionKindComposition)
@@ -230,6 +259,19 @@ func validateJoinLookupTaskCompositionBoundary(spec taskspec.TaskSpec) error {
 	}
 	if spec.Operation != taskspec.OperationCreateJoinLookupResultSheet {
 		return fmt.Errorf("join lookup task operation=%q want %q", spec.Operation, taskspec.OperationCreateJoinLookupResultSheet)
+	}
+	return nil
+}
+
+func validateAppendStructuredRowsTaskCompositionBoundary(spec taskspec.TaskSpec) error {
+	if spec.ExecutionKind != taskspec.ExecutionKindComposition {
+		return fmt.Errorf("append structured rows task execution_kind=%q want %q", spec.ExecutionKind, taskspec.ExecutionKindComposition)
+	}
+	if spec.CompositionKind != taskspec.CompositionKindStructuredRowAppend {
+		return fmt.Errorf("append structured rows task composition_kind=%q want %q", spec.CompositionKind, taskspec.CompositionKindStructuredRowAppend)
+	}
+	if spec.Operation != taskspec.OperationAppendStructuredRows {
+		return fmt.Errorf("append structured rows task operation=%q want %q", spec.Operation, taskspec.OperationAppendStructuredRows)
 	}
 	return nil
 }

@@ -1,0 +1,43 @@
+{
+  "name": "append_structured_rows",
+  "operation_family": "append_structured_rows",
+  "task_operations": [
+    "append_structured_rows"
+  ],
+  "inputs": [
+    "input_workbook",
+    "source_sheet",
+    "include_source_columns",
+    "values"
+  ],
+  "outputs": [
+    "output_workbook",
+    "source_sheet",
+    "written_cells"
+  ],
+  "required_facts": [
+    "sheets",
+    "headers",
+    "source_rows"
+  ],
+  "verifies": [
+    "source_preserved",
+    "row_count_increased",
+    "appended_values_match"
+  ],
+  "contract_paths": [
+    "contracts/task/task_spec.schema.json",
+    "contracts/ir/workbook_operation_ir.schema.json",
+    "contracts/verification/verification_result.schema.json"
+  ],
+  "runtime_paths": [
+    "runtime/compiler/workbook_compiler.go",
+    "runtime/execute/append_structured_rows.go",
+    "runtime/verify/append_structured_rows.go"
+  ],
+  "examples": [
+    "examples/append_structured_rows/request.json"
+  ],
+  "status": "supported",
+  "exposure": "public_agent_capability"
+}

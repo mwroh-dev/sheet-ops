@@ -26,6 +26,11 @@ type JoinLookupSpec struct {
 	AppendLookupColumns  []string `json:"append_lookup_columns"`
 }
 
+type CellValue struct {
+	Cell  string `json:"cell"`
+	Value any    `json:"value"`
+}
+
 type SourceSpec struct {
 	Kind string `json:"kind"`
 	Path string `json:"path,omitempty"`
@@ -51,6 +56,7 @@ type TaskSpec struct {
 	JoinKey              string         `json:"join_key,omitempty"`
 	IncludeSourceColumns []string       `json:"include_source_columns,omitempty"`
 	AppendLookupColumns  []string       `json:"append_lookup_columns,omitempty"`
+	Values               []CellValue    `json:"values,omitempty"`
 }
 
 type GroupSummarizeTask struct {
@@ -78,6 +84,14 @@ type JoinLookupTask struct {
 	TargetSheet          string
 	IncludeSourceColumns []string
 	AppendLookupColumns  []string
+	PreserveOriginal     bool
+}
+
+type AppendStructuredRowsTask struct {
+	TaskSpec             TaskSpec
+	SourceSheet          string
+	IncludeSourceColumns []string
+	Values               []CellValue
 	PreserveOriginal     bool
 }
 
@@ -116,17 +130,29 @@ type JoinLookupRequest struct {
 	AppendLookupColumns  []string
 }
 
+type AppendStructuredRowsRequest struct {
+	RequestText          string
+	InputFile            string
+	SourceSheet          string
+	OutputFile           string
+	IncludeSourceColumns []string
+	Values               []CellValue
+}
+
 const (
 	ExecutionKindComposition             = "composition"
 	CompositionKindGroupSummary          = "group_summary"
 	CompositionKindThresholdHighlight    = "threshold_highlight"
 	CompositionKindJoinLookup            = "join_lookup"
+	CompositionKindStructuredRowAppend   = "structured_row_append"
 	OperationCreateSummarySheet          = "create_summary_sheet"
 	OperationHighlightThresholdRows      = "highlight_threshold_rows"
 	OperationCreateJoinLookupResultSheet = "create_join_lookup_result_sheet"
+	OperationAppendStructuredRows        = "append_structured_rows"
 	OperationFamilyGroupSummarize        = "group_summarize"
 	OperationFamilyHighlightThreshold    = "highlight_threshold"
 	OperationFamilyJoinLookup            = "join_lookup"
+	OperationFamilyAppendStructuredRows  = "append_structured_rows"
 
 	defaultHighlightColumn    = "amount"
 	defaultHighlightOperator  = ">"
@@ -245,6 +271,28 @@ func BuildJoinLookupTask(req JoinLookupRequest) JoinLookupTask {
 	}
 }
 
+func BuildAppendStructuredRowsTask(req AppendStructuredRowsRequest) AppendStructuredRowsTask {
+	return AppendStructuredRowsTask{
+		TaskSpec: TaskSpec{
+			RequestKind:          "workbook_case",
+			ExecutionKind:        ExecutionKindComposition,
+			CompositionKind:      CompositionKindStructuredRowAppend,
+			Source:               SourceSpec{Kind: "natural_language"},
+			RequestText:          req.RequestText,
+			InputWorkbook:        req.InputFile,
+			OutputWorkbook:       req.OutputFile,
+			Operation:            OperationAppendStructuredRows,
+			SourceSheet:          req.SourceSheet,
+			IncludeSourceColumns: cloneStrings(req.IncludeSourceColumns),
+			Values:               cloneCellValues(req.Values),
+		},
+		SourceSheet:          req.SourceSheet,
+		IncludeSourceColumns: cloneStrings(req.IncludeSourceColumns),
+		Values:               cloneCellValues(req.Values),
+		PreserveOriginal:     true,
+	}
+}
+
 func cloneFilters(values []FilterSpec) []FilterSpec {
 	if len(values) == 0 {
 		return nil
@@ -257,6 +305,15 @@ func cloneFilters(values []FilterSpec) []FilterSpec {
 func cloneThresholdRule(value ThresholdRule) *ThresholdRule {
 	cloned := value
 	return &cloned
+}
+
+func cloneCellValues(values []CellValue) []CellValue {
+	if len(values) == 0 {
+		return nil
+	}
+	cloned := make([]CellValue, len(values))
+	copy(cloned, values)
+	return cloned
 }
 
 func cloneMetrics(values []MetricSpec) []MetricSpec {

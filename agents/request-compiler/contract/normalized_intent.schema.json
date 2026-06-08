@@ -23,7 +23,7 @@
     },
     "composition_candidates": {
       "type": "array",
-      "items": { "enum": ["group_summary", "threshold_highlight", "join_lookup"] }
+      "items": { "enum": ["group_summary", "threshold_highlight", "join_lookup", "structured_row_append"] }
     },
     "summary": {
       "type": "object",
@@ -67,6 +67,20 @@
         "append_lookup_columns": {
           "type": "array",
           "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "additionalProperties": false
+    },
+    "append_rows": {
+      "type": "object",
+      "properties": {
+        "include_source_columns": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "values": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/cell_value" }
         }
       },
       "additionalProperties": false
@@ -118,6 +132,23 @@
         "column": { "type": "string", "minLength": 1 },
         "op": { "type": "string", "minLength": 1 },
         "value": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "cell_value": {
+      "type": "object",
+      "required": ["cell", "value"],
+      "properties": {
+        "cell": { "type": "string", "minLength": 1 },
+        "value": {
+          "anyOf": [
+            { "type": "string" },
+            { "type": "number" },
+            { "type": "integer" },
+            { "type": "boolean" },
+            { "type": "null" }
+          ]
+        }
       },
       "additionalProperties": false
     }

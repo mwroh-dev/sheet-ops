@@ -1,9 +1,10 @@
 package requestcompiler
 
 const (
-	CompositionCandidateGroupSummary       = "group_summary"
-	CompositionCandidateThresholdHighlight = "threshold_highlight"
-	CompositionCandidateJoinLookup         = "join_lookup"
+	CompositionCandidateGroupSummary        = "group_summary"
+	CompositionCandidateThresholdHighlight  = "threshold_highlight"
+	CompositionCandidateJoinLookup          = "join_lookup"
+	CompositionCandidateStructuredRowAppend = "structured_row_append"
 
 	OutputDestinationModeNewWorkbook  = "new_workbook"
 	OutputDestinationModeSameWorkbook = "same_workbook"
@@ -47,6 +48,16 @@ type JoinLookupIntent struct {
 	JoinKey              string   `json:"join_key,omitempty"`
 	IncludeSourceColumns []string `json:"include_source_columns,omitempty"`
 	AppendLookupColumns  []string `json:"append_lookup_columns,omitempty"`
+}
+
+type AppendRowsIntent struct {
+	IncludeSourceColumns []string    `json:"include_source_columns,omitempty"`
+	Values               []CellValue `json:"values,omitempty"`
+}
+
+type CellValue struct {
+	Cell  string `json:"cell"`
+	Value any    `json:"value"`
 }
 
 type FilterIntent struct {
@@ -99,6 +110,7 @@ type NormalizedIntent struct {
 	Summary               SummaryIntent         `json:"summary,omitempty"`
 	Highlight             HighlightIntent       `json:"highlight,omitempty"`
 	JoinLookup            JoinLookupIntent      `json:"join_lookup,omitempty"`
+	AppendRows            AppendRowsIntent      `json:"append_rows,omitempty"`
 	Materialization       MaterializationIntent `json:"materialization"`
 	Ambiguity             AmbiguityIntent       `json:"ambiguity"`
 	Ambiguities           []string              `json:"-"`

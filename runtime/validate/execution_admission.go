@@ -32,6 +32,9 @@ func (validator Validator) AdmitExecution(bound boundIntent) (Result, error) {
 			request.IncludeSourceColumns = append([]string(nil), bound.includeSourceColumns...)
 		}
 		request.AppendLookupColumns = append([]string(nil), bound.appendLookupColumns...)
+	case "structured_row_append":
+		request.IncludeSourceColumns = append([]string(nil), bound.includeSourceColumns...)
+		request.Values = cloneCellValues(bound.values)
 	}
 
 	return finalizeResult(Result{

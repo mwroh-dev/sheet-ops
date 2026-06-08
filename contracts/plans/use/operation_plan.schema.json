@@ -191,6 +191,65 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "operation",
+        "sheet_name",
+        "include_source_columns",
+        "values",
+        "preserve_original",
+        "output_file"
+      ],
+      "properties": {
+        "operation": {
+          "const": "append_structured_rows"
+        },
+        "sheet_name": {
+          "type": "string"
+        },
+        "include_source_columns": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "cell",
+              "value"
+            ],
+            "properties": {
+              "cell": {
+                "type": "string"
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "integer",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "preserve_original": {
+          "type": "boolean"
+        },
+        "output_file": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
     }
   ]
 }

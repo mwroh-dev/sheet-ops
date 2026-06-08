@@ -17,6 +17,7 @@
         "highlight_threshold_rows",
         "create_summary_sheet",
         "create_join_lookup_result_sheet",
+        "append_structured_rows",
         "write_values"
       ]
     },

@@ -34,9 +34,11 @@ type UseRequest struct {
 	JoinKey              string       `json:"join_key,omitempty"`
 	IncludeSourceColumns []string     `json:"include_source_columns,omitempty"`
 	AppendLookupColumns  []string     `json:"append_lookup_columns,omitempty"`
+	Values               []CellValue  `json:"values,omitempty"`
 }
 
 type ValidatedExecutionRequest = runtimevalidate.ValidatedExecutionRequest
+type CellValue = runtimevalidate.CellValue
 
 func LoadRequest(path string) (UseRequest, error) {
 	var req UseRequest

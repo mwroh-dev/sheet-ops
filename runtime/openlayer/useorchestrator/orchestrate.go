@@ -46,6 +46,8 @@ func validateSupportedValidatedExecutionRequest(req ValidatedExecutionRequest) e
 		return fmt.Errorf("unsupported validated execution kind %q", req.ExecutionKind)
 	}
 	switch req.CompositionKind {
+	case "structured_row_append":
+		return nil
 	case "group_summary", "threshold_highlight", "join_lookup":
 		return nil
 	default:
@@ -73,6 +75,15 @@ func runTaskSpec(scenarioID string, spec runtimetaskspec.TaskSpec, routing routi
 func taskSpecFromUseRequest(req UseRequest) runtimetaskspec.TaskSpec {
 	effectiveOperation, _ := resolveRequestedOperation(req)
 	switch effectiveOperation {
+	case runtimeworkbookcase.AppendRowsOperationName:
+		return runtimetaskspec.BuildAppendStructuredRowsTask(runtimetaskspec.AppendStructuredRowsRequest{
+			RequestText:          coalesceValidatedRequestText(req.RequestText, "structured append rows request"),
+			InputFile:            req.InputFile,
+			SourceSheet:          req.SheetName,
+			OutputFile:           req.OutputFile,
+			IncludeSourceColumns: append([]string(nil), req.IncludeSourceColumns...),
+			Values:               toTaskSpecCellValues(req.Values),
+		}).TaskSpec
 	case runtimeworkbookcase.SummaryOperationName:
 		return runtimetaskspec.BuildGroupSummarizeTask(runtimetaskspec.UseRequest{
 			RequestText: req.RequestText,
@@ -113,6 +124,15 @@ func taskSpecFromUseRequest(req UseRequest) runtimetaskspec.TaskSpec {
 
 func taskSpecFromValidatedExecutionRequest(req ValidatedExecutionRequest) (runtimetaskspec.TaskSpec, error) {
 	switch req.CompositionKind {
+	case "structured_row_append":
+		return runtimetaskspec.BuildAppendStructuredRowsTask(runtimetaskspec.AppendStructuredRowsRequest{
+			RequestText:          coalesceValidatedRequestText(req.RequestText, "validated append rows request"),
+			InputFile:            req.InputFile,
+			SourceSheet:          req.SourceSheet,
+			OutputFile:           req.OutputFile,
+			IncludeSourceColumns: append([]string(nil), req.IncludeSourceColumns...),
+			Values:               toTaskSpecCellValues(req.Values),
+		}).TaskSpec, nil
 	case "join_lookup":
 		includeSourceColumns, err := defaultJoinSourceColumns(req)
 		if err != nil {
@@ -174,6 +194,8 @@ func validatedRoutingUseRequest(req ValidatedExecutionRequest) UseRequest {
 
 func validatedRoutingRequestText(req ValidatedExecutionRequest) string {
 	switch req.CompositionKind {
+	case "structured_row_append":
+		return coalesceValidatedRequestText(req.RequestText, "validated append rows request")
 	case "join_lookup":
 		return coalesceValidatedRequestText(req.RequestText, "validated join lookup request")
 	case "threshold_highlight":
@@ -185,6 +207,8 @@ func validatedRoutingRequestText(req ValidatedExecutionRequest) string {
 
 func validatedOperation(req ValidatedExecutionRequest) string {
 	switch req.CompositionKind {
+	case "structured_row_append":
+		return runtimeworkbookcase.AppendRowsOperationName
 	case "join_lookup":
 		return runtimeworkbookcase.JoinLookupOperationName
 	case "threshold_highlight":
@@ -222,11 +246,22 @@ func defaultJoinSourceColumns(req ValidatedExecutionRequest) ([]string, error) {
 
 func isSupportedOperation(operation string) bool {
 	switch operation {
-	case runtimeworkbookcase.SummaryOperationName, runtimeworkbookcase.HighlightOperationName, runtimeworkbookcase.JoinLookupOperationName:
+	case runtimeworkbookcase.SummaryOperationName, runtimeworkbookcase.HighlightOperationName, runtimeworkbookcase.JoinLookupOperationName, runtimeworkbookcase.AppendRowsOperationName:
 		return true
 	default:
 		return false
 	}
+}
+
+func toTaskSpecCellValues(values []CellValue) []runtimetaskspec.CellValue {
+	if len(values) == 0 {
+		return nil
+	}
+	converted := make([]runtimetaskspec.CellValue, 0, len(values))
+	for _, value := range values {
+		converted = append(converted, runtimetaskspec.CellValue{Cell: value.Cell, Value: value.Value})
+	}
+	return converted
 }
 
 func toTaskSpecFilters(filters []FilterSpec) []runtimetaskspec.FilterSpec {

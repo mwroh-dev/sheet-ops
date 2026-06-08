@@ -51,6 +51,11 @@ type JoinLookupIntent struct {
 	AppendLookupColumns  []string
 }
 
+type AppendRowsIntent struct {
+	IncludeSourceColumns []string
+	Values               []CellValue
+}
+
 type MaterializationIntent struct {
 	PreserveOriginal      bool
 	OutputDestinationMode string
@@ -72,6 +77,7 @@ type NormalizedIntent struct {
 	Summary               SummaryIntent
 	Highlight             HighlightIntent
 	JoinLookup            JoinLookupIntent
+	AppendRows            AppendRowsIntent
 	Materialization       MaterializationIntent
 	Ambiguity             AmbiguityIntent
 }
@@ -134,6 +140,12 @@ type ValidatedExecutionRequest struct {
 	JoinKey              string       `json:"join_key,omitempty"`
 	IncludeSourceColumns []string     `json:"include_source_columns,omitempty"`
 	AppendLookupColumns  []string     `json:"append_lookup_columns,omitempty"`
+	Values               []CellValue  `json:"values,omitempty"`
+}
+
+type CellValue struct {
+	Cell  string `json:"cell"`
+	Value any    `json:"value"`
 }
 
 type FilterSpec struct {
@@ -169,6 +181,7 @@ type admittedIntent struct {
 	joinKey              string
 	includeSourceColumns []string
 	appendLookupColumns  []string
+	values               []CellValue
 }
 
 type boundIntent struct {
@@ -177,6 +190,15 @@ type boundIntent struct {
 	sourceSheet          string
 	lookupSheet          string
 	includeSourceColumns []string
+}
+
+func cloneCellValues(values []CellValue) []CellValue {
+	if len(values) == 0 {
+		return []CellValue{}
+	}
+	cloned := make([]CellValue, len(values))
+	copy(cloned, values)
+	return cloned
 }
 
 func finalizeResult(result Result) (Result, error) {

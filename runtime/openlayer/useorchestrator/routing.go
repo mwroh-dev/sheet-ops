@@ -67,6 +67,9 @@ func resolveRequestedOperation(req UseRequest) (string, string) {
 	if isSummaryRequest(req) {
 		return runtimeworkbookcase.SummaryOperationName, "summary_request_signals"
 	}
+	if isAppendRowsRequest(req) {
+		return runtimeworkbookcase.AppendRowsOperationName, "append_rows_request_signals"
+	}
 	if isJoinLookupRequest(req) {
 		return runtimeworkbookcase.JoinLookupOperationName, "join_lookup_request_signals"
 	}
@@ -74,6 +77,12 @@ func resolveRequestedOperation(req UseRequest) (string, string) {
 		return runtimeworkbookcase.HighlightOperationName, "highlight_request_signals"
 	}
 	return "", "unsupported_request_signals"
+}
+
+func isAppendRowsRequest(req UseRequest) bool {
+	return len(req.Values) > 0 ||
+		strings.Contains(req.RequestText, "행 추가") ||
+		strings.Contains(req.RequestText, "append")
 }
 
 func isSummaryRequest(req UseRequest) bool {
@@ -111,6 +120,8 @@ func buildRoutingNote(selectedOperation, routingAuthority string, knowledge runt
 			return fmt.Sprintf("%s Fallback routed by summary request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		case "join_lookup_request_signals":
 			return fmt.Sprintf("%s Fallback routed by join lookup request signals to %s.", knowledge.FallbackReason, selectedOperation)
+		case "append_rows_request_signals":
+			return fmt.Sprintf("%s Fallback routed by append row request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		case "highlight_request_signals":
 			return fmt.Sprintf("%s Fallback routed by highlight request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		default:
@@ -134,6 +145,12 @@ func buildRoutingNote(selectedOperation, routingAuthority string, knowledge runt
 	case "join_lookup_request_signals":
 		return fmt.Sprintf(
 			"Loaded %d orchestrator knowledge records; join lookup request signals still selected %s. Knowledge remains advisory only.",
+			knowledge.RecordCount,
+			selectedOperation,
+		)
+	case "append_rows_request_signals":
+		return fmt.Sprintf(
+			"Loaded %d orchestrator knowledge records; append row request signals still selected %s. Knowledge remains advisory only.",
 			knowledge.RecordCount,
 			selectedOperation,
 		)

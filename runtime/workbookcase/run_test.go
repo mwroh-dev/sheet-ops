@@ -13,6 +13,7 @@ import (
 	runtimeexecute "github.com/mwroh/sheet-ops/runtime/execute"
 	runtimetaskspec "github.com/mwroh/sheet-ops/runtime/taskspec"
 	runtimeverify "github.com/mwroh/sheet-ops/runtime/verify"
+	"github.com/xuri/excelize/v2"
 )
 
 func setRuntimeRoots(t *testing.T) {
@@ -152,6 +153,70 @@ func TestWorkbookcaseSummariesCarryWrittenCells(t *testing.T) {
 	}
 	if len(verification.Layers) != 1 || verification.Layers[0].Name != "file_opens" {
 		t.Fatalf("verification layers=%+v want file_opens", verification.Layers)
+	}
+}
+
+func TestRunAppendStructuredRowsEndToEnd(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "line-items.xlsx")
+	outputFile := filepath.Join(tempDir, "line-items-output.xlsx")
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "LineItems"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	header := []any{"sku", "quantity", "unit_price"}
+	if err := file.SetSheetRow("LineItems", "A1", &header); err != nil {
+		t.Fatalf("SetSheetRow(header): %v", err)
+	}
+	existing := []any{"A001", 2, 10}
+	if err := file.SetSheetRow("LineItems", "A2", &existing); err != nil {
+		t.Fatalf("SetSheetRow(existing): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	task := runtimetaskspec.BuildAppendStructuredRowsTask(runtimetaskspec.AppendStructuredRowsRequest{
+		RequestText:          "LineItems 시트에 새 품목 행을 추가한다.",
+		InputFile:            inputFile,
+		SourceSheet:          "LineItems",
+		OutputFile:           outputFile,
+		IncludeSourceColumns: []string{"sku", "quantity", "unit_price"},
+		Values: []runtimetaskspec.CellValue{
+			{Cell: "sku", Value: "B002"},
+			{Cell: "quantity", Value: 3},
+			{Cell: "unit_price", Value: 15},
+		},
+	})
+	result, err := Run(Request{ScenarioID: "workbookcase-append-rows", TaskSpec: task.TaskSpec})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if !result.Verification.Pass {
+		t.Fatalf("verification failed: %+v", result.Verification)
+	}
+	if result.Verification.Operation != AppendRowsOperationName {
+		t.Fatalf("verification operation=%q want %s", result.Verification.Operation, AppendRowsOperationName)
+	}
+	if len(result.Verification.WrittenCells) != 3 {
+		t.Fatalf("written cells=%v want 3", result.Verification.WrittenCells)
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	got, err := outputHandle.GetCellValue("LineItems", "A3")
+	if err != nil {
+		t.Fatalf("GetCellValue A3: %v", err)
+	}
+	if got != "B002" {
+		t.Fatalf("LineItems!A3=%q want B002", got)
 	}
 }
 

@@ -100,7 +100,8 @@
       "enum": [
         "group_summary",
         "threshold_highlight",
-        "join_lookup"
+        "join_lookup",
+        "structured_row_append"
       ]
     },
     "operation_family": {
@@ -108,6 +109,7 @@
         "group_summarize",
         "highlight_threshold",
         "join_lookup",
+        "append_structured_rows",
         "write_values"
       ]
     },
@@ -366,6 +368,98 @@
             {
               "required": [
                 "highlight_color"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "operation_family": {
+            "const": "append_structured_rows"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "execution_kind": {
+            "const": "composition"
+          },
+          "composition_kind": {
+            "const": "structured_row_append"
+          },
+          "preserve_original": {
+            "const": true
+          }
+        },
+        "required": [
+          "composition_kind",
+          "source_sheet",
+          "include_source_columns",
+          "values"
+        ],
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "filters"
+              ]
+            },
+            {
+              "required": [
+                "group_by"
+              ]
+            },
+            {
+              "required": [
+                "metrics"
+              ]
+            },
+            {
+              "required": [
+                "summary_mode"
+              ]
+            },
+            {
+              "required": [
+                "target_sheet"
+              ]
+            },
+            {
+              "required": [
+                "target_column"
+              ]
+            },
+            {
+              "required": [
+                "operator"
+              ]
+            },
+            {
+              "required": [
+                "threshold"
+              ]
+            },
+            {
+              "required": [
+                "highlight_color"
+              ]
+            },
+            {
+              "required": [
+                "lookup_sheet"
+              ]
+            },
+            {
+              "required": [
+                "join_key"
+              ]
+            },
+            {
+              "required": [
+                "append_lookup_columns"
               ]
             }
           ]

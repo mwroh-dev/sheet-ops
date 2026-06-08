@@ -1,0 +1,14 @@
+{
+  "scenario_id": "append-structured-rows-example",
+  "request_text": "LineItems 시트에 새 항목 행을 추가한다.",
+  "input_file": "examples/workbooks/line-items.xlsx",
+  "sheet_name": "LineItems",
+  "output_file": "examples/workbooks/line-items-output.xlsx",
+  "operation": "append_structured_rows",
+  "include_source_columns": ["sku", "quantity", "unit_price"],
+  "values": [
+    { "cell": "sku", "value": "B002" },
+    { "cell": "quantity", "value": 3 },
+    { "cell": "unit_price", "value": 15 }
+  ]
+}

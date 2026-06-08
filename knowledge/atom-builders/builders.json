@@ -57,16 +57,16 @@
     },
     {
       "atom_id": "append_structured_rows",
-      "status": "planned",
-      "builder_layer": "planned_contract",
-      "input_contract": ["table anchor", "canonical headers", "rows to append", "formula propagation policy", "validation propagation policy"],
-      "inspection_requirements": ["header row", "table boundary", "existing formulas", "existing validation rules"],
-      "plan_outputs": ["append range", "value writes", "formula copy targets", "validation copy targets"],
-      "result_outputs": ["appended rows", "warnings"],
-      "verification_assertions": ["row_count_increased", "appended_values_match", "formulas_extended", "validation_rule_present"],
-      "capability_record": "",
-      "opportunity_record": "knowledge/template-research/opportunities/append_structured_rows.json",
-      "runtime_paths": []
+      "status": "supported",
+      "builder_layer": "runtime_mirror",
+      "input_contract": ["source sheet", "canonical columns", "rows to append"],
+      "inspection_requirements": ["sheet names", "header row", "source rows"],
+      "plan_outputs": ["append range", "value writes"],
+      "result_outputs": ["output workbook", "appended row count", "written cells"],
+      "verification_assertions": ["source_preserved", "row_count_increased", "appended_values_match"],
+      "capability_record": "contracts/capabilities/records/append_structured_rows.yaml",
+      "opportunity_record": "",
+      "runtime_paths": ["runtime/compiler/workbook_compiler.go", "runtime/execute/append_structured_rows.go", "runtime/verify/append_structured_rows.go"]
     },
     {
       "atom_id": "extend_table_formulas",

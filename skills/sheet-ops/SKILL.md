@@ -110,7 +110,7 @@ Supported today:
 
 - use this skill as the single human-facing entry for local workbook requests
 - select public agent capabilities from `group_summarize`,
-  `highlight_threshold`, and `join_lookup`
+  `highlight_threshold`, `join_lookup`, and `append_structured_rows`
 - use runtime handoff for schema-authorized deterministic execution,
   verification, and evidence
 - trust the deterministic fixture-backed harness smoke and public preview
@@ -130,7 +130,7 @@ Follow-up:
 - live delegation smoke hardening
 - cross-platform visual quality checks
 - hosted state/privacy hardening
-- public `write_values` orchestration and e2e tests
+- additional public orchestration and e2e tests for future atom promotions
 
 ## Built-in carrier mapping
 

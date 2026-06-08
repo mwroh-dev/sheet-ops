@@ -11,6 +11,7 @@ const (
 	SummaryOperationName     = "create_summary_sheet"
 	HighlightOperationName   = "highlight_threshold_rows"
 	JoinLookupOperationName  = "create_join_lookup_result_sheet"
+	AppendRowsOperationName  = "append_structured_rows"
 	WriteValuesOperationName = "write_values"
 )
 
@@ -109,6 +110,15 @@ type JoinLookupPlan struct {
 	AppendLookupColumns  []string `json:"append_lookup_columns"`
 	PreserveOriginal     bool     `json:"preserve_original"`
 	OutputFile           string   `json:"output_file"`
+}
+
+type AppendStructuredRowsPlan struct {
+	Operation            string                      `json:"operation"`
+	SheetName            string                      `json:"sheet_name"`
+	IncludeSourceColumns []string                    `json:"include_source_columns"`
+	Values               []runtimetaskspec.CellValue `json:"values"`
+	PreserveOriginal     bool                        `json:"preserve_original"`
+	OutputFile           string                      `json:"output_file"`
 }
 
 type WritePolicyDecision struct {

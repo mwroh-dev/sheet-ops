@@ -29,6 +29,8 @@ func AdmitIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIn
 		return admitHighlightIntent(intent, decision)
 	case "create_join_lookup_result_sheet":
 		return admitJoinLookupIntent(intent, decision)
+	case "append_structured_rows":
+		return admitAppendRowsIntent(intent, decision)
 	default:
 		result, err := finalizeResult(Result{
 			Status: StatusBlocked,
@@ -164,6 +166,40 @@ func admitJoinLookupIntent(intent NormalizedIntent, decision CompilerDecision) (
 		joinKey:              intent.JoinLookup.JoinKey,
 		includeSourceColumns: append([]string(nil), intent.JoinLookup.IncludeSourceColumns...),
 		appendLookupColumns:  append([]string(nil), intent.JoinLookup.AppendLookupColumns...),
+	}, nil, nil
+}
+
+func admitAppendRowsIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIntent, *Result, error) {
+	if !intent.Materialization.PreserveOriginal ||
+		intent.Materialization.OutputDestinationMode != "new_workbook" ||
+		intent.Materialization.WriteShape != "in_place_cells" {
+		result, err := finalizeResult(Result{
+			Status: StatusBlocked,
+			Blocked: &Blocked{
+				FailedStage: StageIntentAdmission,
+				ReasonCodes: []string{"invalid_materialization"},
+			},
+		})
+		return admittedIntent{}, &result, err
+	}
+
+	if len(intent.AppendRows.IncludeSourceColumns) == 0 || len(intent.AppendRows.Values) == 0 {
+		result, err := finalizeResult(Result{
+			Status: StatusBlocked,
+			Blocked: &Blocked{
+				FailedStage: StageIntentAdmission,
+				ReasonCodes: []string{"incomplete_append_rows_intent"},
+			},
+		})
+		return admittedIntent{}, &result, err
+	}
+
+	return admittedIntent{
+		decision:             decision,
+		compositionKind:      "structured_row_append",
+		sourceSheets:         preferredSourceSheets(intent, decision),
+		includeSourceColumns: append([]string(nil), intent.AppendRows.IncludeSourceColumns...),
+		values:               cloneCellValues(intent.AppendRows.Values),
 	}, nil, nil
 }
 

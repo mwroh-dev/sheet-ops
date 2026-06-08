@@ -46,6 +46,7 @@
         "group_summarize",
         "highlight_threshold",
         "join_lookup",
+        "append_structured_rows",
         "write_values"
       ]
     },
@@ -54,6 +55,7 @@
         "group_summarize",
         "highlight_threshold",
         "join_lookup",
+        "append_structured_rows",
         "write_values"
       ]
     },
@@ -140,6 +142,22 @@
         "properties": {
           "operation_family": {
             "const": "join_lookup"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "append_structured_rows"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "operation_family": {
+            "const": "append_structured_rows"
           }
         }
       }
