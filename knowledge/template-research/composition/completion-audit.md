@@ -41,6 +41,9 @@ goal. It does not claim full workbook generation or broad Excel automation.
 - The public typed envelope dispatcher now accepts
   `request.kind=organism_execution_request`, validates the request file, and
   routes it to the explicit organism execution bridge.
+- The first template-class draft planner now turns invoice line-item workbook
+  facts into a schema-valid explicit organism request and proves that draft
+  through open-layer organism execution.
 - The knowledge harness validates roadmap coverage, fixture priority alignment,
   advisory authority, supported atom references, absence of planned blockers,
   preview evidence presence, verified-class depth contract references, and
@@ -63,11 +66,12 @@ goal. It does not claim full workbook generation or broad Excel automation.
   slice, but domain-specific organism verifiers do not exist yet. Runtime
   evidence still relies on operation-specific verifier depth for workbook
   semantics.
-- Operation planner and template class harness records are advisory contracts,
-  not autonomous runtime planner execution. The `runtime/templateclass` package
-  plans and evaluates evidence, and the open-layer entry can preserve that plan
-  hint and execute explicit organism steps, but it does not synthesize missing
-  operation parameters.
+- Operation planner and template class harness records are mostly advisory
+  contracts, not broad autonomous runtime planner execution. The
+  `runtime/templateclass` package plans and evaluates evidence, and the
+  open-layer entry can preserve that plan hint and execute explicit organism
+  steps. Only the invoice line-item slice currently synthesizes a draft request
+  from workbook facts.
 - The organism harness currently covers the first five productization classes.
   The remaining roadmap organisms still need equivalent multi-operation
   fixtures before broad 21-organism runtime claims are appropriate.
@@ -83,8 +87,9 @@ The advisory ecosystem, runtime bridge, coverage ladder, representative preview
 fixture coverage, p2/p3 verified-class depth contracts, and runtime
 productization contracts are complete for the current 21 roadmap organisms.
 The first deterministic template-class planner/evaluator slice now has
-multi-operation organism harness coverage for all five productization classes.
-The remaining limits are explicitly documented as future runtime implementation
-depth, especially for broad 21-organism harness coverage and true
-domain-specific organism verifiers, not untracked blockers in the requested
-advisory-to-productization coverage layer.
+multi-operation organism harness coverage for all five productization classes,
+and the invoice line-item class has a first explicit draft-planner path. The
+remaining limits are explicitly documented as future runtime implementation
+depth, especially for broad 21-organism harness coverage, broader request draft
+synthesis, and true domain-specific organism verifiers, not untracked blockers
+in the requested advisory-to-productization coverage layer.

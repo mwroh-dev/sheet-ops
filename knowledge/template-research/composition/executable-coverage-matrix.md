@@ -768,3 +768,38 @@ dispatcher path:
 - Advisory claim risk: public envelope reachability must not be described as
   open-ended template generation; it is explicit multi-step execution with
   existing atom and organism guards.
+
+## Phase 27 Result
+
+Added the first template-class draft planner:
+
+- `requestcompiler.DraftOrganismExecutionRequest` turns an invoice
+  template-class plan plus workbook facts into a schema-valid explicit organism
+  request draft
+- the planner detects an invoice line-item sheet, formula columns, target row,
+  validation range, formula protection range, and printable form bindings from
+  workbook structure
+- the draft emits the five-step invoice sequence: append structured rows,
+  extend formulas, add validation, protect formulas, and generate a printable
+  form
+- tests validate the draft against
+  `contracts/requests/organism_execution_request.schema.json`
+- an open-layer integration test proves the draft JSON can be unmarshaled into
+  `OrganismExecutionRequest`, executed by `OrchestrateOrganism`, and verified
+  by output workbook checks
+
+## Phase 27 Self-Retro
+
+- Coverage improved: the runtime bridge moved from only accepting
+  hand-authored explicit organism requests to generating one concrete draft for
+  a known invoice organism shape.
+- Remaining template needs: this is not a broad planner for budgets,
+  inventory, gradebooks, loan schedules, or arbitrary invoices. It needs
+  sufficient workbook facts and currently uses conservative fixture-shaped
+  defaults.
+- Verifier strength: schema validation, organism execution, template-class
+  evidence, organism verification, and workbook output checks now cover the
+  draft path. It still does not prove layout inference, domain correctness, or
+  robust ambiguity resolution.
+- Advisory claim risk: the draft planner must be described as a first runtime
+  slice, not as autonomous template generation.
