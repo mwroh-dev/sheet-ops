@@ -131,6 +131,12 @@ var plans = []Plan{
 		NonClaims:             []string{"does not dispatch maintenance work", "does not infer safety or maintenance policy", "does not schedule technicians"},
 	},
 	{
+		OrganismID:            "compliance_action_register",
+		OperationSequence:     []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells", "generate_printable_form"},
+		RequiredVerifierSpecs: []string{"compliance_action_register_verifier"},
+		NonClaims:             []string{"does not interpret regulations", "does not approve compliance actions", "does not certify audit readiness"},
+	},
+	{
 		OrganismID:            "loan_repayment_calculator",
 		OperationSequence:     []string{"extend_table_formulas", "protect_formula_cells"},
 		RequiredVerifierSpecs: []string{"loan_repayment_calculator_verifier"},
@@ -153,6 +159,8 @@ func PlanForRequest(requestText string) (Plan, bool) {
 		return planForOrganism("sales_pipeline_tracker")
 	case containsAny(normalized, "maintenance issue", "issue status", "high risk issues", "action-required", "maintenance status"):
 		return planForOrganism("maintenance_issue_log")
+	case containsAny(normalized, "compliance action", "action register", "action status", "overdue actions", "compliance status"):
+		return planForOrganism("compliance_action_register")
 	case containsAny(normalized, "construction cost", "cost row", "cost_code", "forecast formula"):
 		return planForOrganism("construction_cost_tracker")
 	case containsAny(normalized, "budget", "variance", "over-budget", "over budget"):

@@ -242,6 +242,20 @@ func TestPlanForRequestClassifiesMaintenanceIssueLog(t *testing.T) {
 	}
 }
 
+func TestPlanForRequestClassifiesComplianceActionRegister(t *testing.T) {
+	plan, ok := PlanForRequest("Append compliance action, validate action status, extend review-required formulas, flag overdue actions, summarize compliance status, protect review formulas, and generate a printable action register")
+	if !ok {
+		t.Fatal("PlanForRequest returned ok=false")
+	}
+	if plan.OrganismID != "compliance_action_register" {
+		t.Fatalf("organism=%q want compliance_action_register", plan.OrganismID)
+	}
+	wantOps := []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells", "generate_printable_form"}
+	if !sameStrings(plan.OperationSequence, wantOps) {
+		t.Fatalf("operation sequence=%v want %v", plan.OperationSequence, wantOps)
+	}
+}
+
 func TestPlanForRequestRejectsFinancialAdviceClaim(t *testing.T) {
 	plan, ok := PlanForRequest("Give financial advice and certify the amortization correctness of this loan repayment schedule")
 	if !ok {

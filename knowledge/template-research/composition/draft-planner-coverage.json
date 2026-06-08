@@ -202,11 +202,14 @@
     },
     {
       "organism_id": "compliance_action_register",
-      "draft_status": "explicit_request_only",
-      "runtime_entrypoint": "",
-      "evidence_tests": [],
-      "current_limit": "No workbook-facts draft planner for compliance action status, printable register, or protected review summary.",
-      "next_gate": "Add a compliance fixture with action owners, due dates, status pipeline, printable output, and protected summaries."
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsComplianceActionStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerComplianceActionDraft"
+      ],
+      "current_limit": "Compliance action row register with action append, review-required formula extension, status validation, overdue threshold highlighting, status summary, protected review formulas, and printable register only; does not interpret regulations or certify audit readiness.",
+      "next_gate": "Add compliance fixtures with policy references, owner/action due dates, approval state transitions, evidence attachment fields, audit sampling checks, and printable pagination review."
     },
     {
       "organism_id": "safety_compliance_register",

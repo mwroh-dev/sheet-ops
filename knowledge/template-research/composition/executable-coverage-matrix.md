@@ -1412,3 +1412,41 @@ Extended the runtime draft planner to `maintenance_issue_log`:
 - Advisory claim risk: maintenance support must not be described as work-order
   dispatch or CMMS automation until owner/action fields, due dates,
   assignments, escalation, and dashboard verifiers exist.
+
+## Phase 47 Result
+
+Extended the runtime draft planner to `compliance_action_register`:
+
+- `runtime/templateclass` now classifies compliance action register requests
+  and limits the executable plan to action row append, review-required formula
+  extension, action status validation, overdue threshold highlighting, status
+  summary, formula protection, and printable register generation
+- `requestcompiler.DraftOrganismExecutionRequest` detects compliance action
+  tables from action id, owner, status, days-until-due, review-required, and
+  action-count headers
+- the draft appends an overdue open action, extends review-required formulas,
+  validates status, flags overdue rows, summarizes action counts by status,
+  protects review formulas, and generates a printable compliance register
+- open-layer integration proves the draft executes through
+  `OrchestrateOrganism` and produces expected appended action, extended review
+  formula, threshold highlight evidence, status summary output, and printable
+  register title
+- `draft-planner-coverage.json` now records compliance action register as a
+  runtime draft planner, moving the boundary from 19/2 to 20/1
+
+## Phase 47 Self-Retro
+
+- Coverage improved: runtime draft synthesis now covers twenty roadmap
+  organisms and adds the first compliance printable-register workflow beyond
+  training completion reporting.
+- Remaining template needs: this draft covers row-based compliance action
+  control, not regulatory interpretation, approval policy, evidence attachment
+  handling, audit sampling, or printable pagination QA.
+- Verifier strength: classifier, schema, draft, row append, formula extension,
+  status validation, overdue threshold highlight, grouped status summary,
+  formula protection, printable output, open-layer execution, and
+  organism-level evidence are covered for the slice.
+- Advisory claim risk: compliance support must not be described as audit
+  readiness certification or regulation-aware automation until policy
+  references, approval transitions, evidence fields, sampling, and pagination
+  verifiers exist.

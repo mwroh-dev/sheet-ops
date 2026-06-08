@@ -1325,6 +1325,80 @@ func TestDraftOrganismExecutionRequestBuildsMaintenanceIssueStepsFromWorkbookFac
 	}
 }
 
+func TestDraftOrganismExecutionRequestBuildsComplianceActionStepsFromWorkbookFacts(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "compliance.xlsx")
+	outputFile := filepath.Join(tempDir, "compliance-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Compliance"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Compliance", "A1", &[]any{"action_id", "owner", "status", "days_until_due", "review_required", "action_count"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Compliance", "A2", &[]any{"C-1", "Ops", "open", 5, nil, 1}); err != nil {
+		t.Fatalf("SetSheetRow row: %v", err)
+	}
+	if err := file.SetCellFormula("Compliance", "E2", "=IF(D2<0,1,0)"); err != nil {
+		t.Fatalf("SetCellFormula(E2): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	facts, err := runtimeinspect.InspectWorkbookFacts(inputFile)
+	if err != nil {
+		t.Fatalf("InspectWorkbookFacts: %v", err)
+	}
+	requestText := "Append compliance action, validate action status, extend review-required formulas, flag overdue actions, summarize compliance status, protect review formulas, and generate a printable action register"
+	plan := TemplateClassPlanHintForRequest(requestText)
+	if plan == nil {
+		t.Fatal("missing plan")
+	}
+
+	req, ok := DraftOrganismExecutionRequest(OrganismDraftInput{
+		ScenarioID:        "compliance-action-organism-draft",
+		RequestText:       requestText,
+		InputFile:         inputFile,
+		OutputFile:        outputFile,
+		WorkbookFacts:     facts,
+		TemplateClassPlan: *plan,
+	})
+	if !ok {
+		t.Fatal("DraftOrganismExecutionRequest ok=false")
+	}
+	if len(req.Steps) != 7 {
+		t.Fatalf("steps=%d want 7", len(req.Steps))
+	}
+	if req.Steps[0].AtomID != "append_structured_rows" || req.Steps[0].SourceSheet != "Compliance" || len(req.Steps[0].Values) != 5 {
+		t.Fatalf("append step=%+v", req.Steps[0])
+	}
+	if req.Steps[1].AtomID != "extend_table_formulas" || req.Steps[1].FormulaSourceRow != 2 || req.Steps[1].TargetRows[0] != 3 || req.Steps[1].FormulaColumns[0] != "E" {
+		t.Fatalf("formula step=%+v", req.Steps[1])
+	}
+	if req.Steps[2].AtomID != "add_data_validation" || req.Steps[2].ValidationRule == nil || req.Steps[2].ValidationRule.Ranges[0] != "C2:C20" {
+		t.Fatalf("validation step=%+v", req.Steps[2])
+	}
+	if req.Steps[3].AtomID != "highlight_threshold" || req.Steps[3].TargetColumn != "days_until_due" || req.Steps[3].Operator != "<" || req.Steps[3].Threshold == nil || *req.Steps[3].Threshold != 0 {
+		t.Fatalf("threshold step=%+v", req.Steps[3])
+	}
+	if req.Steps[4].AtomID != "group_summarize" || req.Steps[4].TargetSheet != "ComplianceSummary" || req.Steps[4].Metrics[0].Column != "action_count" {
+		t.Fatalf("summary step=%+v", req.Steps[4])
+	}
+	if req.Steps[5].AtomID != "protect_formula_cells" || req.Steps[5].ProtectionRule == nil || req.Steps[5].ProtectionRule.FormulaRanges[0] != "E2:E3" {
+		t.Fatalf("protection step=%+v", req.Steps[5])
+	}
+	if req.Steps[6].AtomID != "generate_printable_form" || req.Steps[6].TargetSheet != "ComplianceRegister" || req.Steps[6].TableBinding == nil {
+		t.Fatalf("printable step=%+v", req.Steps[6])
+	}
+	if err := runtimeschema.ValidateStruct(organismExecutionRequestSchemaPathForTest(), req); err != nil {
+		t.Fatalf("draft organism request schema validation: %v", err)
+	}
+}
+
 func TestDraftOrganismExecutionRequestBuildsLoanRepaymentStepsFromWorkbookFacts(t *testing.T) {
 	tempDir := t.TempDir()
 	inputFile := filepath.Join(tempDir, "loan.xlsx")
