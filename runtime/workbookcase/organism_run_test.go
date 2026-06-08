@@ -706,6 +706,56 @@ func TestVerifyOrganismPlanExecutionChecksInventoryWorkbookSemantics(t *testing.
 	}
 }
 
+func TestVerifyOrganismPlanExecutionChecksProcurementWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "procurement.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "PO"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("PO", "A1", &[]any{"po_id", "amount"}); err != nil {
+		t.Fatalf("SetSheetRow PO header: %v", err)
+	}
+	if err := file.SetSheetRow("PO", "A2", &[]any{"PO-1", 100}); err != nil {
+		t.Fatalf("SetSheetRow PO row: %v", err)
+	}
+	if _, err := file.NewSheet("Invoice"); err != nil {
+		t.Fatalf("NewSheet Invoice: %v", err)
+	}
+	if err := file.SetSheetRow("Invoice", "A1", &[]any{"po_id", "invoice_amount", "status", "review_flag"}); err != nil {
+		t.Fatalf("SetSheetRow invoice header: %v", err)
+	}
+	if err := file.SetSheetRow("Invoice", "A2", &[]any{"PO-1", 125, "received"}); err != nil {
+		t.Fatalf("SetSheetRow invoice row: %v", err)
+	}
+	if err := file.SetCellFormula("Invoice", "D2", "=IF(B2>0,\"review\",\"missing\")"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "procurement_reconciliation",
+		OperationSequence:     []string{"add_data_validation", "reconcile_tables", "protect_formula_cells"},
+		RequiredVerifierSpecs: []string{"procurement_reconciliation_verifier"},
+	}, []string{"add_data_validation", "reconcile_tables", "protect_formula_cells"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "ProcurementReconciliation") {
+		t.Fatalf("organism verification reasons=%v want missing procurement reconciliation evidence", verification.Reasons)
+	}
+}
+
 func TestRunOrganismPlanExecutesLoanSequenceWithNonClaims(t *testing.T) {
 	setRuntimeRoots(t)
 

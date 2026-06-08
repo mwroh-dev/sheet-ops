@@ -180,6 +180,8 @@ func verifyOrganismWorkbookSemantics(organismID, outputFile string) []string {
 		return verifyConstructionCostWorkbook(outputFile)
 	case "inventory_movement_log":
 		return verifyInventoryMovementWorkbook(outputFile)
+	case "procurement_reconciliation":
+		return verifyProcurementReconciliationWorkbook(outputFile)
 	default:
 		return nil
 	}
@@ -497,6 +499,42 @@ func verifyInventoryMovementWorkbook(outputFile string) []string {
 		reasons = append(reasons, fmt.Sprintf("inventory protection semantic check missing Movements protection: %v", err))
 	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
 		reasons = append(reasons, "inventory protection semantic check missing Movements protection options")
+	}
+	return reasons
+}
+
+func verifyProcurementReconciliationWorkbook(outputFile string) []string {
+	handle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		return []string{fmt.Sprintf("procurement reconciliation workbook semantic check failed to open output: %v", err)}
+	}
+	defer func() { _ = handle.Close() }()
+
+	var reasons []string
+	if got, err := handle.GetCellValue("ProcurementReconciliation", "A2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("procurement reconciliation semantic check missing ProcurementReconciliation!A2: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "procurement reconciliation semantic check missing ProcurementReconciliation!A2 result value")
+	}
+	if got, err := handle.GetCellValue("ProcurementReconciliation", "B2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("procurement reconciliation semantic check missing ProcurementReconciliation!B2: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "procurement reconciliation semantic check missing ProcurementReconciliation!B2 PO id value")
+	}
+	if got, err := handle.GetCellFormula("Invoice", "D2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("procurement review formula semantic check missing Invoice!D2 formula: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "procurement review formula semantic check missing Invoice!D2 formula")
+	}
+	if validations, err := handle.GetDataValidations("Invoice"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("procurement validation semantic check missing Invoice data validation: %v", err))
+	} else if len(validations) == 0 {
+		reasons = append(reasons, "procurement validation semantic check missing Invoice data validation")
+	}
+	if protection, err := handle.GetSheetProtection("Invoice"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("procurement protection semantic check missing Invoice protection: %v", err))
+	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
+		reasons = append(reasons, "procurement protection semantic check missing Invoice protection options")
 	}
 	return reasons
 }
