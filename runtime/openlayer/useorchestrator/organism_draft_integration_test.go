@@ -915,6 +915,92 @@ func TestOrchestrateOrganismExecutesRequestCompilerInventoryDraft(t *testing.T) 
 	}
 }
 
+func TestOrchestrateOrganismExecutesRequestCompilerProcurementDraft(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "procurement.xlsx")
+	outputFile := filepath.Join(tempDir, "procurement-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "PO"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("PO", "A1", &[]any{"po_id", "amount"}); err != nil {
+		t.Fatalf("SetSheetRow PO header: %v", err)
+	}
+	if err := file.SetSheetRow("PO", "A2", &[]any{"PO-1", 100}); err != nil {
+		t.Fatalf("SetSheetRow PO row: %v", err)
+	}
+	if _, err := file.NewSheet("Invoice"); err != nil {
+		t.Fatalf("NewSheet Invoice: %v", err)
+	}
+	if err := file.SetSheetRow("Invoice", "A1", &[]any{"po_id", "invoice_amount", "status", "review_flag"}); err != nil {
+		t.Fatalf("SetSheetRow invoice header: %v", err)
+	}
+	if err := file.SetSheetRow("Invoice", "A2", &[]any{"PO-1", 125, "received"}); err != nil {
+		t.Fatalf("SetSheetRow invoice row: %v", err)
+	}
+	if err := file.SetCellFormula("Invoice", "D2", "=IF(B2>0,\"review\",\"missing\")"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	facts, err := runtimeinspect.InspectWorkbookFacts(inputFile)
+	if err != nil {
+		t.Fatalf("InspectWorkbookFacts: %v", err)
+	}
+	requestText := "Validate invoice status, reconcile procurement PO and invoice amounts, and protect review formulas"
+	plan := requestcompiler.TemplateClassPlanHintForRequest(requestText)
+	if plan == nil {
+		t.Fatal("missing plan")
+	}
+	draft, ok := requestcompiler.DraftOrganismExecutionRequest(requestcompiler.OrganismDraftInput{
+		ScenarioID:        "procurement-organism-draft-integration",
+		RequestText:       requestText,
+		InputFile:         inputFile,
+		OutputFile:        outputFile,
+		WorkbookFacts:     facts,
+		TemplateClassPlan: *plan,
+	})
+	if !ok {
+		t.Fatal("DraftOrganismExecutionRequest ok=false")
+	}
+	raw, err := json.Marshal(draft)
+	if err != nil {
+		t.Fatalf("Marshal draft: %v", err)
+	}
+	var req OrganismExecutionRequest
+	if err := json.Unmarshal(raw, &req); err != nil {
+		t.Fatalf("Unmarshal draft: %v", err)
+	}
+
+	result, err := OrchestrateOrganism(req)
+	if err != nil {
+		t.Fatalf("OrchestrateOrganism: %v", err)
+	}
+	if !result.TemplateClassEvaluation.Pass || !result.OrganismVerification.Pass {
+		t.Fatalf("organism evidence failed: eval=%+v verification=%+v", result.TemplateClassEvaluation, result.OrganismVerification)
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	if got, err := outputHandle.GetCellValue("ProcurementReconciliation", "A2"); err != nil || got != "value_mismatch" {
+		t.Fatalf("ProcurementReconciliation!A2=%q err=%v want value_mismatch", got, err)
+	}
+	if got, err := outputHandle.GetCellValue("ProcurementReconciliation", "B2"); err != nil || got != "PO-1" {
+		t.Fatalf("ProcurementReconciliation!B2=%q err=%v want PO-1", got, err)
+	}
+	if got, err := outputHandle.GetCellFormula("Invoice", "D2"); err != nil || got != "=IF(B2>0,\"review\",\"missing\")" {
+		t.Fatalf("Invoice!D2 formula=%q err=%v want =IF(B2>0,\"review\",\"missing\")", got, err)
+	}
+}
+
 func TestOrchestrateOrganismExecutesRequestCompilerWarehouseDraft(t *testing.T) {
 	tempDir := t.TempDir()
 	inputFile := filepath.Join(tempDir, "warehouse.xlsx")

@@ -125,11 +125,14 @@
     },
     {
       "organism_id": "procurement_reconciliation",
-      "draft_status": "explicit_request_only",
-      "runtime_entrypoint": "",
-      "evidence_tests": [],
-      "current_limit": "No workbook-facts draft planner for procurement matching, approval status, and reconciliation outputs.",
-      "next_gate": "Add a procurement fixture with PO/receipt/invoice tables, status pipeline, and reconciliation result checks."
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsProcurementReconciliationStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerProcurementDraft"
+      ],
+      "current_limit": "PO-to-invoice amount reconciliation with invoice status validation and protected review formulas only; does not perform three-way receipt matching or approve invoices.",
+      "next_gate": "Add procurement fixtures with PO/receipt/invoice three-way matching, duplicate keys, approval transitions, and reconciliation status summaries."
     },
     {
       "organism_id": "warehouse_reorder_tracker",

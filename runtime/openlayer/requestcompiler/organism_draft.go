@@ -74,6 +74,8 @@ func DraftOrganismExecutionRequest(input OrganismDraftInput) (OrganismExecutionR
 		return draftExpenseReimbursement(input)
 	case "purchase_order_control":
 		return draftPurchaseOrderControl(input)
+	case "procurement_reconciliation":
+		return draftProcurementReconciliation(input)
 	case "monthly_budget_control":
 		return draftMonthlyBudgetControl(input)
 	case "cash_flow_monitor":
@@ -377,6 +379,79 @@ func draftAttendanceRegister(input OrganismDraftInput) (OrganismExecutionRequest
 				AtomID:          "protect_formula_cells",
 				CompositionKind: "formula_protection",
 				SourceSheet:     nextSheet,
+				ProtectionRule: &FormulaProtectionRule{
+					FormulaRanges: []string{formulaRange(formulaColumnLetters, minFormulaRow, maxFormulaRow)},
+					InputRanges:   []string{"A2:C20"},
+				},
+			},
+		},
+	}, true
+}
+
+func draftProcurementReconciliation(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
+	poSheet, ok := findProcurementPOSheet(input.WorkbookFacts)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	invoiceSheet, ok := findProcurementInvoiceSheet(input.WorkbookFacts)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	statusColumnLetter, ok := columnLetterForHeader(invoiceSheet.Columns, "status")
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumns := formulaColumnsForSheet(invoiceSheet)
+	if len(formulaColumns) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumnLetters := make([]string, 0, len(formulaColumns))
+	for _, column := range formulaColumns {
+		if letter, ok := columnLetterForHeader(invoiceSheet.Columns, column); ok {
+			formulaColumnLetters = append(formulaColumnLetters, letter)
+		}
+	}
+	if len(formulaColumnLetters) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	minFormulaRow, maxFormulaRow, ok := formulaRowBounds(invoiceSheet)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+
+	return OrganismExecutionRequestDraft{
+		ScenarioID:  input.ScenarioID,
+		RequestText: input.RequestText,
+		InputFile:   input.InputFile,
+		OutputFile:  input.OutputFile,
+		Steps: []OrganismExecutionStepDraft{
+			{
+				AtomID:          "add_data_validation",
+				CompositionKind: "data_validation",
+				SourceSheet:     invoiceSheet.Name,
+				ValidationRule: &DataValidationRule{
+					Ranges:        []string{statusColumnLetter + "2:" + statusColumnLetter + "20"},
+					RuleType:      "list",
+					AllowedValues: []string{"received", "matched", "exception"},
+					AllowBlank:    false,
+				},
+			},
+			{
+				AtomID:          "reconcile_tables",
+				CompositionKind: "table_reconciliation",
+				SourceSheet:     poSheet.Name,
+				LookupSheet:     invoiceSheet.Name,
+				TargetSheet:     "ProcurementReconciliation",
+				LeftKey:         "po_id",
+				RightKey:        "po_id",
+				CompareMappings: []CompareMapping{
+					{LeftColumn: "amount", RightColumn: "invoice_amount", As: "amount"},
+				},
+			},
+			{
+				AtomID:          "protect_formula_cells",
+				CompositionKind: "formula_protection",
+				SourceSheet:     invoiceSheet.Name,
 				ProtectionRule: &FormulaProtectionRule{
 					FormulaRanges: []string{formulaRange(formulaColumnLetters, minFormulaRow, maxFormulaRow)},
 					InputRanges:   []string{"A2:C20"},
@@ -1232,6 +1307,26 @@ func findPurchaseOrderSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect.
 	for _, sheet := range facts.Sheets {
 		headers := lowerSet(sheet.Columns)
 		if headers["item"] && headers["quantity"] && headers["unit_price"] && headers["po_status"] && headers["line_total"] {
+			return sheet, true
+		}
+	}
+	return runtimeinspect.SheetFacts{}, false
+}
+
+func findProcurementPOSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect.SheetFacts, bool) {
+	for _, sheet := range facts.Sheets {
+		headers := lowerSet(sheet.Columns)
+		if headers["po_id"] && headers["amount"] {
+			return sheet, true
+		}
+	}
+	return runtimeinspect.SheetFacts{}, false
+}
+
+func findProcurementInvoiceSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect.SheetFacts, bool) {
+	for _, sheet := range facts.Sheets {
+		headers := lowerSet(sheet.Columns)
+		if headers["po_id"] && headers["invoice_amount"] && headers["status"] && headers["review_flag"] {
 			return sheet, true
 		}
 	}

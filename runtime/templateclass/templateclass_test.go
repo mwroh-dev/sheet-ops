@@ -172,6 +172,20 @@ func TestPlanForRequestClassifiesPurchaseOrderControl(t *testing.T) {
 	}
 }
 
+func TestPlanForRequestClassifiesProcurementReconciliation(t *testing.T) {
+	plan, ok := PlanForRequest("Validate invoice status, reconcile procurement PO and invoice amounts, and protect review formulas")
+	if !ok {
+		t.Fatal("PlanForRequest returned ok=false")
+	}
+	if plan.OrganismID != "procurement_reconciliation" {
+		t.Fatalf("organism=%q want procurement_reconciliation", plan.OrganismID)
+	}
+	wantOps := []string{"add_data_validation", "reconcile_tables", "protect_formula_cells"}
+	if !sameStrings(plan.OperationSequence, wantOps) {
+		t.Fatalf("operation sequence=%v want %v", plan.OperationSequence, wantOps)
+	}
+}
+
 func TestPlanForRequestRejectsFinancialAdviceClaim(t *testing.T) {
 	plan, ok := PlanForRequest("Give financial advice and certify the amortization correctness of this loan repayment schedule")
 	if !ok {

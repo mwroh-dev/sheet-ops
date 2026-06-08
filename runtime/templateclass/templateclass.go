@@ -41,6 +41,12 @@ var plans = []Plan{
 		NonClaims:             []string{"does not approve purchases", "does not infer procurement policy", "does not create vendor contract terms"},
 	},
 	{
+		OrganismID:            "procurement_reconciliation",
+		OperationSequence:     []string{"add_data_validation", "reconcile_tables", "protect_formula_cells"},
+		RequiredVerifierSpecs: []string{"procurement_reconciliation_verifier"},
+		NonClaims:             []string{"does not perform three-way receipt matching", "does not approve invoices", "does not infer procurement policy"},
+	},
+	{
 		OrganismID:            "monthly_budget_control",
 		OperationSequence:     []string{"group_summarize", "highlight_threshold", "copy_period_sheet", "roll_forward_period", "protect_formula_cells"},
 		RequiredVerifierSpecs: []string{"monthly_budget_control_verifier"},
@@ -115,6 +121,8 @@ func PlanForRequest(requestText string) (Plan, bool) {
 		return planForOrganism("invoice_line_item_billing")
 	case containsAny(normalized, "expense reimbursement", "reimbursement", "expense claim", "expense report"):
 		return planForOrganism("expense_reimbursement")
+	case containsAny(normalized, "procurement reconciliation", "reconcile procurement", "po and invoice", "invoice amounts"):
+		return planForOrganism("procurement_reconciliation")
 	case containsAny(normalized, "purchase order", "po status", "po line", "vendor order", "procurement order"):
 		return planForOrganism("purchase_order_control")
 	case containsAny(normalized, "construction cost", "cost row", "cost_code", "forecast formula"):

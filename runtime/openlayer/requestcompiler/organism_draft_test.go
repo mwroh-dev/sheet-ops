@@ -815,6 +815,80 @@ func TestDraftOrganismExecutionRequestBuildsInventoryMovementStepsFromWorkbookFa
 	}
 }
 
+func TestDraftOrganismExecutionRequestBuildsProcurementReconciliationStepsFromWorkbookFacts(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "procurement.xlsx")
+	outputFile := filepath.Join(tempDir, "procurement-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "PO"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("PO", "A1", &[]any{"po_id", "amount"}); err != nil {
+		t.Fatalf("SetSheetRow PO header: %v", err)
+	}
+	if err := file.SetSheetRow("PO", "A2", &[]any{"PO-1", 100}); err != nil {
+		t.Fatalf("SetSheetRow PO row: %v", err)
+	}
+	if _, err := file.NewSheet("Invoice"); err != nil {
+		t.Fatalf("NewSheet Invoice: %v", err)
+	}
+	if err := file.SetSheetRow("Invoice", "A1", &[]any{"po_id", "invoice_amount", "status", "review_flag"}); err != nil {
+		t.Fatalf("SetSheetRow invoice header: %v", err)
+	}
+	if err := file.SetSheetRow("Invoice", "A2", &[]any{"PO-1", 125, "received"}); err != nil {
+		t.Fatalf("SetSheetRow invoice row: %v", err)
+	}
+	if err := file.SetCellFormula("Invoice", "D2", "=IF(B2>0,\"review\",\"missing\")"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	facts, err := runtimeinspect.InspectWorkbookFacts(inputFile)
+	if err != nil {
+		t.Fatalf("InspectWorkbookFacts: %v", err)
+	}
+	requestText := "Validate invoice status, reconcile procurement PO and invoice amounts, and protect review formulas"
+	plan := TemplateClassPlanHintForRequest(requestText)
+	if plan == nil {
+		t.Fatal("missing plan")
+	}
+
+	req, ok := DraftOrganismExecutionRequest(OrganismDraftInput{
+		ScenarioID:        "procurement-organism-draft",
+		RequestText:       requestText,
+		InputFile:         inputFile,
+		OutputFile:        outputFile,
+		WorkbookFacts:     facts,
+		TemplateClassPlan: *plan,
+	})
+	if !ok {
+		t.Fatal("DraftOrganismExecutionRequest ok=false")
+	}
+	if len(req.Steps) != 3 {
+		t.Fatalf("steps=%d want 3", len(req.Steps))
+	}
+	if req.Steps[0].AtomID != "add_data_validation" || req.Steps[0].SourceSheet != "Invoice" || req.Steps[0].ValidationRule == nil || req.Steps[0].ValidationRule.Ranges[0] != "C2:C20" {
+		t.Fatalf("validation step=%+v", req.Steps[0])
+	}
+	if req.Steps[1].AtomID != "reconcile_tables" || req.Steps[1].SourceSheet != "PO" || req.Steps[1].LookupSheet != "Invoice" || req.Steps[1].TargetSheet != "ProcurementReconciliation" {
+		t.Fatalf("reconcile step=%+v", req.Steps[1])
+	}
+	if len(req.Steps[1].CompareMappings) != 1 || req.Steps[1].CompareMappings[0].LeftColumn != "amount" || req.Steps[1].CompareMappings[0].RightColumn != "invoice_amount" {
+		t.Fatalf("compare mappings=%+v", req.Steps[1].CompareMappings)
+	}
+	if req.Steps[2].AtomID != "protect_formula_cells" || req.Steps[2].SourceSheet != "Invoice" || req.Steps[2].ProtectionRule == nil || req.Steps[2].ProtectionRule.FormulaRanges[0] != "D2:D2" {
+		t.Fatalf("protection step=%+v", req.Steps[2])
+	}
+	if err := runtimeschema.ValidateStruct(organismExecutionRequestSchemaPathForTest(), req); err != nil {
+		t.Fatalf("draft organism request schema validation: %v", err)
+	}
+}
+
 func TestDraftOrganismExecutionRequestBuildsWarehouseReorderStepsFromWorkbookFacts(t *testing.T) {
 	tempDir := t.TempDir()
 	inputFile := filepath.Join(tempDir, "warehouse.xlsx")

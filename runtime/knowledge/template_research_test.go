@@ -530,20 +530,21 @@ func TestTemplateResearchDraftPlannerCoverageStaysExplicit(t *testing.T) {
 	}
 
 	wantRuntimeDraft := map[string]bool{
-		"invoice_line_item_billing": true,
-		"expense_reimbursement":     true,
-		"purchase_order_control":    true,
-		"monthly_budget_control":    true,
-		"cash_flow_monitor":         true,
-		"attendance_register":       true,
-		"project_timeline_tracker":  true,
-		"shift_roster_planner":      true,
-		"construction_cost_tracker": true,
-		"timesheet_hours_log":       true,
-		"warehouse_reorder_tracker": true,
-		"inventory_movement_log":    true,
-		"student_gradebook":         true,
-		"loan_repayment_calculator": true,
+		"invoice_line_item_billing":  true,
+		"expense_reimbursement":      true,
+		"purchase_order_control":     true,
+		"procurement_reconciliation": true,
+		"monthly_budget_control":     true,
+		"cash_flow_monitor":          true,
+		"attendance_register":        true,
+		"project_timeline_tracker":   true,
+		"shift_roster_planner":       true,
+		"construction_cost_tracker":  true,
+		"timesheet_hours_log":        true,
+		"warehouse_reorder_tracker":  true,
+		"inventory_movement_log":     true,
+		"student_gradebook":          true,
+		"loan_repayment_calculator":  true,
 	}
 	seen := map[string]bool{}
 	runtimeDraftCount := 0

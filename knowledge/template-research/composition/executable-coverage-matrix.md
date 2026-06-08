@@ -1238,3 +1238,37 @@ Extended the runtime draft planner to `construction_cost_tracker`:
 - Advisory claim risk: construction support must not be described as forecast
   or earned-value automation until formula-evaluated variance, phase summaries,
   and timeline/carry-forward verifiers exist.
+
+## Phase 42 Result
+
+Extended the runtime draft planner to `procurement_reconciliation`:
+
+- `runtime/templateclass` now classifies procurement reconciliation requests
+  before purchase-order document generation and limits the executable plan to
+  invoice status validation, table reconciliation, and formula protection
+- `requestcompiler.DraftOrganismExecutionRequest` detects procurement PO and
+  invoice tables from PO id, amount, invoice amount, status, and review formula
+  headers
+- the draft validates invoice status, reconciles PO amount against invoice
+  amount, writes a procurement reconciliation sheet, and protects invoice
+  review formulas
+- open-layer integration proves the draft executes through
+  `OrchestrateOrganism` and produces expected value-mismatch reconciliation
+  evidence while preserving the protected invoice review formula
+- `draft-planner-coverage.json` now records procurement reconciliation as a
+  runtime draft planner, moving the boundary from 14/7 to 15/6
+
+## Phase 42 Self-Retro
+
+- Coverage improved: runtime draft synthesis now covers fifteen roadmap
+  organisms and adds procurement exception reconciliation beyond purchase-order
+  document control.
+- Remaining template needs: this draft covers PO-to-invoice amount matching,
+  not receipt matching, duplicate-key handling, approval workflows, or
+  status-summary dashboards.
+- Verifier strength: classifier, schema, draft, status validation, table
+  reconciliation, formula protection, open-layer execution, and organism-level
+  evidence are covered for the slice.
+- Advisory claim risk: procurement support must not be described as full
+  three-way matching or invoice approval until PO/receipt/invoice fixtures,
+  duplicate-key policy, and approval-transition verifiers exist.
