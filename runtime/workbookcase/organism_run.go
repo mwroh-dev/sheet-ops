@@ -196,6 +196,8 @@ func verifyOrganismWorkbookSemantics(organismID, outputFile string) []string {
 		return verifyMaintenanceIssueWorkbook(outputFile)
 	case "compliance_action_register":
 		return verifyComplianceActionWorkbook(outputFile)
+	case "safety_compliance_register":
+		return verifySafetyComplianceWorkbook(outputFile)
 	default:
 		return nil
 	}
@@ -801,6 +803,47 @@ func verifyComplianceActionWorkbook(outputFile string) []string {
 		reasons = append(reasons, fmt.Sprintf("compliance protection semantic check missing Compliance protection: %v", err))
 	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
 		reasons = append(reasons, "compliance protection semantic check missing Compliance protection options")
+	}
+	return reasons
+}
+
+func verifySafetyComplianceWorkbook(outputFile string) []string {
+	handle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		return []string{fmt.Sprintf("safety compliance workbook semantic check failed to open output: %v", err)}
+	}
+	defer func() { _ = handle.Close() }()
+
+	var reasons []string
+	if got, err := handle.GetCellValue("Safety", "A3"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("safety compliance append semantic check missing Safety!A3: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "safety compliance append semantic check missing Safety!A3 check id value")
+	}
+	if got, err := handle.GetCellValue("SafetySummary", "B2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("safety compliance summary semantic check missing SafetySummary!B2: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "safety compliance summary semantic check missing SafetySummary!B2 completion summary value")
+	}
+	if got, err := handle.GetCellFormula("Safety", "F3"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("safety action formula semantic check missing Safety!F3 formula: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "safety action formula semantic check missing Safety!F3 formula")
+	}
+	if got, err := handle.GetCellValue("SafetyReport", "A1"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("safety printable semantic check missing SafetyReport!A1: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "safety printable semantic check missing SafetyReport!A1 title")
+	}
+	if validations, err := handle.GetDataValidations("Safety"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("safety validation semantic check missing Safety data validation: %v", err))
+	} else if len(validations) == 0 {
+		reasons = append(reasons, "safety validation semantic check missing Safety data validation")
+	}
+	if protection, err := handle.GetSheetProtection("Safety"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("safety protection semantic check missing Safety protection: %v", err))
+	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
+		reasons = append(reasons, "safety protection semantic check missing Safety protection options")
 	}
 	return reasons
 }
