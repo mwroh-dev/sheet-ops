@@ -168,6 +168,8 @@ func verifyOrganismWorkbookSemantics(organismID, outputFile string) []string {
 		return verifyMonthlyBudgetWorkbook(outputFile)
 	case "cash_flow_monitor":
 		return verifyCashFlowWorkbook(outputFile)
+	case "attendance_register":
+		return verifyAttendanceWorkbook(outputFile)
 	default:
 		return nil
 	}
@@ -299,6 +301,37 @@ func verifyCashFlowWorkbook(outputFile string) []string {
 		reasons = append(reasons, fmt.Sprintf("cash flow formula semantic check missing NextCashFlow!E4 formula: %v", err))
 	} else if strings.TrimSpace(got) == "" {
 		reasons = append(reasons, "cash flow formula semantic check missing NextCashFlow!E4 formula")
+	}
+	return reasons
+}
+
+func verifyAttendanceWorkbook(outputFile string) []string {
+	handle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		return []string{fmt.Sprintf("attendance workbook semantic check failed to open output: %v", err)}
+	}
+	defer func() { _ = handle.Close() }()
+
+	var reasons []string
+	if got, err := handle.GetCellValue("NextAttendance", "A2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("attendance period-copy semantic check missing NextAttendance!A2: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "attendance period-copy semantic check missing NextAttendance!A2 student value")
+	}
+	if got, err := handle.GetCellFormula("NextAttendance", "D2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("attendance formula semantic check missing NextAttendance!D2 formula: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "attendance formula semantic check missing NextAttendance!D2 formula")
+	}
+	if validations, err := handle.GetDataValidations("NextAttendance"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("attendance validation semantic check missing NextAttendance data validation: %v", err))
+	} else if len(validations) == 0 {
+		reasons = append(reasons, "attendance validation semantic check missing NextAttendance data validation")
+	}
+	if protection, err := handle.GetSheetProtection("NextAttendance"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("attendance protection semantic check missing NextAttendance protection: %v", err))
+	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
+		reasons = append(reasons, "attendance protection semantic check missing NextAttendance protection options")
 	}
 	return reasons
 }
