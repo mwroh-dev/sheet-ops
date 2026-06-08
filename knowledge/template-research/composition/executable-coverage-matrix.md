@@ -1051,3 +1051,35 @@ Extended the runtime draft planner to `warehouse_reorder_tracker`:
   covered for the slice.
 - Advisory claim risk: warehouse reorder support must remain threshold
   tracking, not warehouse policy automation or purchasing advice.
+
+## Phase 36 Result
+
+Extended the runtime draft planner to `expense_reimbursement`:
+
+- `runtime/templateclass` now classifies reimbursement/expense-claim requests
+  separately from invoice and rejected expense-policy patterns
+- `requestcompiler.DraftOrganismExecutionRequest` detects expense reimbursement
+  workbooks from item, amount, reimbursable rate, receipt status, and
+  reimbursable total headers
+- the draft appends a reimbursement row, extends reimbursable total formulas,
+  validates receipt status, protects formula cells, and generates a printable
+  expense claim
+- open-layer integration proves the draft executes through
+  `OrchestrateOrganism` and produces expected appended row, extended formula,
+  and printable claim evidence
+- `draft-planner-coverage.json` now records expense reimbursement as a runtime
+  draft planner, moving the boundary from 8/13 to 9/12
+
+## Phase 36 Self-Retro
+
+- Coverage improved: runtime draft synthesis now covers nine roadmap organisms
+  and adds a second printable-document finance workflow beyond invoice.
+- Remaining template needs: this draft covers itemized reimbursement claim
+  mechanics, not company policy enforcement, approval decisions, tax handling,
+  or receipt audit workflows.
+- Verifier strength: classifier, schema, draft, row append, formula extension,
+  receipt validation, formula protection, printable output, open-layer
+  execution, and organism-level evidence are covered for the slice.
+- Advisory claim risk: expense reimbursement must stay separate from the
+  rejected `expense_policy_checker` boundary unless workbook-native policy
+  gates are later proven.

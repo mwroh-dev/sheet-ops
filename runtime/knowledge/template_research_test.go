@@ -531,6 +531,7 @@ func TestTemplateResearchDraftPlannerCoverageStaysExplicit(t *testing.T) {
 
 	wantRuntimeDraft := map[string]bool{
 		"invoice_line_item_billing": true,
+		"expense_reimbursement":     true,
 		"monthly_budget_control":    true,
 		"cash_flow_monitor":         true,
 		"timesheet_hours_log":       true,

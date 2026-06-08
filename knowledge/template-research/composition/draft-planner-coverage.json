@@ -15,11 +15,14 @@
     },
     {
       "organism_id": "expense_reimbursement",
-      "draft_status": "explicit_request_only",
-      "runtime_entrypoint": "",
-      "evidence_tests": [],
-      "current_limit": "No workbook-facts draft planner; explicit organism requests or lower-level supported atoms are required.",
-      "next_gate": "Add a reimbursement fixture with receipt rows, approval status, printable output, and protected totals."
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsExpenseReimbursementStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerExpenseDraft"
+      ],
+      "current_limit": "Itemized reimbursement row with receipt status and printable claim only; does not enforce company expense policy or approve payment.",
+      "next_gate": "Add reimbursement fixtures with approver status, receipt completeness exceptions, category limits, and printable review metadata."
     },
     {
       "organism_id": "purchase_order_control",
