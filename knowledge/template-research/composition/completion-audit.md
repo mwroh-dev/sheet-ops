@@ -35,6 +35,9 @@ goal. It does not claim full workbook generation or broad Excel automation.
 - The open-layer request compiler and orchestrator decision surface now carry
   optional `template_class_plan` hints so organism id, atom sequence, verifier
   specs, and non-claims can survive the request-entry boundary.
+- The open-layer orchestrator now has an explicit multi-step
+  `OrganismExecutionRequest` bridge that converts concrete organism steps into
+  `RunOrganismPlan` execution and preserves the organism verification report.
 - The knowledge harness validates roadmap coverage, fixture priority alignment,
   advisory authority, supported atom references, absence of planned blockers,
   preview evidence presence, verified-class depth contract references, and
@@ -60,7 +63,8 @@ goal. It does not claim full workbook generation or broad Excel automation.
 - Operation planner and template class harness records are advisory contracts,
   not autonomous runtime planner execution. The `runtime/templateclass` package
   plans and evaluates evidence, and the open-layer entry can preserve that plan
-  hint, but it does not synthesize missing operation parameters.
+  hint and execute explicit organism steps, but it does not synthesize missing
+  operation parameters.
 - The organism harness currently covers the first five productization classes.
   The remaining roadmap organisms still need equivalent multi-operation
   fixtures before broad 21-organism runtime claims are appropriate.

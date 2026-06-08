@@ -708,3 +708,32 @@ entry surface:
   from a public `sheet-ops use` invocation.
 - Advisory claim risk: the plan hint must remain a hint until explicit step
   specs exist and the organism verification report passes.
+
+## Phase 25 Result
+
+Added an explicit multi-step organism execution bridge in the open-layer
+orchestrator:
+
+- `OrganismExecutionRequest` represents a request text, workbook IO, and an
+  ordered list of explicit organism steps
+- each step carries a template atom id plus a supported composition kind and
+  the operation parameters needed to build a `TaskSpec`
+- `OrchestrateOrganism` converts those explicit steps into
+  `workbookcase.OrganismStep` values and runs `RunOrganismPlan`
+- the bridge preserves the existing template-class plan sequence check and
+  organism verification report
+- `contracts/requests/organism_execution_request.schema.json` records the
+  explicit request shape
+
+## Phase 25 Self-Retro
+
+- Coverage improved: open-layer runtime code can now execute a schema-shaped
+  explicit multi-step organism request, not only preserve a plan hint.
+- Remaining template needs: this still does not infer missing step parameters
+  from natural language. A caller must provide the concrete step specs.
+- Verifier strength: tests prove an explicit invoice organism request executes
+  through open-layer orchestration and that mismatched steps are rejected by the
+  template-class plan guard.
+- Advisory claim risk: this is not autonomous template generation. It is a
+  contract-shaped path for explicit multi-step execution backed by the existing
+  organism harness.

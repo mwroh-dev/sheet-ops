@@ -41,6 +41,126 @@ func OrchestrateValidated(req ValidatedExecutionRequest) (RunResult, error) {
 	return runTaskSpec(req.ScenarioID, taskSpec, routing)
 }
 
+func OrchestrateOrganism(req OrganismExecutionRequest) (runtimeworkbookcase.OrganismRunResult, error) {
+	if req.ScenarioID == "" {
+		return runtimeworkbookcase.OrganismRunResult{}, fmt.Errorf("organism execution scenario_id is required")
+	}
+	if req.RequestText == "" {
+		return runtimeworkbookcase.OrganismRunResult{}, fmt.Errorf("organism execution request_text is required")
+	}
+	if req.InputFile == "" || req.OutputFile == "" {
+		return runtimeworkbookcase.OrganismRunResult{}, fmt.Errorf("organism execution input_file and output_file are required")
+	}
+	if len(req.Steps) == 0 {
+		return runtimeworkbookcase.OrganismRunResult{}, fmt.Errorf("organism execution requires at least one step")
+	}
+
+	steps := make([]runtimeworkbookcase.OrganismStep, 0, len(req.Steps))
+	for index, step := range req.Steps {
+		if step.AtomID == "" {
+			return runtimeworkbookcase.OrganismRunResult{}, fmt.Errorf("organism step %d atom_id is required", index+1)
+		}
+		if step.CompositionKind == "" {
+			return runtimeworkbookcase.OrganismRunResult{}, fmt.Errorf("organism step %d composition_kind is required", index+1)
+		}
+		if _, err := taskSpecFromValidatedExecutionRequest(validatedRequestFromOrganismStep(req, step, req.InputFile, req.OutputFile)); err != nil {
+			return runtimeworkbookcase.OrganismRunResult{}, fmt.Errorf("organism step %d task spec: %w", index+1, err)
+		}
+		stepCopy := step
+		steps = append(steps, runtimeworkbookcase.OrganismStep{
+			AtomID: step.AtomID,
+			Build: func(input, output string) runtimetaskspec.TaskSpec {
+				validated := validatedRequestFromOrganismStep(req, stepCopy, input, output)
+				taskSpec, err := taskSpecFromValidatedExecutionRequest(validated)
+				if err != nil {
+					return runtimetaskspec.TaskSpec{}
+				}
+				return taskSpec
+			},
+		})
+	}
+
+	return runtimeworkbookcase.RunOrganismPlan(runtimeworkbookcase.OrganismRunRequest{
+		ScenarioID:  req.ScenarioID,
+		RequestText: req.RequestText,
+		InputFile:   req.InputFile,
+		OutputFile:  req.OutputFile,
+		Steps:       steps,
+	})
+}
+
+func validatedRequestFromOrganismStep(req OrganismExecutionRequest, step OrganismExecutionStep, input, output string) ValidatedExecutionRequest {
+	return ValidatedExecutionRequest{
+		ScenarioID:           req.ScenarioID,
+		RequestKind:          "prompt_text",
+		RequestText:          req.RequestText,
+		InputFile:            input,
+		SourceSheet:          step.SourceSheet,
+		OutputFile:           output,
+		ExecutionKind:        "composition",
+		CompositionKind:      step.CompositionKind,
+		TargetSheet:          step.TargetSheet,
+		SummaryMode:          step.SummaryMode,
+		Filters:              toValidatedFilters(step.Filters),
+		GroupBy:              append([]string(nil), step.GroupBy...),
+		Metrics:              toValidatedMetrics(step.Metrics),
+		TargetColumn:         step.TargetColumn,
+		Operator:             step.Operator,
+		Threshold:            step.Threshold,
+		HighlightColor:       step.HighlightColor,
+		LookupSheet:          step.LookupSheet,
+		JoinKey:              step.JoinKey,
+		IncludeSourceColumns: append([]string(nil), step.IncludeSourceColumns...),
+		AppendLookupColumns:  append([]string(nil), step.AppendLookupColumns...),
+		Values:               append([]CellValue(nil), step.Values...),
+		FormulaSourceRow:     step.FormulaSourceRow,
+		TargetRows:           append([]int(nil), step.TargetRows...),
+		FormulaColumns:       append([]string(nil), step.FormulaColumns...),
+		ValidationRule:       step.ValidationRule,
+		ProtectionRule:       step.ProtectionRule,
+		HeaderRow:            step.HeaderRow,
+		HeaderMappings:       append([]HeaderMapping(nil), step.HeaderMappings...),
+		CarryForwardMappings: append([]CarryForwardMapping(nil), step.CarryForwardMappings...),
+		LeftKey:              step.LeftKey,
+		RightKey:             step.RightKey,
+		CompareMappings:      append([]CompareMapping(nil), step.CompareMappings...),
+		FormTitle:            step.FormTitle,
+		PrintArea:            step.PrintArea,
+		FieldBindings:        append([]FormFieldBinding(nil), step.FieldBindings...),
+		TableBinding:         step.TableBinding,
+	}
+}
+
+func toValidatedFilters(filters []FilterSpec) []runtimevalidate.FilterSpec {
+	if len(filters) == 0 {
+		return nil
+	}
+	converted := make([]runtimevalidate.FilterSpec, 0, len(filters))
+	for _, filter := range filters {
+		converted = append(converted, runtimevalidate.FilterSpec{
+			Column: filter.Column,
+			Op:     filter.Op,
+			Value:  filter.Value,
+		})
+	}
+	return converted
+}
+
+func toValidatedMetrics(metrics []MetricSpec) []runtimevalidate.MetricSpec {
+	if len(metrics) == 0 {
+		return nil
+	}
+	converted := make([]runtimevalidate.MetricSpec, 0, len(metrics))
+	for _, metric := range metrics {
+		converted = append(converted, runtimevalidate.MetricSpec{
+			Column: metric.Column,
+			Op:     metric.Op,
+			As:     metric.As,
+		})
+	}
+	return converted
+}
+
 func validateSupportedValidatedExecutionRequest(req ValidatedExecutionRequest) error {
 	if req.ExecutionKind != "composition" {
 		return fmt.Errorf("unsupported validated execution kind %q", req.ExecutionKind)
