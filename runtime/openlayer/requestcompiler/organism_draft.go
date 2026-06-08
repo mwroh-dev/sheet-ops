@@ -72,6 +72,8 @@ func DraftOrganismExecutionRequest(input OrganismDraftInput) (OrganismExecutionR
 		return draftInvoiceLineItemBilling(input)
 	case "expense_reimbursement":
 		return draftExpenseReimbursement(input)
+	case "purchase_order_control":
+		return draftPurchaseOrderControl(input)
 	case "monthly_budget_control":
 		return draftMonthlyBudgetControl(input)
 	case "cash_flow_monitor":
@@ -89,6 +91,95 @@ func DraftOrganismExecutionRequest(input OrganismDraftInput) (OrganismExecutionR
 	default:
 		return OrganismExecutionRequestDraft{}, false
 	}
+}
+
+func draftPurchaseOrderControl(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
+	sheet, ok := findPurchaseOrderSheet(input.WorkbookFacts)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	inputColumns, formulaColumns := splitInputAndFormulaColumns(sheet)
+	if len(inputColumns) == 0 || len(formulaColumns) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaSourceRow, targetRow, ok := formulaRows(sheet)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumnLetters := make([]string, 0, len(formulaColumns))
+	for _, column := range formulaColumns {
+		if letter, ok := columnLetterForHeader(sheet.Columns, column); ok {
+			formulaColumnLetters = append(formulaColumnLetters, letter)
+		}
+	}
+	if len(formulaColumnLetters) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	statusColumnLetter, ok := columnLetterForHeader(sheet.Columns, "po_status")
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+
+	return OrganismExecutionRequestDraft{
+		ScenarioID:  input.ScenarioID,
+		RequestText: input.RequestText,
+		InputFile:   input.InputFile,
+		OutputFile:  input.OutputFile,
+		Steps: []OrganismExecutionStepDraft{
+			{
+				AtomID:               "append_structured_rows",
+				CompositionKind:      "structured_row_append",
+				SourceSheet:          sheet.Name,
+				IncludeSourceColumns: append([]string(nil), inputColumns...),
+				Values:               defaultPurchaseOrderValues(inputColumns),
+			},
+			{
+				AtomID:           "extend_table_formulas",
+				CompositionKind:  "formula_extension",
+				SourceSheet:      sheet.Name,
+				FormulaSourceRow: formulaSourceRow,
+				TargetRows:       []int{targetRow},
+				FormulaColumns:   formulaColumnLetters,
+			},
+			{
+				AtomID:          "add_data_validation",
+				CompositionKind: "data_validation",
+				SourceSheet:     sheet.Name,
+				ValidationRule: &DataValidationRule{
+					Ranges:        []string{statusColumnLetter + "2:" + statusColumnLetter + "20"},
+					RuleType:      "list",
+					AllowedValues: []string{"draft", "submitted", "approved"},
+					AllowBlank:    false,
+				},
+			},
+			{
+				AtomID:          "protect_formula_cells",
+				CompositionKind: "formula_protection",
+				SourceSheet:     sheet.Name,
+				ProtectionRule: &FormulaProtectionRule{
+					FormulaRanges: []string{formulaRange(formulaColumnLetters, formulaSourceRow, targetRow)},
+					InputRanges:   []string{inputRange(inputColumns, targetRow)},
+				},
+			},
+			{
+				AtomID:          "generate_printable_form",
+				CompositionKind: "printable_form",
+				SourceSheet:     sheet.Name,
+				TargetSheet:     "PurchaseOrderPrint",
+				FormTitle:       "Purchase Order",
+				PrintArea:       "A1:" + lastColumnLetter(sheet.Columns) + strconv.Itoa(targetRow+5),
+				FieldBindings: []FormFieldBinding{
+					{Label: "First Item", SourceSheet: sheet.Name, SourceCell: "A2", LabelCell: "A2", ValueCell: "B2"},
+				},
+				TableBinding: &FormTableBinding{
+					SourceSheet:   sheet.Name,
+					SourceColumns: append([]string(nil), sheet.Columns...),
+					HeaderStart:   "A4",
+					DataStart:     "A5",
+				},
+			},
+		},
+	}, true
 }
 
 func draftExpenseReimbursement(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
@@ -844,6 +935,16 @@ func findExpenseReimbursementSheet(facts runtimeinspect.WorkbookFacts) (runtimei
 	return runtimeinspect.SheetFacts{}, false
 }
 
+func findPurchaseOrderSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect.SheetFacts, bool) {
+	for _, sheet := range facts.Sheets {
+		headers := lowerSet(sheet.Columns)
+		if headers["item"] && headers["quantity"] && headers["unit_price"] && headers["po_status"] && headers["line_total"] {
+			return sheet, true
+		}
+	}
+	return runtimeinspect.SheetFacts{}, false
+}
+
 func findMonthlyBudgetSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect.SheetFacts, bool) {
 	for _, sheet := range facts.Sheets {
 		headers := lowerSet(sheet.Columns)
@@ -1037,6 +1138,23 @@ func defaultExpenseValues(columns []string) []CellValue {
 			values = append(values, CellValue{Cell: column, Value: 1})
 		case "receipt_status":
 			values = append(values, CellValue{Cell: column, Value: "attached"})
+		}
+	}
+	return values
+}
+
+func defaultPurchaseOrderValues(columns []string) []CellValue {
+	values := make([]CellValue, 0, len(columns))
+	for _, column := range columns {
+		switch strings.ToLower(column) {
+		case "item":
+			values = append(values, CellValue{Cell: column, Value: "Monitor"})
+		case "quantity":
+			values = append(values, CellValue{Cell: column, Value: 1})
+		case "unit_price":
+			values = append(values, CellValue{Cell: column, Value: 150})
+		case "po_status":
+			values = append(values, CellValue{Cell: column, Value: "submitted"})
 		}
 	}
 	return values

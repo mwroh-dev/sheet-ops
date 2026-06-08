@@ -35,6 +35,12 @@ var plans = []Plan{
 		NonClaims:             []string{"does not enforce company expense policy", "does not approve reimbursements", "does not perform tax advice"},
 	},
 	{
+		OrganismID:            "purchase_order_control",
+		OperationSequence:     []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells", "generate_printable_form"},
+		RequiredVerifierSpecs: []string{"purchase_order_control_verifier"},
+		NonClaims:             []string{"does not approve purchases", "does not infer procurement policy", "does not create vendor contract terms"},
+	},
+	{
 		OrganismID:            "monthly_budget_control",
 		OperationSequence:     []string{"group_summarize", "highlight_threshold", "copy_period_sheet", "roll_forward_period", "protect_formula_cells"},
 		RequiredVerifierSpecs: []string{"monthly_budget_control_verifier"},
@@ -85,6 +91,8 @@ func PlanForRequest(requestText string) (Plan, bool) {
 		return planForOrganism("invoice_line_item_billing")
 	case containsAny(normalized, "expense reimbursement", "reimbursement", "expense claim", "expense report"):
 		return planForOrganism("expense_reimbursement")
+	case containsAny(normalized, "purchase order", "po status", "po line", "vendor order", "procurement order"):
+		return planForOrganism("purchase_order_control")
 	case containsAny(normalized, "budget", "variance", "over-budget", "over budget"):
 		return planForOrganism("monthly_budget_control")
 	case containsAny(normalized, "cash flow", "cash-flow", "opening balance", "closing balance"):

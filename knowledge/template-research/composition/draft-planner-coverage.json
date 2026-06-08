@@ -26,11 +26,14 @@
     },
     {
       "organism_id": "purchase_order_control",
-      "draft_status": "explicit_request_only",
-      "runtime_entrypoint": "",
-      "evidence_tests": [],
-      "current_limit": "No workbook-facts draft planner for PO line items, status control, and printable purchase order output.",
-      "next_gate": "Add a PO fixture that combines line totals, vendor metadata, status pipeline, and printable form checks."
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsPurchaseOrderStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerPurchaseOrderDraft"
+      ],
+      "current_limit": "Line-item purchase order workbook with PO status validation and printable output only; does not approve purchases or infer procurement policy.",
+      "next_gate": "Add PO fixtures with vendor metadata, approval transitions, tax/freight totals, and status history checks."
     },
     {
       "organism_id": "monthly_budget_control",

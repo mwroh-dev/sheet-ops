@@ -1083,3 +1083,34 @@ Extended the runtime draft planner to `expense_reimbursement`:
 - Advisory claim risk: expense reimbursement must stay separate from the
   rejected `expense_policy_checker` boundary unless workbook-native policy
   gates are later proven.
+
+## Phase 37 Result
+
+Extended the runtime draft planner to `purchase_order_control`:
+
+- `runtime/templateclass` now classifies purchase-order requests separately
+  from invoice and generic procurement wording
+- `requestcompiler.DraftOrganismExecutionRequest` detects purchase-order
+  workbooks from item, quantity, unit price, PO status, and line total headers
+- the draft appends a purchase-order line, extends line-total formulas,
+  validates PO status, protects formula cells, and generates a printable
+  purchase order
+- open-layer integration proves the draft executes through
+  `OrchestrateOrganism` and produces expected appended row, extended formula,
+  and printable PO evidence
+- `draft-planner-coverage.json` now records purchase order control as a
+  runtime draft planner, moving the boundary from 9/12 to 10/11
+
+## Phase 37 Self-Retro
+
+- Coverage improved: runtime draft synthesis now covers ten roadmap organisms
+  and completes the three core printable-document line-item workflows: invoice,
+  reimbursement, and purchase order.
+- Remaining template needs: this draft covers line-item PO mechanics and status
+  validation, not purchase approval, vendor contracts, tax/freight policy, or
+  procurement governance.
+- Verifier strength: classifier, schema, draft, row append, formula extension,
+  PO status validation, formula protection, printable output, open-layer
+  execution, and organism-level evidence are covered for the slice.
+- Advisory claim risk: PO support must remain a workbook control pattern until
+  approval transitions, vendor metadata, and policy-specific verifiers exist.

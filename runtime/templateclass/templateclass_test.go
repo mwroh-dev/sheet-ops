@@ -102,6 +102,20 @@ func TestPlanForRequestClassifiesExpenseReimbursement(t *testing.T) {
 	}
 }
 
+func TestPlanForRequestClassifiesPurchaseOrderControl(t *testing.T) {
+	plan, ok := PlanForRequest("Append purchase order line items, extend order totals, validate PO status, protect formulas, and generate a printable purchase order")
+	if !ok {
+		t.Fatal("PlanForRequest returned ok=false")
+	}
+	if plan.OrganismID != "purchase_order_control" {
+		t.Fatalf("organism=%q want purchase_order_control", plan.OrganismID)
+	}
+	wantOps := []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells", "generate_printable_form"}
+	if !sameStrings(plan.OperationSequence, wantOps) {
+		t.Fatalf("operation sequence=%v want %v", plan.OperationSequence, wantOps)
+	}
+}
+
 func TestPlanForRequestRejectsFinancialAdviceClaim(t *testing.T) {
 	plan, ok := PlanForRequest("Give financial advice and certify the amortization correctness of this loan repayment schedule")
 	if !ok {

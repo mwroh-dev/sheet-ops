@@ -152,6 +152,74 @@ func TestDraftOrganismExecutionRequestBuildsExpenseReimbursementStepsFromWorkboo
 	}
 }
 
+func TestDraftOrganismExecutionRequestBuildsPurchaseOrderStepsFromWorkbookFacts(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "purchase-order.xlsx")
+	outputFile := filepath.Join(tempDir, "purchase-order-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "PurchaseOrder"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("PurchaseOrder", "A1", &[]any{"item", "quantity", "unit_price", "po_status", "line_total"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("PurchaseOrder", "A2", &[]any{"Keyboard", 2, 50, "draft"}); err != nil {
+		t.Fatalf("SetSheetRow row: %v", err)
+	}
+	if err := file.SetCellFormula("PurchaseOrder", "E2", "=B2*C2"); err != nil {
+		t.Fatalf("SetCellFormula(E2): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	facts, err := runtimeinspect.InspectWorkbookFacts(inputFile)
+	if err != nil {
+		t.Fatalf("InspectWorkbookFacts: %v", err)
+	}
+	requestText := "Append purchase order line items, extend order totals, validate PO status, protect formulas, and generate a printable purchase order"
+	plan := TemplateClassPlanHintForRequest(requestText)
+	if plan == nil {
+		t.Fatal("missing plan")
+	}
+
+	req, ok := DraftOrganismExecutionRequest(OrganismDraftInput{
+		ScenarioID:        "purchase-order-organism-draft",
+		RequestText:       requestText,
+		InputFile:         inputFile,
+		OutputFile:        outputFile,
+		WorkbookFacts:     facts,
+		TemplateClassPlan: *plan,
+	})
+	if !ok {
+		t.Fatal("DraftOrganismExecutionRequest ok=false")
+	}
+	if len(req.Steps) != 5 {
+		t.Fatalf("steps=%d want 5", len(req.Steps))
+	}
+	if req.Steps[0].AtomID != "append_structured_rows" || len(req.Steps[0].Values) != 4 {
+		t.Fatalf("append step=%+v", req.Steps[0])
+	}
+	if req.Steps[1].AtomID != "extend_table_formulas" || req.Steps[1].FormulaSourceRow != 2 || req.Steps[1].TargetRows[0] != 3 {
+		t.Fatalf("formula step=%+v", req.Steps[1])
+	}
+	if req.Steps[2].AtomID != "add_data_validation" || req.Steps[2].ValidationRule == nil || req.Steps[2].ValidationRule.Ranges[0] != "D2:D20" {
+		t.Fatalf("validation step=%+v", req.Steps[2])
+	}
+	if req.Steps[3].AtomID != "protect_formula_cells" || req.Steps[3].ProtectionRule == nil || req.Steps[3].ProtectionRule.FormulaRanges[0] != "E2:E3" {
+		t.Fatalf("protection step=%+v", req.Steps[3])
+	}
+	if req.Steps[4].AtomID != "generate_printable_form" || req.Steps[4].TargetSheet != "PurchaseOrderPrint" || req.Steps[4].FormTitle != "Purchase Order" || req.Steps[4].TableBinding == nil {
+		t.Fatalf("printable step=%+v", req.Steps[4])
+	}
+	if err := runtimeschema.ValidateStruct(organismExecutionRequestSchemaPathForTest(), req); err != nil {
+		t.Fatalf("draft organism request schema validation: %v", err)
+	}
+}
+
 func TestDraftOrganismExecutionRequestBuildsMonthlyBudgetStepsFromWorkbookFacts(t *testing.T) {
 	tempDir := t.TempDir()
 	inputFile := filepath.Join(tempDir, "budget.xlsx")

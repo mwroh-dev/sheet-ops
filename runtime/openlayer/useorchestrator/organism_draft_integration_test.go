@@ -168,6 +168,83 @@ func TestOrchestrateOrganismExecutesRequestCompilerExpenseDraft(t *testing.T) {
 	}
 }
 
+func TestOrchestrateOrganismExecutesRequestCompilerPurchaseOrderDraft(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "purchase-order.xlsx")
+	outputFile := filepath.Join(tempDir, "purchase-order-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "PurchaseOrder"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("PurchaseOrder", "A1", &[]any{"item", "quantity", "unit_price", "po_status", "line_total"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("PurchaseOrder", "A2", &[]any{"Keyboard", 2, 50, "draft"}); err != nil {
+		t.Fatalf("SetSheetRow row: %v", err)
+	}
+	if err := file.SetCellFormula("PurchaseOrder", "E2", "=B2*C2"); err != nil {
+		t.Fatalf("SetCellFormula(E2): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	facts, err := runtimeinspect.InspectWorkbookFacts(inputFile)
+	if err != nil {
+		t.Fatalf("InspectWorkbookFacts: %v", err)
+	}
+	requestText := "Append purchase order line items, extend order totals, validate PO status, protect formulas, and generate a printable purchase order"
+	plan := requestcompiler.TemplateClassPlanHintForRequest(requestText)
+	if plan == nil {
+		t.Fatal("missing plan")
+	}
+	draft, ok := requestcompiler.DraftOrganismExecutionRequest(requestcompiler.OrganismDraftInput{
+		ScenarioID:        "purchase-order-organism-draft-integration",
+		RequestText:       requestText,
+		InputFile:         inputFile,
+		OutputFile:        outputFile,
+		WorkbookFacts:     facts,
+		TemplateClassPlan: *plan,
+	})
+	if !ok {
+		t.Fatal("DraftOrganismExecutionRequest ok=false")
+	}
+	raw, err := json.Marshal(draft)
+	if err != nil {
+		t.Fatalf("Marshal draft: %v", err)
+	}
+	var req OrganismExecutionRequest
+	if err := json.Unmarshal(raw, &req); err != nil {
+		t.Fatalf("Unmarshal draft: %v", err)
+	}
+
+	result, err := OrchestrateOrganism(req)
+	if err != nil {
+		t.Fatalf("OrchestrateOrganism: %v", err)
+	}
+	if !result.TemplateClassEvaluation.Pass || !result.OrganismVerification.Pass {
+		t.Fatalf("organism evidence failed: eval=%+v verification=%+v", result.TemplateClassEvaluation, result.OrganismVerification)
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	if got, err := outputHandle.GetCellValue("PurchaseOrder", "A3"); err != nil || got != "Monitor" {
+		t.Fatalf("PurchaseOrder!A3=%q err=%v want Monitor", got, err)
+	}
+	if got, err := outputHandle.GetCellFormula("PurchaseOrder", "E3"); err != nil || got != "=B3*C3" {
+		t.Fatalf("PurchaseOrder!E3 formula=%q err=%v want =B3*C3", got, err)
+	}
+	if got, err := outputHandle.GetCellValue("PurchaseOrderPrint", "A1"); err != nil || got != "Purchase Order" {
+		t.Fatalf("PurchaseOrderPrint!A1=%q err=%v want Purchase Order", got, err)
+	}
+}
+
 func TestOrchestrateOrganismExecutesRequestCompilerBudgetDraft(t *testing.T) {
 	tempDir := t.TempDir()
 	inputFile := filepath.Join(tempDir, "budget.xlsx")
