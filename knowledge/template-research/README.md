@@ -108,6 +108,9 @@ Promotion status is owned by Agent C:
   layer. They must not be read as an autonomous planner, classifier, or
   organism-level verifier implementation until runtime code and verifier
   fixtures are added.
+- `runtime/templateclass` provides the first deterministic request classifier,
+  atom-sequence planner, and verifier-evidence evaluator for the productization
+  slice. It still does not execute workbook operations by itself.
 - Atom-builder records are an intermediate planning layer. A supported mirror
   must reference an existing capability record and runtime paths; a planned
   builder must reference an opportunity record and no runtime implementation.

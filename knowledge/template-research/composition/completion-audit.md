@@ -22,6 +22,8 @@ goal. It does not claim full workbook generation or broad Excel automation.
 - Runtime productization contracts now cover organism-level verifier specs,
   operation planner sequences, template class harness scenarios, and advanced
   atom promotion decisions.
+- `runtime/templateclass` provides a deterministic classifier/planner/evidence
+  evaluator for the first productization slice.
 - The knowledge harness validates roadmap coverage, fixture priority alignment,
   advisory authority, supported atom references, absence of planned blockers,
   preview evidence presence, verified-class depth contract references, and
@@ -43,7 +45,8 @@ goal. It does not claim full workbook generation or broad Excel automation.
 - Organism-level verifiers do not exist yet; previews rely on
   operation-specific verifiers.
 - Operation planner and template class harness records are advisory contracts,
-  not autonomous runtime planner execution.
+  not autonomous runtime planner execution. The `runtime/templateclass` package
+  plans and evaluates evidence, but it does not execute workbook operations.
 - Native Excel pivot artifacts are not supported.
 - Matrix auto-growth, rich visual layout QA, full printable pagination QA, and
   domain-specific schedule semantics remain future runtime work.
@@ -55,6 +58,7 @@ goal. It does not claim full workbook generation or broad Excel automation.
 The advisory ecosystem, runtime bridge, coverage ladder, representative preview
 fixture coverage, p2/p3 verified-class depth contracts, and runtime
 productization contracts are complete for the current 21 roadmap organisms.
+The first deterministic template-class planner/evaluator slice is also present.
 The remaining limits are explicitly documented as future runtime implementation
 depth, not untracked blockers in the requested advisory-to-productization
 coverage layer.
