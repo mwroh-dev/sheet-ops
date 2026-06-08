@@ -188,6 +188,8 @@ func verifyOrganismWorkbookSemantics(organismID, outputFile string) []string {
 		return verifyStudentGradebookWorkbook(outputFile)
 	case "training_completion_matrix":
 		return verifyTrainingCompletionWorkbook(outputFile)
+	case "service_ticket_queue":
+		return verifyServiceTicketWorkbook(outputFile)
 	default:
 		return nil
 	}
@@ -644,6 +646,42 @@ func verifyTrainingCompletionWorkbook(outputFile string) []string {
 		reasons = append(reasons, fmt.Sprintf("training completion protection semantic check missing Training protection: %v", err))
 	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
 		reasons = append(reasons, "training completion protection semantic check missing Training protection options")
+	}
+	return reasons
+}
+
+func verifyServiceTicketWorkbook(outputFile string) []string {
+	handle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		return []string{fmt.Sprintf("service ticket workbook semantic check failed to open output: %v", err)}
+	}
+	defer func() { _ = handle.Close() }()
+
+	var reasons []string
+	if got, err := handle.GetCellValue("Tickets", "A3"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("service ticket append semantic check missing Tickets!A3: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "service ticket append semantic check missing Tickets!A3 ticket id value")
+	}
+	if got, err := handle.GetCellValue("TicketSummary", "B2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("service ticket summary semantic check missing TicketSummary!B2: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "service ticket summary semantic check missing TicketSummary!B2 ticket summary value")
+	}
+	if got, err := handle.GetCellFormula("Tickets", "D3"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("service ticket SLA formula semantic check missing Tickets!D3 formula: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "service ticket SLA formula semantic check missing Tickets!D3 formula")
+	}
+	if validations, err := handle.GetDataValidations("Tickets"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("service ticket validation semantic check missing Tickets data validation: %v", err))
+	} else if len(validations) == 0 {
+		reasons = append(reasons, "service ticket validation semantic check missing Tickets data validation")
+	}
+	if protection, err := handle.GetSheetProtection("Tickets"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("service ticket protection semantic check missing Tickets protection: %v", err))
+	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
+		reasons = append(reasons, "service ticket protection semantic check missing Tickets protection options")
 	}
 	return reasons
 }
