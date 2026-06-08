@@ -275,6 +275,52 @@ func TestVerifyOrganismPlanExecutionChecksInvoiceWorkbookSemantics(t *testing.T)
 	}
 }
 
+func TestVerifyOrganismPlanExecutionChecksExpenseWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "expense.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "ExpenseItems"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("ExpenseItems", "A1", &[]any{"item", "amount", "reimbursable_rate", "receipt_status", "reimbursable_total"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("ExpenseItems", "A2", &[]any{"Hotel", 200, 1, "attached"}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetSheetRow("ExpenseItems", "A3", &[]any{"Taxi", 40, 1, "attached"}); err != nil {
+		t.Fatalf("SetSheetRow row3: %v", err)
+	}
+	if err := file.SetCellFormula("ExpenseItems", "E3", "=B3*C3"); err != nil {
+		t.Fatalf("SetCellFormula(E3): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "expense_reimbursement",
+		OperationSequence:     []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells", "generate_printable_form"},
+		RequiredVerifierSpecs: []string{"expense_reimbursement_verifier"},
+	}, []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells", "generate_printable_form"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "ExpenseClaim") {
+		t.Fatalf("organism verification reasons=%v want missing printable expense evidence", verification.Reasons)
+	}
+}
+
 func TestRunOrganismPlanExecutesLoanSequenceWithNonClaims(t *testing.T) {
 	setRuntimeRoots(t)
 

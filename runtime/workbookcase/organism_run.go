@@ -160,6 +160,8 @@ func verifyOrganismWorkbookSemantics(organismID, outputFile string) []string {
 	switch organismID {
 	case "invoice_line_item_billing":
 		return verifyInvoiceLineItemWorkbook(outputFile)
+	case "expense_reimbursement":
+		return verifyExpenseReimbursementWorkbook(outputFile)
 	default:
 		return nil
 	}
@@ -187,6 +189,32 @@ func verifyInvoiceLineItemWorkbook(outputFile string) []string {
 		reasons = append(reasons, fmt.Sprintf("invoice printable semantic check missing InvoicePrint!A1: %v", err))
 	} else if strings.TrimSpace(got) == "" {
 		reasons = append(reasons, "invoice printable semantic check missing InvoicePrint!A1 title")
+	}
+	return reasons
+}
+
+func verifyExpenseReimbursementWorkbook(outputFile string) []string {
+	handle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		return []string{fmt.Sprintf("expense workbook semantic check failed to open output: %v", err)}
+	}
+	defer func() { _ = handle.Close() }()
+
+	var reasons []string
+	if got, err := handle.GetCellValue("ExpenseItems", "A3"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("expense reimbursement semantic check failed reading ExpenseItems!A3: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "expense reimbursement semantic check missing appended ExpenseItems!A3 value")
+	}
+	if got, err := handle.GetCellFormula("ExpenseItems", "E3"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("expense reimbursement semantic check failed reading ExpenseItems!E3 formula: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "expense reimbursement semantic check missing ExpenseItems!E3 formula")
+	}
+	if got, err := handle.GetCellValue("ExpenseClaim", "A1"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("expense printable semantic check missing ExpenseClaim!A1: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "expense printable semantic check missing ExpenseClaim!A1 title")
 	}
 	return reasons
 }
