@@ -9,6 +9,26 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+func assertCellValue(t *testing.T, file *excelize.File, sheet, cell, want string) {
+	t.Helper()
+	got, err := file.GetCellValue(sheet, cell)
+	if err != nil {
+		t.Fatalf("GetCellValue %s!%s: %v", sheet, cell, err)
+	}
+	if got != want {
+		t.Fatalf("%s!%s=%q want %q", sheet, cell, got, want)
+	}
+}
+
+func definedNameExists(values []excelize.DefinedName, name, scope, refersTo string) bool {
+	for _, value := range values {
+		if value.Name == name && value.Scope == scope && value.RefersTo == refersTo {
+			return true
+		}
+	}
+	return false
+}
+
 func TestRunWriteValuesPreservesSourceAndVerifiesCells(t *testing.T) {
 	tempDir := t.TempDir()
 	inputFile := filepath.Join(tempDir, "input.xlsx")
@@ -206,6 +226,97 @@ func TestRunReconcileTablesCreatesMatchedMissingAndMismatchRows(t *testing.T) {
 				t.Fatalf("row %d column %d=%q want %q", rowIndex+1, columnIndex+1, valueAt(rows[rowIndex], columnIndex), wantRows[rowIndex][columnIndex])
 			}
 		}
+	}
+}
+
+func TestRunGeneratePrintableFormCreatesFixedOutputRegion(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "invoice.xlsx")
+	outputFile := filepath.Join(tempDir, "invoice-output.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "InvoiceData"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetCellValue("InvoiceData", "B2", "INV-001"); err != nil {
+		t.Fatalf("SetCellValue invoice: %v", err)
+	}
+	if err := file.SetCellValue("InvoiceData", "B3", "Acme Co"); err != nil {
+		t.Fatalf("SetCellValue customer: %v", err)
+	}
+	if _, err := file.NewSheet("LineItems"); err != nil {
+		t.Fatalf("NewSheet LineItems: %v", err)
+	}
+	header := []any{"sku", "quantity", "unit_price", "line_total"}
+	if err := file.SetSheetRow("LineItems", "A1", &header); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	for idx, row := range [][]any{
+		{"A001", 2, 10, 20},
+		{"B002", 1, 15, 15},
+	} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("LineItems", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow line item %d: %v", idx, err)
+		}
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	ir := compiler.WorkbookOperationIR{
+		ExecutionKind:   "composition",
+		CompositionKind: "printable_form",
+		OperationFamily: "generate_printable_form",
+		SourceSheet:     "InvoiceData",
+		TargetSheet:     "InvoicePrint",
+		FormTitle:       "Invoice",
+		PrintArea:       "A1:D8",
+		FieldBindings: []compiler.FormFieldBinding{
+			{Label: "Invoice No", SourceSheet: "InvoiceData", SourceCell: "B2", LabelCell: "A2", ValueCell: "B2"},
+			{Label: "Customer", SourceSheet: "InvoiceData", SourceCell: "B3", LabelCell: "A3", ValueCell: "B3"},
+		},
+		TableBinding: &compiler.FormTableBinding{
+			SourceSheet:   "LineItems",
+			SourceColumns: []string{"sku", "quantity", "unit_price", "line_total"},
+			HeaderStart:   "A5",
+			DataStart:     "A6",
+		},
+		PreserveOriginal: true,
+	}
+	result, err := RunWorkbookOperation(ir, inputFile, outputFile)
+	if err != nil {
+		t.Fatalf("RunWorkbookOperation: %v", err)
+	}
+	if result.OperationFamily != "generate_printable_form" {
+		t.Fatalf("operation_family=%q want generate_printable_form", result.OperationFamily)
+	}
+	if result.SummarySheet != "InvoicePrint" {
+		t.Fatalf("summary_sheet=%q want InvoicePrint", result.SummarySheet)
+	}
+
+	verification, err := runtimeverify.VerifyWorkbookOperation(ir, inputFile, outputFile, result.SourceSHA256Before, result.SourceSHA256After)
+	if err != nil {
+		t.Fatalf("VerifyWorkbookOperation: %v", err)
+	}
+	if !verification.Pass {
+		t.Fatalf("verification failed: %+v", verification)
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	assertCellValue(t, outputHandle, "InvoicePrint", "A1", "Invoice")
+	assertCellValue(t, outputHandle, "InvoicePrint", "A2", "Invoice No")
+	assertCellValue(t, outputHandle, "InvoicePrint", "B2", "INV-001")
+	assertCellValue(t, outputHandle, "InvoicePrint", "A5", "sku")
+	assertCellValue(t, outputHandle, "InvoicePrint", "D7", "15")
+	if !definedNameExists(outputHandle.GetDefinedName(), "_xlnm.Print_Area", "InvoicePrint", "'InvoicePrint'!$A$1:$D$8") {
+		t.Fatalf("print area defined names=%+v", outputHandle.GetDefinedName())
 	}
 }
 

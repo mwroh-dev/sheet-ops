@@ -8,18 +8,19 @@ import (
 )
 
 const (
-	SummaryOperationName             = "create_summary_sheet"
-	HighlightOperationName           = "highlight_threshold_rows"
-	JoinLookupOperationName          = "create_join_lookup_result_sheet"
-	AppendRowsOperationName          = "append_structured_rows"
-	ExtendFormulasOperationName      = "extend_table_formulas"
-	CopyPeriodSheetOperationName     = "copy_period_sheet"
-	AddDataValidationOperationName   = "add_data_validation"
-	ProtectFormulaCellsOperationName = "protect_formula_cells"
-	NormalizeHeadersOperationName    = "normalize_headers"
-	RollForwardPeriodOperationName   = "roll_forward_period"
-	ReconcileTablesOperationName     = "reconcile_tables"
-	WriteValuesOperationName         = "write_values"
+	SummaryOperationName               = "create_summary_sheet"
+	HighlightOperationName             = "highlight_threshold_rows"
+	JoinLookupOperationName            = "create_join_lookup_result_sheet"
+	AppendRowsOperationName            = "append_structured_rows"
+	ExtendFormulasOperationName        = "extend_table_formulas"
+	CopyPeriodSheetOperationName       = "copy_period_sheet"
+	AddDataValidationOperationName     = "add_data_validation"
+	ProtectFormulaCellsOperationName   = "protect_formula_cells"
+	NormalizeHeadersOperationName      = "normalize_headers"
+	RollForwardPeriodOperationName     = "roll_forward_period"
+	ReconcileTablesOperationName       = "reconcile_tables"
+	GeneratePrintableFormOperationName = "generate_printable_form"
+	WriteValuesOperationName           = "write_values"
 )
 
 type FilterSpec = runtimetaskspec.FilterSpec
@@ -190,6 +191,18 @@ type ReconcileTablesPlan struct {
 	CompareMappings  []runtimetaskspec.CompareMapping `json:"compare_mappings"`
 	PreserveOriginal bool                             `json:"preserve_original"`
 	OutputFile       string                           `json:"output_file"`
+}
+
+type GeneratePrintableFormPlan struct {
+	Operation        string                             `json:"operation"`
+	SheetName        string                             `json:"sheet_name"`
+	TargetSheet      string                             `json:"target_sheet"`
+	FormTitle        string                             `json:"form_title"`
+	PrintArea        string                             `json:"print_area"`
+	FieldBindings    []runtimetaskspec.FormFieldBinding `json:"field_bindings"`
+	TableBinding     *runtimetaskspec.FormTableBinding  `json:"table_binding"`
+	PreserveOriginal bool                               `json:"preserve_original"`
+	OutputFile       string                             `json:"output_file"`
 }
 
 type WritePolicyDecision struct {

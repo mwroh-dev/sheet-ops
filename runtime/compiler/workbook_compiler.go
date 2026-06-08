@@ -48,6 +48,21 @@ type CompareMapping struct {
 	As          string `json:"as,omitempty"`
 }
 
+type FormFieldBinding struct {
+	Label       string `json:"label"`
+	SourceSheet string `json:"source_sheet,omitempty"`
+	SourceCell  string `json:"source_cell"`
+	LabelCell   string `json:"label_cell"`
+	ValueCell   string `json:"value_cell"`
+}
+
+type FormTableBinding struct {
+	SourceSheet   string   `json:"source_sheet"`
+	SourceColumns []string `json:"source_columns"`
+	HeaderStart   string   `json:"header_start"`
+	DataStart     string   `json:"data_start"`
+}
+
 type WorkbookInspection struct {
 	InputWorkbook     string                  `json:"input_workbook"`
 	SheetNames        []string                `json:"sheet_names"`
@@ -82,6 +97,10 @@ type WorkbookOperationIR struct {
 	IncludeSourceColumns []string               `json:"include_source_columns,omitempty"`
 	AppendLookupColumns  []string               `json:"append_lookup_columns,omitempty"`
 	CompareMappings      []CompareMapping       `json:"compare_mappings,omitempty"`
+	FormTitle            string                 `json:"form_title,omitempty"`
+	PrintArea            string                 `json:"print_area,omitempty"`
+	FieldBindings        []FormFieldBinding     `json:"field_bindings,omitempty"`
+	TableBinding         *FormTableBinding      `json:"table_binding,omitempty"`
 	Values               []CellValue            `json:"values,omitempty"`
 	FormulaSourceRow     int                    `json:"formula_source_row,omitempty"`
 	TargetRows           []int                  `json:"target_rows,omitempty"`
@@ -531,6 +550,66 @@ func CompileReconcileTablesOperation(task taskspec.ReconcileTablesTask) (Workboo
 	}, nil
 }
 
+func CompileGeneratePrintableFormOperation(task taskspec.GeneratePrintableFormTask) (WorkbookOperationIR, error) {
+	if task.SourceSheet == "" {
+		return WorkbookOperationIR{}, fmt.Errorf("source sheet must not be empty")
+	}
+	if task.TargetSheet == "" {
+		return WorkbookOperationIR{}, fmt.Errorf("target sheet must not be empty")
+	}
+	if task.TargetSheet == task.SourceSheet {
+		return WorkbookOperationIR{}, fmt.Errorf("target sheet must differ from source sheet")
+	}
+	if strings.TrimSpace(task.FormTitle) == "" {
+		return WorkbookOperationIR{}, fmt.Errorf("form title must not be empty")
+	}
+	if strings.TrimSpace(task.PrintArea) == "" {
+		return WorkbookOperationIR{}, fmt.Errorf("print area must not be empty")
+	}
+	if len(task.FieldBindings) == 0 {
+		return WorkbookOperationIR{}, fmt.Errorf("field bindings must not be empty")
+	}
+	if task.TableBinding == nil || len(task.TableBinding.SourceColumns) == 0 {
+		return WorkbookOperationIR{}, fmt.Errorf("table binding source columns must not be empty")
+	}
+	if err := validateGeneratePrintableFormTaskCompositionBoundary(task.TaskSpec); err != nil {
+		return WorkbookOperationIR{}, err
+	}
+	fields := make([]FormFieldBinding, 0, len(task.FieldBindings))
+	for _, binding := range task.FieldBindings {
+		if strings.TrimSpace(binding.Label) == "" ||
+			strings.TrimSpace(binding.SourceCell) == "" ||
+			strings.TrimSpace(binding.LabelCell) == "" ||
+			strings.TrimSpace(binding.ValueCell) == "" {
+			return WorkbookOperationIR{}, fmt.Errorf("field binding label, source_cell, label_cell, and value_cell must not be empty")
+		}
+		fields = append(fields, FormFieldBinding(binding))
+	}
+	table := FormTableBinding{
+		SourceSheet:   task.TableBinding.SourceSheet,
+		SourceColumns: cloneStrings(task.TableBinding.SourceColumns),
+		HeaderStart:   task.TableBinding.HeaderStart,
+		DataStart:     task.TableBinding.DataStart,
+	}
+	if strings.TrimSpace(table.SourceSheet) == "" ||
+		strings.TrimSpace(table.HeaderStart) == "" ||
+		strings.TrimSpace(table.DataStart) == "" {
+		return WorkbookOperationIR{}, fmt.Errorf("table binding source_sheet, header_start, and data_start must not be empty")
+	}
+	return WorkbookOperationIR{
+		ExecutionKind:    taskspec.ExecutionKindComposition,
+		CompositionKind:  taskspec.CompositionKindPrintableForm,
+		OperationFamily:  taskspec.OperationFamilyGeneratePrintableForm,
+		SourceSheet:      task.SourceSheet,
+		TargetSheet:      task.TargetSheet,
+		FormTitle:        task.FormTitle,
+		PrintArea:        task.PrintArea,
+		FieldBindings:    fields,
+		TableBinding:     &table,
+		PreserveOriginal: task.PreserveOriginal,
+	}, nil
+}
+
 func validateHighlightTaskCompositionBoundary(spec taskspec.TaskSpec) error {
 	if spec.ExecutionKind != taskspec.ExecutionKindComposition {
 		return fmt.Errorf("highlight task execution_kind=%q want %q", spec.ExecutionKind, taskspec.ExecutionKindComposition)
@@ -657,6 +736,19 @@ func validateReconcileTablesTaskCompositionBoundary(spec taskspec.TaskSpec) erro
 	}
 	if spec.Operation != taskspec.OperationReconcileTables {
 		return fmt.Errorf("reconcile tables task operation=%q want %q", spec.Operation, taskspec.OperationReconcileTables)
+	}
+	return nil
+}
+
+func validateGeneratePrintableFormTaskCompositionBoundary(spec taskspec.TaskSpec) error {
+	if spec.ExecutionKind != taskspec.ExecutionKindComposition {
+		return fmt.Errorf("generate printable form task execution_kind=%q want %q", spec.ExecutionKind, taskspec.ExecutionKindComposition)
+	}
+	if spec.CompositionKind != taskspec.CompositionKindPrintableForm {
+		return fmt.Errorf("generate printable form task composition_kind=%q want %q", spec.CompositionKind, taskspec.CompositionKindPrintableForm)
+	}
+	if spec.Operation != taskspec.OperationGeneratePrintableForm {
+		return fmt.Errorf("generate printable form task operation=%q want %q", spec.Operation, taskspec.OperationGeneratePrintableForm)
 	}
 	return nil
 }

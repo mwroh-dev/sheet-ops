@@ -17,6 +17,7 @@ func TestInvoiceLineItemBillingPreviewComposesAppendFormulaExtensionValidationAn
 	finalOutput := filepath.Join(tempDir, "invoice-final.xlsx")
 	validationOutput := filepath.Join(tempDir, "invoice-validated.xlsx")
 	protectedOutput := filepath.Join(tempDir, "invoice-protected.xlsx")
+	printableOutput := filepath.Join(tempDir, "invoice-printable.xlsx")
 
 	file := excelize.NewFile()
 	defer func() { _ = file.Close() }()
@@ -117,11 +118,43 @@ func TestInvoiceLineItemBillingPreviewComposesAppendFormulaExtensionValidationAn
 		t.Fatalf("protection verification failed: %+v", protectionResult.Verification)
 	}
 
-	outputHandle, err := excelize.OpenFile(protectedOutput)
+	printableTask := runtimetaskspec.BuildGeneratePrintableFormTask(runtimetaskspec.GeneratePrintableFormRequest{
+		RequestText: "청구서 line item 데이터를 printable invoice form으로 생성한다.",
+		InputFile:   protectedOutput,
+		SourceSheet: "LineItems",
+		TargetSheet: "InvoicePrint",
+		OutputFile:  printableOutput,
+		FormTitle:   "Invoice",
+		PrintArea:   "A1:E8",
+		FieldBindings: []runtimetaskspec.FormFieldBinding{
+			{Label: "First SKU", SourceSheet: "LineItems", SourceCell: "A2", LabelCell: "A2", ValueCell: "B2"},
+		},
+		TableBinding: &runtimetaskspec.FormTableBinding{
+			SourceSheet:   "LineItems",
+			SourceColumns: []string{"sku", "quantity", "unit_price", "line_total", "tax"},
+			HeaderStart:   "A4",
+			DataStart:     "A5",
+		},
+	})
+	printableResult, err := Run(Request{ScenarioID: "invoice-preview-printable-form", TaskSpec: printableTask.TaskSpec})
 	if err != nil {
-		t.Fatalf("Open protected output: %v", err)
+		t.Fatalf("printable Run: %v", err)
+	}
+	if !printableResult.Verification.Pass {
+		t.Fatalf("printable verification failed: %+v", printableResult.Verification)
+	}
+
+	outputHandle, err := excelize.OpenFile(printableOutput)
+	if err != nil {
+		t.Fatalf("Open printable output: %v", err)
 	}
 	defer func() { _ = outputHandle.Close() }()
+	if got, err := outputHandle.GetCellValue("InvoicePrint", "A1"); err != nil || got != "Invoice" {
+		t.Fatalf("InvoicePrint!A1=%q err=%v want Invoice", got, err)
+	}
+	if got, err := outputHandle.GetCellValue("InvoicePrint", "A5"); err != nil || got != "A001" {
+		t.Fatalf("InvoicePrint!A5=%q err=%v want A001", got, err)
+	}
 	if got, err := outputHandle.GetCellValue("LineItems", "A3"); err != nil || got != "B002" {
 		t.Fatalf("LineItems!A3=%q err=%v want B002", got, err)
 	}

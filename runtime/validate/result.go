@@ -91,6 +91,14 @@ type ReconcileTablesIntent struct {
 	CompareMappings []CompareMapping
 }
 
+type GeneratePrintableFormIntent struct {
+	TargetSheet   string
+	FormTitle     string
+	PrintArea     string
+	FieldBindings []FormFieldBinding
+	TableBinding  *FormTableBinding
+}
+
 type DataValidationRule struct {
 	Ranges        []string `json:"ranges"`
 	RuleType      string   `json:"rule_type"`
@@ -122,6 +130,21 @@ type CompareMapping struct {
 	As          string `json:"as,omitempty"`
 }
 
+type FormFieldBinding struct {
+	Label       string `json:"label"`
+	SourceSheet string `json:"source_sheet,omitempty"`
+	SourceCell  string `json:"source_cell"`
+	LabelCell   string `json:"label_cell"`
+	ValueCell   string `json:"value_cell"`
+}
+
+type FormTableBinding struct {
+	SourceSheet   string   `json:"source_sheet"`
+	SourceColumns []string `json:"source_columns"`
+	HeaderStart   string   `json:"header_start"`
+	DataStart     string   `json:"data_start"`
+}
+
 type MaterializationIntent struct {
 	PreserveOriginal      bool
 	OutputDestinationMode string
@@ -151,6 +174,7 @@ type NormalizedIntent struct {
 	NormalizeHeaders      NormalizeHeadersIntent
 	RollForwardPeriod     RollForwardPeriodIntent
 	ReconcileTables       ReconcileTablesIntent
+	GeneratePrintableForm GeneratePrintableFormIntent
 	Materialization       MaterializationIntent
 	Ambiguity             AmbiguityIntent
 }
@@ -225,6 +249,10 @@ type ValidatedExecutionRequest struct {
 	LeftKey              string                 `json:"left_key,omitempty"`
 	RightKey             string                 `json:"right_key,omitempty"`
 	CompareMappings      []CompareMapping       `json:"compare_mappings,omitempty"`
+	FormTitle            string                 `json:"form_title,omitempty"`
+	PrintArea            string                 `json:"print_area,omitempty"`
+	FieldBindings        []FormFieldBinding     `json:"field_bindings,omitempty"`
+	TableBinding         *FormTableBinding      `json:"table_binding,omitempty"`
 }
 
 type CellValue struct {
@@ -277,6 +305,10 @@ type admittedIntent struct {
 	leftKey              string
 	rightKey             string
 	compareMappings      []CompareMapping
+	formTitle            string
+	printArea            string
+	fieldBindings        []FormFieldBinding
+	tableBinding         *FormTableBinding
 }
 
 type boundIntent struct {
@@ -347,6 +379,24 @@ func cloneCompareMappings(values []CompareMapping) []CompareMapping {
 	cloned := make([]CompareMapping, len(values))
 	copy(cloned, values)
 	return cloned
+}
+
+func cloneFormFieldBindings(values []FormFieldBinding) []FormFieldBinding {
+	if len(values) == 0 {
+		return []FormFieldBinding{}
+	}
+	cloned := make([]FormFieldBinding, len(values))
+	copy(cloned, values)
+	return cloned
+}
+
+func cloneFormTableBinding(value *FormTableBinding) *FormTableBinding {
+	if value == nil {
+		return nil
+	}
+	cloned := *value
+	cloned.SourceColumns = append([]string(nil), value.SourceColumns...)
+	return &cloned
 }
 
 func finalizeResult(result Result) (Result, error) {

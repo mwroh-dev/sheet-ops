@@ -667,6 +667,73 @@ func TestRunReconcileTablesEndToEnd(t *testing.T) {
 	}
 }
 
+func TestRunGeneratePrintableFormEndToEnd(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "invoice.xlsx")
+	outputFile := filepath.Join(tempDir, "invoice-output.xlsx")
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "InvoiceData"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetCellValue("InvoiceData", "B2", "INV-001"); err != nil {
+		t.Fatalf("SetCellValue invoice: %v", err)
+	}
+	if err := file.SetCellValue("InvoiceData", "B3", "Acme Co"); err != nil {
+		t.Fatalf("SetCellValue customer: %v", err)
+	}
+	if _, err := file.NewSheet("LineItems"); err != nil {
+		t.Fatalf("NewSheet LineItems: %v", err)
+	}
+	header := []any{"sku", "quantity", "unit_price", "line_total"}
+	if err := file.SetSheetRow("LineItems", "A1", &header); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	row := []any{"A001", 2, 10, 20}
+	if err := file.SetSheetRow("LineItems", "A2", &row); err != nil {
+		t.Fatalf("SetSheetRow row: %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	task := runtimetaskspec.BuildGeneratePrintableFormTask(runtimetaskspec.GeneratePrintableFormRequest{
+		RequestText: "invoice printable form을 생성한다.",
+		InputFile:   inputFile,
+		SourceSheet: "InvoiceData",
+		TargetSheet: "InvoicePrint",
+		OutputFile:  outputFile,
+		FormTitle:   "Invoice",
+		PrintArea:   "A1:D8",
+		FieldBindings: []runtimetaskspec.FormFieldBinding{
+			{Label: "Invoice No", SourceSheet: "InvoiceData", SourceCell: "B2", LabelCell: "A2", ValueCell: "B2"},
+			{Label: "Customer", SourceSheet: "InvoiceData", SourceCell: "B3", LabelCell: "A3", ValueCell: "B3"},
+		},
+		TableBinding: &runtimetaskspec.FormTableBinding{
+			SourceSheet:   "LineItems",
+			SourceColumns: []string{"sku", "quantity", "unit_price", "line_total"},
+			HeaderStart:   "A5",
+			DataStart:     "A6",
+		},
+	})
+	result, err := Run(Request{ScenarioID: "workbookcase-generate-printable-form", TaskSpec: task.TaskSpec})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if !result.Verification.Pass {
+		t.Fatalf("verification failed: %+v", result.Verification)
+	}
+	if result.Verification.Operation != GeneratePrintableFormOperationName {
+		t.Fatalf("verification operation=%q want %s", result.Verification.Operation, GeneratePrintableFormOperationName)
+	}
+	if result.Verification.SummarySheet != "InvoicePrint" {
+		t.Fatalf("summary sheet=%q want InvoicePrint", result.Verification.SummarySheet)
+	}
+}
+
 func TestRunRejectsUnsafeScenarioIDBeforeCreatingArtifacts(t *testing.T) {
 	artifactRoot := t.TempDir()
 	t.Setenv(ArtifactRootEnv, artifactRoot)

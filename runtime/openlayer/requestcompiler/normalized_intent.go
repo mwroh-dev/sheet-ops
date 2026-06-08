@@ -109,6 +109,9 @@ func normalizeIntent(intent NormalizedIntent) NormalizedIntent {
 	if intent.ReconcileTables.CompareMappings == nil {
 		intent.ReconcileTables.CompareMappings = []CompareMapping{}
 	}
+	if intent.GeneratePrintableForm.FieldBindings == nil {
+		intent.GeneratePrintableForm.FieldBindings = []FormFieldBinding{}
+	}
 	if intent.Ambiguities != nil {
 		intent.Ambiguity.Markers = append([]string(nil), intent.Ambiguities...)
 	} else if intent.Ambiguity.Markers != nil {

@@ -59,6 +59,8 @@ func RunWorkbookOperation(ir compiler.WorkbookOperationIR, inputWorkbook, output
 		return RunRollForwardPeriod(ir, inputWorkbook, outputWorkbook)
 	case "reconcile_tables":
 		return RunReconcileTables(ir, inputWorkbook, outputWorkbook)
+	case "generate_printable_form":
+		return RunGeneratePrintableForm(ir, inputWorkbook, outputWorkbook)
 	case "write_values":
 		return RunWriteValues(ir, inputWorkbook, outputWorkbook)
 	default:

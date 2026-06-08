@@ -30,7 +30,7 @@ Atom builder records mirror this path for `group_summarize`,
 `highlight_threshold`, `join_lookup`, `append_structured_rows`,
 `extend_table_formulas`, `copy_period_sheet`, `add_data_validation`,
 `protect_formula_cells`, `normalize_headers`, `roll_forward_period`,
-`reconcile_tables`, and `write_values`. The supported `add_data_validation` scope is explicit
+`reconcile_tables`, `generate_printable_form`, and `write_values`. The supported `add_data_validation` scope is explicit
 list/dropdown rules on declared ranges; richer validation forms remain
 opportunity scope. The supported `protect_formula_cells` scope is explicit
 formula/input ranges with sheet protection enabled; automatic formula discovery
@@ -48,7 +48,11 @@ label rewriting, input clearing, and automatic carry-forward inference remain
 outside supported scope. The supported `reconcile_tables` scope writes a new
 result sheet from explicit source/lookup sheets, explicit left/right keys, and
 explicit compare mappings; fuzzy matching, duplicate-key resolution, composite
-keys, and tolerance policies remain outside supported scope.
+keys, and tolerance policies remain outside supported scope. The supported
+`generate_printable_form` scope writes a fixed printable sheet from explicit
+field and table bindings and records a print area; inferred layout, styling
+quality, images, merged cells, and PDF pagination remain outside supported
+scope.
 
 ## Promotion Rule
 

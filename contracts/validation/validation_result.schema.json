@@ -48,6 +48,24 @@
             "type": "string",
             "minLength": 1
           }
+        },
+        "form_title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "print_area": {
+          "type": "string",
+          "minLength": 1
+        },
+        "field_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/form_field_binding"
+          }
+        },
+        "table_binding": {
+          "$ref": "#/$defs/form_table_binding"
         }
       },
       "additionalProperties": false
@@ -73,6 +91,24 @@
             "type": "string",
             "minLength": 1
           }
+        },
+        "form_title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "print_area": {
+          "type": "string",
+          "minLength": 1
+        },
+        "field_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/form_field_binding"
+          }
+        },
+        "table_binding": {
+          "$ref": "#/$defs/form_table_binding"
         }
       },
       "additionalProperties": false
@@ -91,6 +127,24 @@
       "items": {
         "$ref": "#/$defs/compare_mapping"
       }
+    },
+    "form_title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "print_area": {
+      "type": "string",
+      "minLength": 1
+    },
+    "field_bindings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/form_field_binding"
+      }
+    },
+    "table_binding": {
+      "$ref": "#/$defs/form_table_binding"
     }
   },
   "allOf": [
@@ -99,6 +153,24 @@
         "properties": {
           "status": {
             "const": "compiled"
+          },
+          "form_title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "print_area": {
+            "type": "string",
+            "minLength": 1
+          },
+          "field_bindings": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/$defs/form_field_binding"
+            }
+          },
+          "table_binding": {
+            "$ref": "#/$defs/form_table_binding"
           }
         },
         "required": [
@@ -130,6 +202,24 @@
         "properties": {
           "status": {
             "const": "needs_human_checkpoint"
+          },
+          "form_title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "print_area": {
+            "type": "string",
+            "minLength": 1
+          },
+          "field_bindings": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/$defs/form_field_binding"
+            }
+          },
+          "table_binding": {
+            "$ref": "#/$defs/form_table_binding"
           }
         },
         "required": [
@@ -161,6 +251,24 @@
         "properties": {
           "status": {
             "const": "blocked"
+          },
+          "form_title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "print_area": {
+            "type": "string",
+            "minLength": 1
+          },
+          "field_bindings": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/$defs/form_field_binding"
+            }
+          },
+          "table_binding": {
+            "$ref": "#/$defs/form_table_binding"
           }
         },
         "required": [
@@ -243,7 +351,8 @@
             "formula_protection",
             "header_normalization",
             "period_roll_forward",
-            "table_reconciliation"
+            "table_reconciliation",
+            "printable_form"
           ]
         },
         "target_sheet": {
@@ -278,6 +387,24 @@
               "value": {
                 "type": "string",
                 "minLength": 1
+              },
+              "form_title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "print_area": {
+                "type": "string",
+                "minLength": 1
+              },
+              "field_bindings": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/form_field_binding"
+                }
+              },
+              "table_binding": {
+                "$ref": "#/$defs/form_table_binding"
               }
             },
             "additionalProperties": false
@@ -315,6 +442,24 @@
               "as": {
                 "type": "string",
                 "minLength": 1
+              },
+              "form_title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "print_area": {
+                "type": "string",
+                "minLength": 1
+              },
+              "field_bindings": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/form_field_binding"
+                }
+              },
+              "table_binding": {
+                "$ref": "#/$defs/form_table_binding"
               }
             },
             "additionalProperties": false
@@ -428,6 +573,24 @@
             },
             "allow_blank": {
               "type": "boolean"
+            },
+            "form_title": {
+              "type": "string",
+              "minLength": 1
+            },
+            "print_area": {
+              "type": "string",
+              "minLength": 1
+            },
+            "field_bindings": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/$defs/form_field_binding"
+              }
+            },
+            "table_binding": {
+              "$ref": "#/$defs/form_table_binding"
             }
           },
           "additionalProperties": false
@@ -458,6 +621,24 @@
             },
             "password": {
               "type": "string"
+            },
+            "form_title": {
+              "type": "string",
+              "minLength": 1
+            },
+            "print_area": {
+              "type": "string",
+              "minLength": 1
+            },
+            "field_bindings": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/$defs/form_field_binding"
+              }
+            },
+            "table_binding": {
+              "$ref": "#/$defs/form_table_binding"
             }
           },
           "additionalProperties": false
@@ -483,6 +664,24 @@
               "to": {
                 "type": "string",
                 "minLength": 1
+              },
+              "form_title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "print_area": {
+                "type": "string",
+                "minLength": 1
+              },
+              "field_bindings": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/form_field_binding"
+                }
+              },
+              "table_binding": {
+                "$ref": "#/$defs/form_table_binding"
               }
             },
             "additionalProperties": false
@@ -513,6 +712,24 @@
               "to_cell": {
                 "type": "string",
                 "minLength": 1
+              },
+              "form_title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "print_area": {
+                "type": "string",
+                "minLength": 1
+              },
+              "field_bindings": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/form_field_binding"
+                }
+              },
+              "table_binding": {
+                "$ref": "#/$defs/form_table_binding"
               }
             },
             "additionalProperties": false
@@ -532,6 +749,24 @@
           "items": {
             "$ref": "#/$defs/compare_mapping"
           }
+        },
+        "form_title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "print_area": {
+          "type": "string",
+          "minLength": 1
+        },
+        "field_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/form_field_binding"
+          }
+        },
+        "table_binding": {
+          "$ref": "#/$defs/form_table_binding"
         }
       },
       "allOf": [
@@ -540,6 +775,24 @@
             "properties": {
               "request_kind": {
                 "const": "structured_use_request"
+              },
+              "form_title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "print_area": {
+                "type": "string",
+                "minLength": 1
+              },
+              "field_bindings": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/form_field_binding"
+                }
+              },
+              "table_binding": {
+                "$ref": "#/$defs/form_table_binding"
               }
             },
             "required": [
@@ -559,6 +812,24 @@
             "properties": {
               "request_kind": {
                 "const": "prompt_text"
+              },
+              "form_title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "print_area": {
+                "type": "string",
+                "minLength": 1
+              },
+              "field_bindings": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/form_field_binding"
+                }
+              },
+              "table_binding": {
+                "$ref": "#/$defs/form_table_binding"
               }
             },
             "required": [
@@ -591,6 +862,24 @@
                 "items": {
                   "$ref": "#/$defs/compare_mapping"
                 }
+              },
+              "form_title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "print_area": {
+                "type": "string",
+                "minLength": 1
+              },
+              "field_bindings": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/form_field_binding"
+                }
+              },
+              "table_binding": {
+                "$ref": "#/$defs/form_table_binding"
               }
             },
             "required": [
@@ -675,6 +964,24 @@
                 "items": {
                   "$ref": "#/$defs/compare_mapping"
                 }
+              },
+              "form_title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "print_area": {
+                "type": "string",
+                "minLength": 1
+              },
+              "field_bindings": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/form_field_binding"
+                }
+              },
+              "table_binding": {
+                "$ref": "#/$defs/form_table_binding"
               }
             },
             "required": [
@@ -763,6 +1070,24 @@
                 "items": {
                   "$ref": "#/$defs/compare_mapping"
                 }
+              },
+              "form_title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "print_area": {
+                "type": "string",
+                "minLength": 1
+              },
+              "field_bindings": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/form_field_binding"
+                }
+              },
+              "table_binding": {
+                "$ref": "#/$defs/form_table_binding"
               }
             },
             "required": [
@@ -847,6 +1172,24 @@
                 "items": {
                   "$ref": "#/$defs/compare_mapping"
                 }
+              },
+              "form_title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "print_area": {
+                "type": "string",
+                "minLength": 1
+              },
+              "field_bindings": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/form_field_binding"
+                }
+              },
+              "table_binding": {
+                "$ref": "#/$defs/form_table_binding"
               }
             },
             "required": [
@@ -944,6 +1287,24 @@
                 "items": {
                   "$ref": "#/$defs/compare_mapping"
                 }
+              },
+              "form_title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "print_area": {
+                "type": "string",
+                "minLength": 1
+              },
+              "field_bindings": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/form_field_binding"
+                }
+              },
+              "table_binding": {
+                "$ref": "#/$defs/form_table_binding"
               }
             },
             "required": [
@@ -1052,6 +1413,24 @@
                 "items": {
                   "$ref": "#/$defs/compare_mapping"
                 }
+              },
+              "form_title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "print_area": {
+                "type": "string",
+                "minLength": 1
+              },
+              "field_bindings": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/form_field_binding"
+                }
+              },
+              "table_binding": {
+                "$ref": "#/$defs/form_table_binding"
               }
             },
             "required": [
@@ -1178,6 +1557,24 @@
                 "items": {
                   "$ref": "#/$defs/compare_mapping"
                 }
+              },
+              "form_title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "print_area": {
+                "type": "string",
+                "minLength": 1
+              },
+              "field_bindings": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/form_field_binding"
+                }
+              },
+              "table_binding": {
+                "$ref": "#/$defs/form_table_binding"
               }
             },
             "required": [
@@ -1304,6 +1701,24 @@
                 "items": {
                   "$ref": "#/$defs/compare_mapping"
                 }
+              },
+              "form_title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "print_area": {
+                "type": "string",
+                "minLength": 1
+              },
+              "field_bindings": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/form_field_binding"
+                }
+              },
+              "table_binding": {
+                "$ref": "#/$defs/form_table_binding"
               }
             },
             "required": [
@@ -1430,6 +1845,24 @@
                 "items": {
                   "$ref": "#/$defs/compare_mapping"
                 }
+              },
+              "form_title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "print_area": {
+                "type": "string",
+                "minLength": 1
+              },
+              "field_bindings": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/form_field_binding"
+                }
+              },
+              "table_binding": {
+                "$ref": "#/$defs/form_table_binding"
               }
             },
             "required": [
@@ -1562,6 +1995,24 @@
                 "items": {
                   "$ref": "#/$defs/compare_mapping"
                 }
+              },
+              "form_title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "print_area": {
+                "type": "string",
+                "minLength": 1
+              },
+              "field_bindings": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/form_field_binding"
+                }
+              },
+              "table_binding": {
+                "$ref": "#/$defs/form_table_binding"
               }
             },
             "required": [
@@ -1711,6 +2162,24 @@
               "type": "null"
             }
           ]
+        },
+        "form_title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "print_area": {
+          "type": "string",
+          "minLength": 1
+        },
+        "field_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/form_field_binding"
+          }
+        },
+        "table_binding": {
+          "$ref": "#/$defs/form_table_binding"
         }
       },
       "additionalProperties": false
@@ -1733,6 +2202,125 @@
         "as": {
           "type": "string",
           "minLength": 1
+        },
+        "form_title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "print_area": {
+          "type": "string",
+          "minLength": 1
+        },
+        "field_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/form_field_binding"
+          }
+        },
+        "table_binding": {
+          "$ref": "#/$defs/form_table_binding"
+        }
+      },
+      "additionalProperties": false
+    },
+    "form_field_binding": {
+      "type": "object",
+      "required": [
+        "label",
+        "source_cell",
+        "label_cell",
+        "value_cell"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_cell": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label_cell": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value_cell": {
+          "type": "string",
+          "minLength": 1
+        },
+        "form_title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "print_area": {
+          "type": "string",
+          "minLength": 1
+        },
+        "field_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/form_field_binding"
+          }
+        },
+        "table_binding": {
+          "$ref": "#/$defs/form_table_binding"
+        }
+      },
+      "additionalProperties": false
+    },
+    "form_table_binding": {
+      "type": "object",
+      "required": [
+        "source_sheet",
+        "source_columns",
+        "header_start",
+        "data_start"
+      ],
+      "properties": {
+        "source_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_columns": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "header_start": {
+          "type": "string",
+          "minLength": 1
+        },
+        "data_start": {
+          "type": "string",
+          "minLength": 1
+        },
+        "form_title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "print_area": {
+          "type": "string",
+          "minLength": 1
+        },
+        "field_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/form_field_binding"
+          }
+        },
+        "table_binding": {
+          "$ref": "#/$defs/form_table_binding"
         }
       },
       "additionalProperties": false

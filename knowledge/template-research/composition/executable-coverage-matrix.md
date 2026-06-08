@@ -19,15 +19,15 @@ the first execution target is p0 organism coverage.
 | `normalize_headers` | supported | explicit header-row mapping scope: capability record, TaskSpec/IR, executor, verifier, fixtures |
 | `roll_forward_period` | supported | explicit closing-to-opening cell mapping scope: capability record, TaskSpec/IR, executor, verifier, fixtures |
 | `reconcile_tables` | supported | explicit key and compare mapping scope: capability record, TaskSpec/IR, executor, verifier, fixtures |
+| `generate_printable_form` | supported | explicit field/table binding scope: capability record, TaskSpec/IR, executor, verifier, fixtures |
 | `write_values` | runtime primitive | primitive only, not public agent capability |
 | `create_pivot_summary` | planned | p2+ summary depth blocker |
-| `generate_printable_form` | planned | invoice document-output blocker |
 
 ## P0 Organism Gap
 
 | Organism | Runtime-Covered Atoms | Missing Runtime Atoms | Immediate Strategy |
 | --- | --- | --- | --- |
-| `invoice_line_item_billing` | `join_lookup`, `group_summarize`, `append_structured_rows`, `extend_table_formulas`, `add_data_validation`, `protect_formula_cells`, `normalize_headers` | `generate_printable_form` | printable form next |
+| `invoice_line_item_billing` | `join_lookup`, `group_summarize`, `append_structured_rows`, `extend_table_formulas`, `add_data_validation`, `protect_formula_cells`, `normalize_headers`, `generate_printable_form` | none in current p0 atom list | broaden organism preview before claiming full template generation |
 | `monthly_budget_control` | `group_summarize`, `highlight_threshold`, `extend_table_formulas`, `copy_period_sheet`, `protect_formula_cells`, `roll_forward_period` | none in current p0 atom list | broaden organism preview before claiming full template generation |
 | `cash_flow_monitor` | `group_summarize`, `extend_table_formulas`, `copy_period_sheet`, `protect_formula_cells`, `roll_forward_period` | none in current p0 atom list | broaden organism preview before claiming full template generation |
 | `attendance_register` | `group_summarize`, `copy_period_sheet`, `add_data_validation`, `protect_formula_cells`, `normalize_headers` | none in current p0 atom list | broaden organism preview before claiming full template generation |
@@ -262,3 +262,39 @@ Non-goals for this phase:
 - Advisory claim risk: this is row-level reconciliation, not general audit
   automation. Ambiguous keys, duplicate keys, tolerances, and fuzzy matching
   must stay outside supported scope until separate verifiers exist.
+
+## Phase 11 Result
+
+Promoted `generate_printable_form` with a deliberately narrow first supported
+scope:
+
+- explicit target printable sheet
+- explicit form title and print area
+- explicit field bindings from source cells to label/value cells
+- explicit table binding from declared source columns to a fixed output region
+- source workbook preserved
+
+Non-goals for this phase:
+
+- automatic layout inference
+- styling quality or visual design assertions
+- merged-cell layout
+- logos/images
+- PDF rendering or pagination QA
+- dynamic multi-page forms
+
+## Phase 11 Self-Retro
+
+- P0 gaps reduced: `invoice_line_item_billing` no longer depends on printable
+  form generation as an unsupported atom for explicit field/table binding
+  cases.
+- Remaining p0 atom gaps: none in the current p0 atom list. This does not mean
+  full template generation is complete; organism preview breadth and richer
+  layout verification still need follow-up.
+- Verifier strength: the verifier checks source hash preservation, source
+  sheet preservation, populated field cells, populated table cells, and the
+  workbook print-area defined name.
+- Advisory claim risk: this is fixed-region materialization, not a general
+  document designer. Visual quality, pagination, merged cells, images, and
+  inferred layouts must stay outside supported scope until render/verifier
+  coverage exists.

@@ -255,6 +255,71 @@
         }
       },
       "additionalProperties": false
+    },
+    "form_field_binding": {
+      "type": "object",
+      "required": [
+        "label",
+        "source_cell",
+        "label_cell",
+        "value_cell"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_cell": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label_cell": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value_cell": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "form_table_binding": {
+      "type": "object",
+      "required": [
+        "source_sheet",
+        "source_columns",
+        "header_start",
+        "data_start"
+      ],
+      "properties": {
+        "source_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_columns": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "header_start": {
+          "type": "string",
+          "minLength": 1
+        },
+        "data_start": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
     }
   },
   "required": [
@@ -285,7 +350,8 @@
         "formula_protection",
         "header_normalization",
         "period_roll_forward",
-        "table_reconciliation"
+        "table_reconciliation",
+        "printable_form"
       ]
     },
     "source": {
@@ -315,7 +381,8 @@
         "protect_formula_cells",
         "normalize_headers",
         "roll_forward_period",
-        "reconcile_tables"
+        "reconcile_tables",
+        "generate_printable_form"
       ]
     },
     "source_sheet": {
@@ -432,6 +499,24 @@
       "items": {
         "$ref": "#/$defs/compare_mapping"
       }
+    },
+    "form_title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "print_area": {
+      "type": "string",
+      "minLength": 1
+    },
+    "field_bindings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/form_field_binding"
+      }
+    },
+    "table_binding": {
+      "$ref": "#/$defs/form_table_binding"
     }
   },
   "allOf": [
@@ -1429,6 +1514,142 @@
             {
               "required": [
                 "carry_forward_mappings"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "operation": {
+            "const": "generate_printable_form"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "execution_kind": {
+            "const": "composition"
+          },
+          "composition_kind": {
+            "const": "printable_form"
+          }
+        },
+        "required": [
+          "composition_kind",
+          "target_sheet",
+          "form_title",
+          "print_area",
+          "field_bindings",
+          "table_binding"
+        ],
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "filters"
+              ]
+            },
+            {
+              "required": [
+                "group_by"
+              ]
+            },
+            {
+              "required": [
+                "metrics"
+              ]
+            },
+            {
+              "required": [
+                "summary_mode"
+              ]
+            },
+            {
+              "required": [
+                "threshold_rule"
+              ]
+            },
+            {
+              "required": [
+                "target_column"
+              ]
+            },
+            {
+              "required": [
+                "operator"
+              ]
+            },
+            {
+              "required": [
+                "threshold"
+              ]
+            },
+            {
+              "required": [
+                "highlight_color"
+              ]
+            },
+            {
+              "required": [
+                "join_key"
+              ]
+            },
+            {
+              "required": [
+                "include_source_columns"
+              ]
+            },
+            {
+              "required": [
+                "append_lookup_columns"
+              ]
+            },
+            {
+              "required": [
+                "values"
+              ]
+            },
+            {
+              "required": [
+                "formula_source_row"
+              ]
+            },
+            {
+              "required": [
+                "target_rows"
+              ]
+            },
+            {
+              "required": [
+                "formula_columns"
+              ]
+            },
+            {
+              "required": [
+                "validation_rule"
+              ]
+            },
+            {
+              "required": [
+                "protection_rule"
+              ]
+            },
+            {
+              "required": [
+                "header_mappings"
+              ]
+            },
+            {
+              "required": [
+                "carry_forward_mappings"
+              ]
+            },
+            {
+              "required": [
+                "compare_mappings"
               ]
             }
           ]

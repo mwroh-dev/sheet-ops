@@ -307,6 +307,19 @@ func compileDecision(intent NormalizedIntent) Decision {
 		}
 	}
 
+	if slices.Contains(intent.CompositionCandidates, CompositionCandidatePrintableForm) && printableFormIntentReady(intent) {
+		return Decision{
+			Status:            StatusCompiled,
+			SelectedOperation: "generate_printable_form",
+			Confidence:        0.98,
+			Notes: []string{
+				"the normalized intent maps cleanly to the supported explicit printable form runtime operation",
+			},
+			SheetCandidates:   supportedSheetCandidates(intent),
+			StructuralSignals: []string{"printable_form_request", "preserve_original"},
+		}
+	}
+
 	if slices.Contains(intent.CompositionCandidates, CompositionCandidateJoinLookup) && joinLookupIntentReady(intent) {
 		return Decision{
 			Status:            StatusCompiled,
@@ -497,6 +510,13 @@ func toRuntimeIntent(intent NormalizedIntent) runtimevalidate.NormalizedIntent {
 			RightKey:        intent.ReconcileTables.RightKey,
 			CompareMappings: toRuntimeCompareMappings(intent.ReconcileTables.CompareMappings),
 		},
+		GeneratePrintableForm: runtimevalidate.GeneratePrintableFormIntent{
+			TargetSheet:   intent.GeneratePrintableForm.TargetSheet,
+			FormTitle:     intent.GeneratePrintableForm.FormTitle,
+			PrintArea:     intent.GeneratePrintableForm.PrintArea,
+			FieldBindings: toRuntimeFormFieldBindings(intent.GeneratePrintableForm.FieldBindings),
+			TableBinding:  toRuntimeFormTableBinding(intent.GeneratePrintableForm.TableBinding),
+		},
 		Materialization: runtimevalidate.MaterializationIntent{
 			PreserveOriginal:      intent.Materialization.PreserveOriginal,
 			OutputDestinationMode: intent.Materialization.OutputDestinationMode,
@@ -647,6 +667,15 @@ func reconcileTablesIntentReady(intent NormalizedIntent) bool {
 		len(intent.ReconcileTables.CompareMappings) > 0
 }
 
+func printableFormIntentReady(intent NormalizedIntent) bool {
+	return len(intent.SourceSheetCandidates) > 0 &&
+		strings.TrimSpace(intent.GeneratePrintableForm.TargetSheet) != "" &&
+		strings.TrimSpace(intent.GeneratePrintableForm.FormTitle) != "" &&
+		strings.TrimSpace(intent.GeneratePrintableForm.PrintArea) != "" &&
+		len(intent.GeneratePrintableForm.FieldBindings) > 0 &&
+		intent.GeneratePrintableForm.TableBinding != nil
+}
+
 func toRuntimeHeaderMappings(values []HeaderMapping) []runtimevalidate.HeaderMapping {
 	if len(values) == 0 {
 		return []runtimevalidate.HeaderMapping{}
@@ -687,6 +716,35 @@ func toRuntimeCompareMappings(values []CompareMapping) []runtimevalidate.Compare
 		})
 	}
 	return converted
+}
+
+func toRuntimeFormFieldBindings(values []FormFieldBinding) []runtimevalidate.FormFieldBinding {
+	if len(values) == 0 {
+		return []runtimevalidate.FormFieldBinding{}
+	}
+	converted := make([]runtimevalidate.FormFieldBinding, 0, len(values))
+	for _, value := range values {
+		converted = append(converted, runtimevalidate.FormFieldBinding{
+			Label:       value.Label,
+			SourceSheet: value.SourceSheet,
+			SourceCell:  value.SourceCell,
+			LabelCell:   value.LabelCell,
+			ValueCell:   value.ValueCell,
+		})
+	}
+	return converted
+}
+
+func toRuntimeFormTableBinding(value *FormTableBinding) *runtimevalidate.FormTableBinding {
+	if value == nil {
+		return nil
+	}
+	return &runtimevalidate.FormTableBinding{
+		SourceSheet:   value.SourceSheet,
+		SourceColumns: append([]string(nil), value.SourceColumns...),
+		HeaderStart:   value.HeaderStart,
+		DataStart:     value.DataStart,
+	}
 }
 
 func toRuntimeCellValues(values []CellValue) []runtimevalidate.CellValue {

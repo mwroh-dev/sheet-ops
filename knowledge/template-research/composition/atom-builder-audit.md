@@ -18,7 +18,7 @@
 | `add_data_validation` | supported for explicit list/dropdown rules | source sheet, target ranges, list rule type, allowed values, allow blank | build list validation rules for declared ranges | validation rules on input ranges | source workbook preserved, validation rule present, allowed values match |
 | `protect_formula_cells` | supported for explicit ranges | source sheet, formula ranges, input ranges, optional password | separate locked formula cells from editable inputs | protected formula cells and sheet protection settings | source workbook preserved, formula cells locked, input cells unlocked, sheet protection enabled |
 | `reconcile_tables` | supported for explicit key and compare mappings | source sheet, lookup sheet, target sheet, left/right key columns, compare mappings | match unique nonblank keys, compare declared fields, bucket matched/missing/mismatched records | reconciliation result table | source and lookup preserved, reconciliation rows match expected buckets |
-| `generate_printable_form` | planned | metadata, line items, totals, output region | materialize reviewable document layout from structured data | printable/reviewable region | required fields populated, totals match source |
+| `generate_printable_form` | supported for explicit field/table bindings | source sheet, target sheet, form title, print area, field bindings, table binding | materialize declared field cells and table region into a printable sheet | printable/reviewable region | source preserved, field cells match sources, table region matches source rows, print area defined |
 
 ## 적용 규칙
 

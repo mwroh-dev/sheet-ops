@@ -46,7 +46,7 @@ func validateSupportedValidatedExecutionRequest(req ValidatedExecutionRequest) e
 		return fmt.Errorf("unsupported validated execution kind %q", req.ExecutionKind)
 	}
 	switch req.CompositionKind {
-	case "structured_row_append", "formula_extension", "period_copy", "data_validation", "formula_protection", "header_normalization", "period_roll_forward", "table_reconciliation":
+	case "structured_row_append", "formula_extension", "period_copy", "data_validation", "formula_protection", "header_normalization", "period_roll_forward", "table_reconciliation", "printable_form":
 		return nil
 	case "group_summary", "threshold_highlight", "join_lookup":
 		return nil
@@ -122,6 +122,18 @@ func taskSpecFromUseRequest(req UseRequest) runtimetaskspec.TaskSpec {
 			LeftKey:         req.LeftKey,
 			RightKey:        req.RightKey,
 			CompareMappings: toTaskSpecCompareMappings(req.CompareMappings),
+		}).TaskSpec
+	case runtimeworkbookcase.GeneratePrintableFormOperationName:
+		return runtimetaskspec.BuildGeneratePrintableFormTask(runtimetaskspec.GeneratePrintableFormRequest{
+			RequestText:   coalesceValidatedRequestText(req.RequestText, "structured printable form request"),
+			InputFile:     req.InputFile,
+			SourceSheet:   req.SheetName,
+			TargetSheet:   req.TargetSheet,
+			OutputFile:    req.OutputFile,
+			FormTitle:     req.FormTitle,
+			PrintArea:     req.PrintArea,
+			FieldBindings: toTaskSpecFormFieldBindings(req.FieldBindings),
+			TableBinding:  toTaskSpecFormTableBinding(req.TableBinding),
 		}).TaskSpec
 	case runtimeworkbookcase.AddDataValidationOperationName:
 		return runtimetaskspec.BuildAddDataValidationTask(runtimetaskspec.AddDataValidationRequest{
@@ -277,6 +289,18 @@ func taskSpecFromValidatedExecutionRequest(req ValidatedExecutionRequest) (runti
 			RightKey:        req.RightKey,
 			CompareMappings: toTaskSpecCompareMappings(req.CompareMappings),
 		}).TaskSpec, nil
+	case "printable_form":
+		return runtimetaskspec.BuildGeneratePrintableFormTask(runtimetaskspec.GeneratePrintableFormRequest{
+			RequestText:   coalesceValidatedRequestText(req.RequestText, "validated printable form request"),
+			InputFile:     req.InputFile,
+			SourceSheet:   req.SourceSheet,
+			OutputFile:    req.OutputFile,
+			TargetSheet:   req.TargetSheet,
+			FormTitle:     req.FormTitle,
+			PrintArea:     req.PrintArea,
+			FieldBindings: toTaskSpecFormFieldBindings(req.FieldBindings),
+			TableBinding:  toTaskSpecFormTableBinding(req.TableBinding),
+		}).TaskSpec, nil
 	case "threshold_highlight":
 		return runtimetaskspec.BuildHighlightThresholdTask(runtimetaskspec.HighlightThresholdRequest{
 			RequestText:    coalesceValidatedRequestText(req.RequestText, "validated threshold highlight request"),
@@ -336,6 +360,8 @@ func validatedRoutingRequestText(req ValidatedExecutionRequest) string {
 		return coalesceValidatedRequestText(req.RequestText, "validated join lookup request")
 	case "table_reconciliation":
 		return coalesceValidatedRequestText(req.RequestText, "validated table reconciliation request")
+	case "printable_form":
+		return coalesceValidatedRequestText(req.RequestText, "validated printable form request")
 	case "threshold_highlight":
 		return coalesceValidatedRequestText(req.RequestText, "validated threshold highlight request")
 	default:
@@ -363,6 +389,8 @@ func validatedOperation(req ValidatedExecutionRequest) string {
 		return runtimeworkbookcase.JoinLookupOperationName
 	case "table_reconciliation":
 		return runtimeworkbookcase.ReconcileTablesOperationName
+	case "printable_form":
+		return runtimeworkbookcase.GeneratePrintableFormOperationName
 	case "threshold_highlight":
 		return runtimeworkbookcase.HighlightOperationName
 	default:
@@ -398,7 +426,7 @@ func defaultJoinSourceColumns(req ValidatedExecutionRequest) ([]string, error) {
 
 func isSupportedOperation(operation string) bool {
 	switch operation {
-	case runtimeworkbookcase.SummaryOperationName, runtimeworkbookcase.HighlightOperationName, runtimeworkbookcase.JoinLookupOperationName, runtimeworkbookcase.AppendRowsOperationName, runtimeworkbookcase.ExtendFormulasOperationName, runtimeworkbookcase.CopyPeriodSheetOperationName, runtimeworkbookcase.AddDataValidationOperationName, runtimeworkbookcase.ProtectFormulaCellsOperationName, runtimeworkbookcase.NormalizeHeadersOperationName, runtimeworkbookcase.RollForwardPeriodOperationName, runtimeworkbookcase.ReconcileTablesOperationName:
+	case runtimeworkbookcase.SummaryOperationName, runtimeworkbookcase.HighlightOperationName, runtimeworkbookcase.JoinLookupOperationName, runtimeworkbookcase.AppendRowsOperationName, runtimeworkbookcase.ExtendFormulasOperationName, runtimeworkbookcase.CopyPeriodSheetOperationName, runtimeworkbookcase.AddDataValidationOperationName, runtimeworkbookcase.ProtectFormulaCellsOperationName, runtimeworkbookcase.NormalizeHeadersOperationName, runtimeworkbookcase.RollForwardPeriodOperationName, runtimeworkbookcase.ReconcileTablesOperationName, runtimeworkbookcase.GeneratePrintableFormOperationName:
 		return true
 	default:
 		return false
@@ -479,6 +507,35 @@ func toTaskSpecCompareMappings(values []CompareMapping) []runtimetaskspec.Compar
 		})
 	}
 	return converted
+}
+
+func toTaskSpecFormFieldBindings(values []FormFieldBinding) []runtimetaskspec.FormFieldBinding {
+	if len(values) == 0 {
+		return nil
+	}
+	converted := make([]runtimetaskspec.FormFieldBinding, 0, len(values))
+	for _, value := range values {
+		converted = append(converted, runtimetaskspec.FormFieldBinding{
+			Label:       value.Label,
+			SourceSheet: value.SourceSheet,
+			SourceCell:  value.SourceCell,
+			LabelCell:   value.LabelCell,
+			ValueCell:   value.ValueCell,
+		})
+	}
+	return converted
+}
+
+func toTaskSpecFormTableBinding(value *FormTableBinding) *runtimetaskspec.FormTableBinding {
+	if value == nil {
+		return nil
+	}
+	return &runtimetaskspec.FormTableBinding{
+		SourceSheet:   value.SourceSheet,
+		SourceColumns: append([]string(nil), value.SourceColumns...),
+		HeaderStart:   value.HeaderStart,
+		DataStart:     value.DataStart,
+	}
 }
 
 func toTaskSpecFilters(filters []FilterSpec) []runtimetaskspec.FilterSpec {

@@ -43,6 +43,8 @@ func AdmitIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIn
 		return admitRollForwardPeriodIntent(intent, decision)
 	case "reconcile_tables":
 		return admitReconcileTablesIntent(intent, decision)
+	case "generate_printable_form":
+		return admitGeneratePrintableFormIntent(intent, decision)
 	case "copy_period_sheet":
 		return admitPeriodCopyIntent(intent, decision)
 	default:
@@ -55,6 +57,39 @@ func AdmitIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIn
 		})
 		return admittedIntent{}, &result, err
 	}
+}
+
+func admitGeneratePrintableFormIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIntent, *Result, error) {
+	if !intent.Materialization.PreserveOriginal ||
+		intent.Materialization.OutputDestinationMode != "new_workbook" ||
+		intent.Materialization.WriteShape != "new_sheet" {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"invalid_materialization"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	if strings.TrimSpace(intent.GeneratePrintableForm.TargetSheet) == "" ||
+		strings.TrimSpace(intent.GeneratePrintableForm.FormTitle) == "" ||
+		strings.TrimSpace(intent.GeneratePrintableForm.PrintArea) == "" ||
+		len(intent.GeneratePrintableForm.FieldBindings) == 0 ||
+		intent.GeneratePrintableForm.TableBinding == nil {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"incomplete_printable_form_intent"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	return admittedIntent{
+		decision:        decision,
+		compositionKind: "printable_form",
+		sourceSheets:    preferredSourceSheets(intent, decision),
+		targetSheet:     intent.GeneratePrintableForm.TargetSheet,
+		formTitle:       intent.GeneratePrintableForm.FormTitle,
+		printArea:       intent.GeneratePrintableForm.PrintArea,
+		fieldBindings:   cloneFormFieldBindings(intent.GeneratePrintableForm.FieldBindings),
+		tableBinding:    cloneFormTableBinding(intent.GeneratePrintableForm.TableBinding),
+	}, nil, nil
 }
 
 func admitReconcileTablesIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIntent, *Result, error) {

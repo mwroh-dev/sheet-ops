@@ -82,6 +82,9 @@ func resolveRequestedOperation(req UseRequest) (string, string) {
 	if isReconcileTablesRequest(req) {
 		return runtimeworkbookcase.ReconcileTablesOperationName, "table_reconciliation_request_signals"
 	}
+	if isPrintableFormRequest(req) {
+		return runtimeworkbookcase.GeneratePrintableFormOperationName, "printable_form_request_signals"
+	}
 	if isDataValidationRequest(req) {
 		return runtimeworkbookcase.AddDataValidationOperationName, "data_validation_request_signals"
 	}
@@ -146,6 +149,16 @@ func isReconcileTablesRequest(req UseRequest) bool {
 		strings.Contains(req.RequestText, "reconciliation")
 }
 
+func isPrintableFormRequest(req UseRequest) bool {
+	return len(req.FieldBindings) > 0 ||
+		req.TableBinding != nil ||
+		req.FormTitle != "" ||
+		req.PrintArea != "" ||
+		strings.Contains(req.RequestText, "printable") ||
+		strings.Contains(req.RequestText, "출력 양식") ||
+		strings.Contains(req.RequestText, "인쇄")
+}
+
 func isFormulaProtectionRequest(req UseRequest) bool {
 	return req.ProtectionRule != nil ||
 		strings.Contains(req.RequestText, "수식 보호") ||
@@ -205,6 +218,8 @@ func buildRoutingNote(selectedOperation, routingAuthority string, knowledge runt
 			return fmt.Sprintf("%s Fallback routed by period roll-forward request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		case "table_reconciliation_request_signals":
 			return fmt.Sprintf("%s Fallback routed by table reconciliation request signals to %s.", knowledge.FallbackReason, selectedOperation)
+		case "printable_form_request_signals":
+			return fmt.Sprintf("%s Fallback routed by printable form request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		case "data_validation_request_signals":
 			return fmt.Sprintf("%s Fallback routed by data validation request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		case "formula_protection_request_signals":
@@ -264,6 +279,12 @@ func buildRoutingNote(selectedOperation, routingAuthority string, knowledge runt
 	case "table_reconciliation_request_signals":
 		return fmt.Sprintf(
 			"Loaded %d orchestrator knowledge records; table reconciliation request signals still selected %s. Knowledge remains advisory only.",
+			knowledge.RecordCount,
+			selectedOperation,
+		)
+	case "printable_form_request_signals":
+		return fmt.Sprintf(
+			"Loaded %d orchestrator knowledge records; printable form request signals still selected %s. Knowledge remains advisory only.",
 			knowledge.RecordCount,
 			selectedOperation,
 		)

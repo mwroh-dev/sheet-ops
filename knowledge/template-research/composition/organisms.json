@@ -26,9 +26,7 @@
         "add_data_validation",
         "normalize_headers"
       ],
-      "planned_or_unsupported_atom_ids": [
-        "generate_printable_form"
-      ],
+      "planned_or_unsupported_atom_ids": [],
       "verifier_focus": [
         "line item total matches source rows",
         "metadata appears in output region",
@@ -59,9 +57,7 @@
         "add_data_validation",
         "normalize_headers"
       ],
-      "planned_or_unsupported_atom_ids": [
-        "generate_printable_form"
-      ],
+      "planned_or_unsupported_atom_ids": [],
       "verifier_focus": [
         "eligible expense rows roll into reimbursement total",
         "required metadata is present",
@@ -92,9 +88,7 @@
         "add_data_validation",
         "normalize_headers"
       ],
-      "planned_or_unsupported_atom_ids": [
-        "generate_printable_form"
-      ],
+      "planned_or_unsupported_atom_ids": [],
       "verifier_focus": [
         "PO line totals match item rows",
         "allowed status values drive status summary",
@@ -440,7 +434,6 @@
         "create_pivot_summary"
       ],
       "planned_or_unsupported_atom_ids": [
-        "generate_printable_form",
         "create_pivot_summary"
       ],
       "verifier_focus": [
@@ -560,7 +553,6 @@
         "create_pivot_summary"
       ],
       "planned_or_unsupported_atom_ids": [
-        "generate_printable_form",
         "create_pivot_summary"
       ],
       "verifier_focus": [
@@ -592,7 +584,6 @@
         "create_pivot_summary"
       ],
       "planned_or_unsupported_atom_ids": [
-        "generate_printable_form",
         "create_pivot_summary"
       ],
       "verifier_focus": [

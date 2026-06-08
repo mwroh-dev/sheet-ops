@@ -1,0 +1,51 @@
+{
+  "name": "generate_printable_form",
+  "operation_family": "generate_printable_form",
+  "task_operations": [
+    "generate_printable_form"
+  ],
+  "inputs": [
+    "input_workbook",
+    "source_sheet",
+    "target_sheet",
+    "form_title",
+    "print_area",
+    "field_bindings",
+    "table_binding"
+  ],
+  "outputs": [
+    "output_workbook",
+    "printable_form_sheet",
+    "populated_field_cells",
+    "populated_table_region",
+    "print_area"
+  ],
+  "required_facts": [
+    "source_sheet_exists",
+    "field_source_sheets_exist",
+    "table_source_sheet_exists",
+    "table_source_columns_present"
+  ],
+  "verifies": [
+    "source_preserved",
+    "printable_sheet_created",
+    "field_cells_match_sources",
+    "table_region_matches_source_rows",
+    "print_area_defined"
+  ],
+  "contract_paths": [
+    "contracts/task/task_spec.schema.json",
+    "contracts/ir/workbook_operation_ir.schema.json",
+    "contracts/verification/verification_result.schema.json"
+  ],
+  "runtime_paths": [
+    "runtime/compiler/workbook_compiler.go",
+    "runtime/execute/generate_printable_form.go",
+    "runtime/verify/generate_printable_form.go"
+  ],
+  "examples": [
+    "examples/generate_printable_form/request.json"
+  ],
+  "status": "supported",
+  "exposure": "public_agent_capability"
+}

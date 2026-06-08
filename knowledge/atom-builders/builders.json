@@ -496,37 +496,44 @@
     },
     {
       "atom_id": "generate_printable_form",
-      "status": "planned",
-      "builder_layer": "planned_contract",
+      "status": "supported",
+      "builder_layer": "runtime_mirror",
       "input_contract": [
-        "metadata fields",
-        "line item table",
-        "totals",
-        "output region"
+        "source sheet",
+        "target sheet",
+        "form title",
+        "print area",
+        "field bindings",
+        "table binding"
       ],
       "inspection_requirements": [
-        "metadata cells",
-        "source rows",
-        "total cells",
-        "output anchors"
+        "source sheet",
+        "field source sheets",
+        "table source sheet",
+        "table source columns"
       ],
       "plan_outputs": [
-        "field bindings",
-        "output writes",
-        "total formulas"
+        "printable sheet",
+        "field cell writes",
+        "table region writes",
+        "print area"
       ],
       "result_outputs": [
-        "printable document region",
-        "warnings"
+        "printable document region"
       ],
       "verification_assertions": [
-        "required_output_fields_populated",
-        "output_totals_match_source",
-        "output_reflects_latest_inputs"
+        "source_preserved",
+        "field_cells_match_sources",
+        "table_region_matches_source_rows",
+        "print_area_defined"
       ],
-      "capability_record": "",
-      "opportunity_record": "knowledge/template-research/opportunities/generate_printable_form.json",
-      "runtime_paths": []
+      "capability_record": "contracts/capabilities/records/generate_printable_form.yaml",
+      "opportunity_record": "",
+      "runtime_paths": [
+        "runtime/compiler/workbook_compiler.go",
+        "runtime/execute/generate_printable_form.go",
+        "runtime/verify/generate_printable_form.go"
+      ]
     }
   ]
 }

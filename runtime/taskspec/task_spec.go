@@ -62,6 +62,21 @@ type CompareMapping struct {
 	As          string `json:"as,omitempty"`
 }
 
+type FormFieldBinding struct {
+	Label       string `json:"label"`
+	SourceSheet string `json:"source_sheet,omitempty"`
+	SourceCell  string `json:"source_cell"`
+	LabelCell   string `json:"label_cell"`
+	ValueCell   string `json:"value_cell"`
+}
+
+type FormTableBinding struct {
+	SourceSheet   string   `json:"source_sheet"`
+	SourceColumns []string `json:"source_columns"`
+	HeaderStart   string   `json:"header_start"`
+	DataStart     string   `json:"data_start"`
+}
+
 type SourceSpec struct {
 	Kind string `json:"kind"`
 	Path string `json:"path,omitempty"`
@@ -90,6 +105,10 @@ type TaskSpec struct {
 	IncludeSourceColumns []string               `json:"include_source_columns,omitempty"`
 	AppendLookupColumns  []string               `json:"append_lookup_columns,omitempty"`
 	CompareMappings      []CompareMapping       `json:"compare_mappings,omitempty"`
+	FormTitle            string                 `json:"form_title,omitempty"`
+	PrintArea            string                 `json:"print_area,omitempty"`
+	FieldBindings        []FormFieldBinding     `json:"field_bindings,omitempty"`
+	TableBinding         *FormTableBinding      `json:"table_binding,omitempty"`
 	Values               []CellValue            `json:"values,omitempty"`
 	FormulaSourceRow     int                    `json:"formula_source_row,omitempty"`
 	TargetRows           []int                  `json:"target_rows,omitempty"`
@@ -191,6 +210,17 @@ type ReconcileTablesTask struct {
 	LeftKey          string
 	RightKey         string
 	CompareMappings  []CompareMapping
+	PreserveOriginal bool
+}
+
+type GeneratePrintableFormTask struct {
+	TaskSpec         TaskSpec
+	SourceSheet      string
+	TargetSheet      string
+	FormTitle        string
+	PrintArea        string
+	FieldBindings    []FormFieldBinding
+	TableBinding     *FormTableBinding
 	PreserveOriginal bool
 }
 
@@ -302,6 +332,18 @@ type ReconcileTablesRequest struct {
 	CompareMappings []CompareMapping
 }
 
+type GeneratePrintableFormRequest struct {
+	RequestText   string
+	InputFile     string
+	SourceSheet   string
+	TargetSheet   string
+	OutputFile    string
+	FormTitle     string
+	PrintArea     string
+	FieldBindings []FormFieldBinding
+	TableBinding  *FormTableBinding
+}
+
 const (
 	ExecutionKindComposition             = "composition"
 	CompositionKindGroupSummary          = "group_summary"
@@ -315,6 +357,7 @@ const (
 	CompositionKindHeaderNormalization   = "header_normalization"
 	CompositionKindPeriodRollForward     = "period_roll_forward"
 	CompositionKindTableReconciliation   = "table_reconciliation"
+	CompositionKindPrintableForm         = "printable_form"
 	OperationCreateSummarySheet          = "create_summary_sheet"
 	OperationHighlightThresholdRows      = "highlight_threshold_rows"
 	OperationCreateJoinLookupResultSheet = "create_join_lookup_result_sheet"
@@ -326,6 +369,7 @@ const (
 	OperationNormalizeHeaders            = "normalize_headers"
 	OperationRollForwardPeriod           = "roll_forward_period"
 	OperationReconcileTables             = "reconcile_tables"
+	OperationGeneratePrintableForm       = "generate_printable_form"
 	OperationFamilyGroupSummarize        = "group_summarize"
 	OperationFamilyHighlightThreshold    = "highlight_threshold"
 	OperationFamilyJoinLookup            = "join_lookup"
@@ -337,6 +381,7 @@ const (
 	OperationFamilyNormalizeHeaders      = "normalize_headers"
 	OperationFamilyRollForwardPeriod     = "roll_forward_period"
 	OperationFamilyReconcileTables       = "reconcile_tables"
+	OperationFamilyGeneratePrintableForm = "generate_printable_form"
 
 	defaultHighlightColumn    = "amount"
 	defaultHighlightOperator  = ">"
@@ -637,6 +682,34 @@ func BuildReconcileTablesTask(req ReconcileTablesRequest) ReconcileTablesTask {
 	}
 }
 
+func BuildGeneratePrintableFormTask(req GeneratePrintableFormRequest) GeneratePrintableFormTask {
+	return GeneratePrintableFormTask{
+		TaskSpec: TaskSpec{
+			RequestKind:     "workbook_case",
+			ExecutionKind:   ExecutionKindComposition,
+			CompositionKind: CompositionKindPrintableForm,
+			Source:          SourceSpec{Kind: "natural_language"},
+			RequestText:     req.RequestText,
+			InputWorkbook:   req.InputFile,
+			OutputWorkbook:  req.OutputFile,
+			Operation:       OperationGeneratePrintableForm,
+			SourceSheet:     req.SourceSheet,
+			TargetSheet:     req.TargetSheet,
+			FormTitle:       req.FormTitle,
+			PrintArea:       req.PrintArea,
+			FieldBindings:   cloneFormFieldBindings(req.FieldBindings),
+			TableBinding:    cloneFormTableBinding(req.TableBinding),
+		},
+		SourceSheet:      req.SourceSheet,
+		TargetSheet:      req.TargetSheet,
+		FormTitle:        req.FormTitle,
+		PrintArea:        req.PrintArea,
+		FieldBindings:    cloneFormFieldBindings(req.FieldBindings),
+		TableBinding:     cloneFormTableBinding(req.TableBinding),
+		PreserveOriginal: true,
+	}
+}
+
 func cloneFilters(values []FilterSpec) []FilterSpec {
 	if len(values) == 0 {
 		return nil
@@ -726,4 +799,22 @@ func cloneCompareMappings(values []CompareMapping) []CompareMapping {
 	cloned := make([]CompareMapping, len(values))
 	copy(cloned, values)
 	return cloned
+}
+
+func cloneFormFieldBindings(values []FormFieldBinding) []FormFieldBinding {
+	if len(values) == 0 {
+		return nil
+	}
+	cloned := make([]FormFieldBinding, len(values))
+	copy(cloned, values)
+	return cloned
+}
+
+func cloneFormTableBinding(value *FormTableBinding) *FormTableBinding {
+	if value == nil {
+		return nil
+	}
+	cloned := *value
+	cloned.SourceColumns = cloneStrings(value.SourceColumns)
+	return &cloned
 }

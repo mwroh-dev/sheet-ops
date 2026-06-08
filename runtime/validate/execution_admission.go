@@ -38,6 +38,12 @@ func (validator Validator) AdmitExecution(bound boundIntent) (Result, error) {
 		request.LeftKey = bound.leftKey
 		request.RightKey = bound.rightKey
 		request.CompareMappings = cloneCompareMappings(bound.compareMappings)
+	case "printable_form":
+		request.TargetSheet = bound.targetSheet
+		request.FormTitle = bound.formTitle
+		request.PrintArea = bound.printArea
+		request.FieldBindings = cloneFormFieldBindings(bound.fieldBindings)
+		request.TableBinding = cloneFormTableBinding(bound.tableBinding)
 	case "structured_row_append":
 		request.IncludeSourceColumns = append([]string(nil), bound.includeSourceColumns...)
 		request.Values = cloneCellValues(bound.values)

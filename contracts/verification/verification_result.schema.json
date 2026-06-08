@@ -25,7 +25,8 @@
         "normalize_headers",
         "roll_forward_period",
         "write_values",
-        "reconcile_tables"
+        "reconcile_tables",
+        "generate_printable_form"
       ]
     },
     "highlighted_rows": {

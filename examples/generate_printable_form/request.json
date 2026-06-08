@@ -1,0 +1,33 @@
+{
+  "scenario_id": "generate-printable-form-example",
+  "request_text": "InvoiceData와 LineItems를 사용해서 invoice printable form을 생성한다.",
+  "input_file": "examples/generate_printable_form/invoice.xlsx",
+  "sheet_name": "InvoiceData",
+  "output_file": "examples/generate_printable_form/invoice-output.xlsx",
+  "operation": "generate_printable_form",
+  "target_sheet": "InvoicePrint",
+  "form_title": "Invoice",
+  "print_area": "A1:D8",
+  "field_bindings": [
+    {
+      "label": "Invoice No",
+      "source_sheet": "InvoiceData",
+      "source_cell": "B2",
+      "label_cell": "A2",
+      "value_cell": "B2"
+    },
+    {
+      "label": "Customer",
+      "source_sheet": "InvoiceData",
+      "source_cell": "B3",
+      "label_cell": "A3",
+      "value_cell": "B3"
+    }
+  ],
+  "table_binding": {
+    "source_sheet": "LineItems",
+    "source_columns": ["sku", "quantity", "unit_price", "line_total"],
+    "header_start": "A5",
+    "data_start": "A6"
+  }
+}

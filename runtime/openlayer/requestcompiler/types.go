@@ -12,6 +12,7 @@ const (
 	CompositionCandidateHeaderNormalization = "header_normalization"
 	CompositionCandidatePeriodRollForward   = "period_roll_forward"
 	CompositionCandidateTableReconciliation = "table_reconciliation"
+	CompositionCandidatePrintableForm       = "printable_form"
 
 	OutputDestinationModeNewWorkbook  = "new_workbook"
 	OutputDestinationModeSameWorkbook = "same_workbook"
@@ -97,6 +98,14 @@ type ReconcileTablesIntent struct {
 	CompareMappings []CompareMapping `json:"compare_mappings,omitempty"`
 }
 
+type GeneratePrintableFormIntent struct {
+	TargetSheet   string             `json:"target_sheet,omitempty"`
+	FormTitle     string             `json:"form_title,omitempty"`
+	PrintArea     string             `json:"print_area,omitempty"`
+	FieldBindings []FormFieldBinding `json:"field_bindings,omitempty"`
+	TableBinding  *FormTableBinding  `json:"table_binding,omitempty"`
+}
+
 type DataValidationRule struct {
 	Ranges        []string `json:"ranges"`
 	RuleType      string   `json:"rule_type"`
@@ -126,6 +135,21 @@ type CompareMapping struct {
 	LeftColumn  string `json:"left_column"`
 	RightColumn string `json:"right_column"`
 	As          string `json:"as,omitempty"`
+}
+
+type FormFieldBinding struct {
+	Label       string `json:"label"`
+	SourceSheet string `json:"source_sheet,omitempty"`
+	SourceCell  string `json:"source_cell"`
+	LabelCell   string `json:"label_cell"`
+	ValueCell   string `json:"value_cell"`
+}
+
+type FormTableBinding struct {
+	SourceSheet   string   `json:"source_sheet"`
+	SourceColumns []string `json:"source_columns"`
+	HeaderStart   string   `json:"header_start"`
+	DataStart     string   `json:"data_start"`
 }
 
 type CellValue struct {
@@ -175,23 +199,24 @@ type MemoryMatchSummary struct {
 }
 
 type NormalizedIntent struct {
-	SourceSheetCandidates []string                  `json:"source_sheet_candidates,omitempty"`
-	LookupSheetCandidates []string                  `json:"lookup_sheet_candidates,omitempty"`
-	GroupKeys             []string                  `json:"group_keys,omitempty"`
-	Aggregates            []AggregateIntent         `json:"aggregates,omitempty"`
-	CompositionCandidates []string                  `json:"composition_candidates,omitempty"`
-	Summary               SummaryIntent             `json:"summary,omitempty"`
-	Highlight             HighlightIntent           `json:"highlight,omitempty"`
-	JoinLookup            JoinLookupIntent          `json:"join_lookup,omitempty"`
-	AppendRows            AppendRowsIntent          `json:"append_rows,omitempty"`
-	ExtendFormulas        ExtendFormulasIntent      `json:"extend_formulas,omitempty"`
-	PeriodCopy            PeriodCopyIntent          `json:"period_copy,omitempty"`
-	AddDataValidation     AddDataValidationIntent   `json:"add_data_validation,omitempty"`
-	ProtectFormulaCells   ProtectFormulaCellsIntent `json:"protect_formula_cells,omitempty"`
-	NormalizeHeaders      NormalizeHeadersIntent    `json:"normalize_headers,omitempty"`
-	RollForwardPeriod     RollForwardPeriodIntent   `json:"roll_forward_period,omitempty"`
-	ReconcileTables       ReconcileTablesIntent     `json:"reconcile_tables,omitempty"`
-	Materialization       MaterializationIntent     `json:"materialization"`
-	Ambiguity             AmbiguityIntent           `json:"ambiguity"`
-	Ambiguities           []string                  `json:"-"`
+	SourceSheetCandidates []string                    `json:"source_sheet_candidates,omitempty"`
+	LookupSheetCandidates []string                    `json:"lookup_sheet_candidates,omitempty"`
+	GroupKeys             []string                    `json:"group_keys,omitempty"`
+	Aggregates            []AggregateIntent           `json:"aggregates,omitempty"`
+	CompositionCandidates []string                    `json:"composition_candidates,omitempty"`
+	Summary               SummaryIntent               `json:"summary,omitempty"`
+	Highlight             HighlightIntent             `json:"highlight,omitempty"`
+	JoinLookup            JoinLookupIntent            `json:"join_lookup,omitempty"`
+	AppendRows            AppendRowsIntent            `json:"append_rows,omitempty"`
+	ExtendFormulas        ExtendFormulasIntent        `json:"extend_formulas,omitempty"`
+	PeriodCopy            PeriodCopyIntent            `json:"period_copy,omitempty"`
+	AddDataValidation     AddDataValidationIntent     `json:"add_data_validation,omitempty"`
+	ProtectFormulaCells   ProtectFormulaCellsIntent   `json:"protect_formula_cells,omitempty"`
+	NormalizeHeaders      NormalizeHeadersIntent      `json:"normalize_headers,omitempty"`
+	RollForwardPeriod     RollForwardPeriodIntent     `json:"roll_forward_period,omitempty"`
+	ReconcileTables       ReconcileTablesIntent       `json:"reconcile_tables,omitempty"`
+	GeneratePrintableForm GeneratePrintableFormIntent `json:"generate_printable_form,omitempty"`
+	Materialization       MaterializationIntent       `json:"materialization"`
+	Ambiguity             AmbiguityIntent             `json:"ambiguity"`
+	Ambiguities           []string                    `json:"-"`
 }

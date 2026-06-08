@@ -280,7 +280,6 @@ func TestTemplateResearchKeepsUnsupportedCapabilitiesOutOfSupportedRegistry(t *t
 
 	plannedNames := []string{
 		"create_pivot_summary",
-		"generate_printable_form",
 	}
 	for _, planned := range plannedNames {
 		if existing[planned] {

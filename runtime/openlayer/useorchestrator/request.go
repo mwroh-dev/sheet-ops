@@ -46,6 +46,10 @@ type UseRequest struct {
 	LeftKey              string                 `json:"left_key,omitempty"`
 	RightKey             string                 `json:"right_key,omitempty"`
 	CompareMappings      []CompareMapping       `json:"compare_mappings,omitempty"`
+	FormTitle            string                 `json:"form_title,omitempty"`
+	PrintArea            string                 `json:"print_area,omitempty"`
+	FieldBindings        []FormFieldBinding     `json:"field_bindings,omitempty"`
+	TableBinding         *FormTableBinding      `json:"table_binding,omitempty"`
 }
 
 type ValidatedExecutionRequest = runtimevalidate.ValidatedExecutionRequest
@@ -55,6 +59,8 @@ type FormulaProtectionRule = runtimevalidate.FormulaProtectionRule
 type HeaderMapping = runtimevalidate.HeaderMapping
 type CarryForwardMapping = runtimevalidate.CarryForwardMapping
 type CompareMapping = runtimevalidate.CompareMapping
+type FormFieldBinding = runtimevalidate.FormFieldBinding
+type FormTableBinding = runtimevalidate.FormTableBinding
 
 func LoadRequest(path string) (UseRequest, error) {
 	var req UseRequest

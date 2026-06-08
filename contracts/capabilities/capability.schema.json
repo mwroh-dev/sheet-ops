@@ -54,7 +54,8 @@
         "normalize_headers",
         "roll_forward_period",
         "write_values",
-        "reconcile_tables"
+        "reconcile_tables",
+        "generate_printable_form"
       ]
     },
     "operation_family": {
@@ -70,7 +71,8 @@
         "normalize_headers",
         "roll_forward_period",
         "write_values",
-        "reconcile_tables"
+        "reconcile_tables",
+        "generate_printable_form"
       ]
     },
     "task_operations": {
@@ -300,6 +302,22 @@
         "properties": {
           "operation_family": {
             "const": "reconcile_tables"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "generate_printable_form"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "operation_family": {
+            "const": "generate_printable_form"
           }
         }
       }
