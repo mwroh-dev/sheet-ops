@@ -48,6 +48,7 @@
         "join_lookup",
         "append_structured_rows",
         "extend_table_formulas",
+        "add_data_validation",
         "write_values"
       ]
     },
@@ -58,6 +59,7 @@
         "join_lookup",
         "append_structured_rows",
         "extend_table_formulas",
+        "add_data_validation",
         "write_values"
       ]
     },
@@ -176,6 +178,22 @@
         "properties": {
           "operation_family": {
             "const": "extend_table_formulas"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "add_data_validation"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "operation_family": {
+            "const": "add_data_validation"
           }
         }
       }

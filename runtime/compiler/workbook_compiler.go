@@ -17,6 +17,13 @@ type CellValue struct {
 	Value any    `json:"value"`
 }
 
+type DataValidationRule struct {
+	Ranges        []string `json:"ranges"`
+	RuleType      string   `json:"rule_type"`
+	AllowedValues []string `json:"allowed_values,omitempty"`
+	AllowBlank    bool     `json:"allow_blank"`
+}
+
 type WorkbookInspection struct {
 	InputWorkbook     string                  `json:"input_workbook"`
 	SheetNames        []string                `json:"sheet_names"`
@@ -31,28 +38,29 @@ type WorkbookInspection struct {
 }
 
 type WorkbookOperationIR struct {
-	ExecutionKind        string       `json:"execution_kind"`
-	CompositionKind      string       `json:"composition_kind,omitempty"`
-	OperationFamily      string       `json:"operation_family"`
-	SourceSheet          string       `json:"source_sheet"`
-	Filters              []FilterSpec `json:"filters,omitempty"`
-	GroupBy              []string     `json:"group_by,omitempty"`
-	Metrics              []MetricSpec `json:"metrics,omitempty"`
-	TargetSheet          string       `json:"target_sheet,omitempty"`
-	SummaryMode          string       `json:"summary_mode,omitempty"`
-	TargetColumn         string       `json:"target_column,omitempty"`
-	Operator             string       `json:"operator,omitempty"`
-	Threshold            *float64     `json:"threshold,omitempty"`
-	HighlightColor       string       `json:"highlight_color,omitempty"`
-	LookupSheet          string       `json:"lookup_sheet,omitempty"`
-	JoinKey              string       `json:"join_key,omitempty"`
-	IncludeSourceColumns []string     `json:"include_source_columns,omitempty"`
-	AppendLookupColumns  []string     `json:"append_lookup_columns,omitempty"`
-	Values               []CellValue  `json:"values,omitempty"`
-	FormulaSourceRow     int          `json:"formula_source_row,omitempty"`
-	TargetRows           []int        `json:"target_rows,omitempty"`
-	FormulaColumns       []string     `json:"formula_columns,omitempty"`
-	PreserveOriginal     bool         `json:"preserve_original"`
+	ExecutionKind        string              `json:"execution_kind"`
+	CompositionKind      string              `json:"composition_kind,omitempty"`
+	OperationFamily      string              `json:"operation_family"`
+	SourceSheet          string              `json:"source_sheet"`
+	Filters              []FilterSpec        `json:"filters,omitempty"`
+	GroupBy              []string            `json:"group_by,omitempty"`
+	Metrics              []MetricSpec        `json:"metrics,omitempty"`
+	TargetSheet          string              `json:"target_sheet,omitempty"`
+	SummaryMode          string              `json:"summary_mode,omitempty"`
+	TargetColumn         string              `json:"target_column,omitempty"`
+	Operator             string              `json:"operator,omitempty"`
+	Threshold            *float64            `json:"threshold,omitempty"`
+	HighlightColor       string              `json:"highlight_color,omitempty"`
+	LookupSheet          string              `json:"lookup_sheet,omitempty"`
+	JoinKey              string              `json:"join_key,omitempty"`
+	IncludeSourceColumns []string            `json:"include_source_columns,omitempty"`
+	AppendLookupColumns  []string            `json:"append_lookup_columns,omitempty"`
+	Values               []CellValue         `json:"values,omitempty"`
+	FormulaSourceRow     int                 `json:"formula_source_row,omitempty"`
+	TargetRows           []int               `json:"target_rows,omitempty"`
+	FormulaColumns       []string            `json:"formula_columns,omitempty"`
+	ValidationRule       *DataValidationRule `json:"validation_rule,omitempty"`
+	PreserveOriginal     bool                `json:"preserve_original"`
 }
 
 func InspectWorkbook(inputWorkbook, sourceSheet string, filters []FilterSpec, groupBy []string, metrics []MetricSpec) (WorkbookInspection, error) {
@@ -277,6 +285,32 @@ func CompileExtendTableFormulasOperation(task taskspec.ExtendTableFormulasTask) 
 	}, nil
 }
 
+func CompileAddDataValidationOperation(task taskspec.AddDataValidationTask) (WorkbookOperationIR, error) {
+	if task.SourceSheet == "" {
+		return WorkbookOperationIR{}, fmt.Errorf("source sheet must not be empty")
+	}
+	if len(task.ValidationRule.Ranges) == 0 {
+		return WorkbookOperationIR{}, fmt.Errorf("validation ranges must not be empty")
+	}
+	if task.ValidationRule.RuleType != "list" {
+		return WorkbookOperationIR{}, fmt.Errorf("unsupported validation rule type %q", task.ValidationRule.RuleType)
+	}
+	if len(task.ValidationRule.AllowedValues) == 0 {
+		return WorkbookOperationIR{}, fmt.Errorf("allowed values must not be empty for list validation")
+	}
+	if err := validateAddDataValidationTaskCompositionBoundary(task.TaskSpec); err != nil {
+		return WorkbookOperationIR{}, err
+	}
+	return WorkbookOperationIR{
+		ExecutionKind:    taskspec.ExecutionKindComposition,
+		CompositionKind:  taskspec.CompositionKindDataValidation,
+		OperationFamily:  taskspec.OperationFamilyAddDataValidation,
+		SourceSheet:      task.SourceSheet,
+		ValidationRule:   cloneDataValidationRule(task.ValidationRule),
+		PreserveOriginal: task.PreserveOriginal,
+	}, nil
+}
+
 func validateHighlightTaskCompositionBoundary(spec taskspec.TaskSpec) error {
 	if spec.ExecutionKind != taskspec.ExecutionKindComposition {
 		return fmt.Errorf("highlight task execution_kind=%q want %q", spec.ExecutionKind, taskspec.ExecutionKindComposition)
@@ -325,6 +359,19 @@ func validateExtendTableFormulasTaskCompositionBoundary(spec taskspec.TaskSpec) 
 	}
 	if spec.Operation != taskspec.OperationExtendTableFormulas {
 		return fmt.Errorf("extend table formulas task operation=%q want %q", spec.Operation, taskspec.OperationExtendTableFormulas)
+	}
+	return nil
+}
+
+func validateAddDataValidationTaskCompositionBoundary(spec taskspec.TaskSpec) error {
+	if spec.ExecutionKind != taskspec.ExecutionKindComposition {
+		return fmt.Errorf("add data validation task execution_kind=%q want %q", spec.ExecutionKind, taskspec.ExecutionKindComposition)
+	}
+	if spec.CompositionKind != taskspec.CompositionKindDataValidation {
+		return fmt.Errorf("add data validation task composition_kind=%q want %q", spec.CompositionKind, taskspec.CompositionKindDataValidation)
+	}
+	if spec.Operation != taskspec.OperationAddDataValidation {
+		return fmt.Errorf("add data validation task operation=%q want %q", spec.Operation, taskspec.OperationAddDataValidation)
 	}
 	return nil
 }
@@ -546,4 +593,13 @@ func cloneInts(values []int) []int {
 	cloned := make([]int, len(values))
 	copy(cloned, values)
 	return cloned
+}
+
+func cloneDataValidationRule(value taskspec.DataValidationRule) *DataValidationRule {
+	return &DataValidationRule{
+		Ranges:        cloneStrings(value.Ranges),
+		RuleType:      value.RuleType,
+		AllowedValues: cloneStrings(value.AllowedValues),
+		AllowBlank:    value.AllowBlank,
+	}
 }

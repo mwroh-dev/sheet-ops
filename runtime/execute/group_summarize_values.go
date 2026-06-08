@@ -47,6 +47,8 @@ func RunWorkbookOperation(ir compiler.WorkbookOperationIR, inputWorkbook, output
 		return RunAppendStructuredRows(ir, inputWorkbook, outputWorkbook)
 	case "extend_table_formulas":
 		return RunExtendTableFormulas(ir, inputWorkbook, outputWorkbook)
+	case "add_data_validation":
+		return RunAddDataValidation(ir, inputWorkbook, outputWorkbook)
 	case "write_values":
 		return RunWriteValues(ir, inputWorkbook, outputWorkbook)
 	default:

@@ -8,13 +8,14 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-func TestInvoiceLineItemBillingPreviewComposesAppendAndFormulaExtension(t *testing.T) {
+func TestInvoiceLineItemBillingPreviewComposesAppendFormulaExtensionAndValidation(t *testing.T) {
 	setRuntimeRoots(t)
 
 	tempDir := t.TempDir()
 	inputFile := filepath.Join(tempDir, "invoice.xlsx")
 	appendOutput := filepath.Join(tempDir, "invoice-appended.xlsx")
 	finalOutput := filepath.Join(tempDir, "invoice-final.xlsx")
+	validationOutput := filepath.Join(tempDir, "invoice-validated.xlsx")
 
 	file := excelize.NewFile()
 	defer func() { _ = file.Close() }()
@@ -77,9 +78,29 @@ func TestInvoiceLineItemBillingPreviewComposesAppendAndFormulaExtension(t *testi
 		t.Fatalf("formula verification failed: %+v", formulaResult.Verification)
 	}
 
-	outputHandle, err := excelize.OpenFile(finalOutput)
+	validationTask := runtimetaskspec.BuildAddDataValidationTask(runtimetaskspec.AddDataValidationRequest{
+		RequestText: "청구서 line item SKU 입력 범위를 허용된 SKU dropdown으로 제한한다.",
+		InputFile:   finalOutput,
+		SourceSheet: "LineItems",
+		OutputFile:  validationOutput,
+		ValidationRule: runtimetaskspec.DataValidationRule{
+			Ranges:        []string{"A2:A10"},
+			RuleType:      "list",
+			AllowedValues: []string{"A001", "B002"},
+			AllowBlank:    false,
+		},
+	})
+	validationResult, err := Run(Request{ScenarioID: "invoice-preview-validation", TaskSpec: validationTask.TaskSpec})
 	if err != nil {
-		t.Fatalf("Open final output: %v", err)
+		t.Fatalf("validation Run: %v", err)
+	}
+	if !validationResult.Verification.Pass {
+		t.Fatalf("validation verification failed: %+v", validationResult.Verification)
+	}
+
+	outputHandle, err := excelize.OpenFile(validationOutput)
+	if err != nil {
+		t.Fatalf("Open validation output: %v", err)
 	}
 	defer func() { _ = outputHandle.Close() }()
 	if got, err := outputHandle.GetCellValue("LineItems", "A3"); err != nil || got != "B002" {
@@ -90,5 +111,19 @@ func TestInvoiceLineItemBillingPreviewComposesAppendAndFormulaExtension(t *testi
 	}
 	if got, err := outputHandle.GetCellFormula("LineItems", "E3"); err != nil || got != "=D3*0.1" {
 		t.Fatalf("LineItems!E3 formula=%q err=%v want =D3*0.1", got, err)
+	}
+	validations, err := outputHandle.GetDataValidations("LineItems")
+	if err != nil {
+		t.Fatalf("GetDataValidations: %v", err)
+	}
+	foundValidation := false
+	for _, validation := range validations {
+		if validation != nil && validation.Sqref == "A2:A10" && validation.Type == "list" {
+			foundValidation = true
+			break
+		}
+	}
+	if !foundValidation {
+		t.Fatalf("expected list validation on LineItems!A2:A10, got %+v", validations)
 	}
 }

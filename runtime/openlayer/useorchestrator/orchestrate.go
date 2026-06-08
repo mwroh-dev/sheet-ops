@@ -46,7 +46,7 @@ func validateSupportedValidatedExecutionRequest(req ValidatedExecutionRequest) e
 		return fmt.Errorf("unsupported validated execution kind %q", req.ExecutionKind)
 	}
 	switch req.CompositionKind {
-	case "structured_row_append", "formula_extension":
+	case "structured_row_append", "formula_extension", "data_validation":
 		return nil
 	case "group_summary", "threshold_highlight", "join_lookup":
 		return nil
@@ -93,6 +93,14 @@ func taskSpecFromUseRequest(req UseRequest) runtimetaskspec.TaskSpec {
 			FormulaSourceRow: req.FormulaSourceRow,
 			TargetRows:       append([]int(nil), req.TargetRows...),
 			FormulaColumns:   append([]string(nil), req.FormulaColumns...),
+		}).TaskSpec
+	case runtimeworkbookcase.AddDataValidationOperationName:
+		return runtimetaskspec.BuildAddDataValidationTask(runtimetaskspec.AddDataValidationRequest{
+			RequestText:    coalesceValidatedRequestText(req.RequestText, "structured data validation request"),
+			InputFile:      req.InputFile,
+			SourceSheet:    req.SheetName,
+			OutputFile:     req.OutputFile,
+			ValidationRule: toTaskSpecDataValidationRule(req.ValidationRule),
 		}).TaskSpec
 	case runtimeworkbookcase.SummaryOperationName:
 		return runtimetaskspec.BuildGroupSummarizeTask(runtimetaskspec.UseRequest{
@@ -152,6 +160,14 @@ func taskSpecFromValidatedExecutionRequest(req ValidatedExecutionRequest) (runti
 			FormulaSourceRow: req.FormulaSourceRow,
 			TargetRows:       append([]int(nil), req.TargetRows...),
 			FormulaColumns:   append([]string(nil), req.FormulaColumns...),
+		}).TaskSpec, nil
+	case "data_validation":
+		return runtimetaskspec.BuildAddDataValidationTask(runtimetaskspec.AddDataValidationRequest{
+			RequestText:    coalesceValidatedRequestText(req.RequestText, "validated data validation request"),
+			InputFile:      req.InputFile,
+			SourceSheet:    req.SourceSheet,
+			OutputFile:     req.OutputFile,
+			ValidationRule: toTaskSpecDataValidationRule(req.ValidationRule),
 		}).TaskSpec, nil
 	case "join_lookup":
 		includeSourceColumns, err := defaultJoinSourceColumns(req)
@@ -218,6 +234,8 @@ func validatedRoutingRequestText(req ValidatedExecutionRequest) string {
 		return coalesceValidatedRequestText(req.RequestText, "validated append rows request")
 	case "formula_extension":
 		return coalesceValidatedRequestText(req.RequestText, "validated formula extension request")
+	case "data_validation":
+		return coalesceValidatedRequestText(req.RequestText, "validated data validation request")
 	case "join_lookup":
 		return coalesceValidatedRequestText(req.RequestText, "validated join lookup request")
 	case "threshold_highlight":
@@ -233,6 +251,8 @@ func validatedOperation(req ValidatedExecutionRequest) string {
 		return runtimeworkbookcase.AppendRowsOperationName
 	case "formula_extension":
 		return runtimeworkbookcase.ExtendFormulasOperationName
+	case "data_validation":
+		return runtimeworkbookcase.AddDataValidationOperationName
 	case "join_lookup":
 		return runtimeworkbookcase.JoinLookupOperationName
 	case "threshold_highlight":
@@ -270,7 +290,7 @@ func defaultJoinSourceColumns(req ValidatedExecutionRequest) ([]string, error) {
 
 func isSupportedOperation(operation string) bool {
 	switch operation {
-	case runtimeworkbookcase.SummaryOperationName, runtimeworkbookcase.HighlightOperationName, runtimeworkbookcase.JoinLookupOperationName, runtimeworkbookcase.AppendRowsOperationName, runtimeworkbookcase.ExtendFormulasOperationName:
+	case runtimeworkbookcase.SummaryOperationName, runtimeworkbookcase.HighlightOperationName, runtimeworkbookcase.JoinLookupOperationName, runtimeworkbookcase.AppendRowsOperationName, runtimeworkbookcase.ExtendFormulasOperationName, runtimeworkbookcase.AddDataValidationOperationName:
 		return true
 	default:
 		return false
@@ -286,6 +306,18 @@ func toTaskSpecCellValues(values []CellValue) []runtimetaskspec.CellValue {
 		converted = append(converted, runtimetaskspec.CellValue{Cell: value.Cell, Value: value.Value})
 	}
 	return converted
+}
+
+func toTaskSpecDataValidationRule(rule *DataValidationRule) runtimetaskspec.DataValidationRule {
+	if rule == nil {
+		return runtimetaskspec.DataValidationRule{}
+	}
+	return runtimetaskspec.DataValidationRule{
+		Ranges:        append([]string(nil), rule.Ranges...),
+		RuleType:      rule.RuleType,
+		AllowedValues: append([]string(nil), rule.AllowedValues...),
+		AllowBlank:    rule.AllowBlank,
+	}
 }
 
 func toTaskSpecFilters(filters []FilterSpec) []runtimetaskspec.FilterSpec {

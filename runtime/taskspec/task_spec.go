@@ -31,35 +31,43 @@ type CellValue struct {
 	Value any    `json:"value"`
 }
 
+type DataValidationRule struct {
+	Ranges        []string `json:"ranges"`
+	RuleType      string   `json:"rule_type"`
+	AllowedValues []string `json:"allowed_values,omitempty"`
+	AllowBlank    bool     `json:"allow_blank"`
+}
+
 type SourceSpec struct {
 	Kind string `json:"kind"`
 	Path string `json:"path,omitempty"`
 }
 
 type TaskSpec struct {
-	RequestKind          string         `json:"request_kind"`
-	ExecutionKind        string         `json:"execution_kind"`
-	CompositionKind      string         `json:"composition_kind,omitempty"`
-	Source               SourceSpec     `json:"source"`
-	RequestText          string         `json:"request_text,omitempty"`
-	InputWorkbook        string         `json:"input_workbook"`
-	OutputWorkbook       string         `json:"output_workbook"`
-	Operation            string         `json:"operation"`
-	SourceSheet          string         `json:"source_sheet"`
-	TargetSheet          string         `json:"target_sheet,omitempty"`
-	Filters              []FilterSpec   `json:"filters,omitempty"`
-	GroupBy              []string       `json:"group_by,omitempty"`
-	Metrics              []MetricSpec   `json:"metrics,omitempty"`
-	SummaryMode          string         `json:"summary_mode,omitempty"`
-	ThresholdRule        *ThresholdRule `json:"threshold_rule,omitempty"`
-	LookupSheet          string         `json:"lookup_sheet,omitempty"`
-	JoinKey              string         `json:"join_key,omitempty"`
-	IncludeSourceColumns []string       `json:"include_source_columns,omitempty"`
-	AppendLookupColumns  []string       `json:"append_lookup_columns,omitempty"`
-	Values               []CellValue    `json:"values,omitempty"`
-	FormulaSourceRow     int            `json:"formula_source_row,omitempty"`
-	TargetRows           []int          `json:"target_rows,omitempty"`
-	FormulaColumns       []string       `json:"formula_columns,omitempty"`
+	RequestKind          string              `json:"request_kind"`
+	ExecutionKind        string              `json:"execution_kind"`
+	CompositionKind      string              `json:"composition_kind,omitempty"`
+	Source               SourceSpec          `json:"source"`
+	RequestText          string              `json:"request_text,omitempty"`
+	InputWorkbook        string              `json:"input_workbook"`
+	OutputWorkbook       string              `json:"output_workbook"`
+	Operation            string              `json:"operation"`
+	SourceSheet          string              `json:"source_sheet"`
+	TargetSheet          string              `json:"target_sheet,omitempty"`
+	Filters              []FilterSpec        `json:"filters,omitempty"`
+	GroupBy              []string            `json:"group_by,omitempty"`
+	Metrics              []MetricSpec        `json:"metrics,omitempty"`
+	SummaryMode          string              `json:"summary_mode,omitempty"`
+	ThresholdRule        *ThresholdRule      `json:"threshold_rule,omitempty"`
+	LookupSheet          string              `json:"lookup_sheet,omitempty"`
+	JoinKey              string              `json:"join_key,omitempty"`
+	IncludeSourceColumns []string            `json:"include_source_columns,omitempty"`
+	AppendLookupColumns  []string            `json:"append_lookup_columns,omitempty"`
+	Values               []CellValue         `json:"values,omitempty"`
+	FormulaSourceRow     int                 `json:"formula_source_row,omitempty"`
+	TargetRows           []int               `json:"target_rows,omitempty"`
+	FormulaColumns       []string            `json:"formula_columns,omitempty"`
+	ValidationRule       *DataValidationRule `json:"validation_rule,omitempty"`
 }
 
 type GroupSummarizeTask struct {
@@ -104,6 +112,13 @@ type ExtendTableFormulasTask struct {
 	FormulaSourceRow int
 	TargetRows       []int
 	FormulaColumns   []string
+	PreserveOriginal bool
+}
+
+type AddDataValidationTask struct {
+	TaskSpec         TaskSpec
+	SourceSheet      string
+	ValidationRule   DataValidationRule
 	PreserveOriginal bool
 }
 
@@ -161,6 +176,14 @@ type ExtendTableFormulasRequest struct {
 	FormulaColumns   []string
 }
 
+type AddDataValidationRequest struct {
+	RequestText    string
+	InputFile      string
+	SourceSheet    string
+	OutputFile     string
+	ValidationRule DataValidationRule
+}
+
 const (
 	ExecutionKindComposition             = "composition"
 	CompositionKindGroupSummary          = "group_summary"
@@ -168,16 +191,19 @@ const (
 	CompositionKindJoinLookup            = "join_lookup"
 	CompositionKindStructuredRowAppend   = "structured_row_append"
 	CompositionKindFormulaExtension      = "formula_extension"
+	CompositionKindDataValidation        = "data_validation"
 	OperationCreateSummarySheet          = "create_summary_sheet"
 	OperationHighlightThresholdRows      = "highlight_threshold_rows"
 	OperationCreateJoinLookupResultSheet = "create_join_lookup_result_sheet"
 	OperationAppendStructuredRows        = "append_structured_rows"
 	OperationExtendTableFormulas         = "extend_table_formulas"
+	OperationAddDataValidation           = "add_data_validation"
 	OperationFamilyGroupSummarize        = "group_summarize"
 	OperationFamilyHighlightThreshold    = "highlight_threshold"
 	OperationFamilyJoinLookup            = "join_lookup"
 	OperationFamilyAppendStructuredRows  = "append_structured_rows"
 	OperationFamilyExtendTableFormulas   = "extend_table_formulas"
+	OperationFamilyAddDataValidation     = "add_data_validation"
 
 	defaultHighlightColumn    = "amount"
 	defaultHighlightOperator  = ">"
@@ -342,6 +368,26 @@ func BuildExtendTableFormulasTask(req ExtendTableFormulasRequest) ExtendTableFor
 	}
 }
 
+func BuildAddDataValidationTask(req AddDataValidationRequest) AddDataValidationTask {
+	return AddDataValidationTask{
+		TaskSpec: TaskSpec{
+			RequestKind:     "workbook_case",
+			ExecutionKind:   ExecutionKindComposition,
+			CompositionKind: CompositionKindDataValidation,
+			Source:          SourceSpec{Kind: "natural_language"},
+			RequestText:     req.RequestText,
+			InputWorkbook:   req.InputFile,
+			OutputWorkbook:  req.OutputFile,
+			Operation:       OperationAddDataValidation,
+			SourceSheet:     req.SourceSheet,
+			ValidationRule:  cloneDataValidationRule(req.ValidationRule),
+		},
+		SourceSheet:      req.SourceSheet,
+		ValidationRule:   *cloneDataValidationRule(req.ValidationRule),
+		PreserveOriginal: true,
+	}
+}
+
 func cloneFilters(values []FilterSpec) []FilterSpec {
 	if len(values) == 0 {
 		return nil
@@ -390,4 +436,11 @@ func cloneInts(values []int) []int {
 	cloned := make([]int, len(values))
 	copy(cloned, values)
 	return cloned
+}
+
+func cloneDataValidationRule(value DataValidationRule) *DataValidationRule {
+	cloned := value
+	cloned.Ranges = cloneStrings(value.Ranges)
+	cloned.AllowedValues = cloneStrings(value.AllowedValues)
+	return &cloned
 }

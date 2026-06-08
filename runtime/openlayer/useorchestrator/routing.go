@@ -73,6 +73,9 @@ func resolveRequestedOperation(req UseRequest) (string, string) {
 	if isFormulaExtensionRequest(req) {
 		return runtimeworkbookcase.ExtendFormulasOperationName, "formula_extension_request_signals"
 	}
+	if isDataValidationRequest(req) {
+		return runtimeworkbookcase.AddDataValidationOperationName, "data_validation_request_signals"
+	}
 	if isJoinLookupRequest(req) {
 		return runtimeworkbookcase.JoinLookupOperationName, "join_lookup_request_signals"
 	}
@@ -96,6 +99,13 @@ func isFormulaExtensionRequest(req UseRequest) bool {
 		strings.Contains(req.RequestText, "수식을 확장") ||
 		strings.Contains(req.RequestText, "formula extension") ||
 		strings.Contains(req.RequestText, "extend formulas")
+}
+
+func isDataValidationRequest(req UseRequest) bool {
+	return req.ValidationRule != nil ||
+		strings.Contains(req.RequestText, "데이터 검증") ||
+		strings.Contains(req.RequestText, "dropdown") ||
+		strings.Contains(req.RequestText, "data validation")
 }
 
 func isSummaryRequest(req UseRequest) bool {
@@ -137,6 +147,8 @@ func buildRoutingNote(selectedOperation, routingAuthority string, knowledge runt
 			return fmt.Sprintf("%s Fallback routed by append row request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		case "formula_extension_request_signals":
 			return fmt.Sprintf("%s Fallback routed by formula extension request signals to %s.", knowledge.FallbackReason, selectedOperation)
+		case "data_validation_request_signals":
+			return fmt.Sprintf("%s Fallback routed by data validation request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		case "highlight_request_signals":
 			return fmt.Sprintf("%s Fallback routed by highlight request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		default:

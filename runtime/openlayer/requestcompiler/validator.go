@@ -229,6 +229,19 @@ func compileDecision(intent NormalizedIntent) Decision {
 		}
 	}
 
+	if slices.Contains(intent.CompositionCandidates, CompositionCandidateDataValidation) && dataValidationIntentReady(intent) {
+		return Decision{
+			Status:            StatusCompiled,
+			SelectedOperation: "add_data_validation",
+			Confidence:        0.98,
+			Notes: []string{
+				"the normalized intent maps cleanly to the supported data validation runtime operation",
+			},
+			SheetCandidates:   supportedSheetCandidates(intent),
+			StructuralSignals: []string{"data_validation_request", "preserve_original"},
+		}
+	}
+
 	if slices.Contains(intent.CompositionCandidates, CompositionCandidateJoinLookup) && joinLookupIntentReady(intent) {
 		return Decision{
 			Status:            StatusCompiled,
@@ -387,6 +400,14 @@ func toRuntimeIntent(intent NormalizedIntent) runtimevalidate.NormalizedIntent {
 			TargetRows:       append([]int(nil), intent.ExtendFormulas.TargetRows...),
 			FormulaColumns:   append([]string(nil), intent.ExtendFormulas.FormulaColumns...),
 		},
+		AddDataValidation: runtimevalidate.AddDataValidationIntent{
+			ValidationRule: runtimevalidate.DataValidationRule{
+				Ranges:        append([]string(nil), intent.AddDataValidation.ValidationRule.Ranges...),
+				RuleType:      intent.AddDataValidation.ValidationRule.RuleType,
+				AllowedValues: append([]string(nil), intent.AddDataValidation.ValidationRule.AllowedValues...),
+				AllowBlank:    intent.AddDataValidation.ValidationRule.AllowBlank,
+			},
+		},
 		Materialization: runtimevalidate.MaterializationIntent{
 			PreserveOriginal:      intent.Materialization.PreserveOriginal,
 			OutputDestinationMode: intent.Materialization.OutputDestinationMode,
@@ -498,6 +519,14 @@ func extendFormulasIntentReady(intent NormalizedIntent) bool {
 		intent.ExtendFormulas.FormulaSourceRow > 0 &&
 		len(intent.ExtendFormulas.TargetRows) > 0 &&
 		len(intent.ExtendFormulas.FormulaColumns) > 0
+}
+
+func dataValidationIntentReady(intent NormalizedIntent) bool {
+	rule := intent.AddDataValidation.ValidationRule
+	return len(intent.SourceSheetCandidates) > 0 &&
+		len(rule.Ranges) > 0 &&
+		rule.RuleType == "list" &&
+		len(rule.AllowedValues) > 0
 }
 
 func toRuntimeCellValues(values []CellValue) []runtimevalidate.CellValue {

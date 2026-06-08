@@ -28,8 +28,10 @@ UseRequest / ValidatedExecutionRequest
 
 Atom builder records mirror this path for `group_summarize`,
 `highlight_threshold`, `join_lookup`, `append_structured_rows`,
-`extend_table_formulas`, and `write_values`. They do not add new runtime
-support by themselves.
+`extend_table_formulas`, `add_data_validation`, and `write_values`. The
+supported `add_data_validation` scope is explicit list/dropdown rules on
+declared ranges; richer validation forms remain opportunity scope. Atom builder
+records do not add new runtime support by themselves.
 
 ## Promotion Rule
 

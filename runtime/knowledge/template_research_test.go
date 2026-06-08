@@ -220,11 +220,11 @@ func TestAtomBuilderLayerValidatesRuntimeMirrorAndPlanningContracts(t *testing.T
 	var catalog struct {
 		Authority string `json:"authority"`
 		Builders  []struct {
-			AtomID           string   `json:"atom_id"`
-			Status           string   `json:"status"`
-			RuntimePaths     []string `json:"runtime_paths"`
-			CapabilityRecord string   `json:"capability_record,omitempty"`
-			OpportunityRecord string  `json:"opportunity_record,omitempty"`
+			AtomID            string   `json:"atom_id"`
+			Status            string   `json:"status"`
+			RuntimePaths      []string `json:"runtime_paths"`
+			CapabilityRecord  string   `json:"capability_record,omitempty"`
+			OpportunityRecord string   `json:"opportunity_record,omitempty"`
 		} `json:"builders"`
 	}
 	if err := json.Unmarshal(raw, &catalog); err != nil {
@@ -282,7 +282,6 @@ func TestTemplateResearchKeepsUnsupportedCapabilitiesOutOfSupportedRegistry(t *t
 		"copy_period_sheet",
 		"normalize_headers",
 		"create_pivot_summary",
-		"add_data_validation",
 		"protect_formula_cells",
 		"reconcile_tables",
 		"generate_printable_form",

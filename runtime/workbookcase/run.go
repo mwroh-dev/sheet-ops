@@ -113,6 +113,10 @@ func Run(req Request) (result RunResult, err error) {
 		if err := orchestrateExtendTableFormulas(req.TaskSpec, paths, &result, mustLog); err != nil {
 			return result, err
 		}
+	case AddDataValidationOperationName:
+		if err := orchestrateAddDataValidation(req.TaskSpec, paths, &result, mustLog); err != nil {
+			return result, err
+		}
 	default:
 		return result, wrapFailure(
 			"request_validation",
@@ -124,6 +128,78 @@ func Run(req Request) (result RunResult, err error) {
 	}
 	mustLog("agent", "agent_completed", "use-orchestrator", map[string]any{"pass": result.Verification.Pass})
 	return result, nil
+}
+
+func orchestrateAddDataValidation(taskSpec runtimetaskspec.TaskSpec, paths RunPaths, result *RunResult, mustLog func(string, string, string, map[string]any)) error {
+	task := addDataValidationTaskFromSpec(taskSpec)
+	inspection, err := runtimecompiler.InspectWorkbook(task.TaskSpec.InputWorkbook, task.SourceSheet, nil, nil, nil)
+	if err != nil {
+		return wrapFailure("inspection", "inspection_failure", "inspect_failed", "inspect the source workbook before planning data validation", err)
+	}
+	result.Inspection = summaryInspectionArtifact(inspection, task.SourceSheet)
+	record := summaryInspectionRecord(inspection, task.SourceSheet)
+	result.SummaryInspection = &record
+	mustLog("agent", "agent_completed", "inspect-workbook", map[string]any{"source_sheet": record.SourceSheet, "row_count": record.RowCount})
+	if err := writeJSON(paths.InspectionPath, record); err != nil {
+		return wrapFailure("inspection", "artifact_emission_failure", "inspection_artifact_write_failed", "write the data validation inspection artifact", err)
+	}
+
+	operationIR, err := runtimecompiler.CompileAddDataValidationOperation(task)
+	if err != nil {
+		return wrapFailure("planning", "planning_failure", "operation_ir_compile_failed", "compile workbook data validation operation IR", err)
+	}
+	plan := AddDataValidationPlan{
+		Operation:        AddDataValidationOperationName,
+		SheetName:        operationIR.SourceSheet,
+		ValidationRule:   task.ValidationRule,
+		PreserveOriginal: operationIR.PreserveOriginal,
+		OutputFile:       task.TaskSpec.OutputWorkbook,
+	}
+	if err := runtimeschema.ValidateStruct(repoJoin("contracts", "plans", "use", "operation_plan.schema.json"), plan); err != nil {
+		return wrapFailure("planning", "planning_failure", "plan_invalid", "validate the data validation plan artifact against its contract", err)
+	}
+	result.Plan = plan
+	mustLog("judgment", "plan_built", "request-planner", map[string]any{"operation": plan.Operation, "source_sheet": plan.SheetName, "validation_ranges": len(plan.ValidationRule.Ranges)})
+	if err := writeJSON(paths.PlanPath, plan); err != nil {
+		return wrapFailure("planning", "artifact_emission_failure", "plan_artifact_write_failed", "write the data validation plan artifact", err)
+	}
+	if err := writeAddDataValidationRuntimeInputs(task.TaskSpec, operationIR, paths); err != nil {
+		return err
+	}
+
+	policy := evaluateWritePolicyOutput(task.TaskSpec.InputWorkbook, task.TaskSpec.OutputWorkbook, task.PreserveOriginal)
+	if err := runtimeschema.ValidateStruct(repoJoin("contracts", "policy", "write_policy_decision.schema.json"), policy); err != nil {
+		return wrapFailure("policy", "policy_failure", "policy_decision_invalid", "validate the data validation write policy decision", err)
+	}
+	result.Policy = policy
+	if err := writeJSON(paths.PolicyPath, policy); err != nil {
+		return wrapFailure("policy", "artifact_emission_failure", "policy_artifact_write_failed", "write the data validation policy artifact", err)
+	}
+	if !policy.Allow {
+		return wrapFailure("policy", "policy_failure", "policy_denied", "evaluate whether the data validation run may write a distinct output workbook", fmt.Errorf("policy denied execution: %s", strings.Join(policy.Reasons, "; ")))
+	}
+
+	execution, err := runtimeexecute.RunWorkbookOperation(operationIR, task.TaskSpec.InputWorkbook, task.TaskSpec.OutputWorkbook)
+	if err != nil {
+		return wrapFailure("execution", "execution_failure", "execute_failed", "execute the data validation workbook operation and write the output workbook", err)
+	}
+	result.Execution = executionSummaryFromRuntime(execution)
+	if err := writeJSON(paths.ExecutionPath, result.Execution); err != nil {
+		return wrapFailure("execution", "artifact_emission_failure", "execution_artifact_write_failed", "write the data validation execution artifact", err)
+	}
+
+	verification, err := runtimeverify.VerifyWorkbookOperation(operationIR, task.TaskSpec.InputWorkbook, task.TaskSpec.OutputWorkbook, result.Execution.SourceSHA256Before, result.Execution.SourceSHA256After)
+	if err != nil {
+		return wrapFailure("verification", "verification_failure", "verify_failed", "verify the emitted data validation workbook against execution fingerprints", err)
+	}
+	result.Verification = verificationSummaryFromRuntime(task.TaskSpec.Operation, verification)
+	if err := runtimeschema.ValidateStruct(repoJoin("contracts", "verification", "verification_result.schema.json"), result.Verification); err != nil {
+		return wrapFailure("verification", "verification_failure", "verification_result_invalid", "validate the data validation verification artifact against its contract", err)
+	}
+	if err := writeJSON(paths.VerificationPath, result.Verification); err != nil {
+		return wrapFailure("verification", "artifact_emission_failure", "verification_artifact_write_failed", "write the data validation verification artifact", err)
+	}
+	return nil
 }
 
 func orchestrateExtendTableFormulas(taskSpec runtimetaskspec.TaskSpec, paths RunPaths, result *RunResult, mustLog func(string, string, string, map[string]any)) error {
@@ -1174,6 +1250,25 @@ func writeExtendTableFormulasRuntimeInputs(taskSpec runtimetaskspec.TaskSpec, op
 	return nil
 }
 
+func writeAddDataValidationRuntimeInputs(taskSpec runtimetaskspec.TaskSpec, operationIR runtimecompiler.WorkbookOperationIR, paths RunPaths) error {
+	if !shouldPersistSensitiveWorkbookArtifacts() {
+		return nil
+	}
+	if err := runtimeschema.ValidateStruct(repoJoin("contracts", "task", "task_spec.schema.json"), taskSpec); err != nil {
+		return wrapFailure("planning", "planning_failure", "task_spec_invalid", "validate the data validation runtime task spec artifact", err)
+	}
+	if err := writeJSON(paths.TaskSpecPath, taskSpec); err != nil {
+		return wrapFailure("planning", "artifact_emission_failure", "task_spec_artifact_write_failed", "write the data validation runtime task spec artifact", err)
+	}
+	if err := runtimeschema.ValidateStruct(repoJoin("contracts", "ir", "workbook_operation_ir.schema.json"), operationIR); err != nil {
+		return wrapFailure("planning", "planning_failure", "operation_ir_invalid", "validate the data validation operation IR artifact", err)
+	}
+	if err := writeJSON(paths.OperationIRPath, operationIR); err != nil {
+		return wrapFailure("planning", "artifact_emission_failure", "operation_ir_artifact_write_failed", "write the data validation operation IR artifact", err)
+	}
+	return nil
+}
+
 func summaryTaskFromSpec(spec runtimetaskspec.TaskSpec) runtimetaskspec.GroupSummarizeTask {
 	return runtimetaskspec.GroupSummarizeTask{
 		TaskSpec:         spec,
@@ -1229,6 +1324,21 @@ func extendTableFormulasTaskFromSpec(spec runtimetaskspec.TaskSpec) runtimetasks
 		FormulaSourceRow: spec.FormulaSourceRow,
 		TargetRows:       append([]int(nil), spec.TargetRows...),
 		FormulaColumns:   append([]string(nil), spec.FormulaColumns...),
+		PreserveOriginal: true,
+	}
+}
+
+func addDataValidationTaskFromSpec(spec runtimetaskspec.TaskSpec) runtimetaskspec.AddDataValidationTask {
+	rule := runtimetaskspec.DataValidationRule{}
+	if spec.ValidationRule != nil {
+		rule = *spec.ValidationRule
+		rule.Ranges = append([]string(nil), spec.ValidationRule.Ranges...)
+		rule.AllowedValues = append([]string(nil), spec.ValidationRule.AllowedValues...)
+	}
+	return runtimetaskspec.AddDataValidationTask{
+		TaskSpec:         spec,
+		SourceSheet:      spec.SourceSheet,
+		ValidationRule:   rule,
 		PreserveOriginal: true,
 	}
 }

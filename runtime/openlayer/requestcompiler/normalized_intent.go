@@ -88,6 +88,12 @@ func normalizeIntent(intent NormalizedIntent) NormalizedIntent {
 	if intent.ExtendFormulas.FormulaColumns == nil {
 		intent.ExtendFormulas.FormulaColumns = []string{}
 	}
+	if intent.AddDataValidation.ValidationRule.Ranges == nil {
+		intent.AddDataValidation.ValidationRule.Ranges = []string{}
+	}
+	if intent.AddDataValidation.ValidationRule.AllowedValues == nil {
+		intent.AddDataValidation.ValidationRule.AllowedValues = []string{}
+	}
 	if intent.Ambiguities != nil {
 		intent.Ambiguity.Markers = append([]string(nil), intent.Ambiguities...)
 	} else if intent.Ambiguity.Markers != nil {

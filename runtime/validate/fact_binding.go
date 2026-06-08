@@ -81,6 +81,12 @@ func BindFacts(admitted admittedIntent, facts runtimeinspect.WorkbookFacts) (bou
 			facts:          facts,
 			sourceSheet:    sourceSheet,
 		}, nil, nil
+	case "data_validation":
+		sourceSheet, ok := firstExistingSheet(facts, admitted.sourceSheets)
+		if !ok {
+			return blockedFactBinding("unsupported_source_sheet")
+		}
+		return boundIntent{admittedIntent: admitted, facts: facts, sourceSheet: sourceSheet}, nil, nil
 	default:
 		return blockedFactBinding("unsupported_request")
 	}

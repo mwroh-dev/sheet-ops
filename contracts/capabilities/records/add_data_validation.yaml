@@ -1,0 +1,41 @@
+{
+  "name": "add_data_validation",
+  "operation_family": "add_data_validation",
+  "task_operations": [
+    "add_data_validation"
+  ],
+  "inputs": [
+    "input_workbook",
+    "source_sheet",
+    "validation_rule"
+  ],
+  "outputs": [
+    "output_workbook",
+    "source_sheet",
+    "validation_ranges"
+  ],
+  "required_facts": [
+    "sheets",
+    "validations"
+  ],
+  "verifies": [
+    "source_preserved",
+    "validation_rule_present",
+    "allowed_values_match"
+  ],
+  "contract_paths": [
+    "contracts/task/task_spec.schema.json",
+    "contracts/ir/workbook_operation_ir.schema.json",
+    "contracts/verification/verification_result.schema.json"
+  ],
+  "runtime_paths": [
+    "runtime/compiler/workbook_compiler.go",
+    "runtime/execute/add_data_validation.go",
+    "runtime/verify/add_data_validation.go"
+  ],
+  "examples": [
+    "examples/add_data_validation/request.json"
+  ],
+  "status": "supported",
+  "exposure": "public_agent_capability"
+}

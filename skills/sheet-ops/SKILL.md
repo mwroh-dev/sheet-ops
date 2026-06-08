@@ -110,8 +110,8 @@ Supported today:
 
 - use this skill as the single human-facing entry for local workbook requests
 - select public agent capabilities from `group_summarize`,
-  `highlight_threshold`, `join_lookup`, `append_structured_rows`, and
-  `extend_table_formulas`
+  `highlight_threshold`, `join_lookup`, `append_structured_rows`,
+  `extend_table_formulas`, and `add_data_validation`
 - use runtime handoff for schema-authorized deterministic execution,
   verification, and evidence
 - trust the deterministic fixture-backed harness smoke and public preview

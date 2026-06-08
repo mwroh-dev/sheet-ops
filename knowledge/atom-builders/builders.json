@@ -135,16 +135,16 @@
     },
     {
       "atom_id": "add_data_validation",
-      "status": "planned",
-      "builder_layer": "planned_contract",
-      "input_contract": ["target ranges", "rule type", "allowed values", "numeric bounds", "date windows"],
-      "inspection_requirements": ["input ranges", "existing validation rules", "reference values"],
-      "plan_outputs": ["validation rules", "target ranges", "invalid value expectations"],
+      "status": "supported",
+      "builder_layer": "runtime_mirror",
+      "input_contract": ["source sheet", "target ranges", "list rule type", "allowed values", "allow blank"],
+      "inspection_requirements": ["source sheet exists", "target ranges", "allowed values"],
+      "plan_outputs": ["list validation rules", "target ranges"],
       "result_outputs": ["validation rules", "warnings"],
-      "verification_assertions": ["validation_rule_present", "allowed_values_pass", "invalid_values_rejected_or_flagged"],
-      "capability_record": "",
-      "opportunity_record": "knowledge/template-research/opportunities/add_data_validation.json",
-      "runtime_paths": []
+      "verification_assertions": ["source_preserved", "validation_rule_present", "allowed_values_match"],
+      "capability_record": "contracts/capabilities/records/add_data_validation.yaml",
+      "opportunity_record": "",
+      "runtime_paths": ["runtime/compiler/workbook_compiler.go", "runtime/execute/add_data_validation.go", "runtime/verify/add_data_validation.go"]
     },
     {
       "atom_id": "protect_formula_cells",

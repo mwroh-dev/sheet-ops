@@ -6,6 +6,7 @@ const (
 	CompositionCandidateJoinLookup          = "join_lookup"
 	CompositionCandidateStructuredRowAppend = "structured_row_append"
 	CompositionCandidateFormulaExtension    = "formula_extension"
+	CompositionCandidateDataValidation      = "data_validation"
 
 	OutputDestinationModeNewWorkbook  = "new_workbook"
 	OutputDestinationModeSameWorkbook = "same_workbook"
@@ -62,6 +63,17 @@ type ExtendFormulasIntent struct {
 	FormulaColumns   []string `json:"formula_columns,omitempty"`
 }
 
+type AddDataValidationIntent struct {
+	ValidationRule DataValidationRule `json:"validation_rule,omitempty"`
+}
+
+type DataValidationRule struct {
+	Ranges        []string `json:"ranges"`
+	RuleType      string   `json:"rule_type"`
+	AllowedValues []string `json:"allowed_values,omitempty"`
+	AllowBlank    bool     `json:"allow_blank"`
+}
+
 type CellValue struct {
 	Cell  string `json:"cell"`
 	Value any    `json:"value"`
@@ -109,17 +121,18 @@ type MemoryMatchSummary struct {
 }
 
 type NormalizedIntent struct {
-	SourceSheetCandidates []string              `json:"source_sheet_candidates,omitempty"`
-	LookupSheetCandidates []string              `json:"lookup_sheet_candidates,omitempty"`
-	GroupKeys             []string              `json:"group_keys,omitempty"`
-	Aggregates            []AggregateIntent     `json:"aggregates,omitempty"`
-	CompositionCandidates []string              `json:"composition_candidates,omitempty"`
-	Summary               SummaryIntent         `json:"summary,omitempty"`
-	Highlight             HighlightIntent       `json:"highlight,omitempty"`
-	JoinLookup            JoinLookupIntent      `json:"join_lookup,omitempty"`
-	AppendRows            AppendRowsIntent      `json:"append_rows,omitempty"`
-	ExtendFormulas        ExtendFormulasIntent  `json:"extend_formulas,omitempty"`
-	Materialization       MaterializationIntent `json:"materialization"`
-	Ambiguity             AmbiguityIntent       `json:"ambiguity"`
-	Ambiguities           []string              `json:"-"`
+	SourceSheetCandidates []string                `json:"source_sheet_candidates,omitempty"`
+	LookupSheetCandidates []string                `json:"lookup_sheet_candidates,omitempty"`
+	GroupKeys             []string                `json:"group_keys,omitempty"`
+	Aggregates            []AggregateIntent       `json:"aggregates,omitempty"`
+	CompositionCandidates []string                `json:"composition_candidates,omitempty"`
+	Summary               SummaryIntent           `json:"summary,omitempty"`
+	Highlight             HighlightIntent         `json:"highlight,omitempty"`
+	JoinLookup            JoinLookupIntent        `json:"join_lookup,omitempty"`
+	AppendRows            AppendRowsIntent        `json:"append_rows,omitempty"`
+	ExtendFormulas        ExtendFormulasIntent    `json:"extend_formulas,omitempty"`
+	AddDataValidation     AddDataValidationIntent `json:"add_data_validation,omitempty"`
+	Materialization       MaterializationIntent   `json:"materialization"`
+	Ambiguity             AmbiguityIntent         `json:"ambiguity"`
+	Ambiguities           []string                `json:"-"`
 }

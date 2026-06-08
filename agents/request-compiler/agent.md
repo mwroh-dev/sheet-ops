@@ -35,6 +35,7 @@ And supports:
 - `join_lookup`
 - `append_rows`
 - `extend_formulas`
+- `add_data_validation`
 
 ## Rules
 

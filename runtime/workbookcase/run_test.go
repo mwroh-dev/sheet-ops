@@ -288,6 +288,57 @@ func TestRunExtendTableFormulasEndToEnd(t *testing.T) {
 	}
 }
 
+func TestRunAddDataValidationEndToEnd(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "invoice.xlsx")
+	outputFile := filepath.Join(tempDir, "invoice-output.xlsx")
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "LineItems"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	header := []any{"sku", "status"}
+	if err := file.SetSheetRow("LineItems", "A1", &header); err != nil {
+		t.Fatalf("SetSheetRow(header): %v", err)
+	}
+	row := []any{"A001", "draft"}
+	if err := file.SetSheetRow("LineItems", "A2", &row); err != nil {
+		t.Fatalf("SetSheetRow(row): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	task := runtimetaskspec.BuildAddDataValidationTask(runtimetaskspec.AddDataValidationRequest{
+		RequestText: "LineItems 상태 열에 dropdown 검증을 추가한다.",
+		InputFile:   inputFile,
+		SourceSheet: "LineItems",
+		OutputFile:  outputFile,
+		ValidationRule: runtimetaskspec.DataValidationRule{
+			Ranges:        []string{"B2:B10"},
+			RuleType:      "list",
+			AllowedValues: []string{"draft", "sent", "paid"},
+			AllowBlank:    false,
+		},
+	})
+	result, err := Run(Request{ScenarioID: "workbookcase-add-validation", TaskSpec: task.TaskSpec})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if !result.Verification.Pass {
+		t.Fatalf("verification failed: %+v", result.Verification)
+	}
+	if result.Verification.Operation != AddDataValidationOperationName {
+		t.Fatalf("verification operation=%q want %s", result.Verification.Operation, AddDataValidationOperationName)
+	}
+	if len(result.Verification.WrittenCells) != 1 || result.Verification.WrittenCells[0] != "B2:B10" {
+		t.Fatalf("written cells=%v want [B2:B10]", result.Verification.WrittenCells)
+	}
+}
+
 func TestRunRejectsUnsafeScenarioIDBeforeCreatingArtifacts(t *testing.T) {
 	artifactRoot := t.TempDir()
 	t.Setenv(ArtifactRootEnv, artifactRoot)

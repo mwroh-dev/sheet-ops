@@ -33,6 +33,8 @@ func AdmitIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIn
 		return admitAppendRowsIntent(intent, decision)
 	case "extend_table_formulas":
 		return admitExtendFormulasIntent(intent, decision)
+	case "add_data_validation":
+		return admitAddDataValidationIntent(intent, decision)
 	default:
 		result, err := finalizeResult(Result{
 			Status: StatusBlocked,
@@ -202,6 +204,33 @@ func admitAppendRowsIntent(intent NormalizedIntent, decision CompilerDecision) (
 		sourceSheets:         preferredSourceSheets(intent, decision),
 		includeSourceColumns: append([]string(nil), intent.AppendRows.IncludeSourceColumns...),
 		values:               cloneCellValues(intent.AppendRows.Values),
+	}, nil, nil
+}
+
+func admitAddDataValidationIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIntent, *Result, error) {
+	if !intent.Materialization.PreserveOriginal ||
+		intent.Materialization.OutputDestinationMode != "new_workbook" ||
+		intent.Materialization.WriteShape != "in_place_cells" {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"invalid_materialization"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	if len(intent.AddDataValidation.ValidationRule.Ranges) == 0 ||
+		intent.AddDataValidation.ValidationRule.RuleType != "list" ||
+		len(intent.AddDataValidation.ValidationRule.AllowedValues) == 0 {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"incomplete_data_validation_intent"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	return admittedIntent{
+		decision:        decision,
+		compositionKind: "data_validation",
+		sourceSheets:    preferredSourceSheets(intent, decision),
+		validationRule:  cloneDataValidationRule(intent.AddDataValidation.ValidationRule),
 	}, nil, nil
 }
 

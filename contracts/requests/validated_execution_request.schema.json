@@ -22,7 +22,7 @@
     "source_sheet": { "type": "string", "minLength": 1 },
     "output_file": { "type": "string", "minLength": 1 },
     "execution_kind": { "const": "composition" },
-    "composition_kind": { "enum": ["group_summary", "threshold_highlight", "join_lookup", "structured_row_append", "formula_extension"] },
+    "composition_kind": { "enum": ["group_summary", "threshold_highlight", "join_lookup", "structured_row_append", "formula_extension", "data_validation"] },
     "target_sheet": { "type": "string", "minLength": 1 },
     "summary_mode": { "enum": ["values", "formulas"] },
     "filters": {
@@ -106,6 +106,27 @@
       "minItems": 1,
       "uniqueItems": true,
       "items": { "type": "string", "minLength": 1 }
+    },
+    "validation_rule": {
+      "type": "object",
+      "required": ["ranges", "rule_type", "allowed_values", "allow_blank"],
+      "properties": {
+        "ranges": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "rule_type": { "const": "list" },
+        "allowed_values": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "allow_blank": { "type": "boolean" }
+      },
+      "additionalProperties": false
     }
   },
   "allOf": [
@@ -241,6 +262,36 @@
             { "required": ["include_source_columns"] },
             { "required": ["append_lookup_columns"] },
             { "required": ["values"] }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "composition_kind": { "const": "data_validation" } },
+        "required": ["composition_kind"]
+      },
+      "then": {
+        "required": ["validation_rule"],
+        "not": {
+          "anyOf": [
+            { "required": ["target_sheet"] },
+            { "required": ["summary_mode"] },
+            { "required": ["filters"] },
+            { "required": ["group_by"] },
+            { "required": ["metrics"] },
+            { "required": ["target_column"] },
+            { "required": ["operator"] },
+            { "required": ["threshold"] },
+            { "required": ["highlight_color"] },
+            { "required": ["lookup_sheet"] },
+            { "required": ["join_key"] },
+            { "required": ["include_source_columns"] },
+            { "required": ["append_lookup_columns"] },
+            { "required": ["values"] },
+            { "required": ["formula_source_row"] },
+            { "required": ["target_rows"] },
+            { "required": ["formula_columns"] }
           ]
         }
       }

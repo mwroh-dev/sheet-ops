@@ -39,6 +39,9 @@ func (validator Validator) AdmitExecution(bound boundIntent) (Result, error) {
 		request.FormulaSourceRow = bound.formulaSourceRow
 		request.TargetRows = cloneInts(bound.targetRows)
 		request.FormulaColumns = append([]string(nil), bound.formulaColumns...)
+	case "data_validation":
+		rule := cloneDataValidationRule(bound.validationRule)
+		request.ValidationRule = &rule
 	}
 
 	return finalizeResult(Result{

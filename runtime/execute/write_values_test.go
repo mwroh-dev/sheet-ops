@@ -275,3 +275,60 @@ func TestRunExtendTableFormulasPreservesSourceAndVerifiesFormulas(t *testing.T) 
 		t.Fatalf("verification failed: %+v", verification)
 	}
 }
+
+func TestRunAddDataValidationPreservesSourceAndVerifiesRule(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "invoice.xlsx")
+	outputFile := filepath.Join(tempDir, "invoice-output.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "LineItems"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	header := []any{"sku", "quantity", "unit_price", "status"}
+	if err := file.SetSheetRow("LineItems", "A1", &header); err != nil {
+		t.Fatalf("SetSheetRow(header): %v", err)
+	}
+	row := []any{"A001", 2, 10, "draft"}
+	if err := file.SetSheetRow("LineItems", "A2", &row); err != nil {
+		t.Fatalf("SetSheetRow(row): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	ir := compiler.WorkbookOperationIR{
+		ExecutionKind:   "composition",
+		CompositionKind: "data_validation",
+		OperationFamily: "add_data_validation",
+		SourceSheet:     "LineItems",
+		ValidationRule: &compiler.DataValidationRule{
+			Ranges:        []string{"D2:D10"},
+			RuleType:      "list",
+			AllowedValues: []string{"draft", "sent", "paid"},
+			AllowBlank:    false,
+		},
+		PreserveOriginal: true,
+	}
+
+	result, err := RunWorkbookOperation(ir, inputFile, outputFile)
+	if err != nil {
+		t.Fatalf("RunWorkbookOperation: %v", err)
+	}
+	if result.OperationFamily != "add_data_validation" {
+		t.Fatalf("operation_family=%q want add_data_validation", result.OperationFamily)
+	}
+	if result.SourceSHA256Before != result.SourceSHA256After {
+		t.Fatal("source hash changed during execution")
+	}
+
+	verification, err := runtimeverify.VerifyWorkbookOperation(ir, inputFile, outputFile, result.SourceSHA256Before, result.SourceSHA256After)
+	if err != nil {
+		t.Fatalf("VerifyWorkbookOperation: %v", err)
+	}
+	if !verification.Pass {
+		t.Fatalf("verification failed: %+v", verification)
+	}
+}
