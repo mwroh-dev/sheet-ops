@@ -76,6 +76,8 @@ func DraftOrganismExecutionRequest(input OrganismDraftInput) (OrganismExecutionR
 		return draftCashFlowMonitor(input)
 	case "timesheet_hours_log":
 		return draftTimesheetHoursLog(input)
+	case "warehouse_reorder_tracker":
+		return draftWarehouseReorderTracker(input)
 	case "inventory_movement_log":
 		return draftInventoryMovementLog(input)
 	case "student_gradebook":
@@ -85,6 +87,97 @@ func DraftOrganismExecutionRequest(input OrganismDraftInput) (OrganismExecutionR
 	default:
 		return OrganismExecutionRequestDraft{}, false
 	}
+}
+
+func draftWarehouseReorderTracker(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
+	stockSheet, ok := findWarehouseReorderSheet(input.WorkbookFacts)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	if _, ok := findSheetWithHeaders(input.WorkbookFacts, "sku", "location"); !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumns := formulaColumnsForSheet(stockSheet)
+	if len(formulaColumns) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumnLetters := make([]string, 0, len(formulaColumns))
+	for _, column := range formulaColumns {
+		if letter, ok := columnLetterForHeader(stockSheet.Columns, column); ok {
+			formulaColumnLetters = append(formulaColumnLetters, letter)
+		}
+	}
+	if len(formulaColumnLetters) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	minFormulaRow, maxFormulaRow, ok := formulaRowBounds(stockSheet)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	threshold := 5.0
+	targetSheet := "StockEnriched"
+	sourceColumns := []string{"sku", "quantity", "reorder_level", "reorder_gap"}
+
+	return OrganismExecutionRequestDraft{
+		ScenarioID:  input.ScenarioID,
+		RequestText: input.RequestText,
+		InputFile:   input.InputFile,
+		OutputFile:  input.OutputFile,
+		Steps: []OrganismExecutionStepDraft{
+			{
+				AtomID:               "join_lookup",
+				CompositionKind:      "join_lookup",
+				SourceSheet:          stockSheet.Name,
+				LookupSheet:          "SKU",
+				TargetSheet:          targetSheet,
+				JoinKey:              "sku",
+				IncludeSourceColumns: append([]string(nil), sourceColumns...),
+				AppendLookupColumns:  []string{"location"},
+			},
+			{
+				AtomID:          "highlight_threshold",
+				CompositionKind: "threshold_highlight",
+				SourceSheet:     targetSheet,
+				TargetColumn:    "quantity",
+				Operator:        "<",
+				Threshold:       &threshold,
+				HighlightColor:  "#FFF59D",
+			},
+			{
+				AtomID:               "append_structured_rows",
+				CompositionKind:      "structured_row_append",
+				SourceSheet:          targetSheet,
+				IncludeSourceColumns: []string{"sku", "quantity", "reorder_level", "reorder_gap", "location"},
+				Values: []CellValue{
+					{Cell: "sku", Value: "B002"},
+					{Cell: "quantity", Value: 2},
+					{Cell: "reorder_level", Value: 5},
+					{Cell: "reorder_gap", Value: -3},
+					{Cell: "location", Value: "Aisle 2"},
+				},
+			},
+			{
+				AtomID:          "add_data_validation",
+				CompositionKind: "data_validation",
+				SourceSheet:     targetSheet,
+				ValidationRule: &DataValidationRule{
+					Ranges:        []string{"A2:A20"},
+					RuleType:      "list",
+					AllowedValues: []string{"A001", "B002"},
+					AllowBlank:    false,
+				},
+			},
+			{
+				AtomID:          "protect_formula_cells",
+				CompositionKind: "formula_protection",
+				SourceSheet:     stockSheet.Name,
+				ProtectionRule: &FormulaProtectionRule{
+					FormulaRanges: []string{formulaRange(formulaColumnLetters, minFormulaRow, maxFormulaRow)},
+					InputRanges:   []string{"A2:C20"},
+				},
+			},
+		},
+	}, true
 }
 
 func draftTimesheetHoursLog(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
@@ -674,6 +767,16 @@ func findTimesheetHoursSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect
 	for _, sheet := range facts.Sheets {
 		headers := lowerSet(sheet.Columns)
 		if headers["date"] && headers["employee"] && headers["work_code"] && headers["hours"] && headers["rate"] && headers["pay"] {
+			return sheet, true
+		}
+	}
+	return runtimeinspect.SheetFacts{}, false
+}
+
+func findWarehouseReorderSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect.SheetFacts, bool) {
+	for _, sheet := range facts.Sheets {
+		headers := lowerSet(sheet.Columns)
+		if headers["sku"] && headers["quantity"] && headers["reorder_level"] && headers["reorder_gap"] {
 			return sheet, true
 		}
 	}

@@ -115,11 +115,14 @@
     },
     {
       "organism_id": "warehouse_reorder_tracker",
-      "draft_status": "explicit_request_only",
-      "runtime_entrypoint": "",
-      "evidence_tests": [],
-      "current_limit": "No workbook-facts draft planner for reorder thresholds and warehouse master lookup enrichment.",
-      "next_gate": "Add a reorder fixture with SKU master lookup, low-stock threshold highlighting, and reorder action output."
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsWarehouseReorderStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerWarehouseDraft"
+      ],
+      "current_limit": "Snapshot reorder table with SKU lookup and constant low-stock threshold only; does not calculate reorder quantity policy.",
+      "next_gate": "Add warehouse fixtures with per-SKU reorder levels, duplicate SKU handling, reorder quantity policy, and exception summary checks."
     },
     {
       "organism_id": "student_gradebook",

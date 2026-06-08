@@ -401,6 +401,86 @@ func TestDraftOrganismExecutionRequestBuildsInventoryMovementStepsFromWorkbookFa
 	}
 }
 
+func TestDraftOrganismExecutionRequestBuildsWarehouseReorderStepsFromWorkbookFacts(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "warehouse.xlsx")
+	outputFile := filepath.Join(tempDir, "warehouse-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Stock"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Stock", "A1", &[]any{"sku", "quantity", "reorder_level", "reorder_gap"}); err != nil {
+		t.Fatalf("SetSheetRow stock header: %v", err)
+	}
+	if err := file.SetSheetRow("Stock", "A2", &[]any{"A001", 3, 5}); err != nil {
+		t.Fatalf("SetSheetRow stock row: %v", err)
+	}
+	if err := file.SetCellFormula("Stock", "D2", "=B2-C2"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if _, err := file.NewSheet("SKU"); err != nil {
+		t.Fatalf("NewSheet SKU: %v", err)
+	}
+	if err := file.SetSheetRow("SKU", "A1", &[]any{"sku", "location"}); err != nil {
+		t.Fatalf("SetSheetRow SKU header: %v", err)
+	}
+	if err := file.SetSheetRow("SKU", "A2", &[]any{"A001", "Aisle 1"}); err != nil {
+		t.Fatalf("SetSheetRow SKU row: %v", err)
+	}
+	if err := file.SetSheetRow("SKU", "A3", &[]any{"B002", "Aisle 2"}); err != nil {
+		t.Fatalf("SetSheetRow SKU row2: %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	facts, err := runtimeinspect.InspectWorkbookFacts(inputFile)
+	if err != nil {
+		t.Fatalf("InspectWorkbookFacts: %v", err)
+	}
+	requestText := "Enrich warehouse reorder stock with SKU location, flag low stock, append reorder candidate, validate SKU, and protect reorder formulas"
+	plan := TemplateClassPlanHintForRequest(requestText)
+	if plan == nil {
+		t.Fatal("missing plan")
+	}
+
+	req, ok := DraftOrganismExecutionRequest(OrganismDraftInput{
+		ScenarioID:        "warehouse-organism-draft",
+		RequestText:       requestText,
+		InputFile:         inputFile,
+		OutputFile:        outputFile,
+		WorkbookFacts:     facts,
+		TemplateClassPlan: *plan,
+	})
+	if !ok {
+		t.Fatal("DraftOrganismExecutionRequest ok=false")
+	}
+	if len(req.Steps) != 5 {
+		t.Fatalf("steps=%d want 5", len(req.Steps))
+	}
+	if req.Steps[0].AtomID != "join_lookup" || req.Steps[0].TargetSheet != "StockEnriched" || req.Steps[0].LookupSheet != "SKU" {
+		t.Fatalf("lookup step=%+v", req.Steps[0])
+	}
+	if req.Steps[1].AtomID != "highlight_threshold" || req.Steps[1].SourceSheet != "StockEnriched" || req.Steps[1].TargetColumn != "quantity" || req.Steps[1].Threshold == nil || *req.Steps[1].Threshold != 5 {
+		t.Fatalf("threshold step=%+v", req.Steps[1])
+	}
+	if req.Steps[2].AtomID != "append_structured_rows" || req.Steps[2].SourceSheet != "StockEnriched" || len(req.Steps[2].Values) != 5 {
+		t.Fatalf("append step=%+v", req.Steps[2])
+	}
+	if req.Steps[3].AtomID != "add_data_validation" || req.Steps[3].ValidationRule == nil || req.Steps[3].ValidationRule.Ranges[0] != "A2:A20" {
+		t.Fatalf("validation step=%+v", req.Steps[3])
+	}
+	if req.Steps[4].AtomID != "protect_formula_cells" || req.Steps[4].ProtectionRule == nil || req.Steps[4].ProtectionRule.FormulaRanges[0] != "D2:D2" {
+		t.Fatalf("protection step=%+v", req.Steps[4])
+	}
+	if err := runtimeschema.ValidateStruct(organismExecutionRequestSchemaPathForTest(), req); err != nil {
+		t.Fatalf("draft organism request schema validation: %v", err)
+	}
+}
+
 func TestDraftOrganismExecutionRequestBuildsStudentGradebookStepsFromWorkbookFacts(t *testing.T) {
 	tempDir := t.TempDir()
 	inputFile := filepath.Join(tempDir, "gradebook.xlsx")

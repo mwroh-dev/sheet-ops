@@ -1018,3 +1018,36 @@ Extended the runtime draft planner to `timesheet_hours_log`:
   protection are covered for the slice.
 - Advisory claim risk: timesheet support must not be described as payroll
   automation until overtime, policy, and payroll verifiers exist.
+
+## Phase 35 Result
+
+Extended the runtime draft planner to `warehouse_reorder_tracker`:
+
+- `runtime/templateclass` now classifies reorder/low-stock requests before the
+  generic inventory route and expects lookup, threshold highlight, structured
+  append, validation, and formula protection
+- `requestcompiler.DraftOrganismExecutionRequest` detects warehouse reorder
+  workbooks from sku, quantity, reorder level, and reorder gap headers plus a
+  SKU lookup sheet
+- the draft enriches stock rows with SKU metadata, flags low stock, appends a
+  reorder candidate row, validates SKU entry, and protects the original reorder
+  gap formula range
+- open-layer integration proves the draft executes through
+  `OrchestrateOrganism` and produces expected `StockEnriched` lookup/append
+  evidence while preserving the protected `Stock` formula
+- `draft-planner-coverage.json` now records warehouse reorder as a runtime
+  draft planner, moving the boundary from 7/14 to 8/13
+
+## Phase 35 Self-Retro
+
+- Coverage improved: runtime draft synthesis now covers eight roadmap
+  organisms and includes a second inventory/logistics class beyond movement
+  reconciliation.
+- Remaining template needs: this draft uses a constant low-stock threshold and
+  snapshot reorder table. It does not calculate reorder quantity policy,
+  handle duplicate SKU keys, or verify per-SKU dynamic threshold formulas.
+- Verifier strength: classifier, schema, draft, lookup, highlight, append,
+  validation, protection, open-layer execution, and organism-level evidence are
+  covered for the slice.
+- Advisory claim risk: warehouse reorder support must remain threshold
+  tracking, not warehouse policy automation or purchasing advice.

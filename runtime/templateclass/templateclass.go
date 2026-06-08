@@ -47,6 +47,12 @@ var plans = []Plan{
 		NonClaims:             []string{"does not calculate payroll taxes", "does not infer labor policy", "does not certify billable hours"},
 	},
 	{
+		OrganismID:            "warehouse_reorder_tracker",
+		OperationSequence:     []string{"join_lookup", "highlight_threshold", "append_structured_rows", "add_data_validation", "protect_formula_cells"},
+		RequiredVerifierSpecs: []string{"warehouse_reorder_tracker_verifier"},
+		NonClaims:             []string{"does not infer warehouse policy", "does not calculate reorder quantity policy", "does not resolve duplicate SKU keys"},
+	},
+	{
 		OrganismID:            "inventory_movement_log",
 		OperationSequence:     []string{"normalize_headers", "append_structured_rows", "join_lookup", "protect_formula_cells", "reconcile_tables"},
 		RequiredVerifierSpecs: []string{"inventory_movement_log_verifier"},
@@ -77,6 +83,8 @@ func PlanForRequest(requestText string) (Plan, bool) {
 		return planForOrganism("cash_flow_monitor")
 	case containsAny(normalized, "timesheet", "time sheet", "employee hours", "billable hours"):
 		return planForOrganism("timesheet_hours_log")
+	case containsAny(normalized, "reorder", "low stock", "low-stock", "reorder point", "reorder level"):
+		return planForOrganism("warehouse_reorder_tracker")
 	case containsAny(normalized, "inventory", "stock", "sku"):
 		return planForOrganism("inventory_movement_log")
 	case containsAny(normalized, "gradebook", "student score", "student scores"):

@@ -74,6 +74,20 @@ func TestPlanForRequestClassifiesTimesheetHoursLog(t *testing.T) {
 	}
 }
 
+func TestPlanForRequestClassifiesWarehouseReorderTracker(t *testing.T) {
+	plan, ok := PlanForRequest("Enrich warehouse reorder stock with SKU location, flag low stock, append reorder candidate, validate SKU, and protect reorder formulas")
+	if !ok {
+		t.Fatal("PlanForRequest returned ok=false")
+	}
+	if plan.OrganismID != "warehouse_reorder_tracker" {
+		t.Fatalf("organism=%q want warehouse_reorder_tracker", plan.OrganismID)
+	}
+	wantOps := []string{"join_lookup", "highlight_threshold", "append_structured_rows", "add_data_validation", "protect_formula_cells"}
+	if !sameStrings(plan.OperationSequence, wantOps) {
+		t.Fatalf("operation sequence=%v want %v", plan.OperationSequence, wantOps)
+	}
+}
+
 func TestPlanForRequestRejectsFinancialAdviceClaim(t *testing.T) {
 	plan, ok := PlanForRequest("Give financial advice and certify the amortization correctness of this loan repayment schedule")
 	if !ok {
