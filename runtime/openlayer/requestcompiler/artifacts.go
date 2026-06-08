@@ -227,6 +227,14 @@ func compilerDecisionArtifact(result Result) map[string]any {
 			"conflict_notes":          append([]string(nil), summary.ConflictNotes...),
 		}
 	}
+	if plan := result.TemplateClassPlan; plan != nil {
+		artifact["template_class_plan"] = map[string]any{
+			"organism_id":             plan.OrganismID,
+			"operation_sequence":      append([]string(nil), plan.OperationSequence...),
+			"required_verifier_specs": append([]string(nil), plan.RequiredVerifierSpecs...),
+			"non_claims":              append([]string(nil), plan.NonClaims...),
+		}
+	}
 
 	return artifact
 }

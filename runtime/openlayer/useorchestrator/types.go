@@ -1,6 +1,7 @@
 package useorchestrator
 
 import (
+	requestcompiler "github.com/mwroh/sheet-ops/runtime/openlayer/requestcompiler"
 	runtimesubagent "github.com/mwroh/sheet-ops/runtime/subagent"
 	runtimeworkbookcase "github.com/mwroh/sheet-ops/runtime/workbookcase"
 )
@@ -21,12 +22,14 @@ type TelemetryEvent = runtimeworkbookcase.TelemetryEvent
 type RunIDs = runtimeworkbookcase.RunIDs
 type RunPaths = runtimeworkbookcase.RunPaths
 type RunResult = runtimeworkbookcase.RunResult
+type TemplateClassPlanHint = requestcompiler.TemplateClassPlanHint
 
 type OrchestratorDecision struct {
 	ScenarioID                string                            `json:"scenario_id"`
 	Decision                  string                            `json:"decision"`
 	RequestCompilerLoopState  runtimesubagent.SubagentLoopState `json:"request_compiler_loop_state"`
 	ValidatedExecutionRequest *ValidatedExecutionRequest        `json:"validated_execution_request,omitempty"`
+	TemplateClassPlan         *TemplateClassPlanHint            `json:"template_class_plan,omitempty"`
 	RepairAdvice              *runtimeworkbookcase.RepairAdvice `json:"repair_advice,omitempty"`
 }
 

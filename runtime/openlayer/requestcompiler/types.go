@@ -198,6 +198,13 @@ type MemoryMatchSummary struct {
 	ConflictNotes         []string `json:"conflict_notes,omitempty"`
 }
 
+type TemplateClassPlanHint struct {
+	OrganismID            string   `json:"organism_id"`
+	OperationSequence     []string `json:"operation_sequence"`
+	RequiredVerifierSpecs []string `json:"required_verifier_specs"`
+	NonClaims             []string `json:"non_claims,omitempty"`
+}
+
 type NormalizedIntent struct {
 	SourceSheetCandidates []string                    `json:"source_sheet_candidates,omitempty"`
 	LookupSheetCandidates []string                    `json:"lookup_sheet_candidates,omitempty"`

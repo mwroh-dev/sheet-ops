@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	runtimeinspect "github.com/mwroh/sheet-ops/runtime/inspect"
+	"github.com/mwroh/sheet-ops/runtime/templateclass"
 	runtimevalidate "github.com/mwroh/sheet-ops/runtime/validate"
 	"github.com/xuri/excelize/v2"
 )
@@ -16,9 +17,14 @@ type Result struct {
 	Validation                runtimevalidate.Result
 	ValidatedExecutionRequest *runtimevalidate.ValidatedExecutionRequest
 	MemoryMatchSummary        *MemoryMatchSummary
+	TemplateClassPlan         *TemplateClassPlanHint
 }
 
 func Compile(input Input) (Result, error) {
+	requestText, err := loadRequestText(input.RequestSource)
+	if err != nil {
+		return Result{}, err
+	}
 	intent, err := interpreter.Interpret(input)
 	if err != nil {
 		return Result{}, err
@@ -32,7 +38,21 @@ func Compile(input Input) (Result, error) {
 		return Result{}, err
 	}
 	result.MemoryMatchSummary = memorySummary
+	result.TemplateClassPlan = TemplateClassPlanHintForRequest(requestText)
 	return result, nil
+}
+
+func TemplateClassPlanHintForRequest(requestText string) *TemplateClassPlanHint {
+	plan, ok := templateclass.PlanForRequest(requestText)
+	if !ok {
+		return nil
+	}
+	return &TemplateClassPlanHint{
+		OrganismID:            plan.OrganismID,
+		OperationSequence:     append([]string(nil), plan.OperationSequence...),
+		RequiredVerifierSpecs: append([]string(nil), plan.RequiredVerifierSpecs...),
+		NonClaims:             append([]string(nil), plan.NonClaims...),
+	}
 }
 
 func applyDeterministicIntentSignals(input Input, intent NormalizedIntent) (NormalizedIntent, *MemoryMatchSummary, error) {

@@ -678,3 +678,33 @@ runtime harness:
   grading policy, warehouse duplicate resolution, or amortization correctness.
 - Advisory claim risk: the new report strengthens runtime evidence but must
   not be described as full organism generation or domain correctness.
+
+## Phase 24 Result
+
+Connected the template-class productization slice to the open-layer runtime
+entry surface:
+
+- `requestcompiler.TemplateClassPlanHintForRequest` exposes a pre-validation
+  resolver for known organism classes
+- `requestcompiler.Result` and persisted compiler decision artifacts can carry
+  the template-class plan hint when one is detected
+- `useorchestrator.OrchestratorDecision` can preserve an optional
+  `template_class_plan`
+- the public orchestrator decision schema and dynamic output schema now allow
+  that optional plan sidecar
+- deterministic recovery copies the compiler hint into the orchestrator
+  decision when a validated single-operation request is also available
+
+## Phase 24 Self-Retro
+
+- Coverage improved: the request compiler and orchestrator decision boundary no
+  longer discard template-class plan knowledge. Runtime entry code can now see
+  the organism id, atom sequence, verifier specs, and non-claims.
+- Remaining template needs: this does not auto-build missing step parameters or
+  execute `RunOrganismPlan` from a natural-language request. It is a bridge
+  surface, not autonomous multi-step planning.
+- Verifier strength: tests prove the pre-validation resolver and decision
+  loader preserve the plan. They do not prove end-to-end organism execution
+  from a public `sheet-ops use` invocation.
+- Advisory claim risk: the plan hint must remain a hint until explicit step
+  specs exist and the organism verification report passes.

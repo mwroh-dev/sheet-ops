@@ -48,6 +48,7 @@ func ValidateIntent(input Input, intent NormalizedIntent) (Result, error) {
 		Decision:                  decisionFromValidation(intent, decision, validation),
 		Validation:                validation,
 		ValidatedExecutionRequest: validation.ValidatedExecutionRequest,
+		TemplateClassPlan:         TemplateClassPlanHintForRequest(requestText),
 	}, nil
 }
 
