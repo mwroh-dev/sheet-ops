@@ -79,6 +79,11 @@ type NormalizeHeadersIntent struct {
 	HeaderMappings []HeaderMapping
 }
 
+type RollForwardPeriodIntent struct {
+	TargetSheet          string
+	CarryForwardMappings []CarryForwardMapping
+}
+
 type DataValidationRule struct {
 	Ranges        []string `json:"ranges"`
 	RuleType      string   `json:"rule_type"`
@@ -95,6 +100,13 @@ type FormulaProtectionRule struct {
 type HeaderMapping struct {
 	From string `json:"from"`
 	To   string `json:"to"`
+}
+
+type CarryForwardMapping struct {
+	FromSheet string `json:"from_sheet,omitempty"`
+	FromCell  string `json:"from_cell"`
+	ToSheet   string `json:"to_sheet,omitempty"`
+	ToCell    string `json:"to_cell"`
 }
 
 type MaterializationIntent struct {
@@ -124,6 +136,7 @@ type NormalizedIntent struct {
 	AddDataValidation     AddDataValidationIntent
 	ProtectFormulaCells   ProtectFormulaCellsIntent
 	NormalizeHeaders      NormalizeHeadersIntent
+	RollForwardPeriod     RollForwardPeriodIntent
 	Materialization       MaterializationIntent
 	Ambiguity             AmbiguityIntent
 }
@@ -194,6 +207,7 @@ type ValidatedExecutionRequest struct {
 	ProtectionRule       *FormulaProtectionRule `json:"protection_rule,omitempty"`
 	HeaderRow            int                    `json:"header_row,omitempty"`
 	HeaderMappings       []HeaderMapping        `json:"header_mappings,omitempty"`
+	CarryForwardMappings []CarryForwardMapping  `json:"carry_forward_mappings,omitempty"`
 }
 
 type CellValue struct {
@@ -242,6 +256,7 @@ type admittedIntent struct {
 	protectionRule       FormulaProtectionRule
 	headerRow            int
 	headerMappings       []HeaderMapping
+	carryForwardMappings []CarryForwardMapping
 }
 
 type boundIntent struct {
@@ -292,6 +307,15 @@ func cloneHeaderMappings(values []HeaderMapping) []HeaderMapping {
 		return []HeaderMapping{}
 	}
 	cloned := make([]HeaderMapping, len(values))
+	copy(cloned, values)
+	return cloned
+}
+
+func cloneCarryForwardMappings(values []CarryForwardMapping) []CarryForwardMapping {
+	if len(values) == 0 {
+		return []CarryForwardMapping{}
+	}
+	cloned := make([]CarryForwardMapping, len(values))
 	copy(cloned, values)
 	return cloned
 }

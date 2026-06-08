@@ -55,6 +55,8 @@ func RunWorkbookOperation(ir compiler.WorkbookOperationIR, inputWorkbook, output
 		return RunCopyPeriodSheet(ir, inputWorkbook, outputWorkbook)
 	case "normalize_headers":
 		return RunNormalizeHeaders(ir, inputWorkbook, outputWorkbook)
+	case "roll_forward_period":
+		return RunRollForwardPeriod(ir, inputWorkbook, outputWorkbook)
 	case "write_values":
 		return RunWriteValues(ir, inputWorkbook, outputWorkbook)
 	default:

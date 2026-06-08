@@ -281,6 +281,19 @@ func compileDecision(intent NormalizedIntent) Decision {
 		}
 	}
 
+	if slices.Contains(intent.CompositionCandidates, CompositionCandidatePeriodRollForward) && rollForwardPeriodIntentReady(intent) {
+		return Decision{
+			Status:            StatusCompiled,
+			SelectedOperation: "roll_forward_period",
+			Confidence:        0.98,
+			Notes: []string{
+				"the normalized intent maps cleanly to the supported explicit period roll-forward runtime operation",
+			},
+			SheetCandidates:   supportedSheetCandidates(intent),
+			StructuralSignals: []string{"period_roll_forward_request", "preserve_original"},
+		}
+	}
+
 	if slices.Contains(intent.CompositionCandidates, CompositionCandidateJoinLookup) && joinLookupIntentReady(intent) {
 		return Decision{
 			Status:            StatusCompiled,
@@ -461,6 +474,10 @@ func toRuntimeIntent(intent NormalizedIntent) runtimevalidate.NormalizedIntent {
 			HeaderRow:      intent.NormalizeHeaders.HeaderRow,
 			HeaderMappings: toRuntimeHeaderMappings(intent.NormalizeHeaders.HeaderMappings),
 		},
+		RollForwardPeriod: runtimevalidate.RollForwardPeriodIntent{
+			TargetSheet:          intent.RollForwardPeriod.TargetSheet,
+			CarryForwardMappings: toRuntimeCarryForwardMappings(intent.RollForwardPeriod.CarryForwardMappings),
+		},
 		Materialization: runtimevalidate.MaterializationIntent{
 			PreserveOriginal:      intent.Materialization.PreserveOriginal,
 			OutputDestinationMode: intent.Materialization.OutputDestinationMode,
@@ -597,6 +614,12 @@ func normalizeHeadersIntentReady(intent NormalizedIntent) bool {
 		len(intent.NormalizeHeaders.HeaderMappings) > 0
 }
 
+func rollForwardPeriodIntentReady(intent NormalizedIntent) bool {
+	return len(intent.SourceSheetCandidates) > 0 &&
+		intent.RollForwardPeriod.TargetSheet != "" &&
+		len(intent.RollForwardPeriod.CarryForwardMappings) > 0
+}
+
 func toRuntimeHeaderMappings(values []HeaderMapping) []runtimevalidate.HeaderMapping {
 	if len(values) == 0 {
 		return []runtimevalidate.HeaderMapping{}
@@ -604,6 +627,22 @@ func toRuntimeHeaderMappings(values []HeaderMapping) []runtimevalidate.HeaderMap
 	converted := make([]runtimevalidate.HeaderMapping, 0, len(values))
 	for _, value := range values {
 		converted = append(converted, runtimevalidate.HeaderMapping{From: value.From, To: value.To})
+	}
+	return converted
+}
+
+func toRuntimeCarryForwardMappings(values []CarryForwardMapping) []runtimevalidate.CarryForwardMapping {
+	if len(values) == 0 {
+		return []runtimevalidate.CarryForwardMapping{}
+	}
+	converted := make([]runtimevalidate.CarryForwardMapping, 0, len(values))
+	for _, value := range values {
+		converted = append(converted, runtimevalidate.CarryForwardMapping{
+			FromSheet: value.FromSheet,
+			FromCell:  value.FromCell,
+			ToSheet:   value.ToSheet,
+			ToCell:    value.ToCell,
+		})
 	}
 	return converted
 }

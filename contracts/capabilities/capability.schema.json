@@ -52,6 +52,7 @@
         "add_data_validation",
         "protect_formula_cells",
         "normalize_headers",
+        "roll_forward_period",
         "write_values"
       ]
     },
@@ -66,6 +67,7 @@
         "add_data_validation",
         "protect_formula_cells",
         "normalize_headers",
+        "roll_forward_period",
         "write_values"
       ]
     },
@@ -248,6 +250,22 @@
         "properties": {
           "operation_family": {
             "const": "normalize_headers"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "roll_forward_period"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "operation_family": {
+            "const": "roll_forward_period"
           }
         }
       }

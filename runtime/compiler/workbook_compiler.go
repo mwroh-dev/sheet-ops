@@ -35,6 +35,13 @@ type HeaderMapping struct {
 	To   string `json:"to"`
 }
 
+type CarryForwardMapping struct {
+	FromSheet string `json:"from_sheet,omitempty"`
+	FromCell  string `json:"from_cell"`
+	ToSheet   string `json:"to_sheet,omitempty"`
+	ToCell    string `json:"to_cell"`
+}
+
 type WorkbookInspection struct {
 	InputWorkbook     string                  `json:"input_workbook"`
 	SheetNames        []string                `json:"sheet_names"`
@@ -74,6 +81,7 @@ type WorkbookOperationIR struct {
 	ProtectionRule       *FormulaProtectionRule `json:"protection_rule,omitempty"`
 	HeaderRow            int                    `json:"header_row,omitempty"`
 	HeaderMappings       []HeaderMapping        `json:"header_mappings,omitempty"`
+	CarryForwardMappings []CarryForwardMapping  `json:"carry_forward_mappings,omitempty"`
 	PreserveOriginal     bool                   `json:"preserve_original"`
 }
 
@@ -412,6 +420,55 @@ func CompileNormalizeHeadersOperation(task taskspec.NormalizeHeadersTask) (Workb
 	}, nil
 }
 
+func CompileRollForwardPeriodOperation(task taskspec.RollForwardPeriodTask) (WorkbookOperationIR, error) {
+	if task.SourceSheet == "" {
+		return WorkbookOperationIR{}, fmt.Errorf("source sheet must not be empty")
+	}
+	if task.TargetSheet == "" {
+		return WorkbookOperationIR{}, fmt.Errorf("target sheet must not be empty")
+	}
+	if len(task.CarryForwardMappings) == 0 {
+		return WorkbookOperationIR{}, fmt.Errorf("carry forward mappings must not be empty")
+	}
+	if err := validateRollForwardPeriodTaskCompositionBoundary(task.TaskSpec); err != nil {
+		return WorkbookOperationIR{}, err
+	}
+	mappings := make([]CarryForwardMapping, 0, len(task.CarryForwardMappings))
+	seenTargets := map[string]struct{}{}
+	for _, mapping := range task.CarryForwardMappings {
+		if strings.TrimSpace(mapping.FromCell) == "" {
+			return WorkbookOperationIR{}, fmt.Errorf("carry forward mapping from_cell must not be empty")
+		}
+		if strings.TrimSpace(mapping.ToCell) == "" {
+			return WorkbookOperationIR{}, fmt.Errorf("carry forward mapping to_cell must not be empty")
+		}
+		toSheet := mapping.ToSheet
+		if toSheet == "" {
+			toSheet = task.TargetSheet
+		}
+		targetKey := toSheet + "!" + mapping.ToCell
+		if _, ok := seenTargets[targetKey]; ok {
+			return WorkbookOperationIR{}, fmt.Errorf("duplicate carry forward target %q", targetKey)
+		}
+		seenTargets[targetKey] = struct{}{}
+		mappings = append(mappings, CarryForwardMapping{
+			FromSheet: mapping.FromSheet,
+			FromCell:  mapping.FromCell,
+			ToSheet:   mapping.ToSheet,
+			ToCell:    mapping.ToCell,
+		})
+	}
+	return WorkbookOperationIR{
+		ExecutionKind:        taskspec.ExecutionKindComposition,
+		CompositionKind:      taskspec.CompositionKindPeriodRollForward,
+		OperationFamily:      taskspec.OperationFamilyRollForwardPeriod,
+		SourceSheet:          task.SourceSheet,
+		TargetSheet:          task.TargetSheet,
+		CarryForwardMappings: mappings,
+		PreserveOriginal:     task.PreserveOriginal,
+	}, nil
+}
+
 func validateHighlightTaskCompositionBoundary(spec taskspec.TaskSpec) error {
 	if spec.ExecutionKind != taskspec.ExecutionKindComposition {
 		return fmt.Errorf("highlight task execution_kind=%q want %q", spec.ExecutionKind, taskspec.ExecutionKindComposition)
@@ -512,6 +569,19 @@ func validateNormalizeHeadersTaskCompositionBoundary(spec taskspec.TaskSpec) err
 	}
 	if spec.Operation != taskspec.OperationNormalizeHeaders {
 		return fmt.Errorf("normalize headers task operation=%q want %q", spec.Operation, taskspec.OperationNormalizeHeaders)
+	}
+	return nil
+}
+
+func validateRollForwardPeriodTaskCompositionBoundary(spec taskspec.TaskSpec) error {
+	if spec.ExecutionKind != taskspec.ExecutionKindComposition {
+		return fmt.Errorf("roll forward period task execution_kind=%q want %q", spec.ExecutionKind, taskspec.ExecutionKindComposition)
+	}
+	if spec.CompositionKind != taskspec.CompositionKindPeriodRollForward {
+		return fmt.Errorf("roll forward period task composition_kind=%q want %q", spec.CompositionKind, taskspec.CompositionKindPeriodRollForward)
+	}
+	if spec.Operation != taskspec.OperationRollForwardPeriod {
+		return fmt.Errorf("roll forward period task operation=%q want %q", spec.Operation, taskspec.OperationRollForwardPeriod)
 	}
 	return nil
 }

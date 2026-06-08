@@ -11,6 +11,7 @@ Examples map user language to capability families. They do not bypass contracts.
 - "Add a status dropdown to D2:D50 with draft, sent, paid" -> `add_data_validation`
 - "Protect formulas in D2:E20 and keep A2:C20 editable" -> `protect_formula_cells`
 - "Rename headers SKU ID -> sku and Qty In -> quantity_in on row 1" -> `normalize_headers`
+- "Carry Jan!D2 closing balance into Feb!A2 opening balance" -> `roll_forward_period`
 
 After mapping a request, create or select a `UseEnvelope` and use the
 skill-owned runtime handoff. Do not type or reconstruct internal launcher

@@ -594,6 +594,139 @@ func TestRunNormalizeHeadersPreservesRowsAndVerifiesHeaderCells(t *testing.T) {
 	}
 }
 
+func TestRunRollForwardPeriodCarriesClosingValuesAndVerifiesContinuity(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "cash-flow.xlsx")
+	outputFile := filepath.Join(tempDir, "cash-flow-output.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Jan"); err != nil {
+		t.Fatalf("SetSheetName(Jan): %v", err)
+	}
+	if _, err := file.NewSheet("Feb"); err != nil {
+		t.Fatalf("NewSheet(Feb): %v", err)
+	}
+	if err := file.SetCellValue("Jan", "A1", "opening"); err != nil {
+		t.Fatalf("SetCellValue(Jan A1): %v", err)
+	}
+	if err := file.SetCellValue("Jan", "B1", "inflow"); err != nil {
+		t.Fatalf("SetCellValue(Jan B1): %v", err)
+	}
+	if err := file.SetCellValue("Jan", "C1", "outflow"); err != nil {
+		t.Fatalf("SetCellValue(Jan C1): %v", err)
+	}
+	if err := file.SetCellValue("Jan", "D1", "closing"); err != nil {
+		t.Fatalf("SetCellValue(Jan D1): %v", err)
+	}
+	if err := file.SetCellValue("Jan", "A2", 100); err != nil {
+		t.Fatalf("SetCellValue(Jan A2): %v", err)
+	}
+	if err := file.SetCellValue("Jan", "B2", 75); err != nil {
+		t.Fatalf("SetCellValue(Jan B2): %v", err)
+	}
+	if err := file.SetCellValue("Jan", "C2", 25); err != nil {
+		t.Fatalf("SetCellValue(Jan C2): %v", err)
+	}
+	if err := file.SetCellFormula("Jan", "D2", "=A2+B2-C2"); err != nil {
+		t.Fatalf("SetCellFormula(Jan D2): %v", err)
+	}
+	if err := file.SetCellValue("Feb", "A1", "opening"); err != nil {
+		t.Fatalf("SetCellValue(Feb A1): %v", err)
+	}
+	if err := file.SetCellValue("Feb", "B1", "inflow"); err != nil {
+		t.Fatalf("SetCellValue(Feb B1): %v", err)
+	}
+	if err := file.SetCellValue("Feb", "C1", "outflow"); err != nil {
+		t.Fatalf("SetCellValue(Feb C1): %v", err)
+	}
+	if err := file.SetCellValue("Feb", "D1", "closing"); err != nil {
+		t.Fatalf("SetCellValue(Feb D1): %v", err)
+	}
+	if err := file.SetCellValue("Feb", "A2", 0); err != nil {
+		t.Fatalf("SetCellValue(Feb A2): %v", err)
+	}
+	if err := file.SetCellValue("Feb", "B2", 20); err != nil {
+		t.Fatalf("SetCellValue(Feb B2): %v", err)
+	}
+	if err := file.SetCellValue("Feb", "C2", 10); err != nil {
+		t.Fatalf("SetCellValue(Feb C2): %v", err)
+	}
+	if err := file.SetCellFormula("Feb", "D2", "=A2+B2-C2"); err != nil {
+		t.Fatalf("SetCellFormula(Feb D2): %v", err)
+	}
+	if err := file.UpdateLinkedValue(); err != nil {
+		t.Fatalf("UpdateLinkedValue: %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	ir := compiler.WorkbookOperationIR{
+		ExecutionKind:    "composition",
+		CompositionKind:  "period_roll_forward",
+		OperationFamily:  "roll_forward_period",
+		SourceSheet:      "Jan",
+		TargetSheet:      "Feb",
+		PreserveOriginal: true,
+		CarryForwardMappings: []compiler.CarryForwardMapping{
+			{FromSheet: "Jan", FromCell: "D2", ToSheet: "Feb", ToCell: "A2"},
+		},
+	}
+	result, err := RunWorkbookOperation(ir, inputFile, outputFile)
+	if err != nil {
+		t.Fatalf("RunWorkbookOperation: %v", err)
+	}
+	if result.OperationFamily != "roll_forward_period" {
+		t.Fatalf("operation_family=%q want roll_forward_period", result.OperationFamily)
+	}
+	if len(result.WrittenCells) != 1 || result.WrittenCells[0] != "Feb!A2" {
+		t.Fatalf("written_cells=%v want [Feb!A2]", result.WrittenCells)
+	}
+
+	verification, err := runtimeverify.VerifyWorkbookOperation(ir, inputFile, outputFile, result.SourceSHA256Before, result.SourceSHA256After)
+	if err != nil {
+		t.Fatalf("VerifyWorkbookOperation: %v", err)
+	}
+	if !verification.Pass {
+		t.Fatalf("verification failed: %+v", verification)
+	}
+
+	inputHandle, err := excelize.OpenFile(inputFile)
+	if err != nil {
+		t.Fatalf("Open input: %v", err)
+	}
+	defer func() { _ = inputHandle.Close() }()
+	sourceOpening, err := inputHandle.GetCellValue("Feb", "A2")
+	if err != nil {
+		t.Fatalf("GetCellValue input Feb A2: %v", err)
+	}
+	if sourceOpening != "0" {
+		t.Fatalf("input Feb!A2=%q want unchanged 0", sourceOpening)
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	gotOpening, err := outputHandle.GetCellValue("Feb", "A2")
+	if err != nil {
+		t.Fatalf("GetCellValue output Feb A2: %v", err)
+	}
+	if gotOpening != "150" {
+		t.Fatalf("output Feb!A2=%q want carried closing 150", gotOpening)
+	}
+	gotFormula, err := outputHandle.GetCellFormula("Feb", "D2")
+	if err != nil {
+		t.Fatalf("GetCellFormula output Feb D2: %v", err)
+	}
+	if gotFormula != "=A2+B2-C2" {
+		t.Fatalf("output Feb!D2 formula=%q want =A2+B2-C2", gotFormula)
+	}
+}
+
 func testCellLocked(file *excelize.File, sheet, cell string) (bool, error) {
 	styleID, err := file.GetCellStyle(sheet, cell)
 	if err != nil {

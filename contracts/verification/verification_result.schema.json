@@ -23,6 +23,7 @@
         "add_data_validation",
         "protect_formula_cells",
         "normalize_headers",
+        "roll_forward_period",
         "write_values"
       ]
     },

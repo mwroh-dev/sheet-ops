@@ -90,6 +90,12 @@ func VerifyWorkbookOperation(ir compiler.WorkbookOperationIR, inputWorkbook, out
 			return VerificationResult{}, err
 		}
 		return WithDefaultLayers(ir, result), nil
+	case "roll_forward_period":
+		result, err := VerifyRollForwardPeriod(ir, inputWorkbook, outputWorkbook, sourceSHA256Before, sourceSHA256After)
+		if err != nil {
+			return VerificationResult{}, err
+		}
+		return WithDefaultLayers(ir, result), nil
 	case "write_values":
 		result, err := VerifyWriteValues(ir, inputWorkbook, outputWorkbook, sourceSHA256Before, sourceSHA256After)
 		if err != nil {

@@ -124,9 +124,7 @@
         "extend_table_formulas",
         "protect_formula_cells"
       ],
-      "planned_or_unsupported_atom_ids": [
-        "roll_forward_period"
-      ],
+      "planned_or_unsupported_atom_ids": [],
       "verifier_focus": [
         "new period preserves formulas",
         "closing values carry into next period",
@@ -154,9 +152,7 @@
         "extend_table_formulas",
         "protect_formula_cells"
       ],
-      "planned_or_unsupported_atom_ids": [
-        "roll_forward_period"
-      ],
+      "planned_or_unsupported_atom_ids": [],
       "verifier_focus": [
         "closing balance equals next opening balance",
         "inflow/outflow formulas remain intact",
@@ -296,9 +292,7 @@
         "roll_forward_period",
         "append_structured_rows"
       ],
-      "planned_or_unsupported_atom_ids": [
-        "roll_forward_period"
-      ],
+      "planned_or_unsupported_atom_ids": [],
       "verifier_focus": [
         "phase totals equal cost line items",
         "budget exceptions are flagged",

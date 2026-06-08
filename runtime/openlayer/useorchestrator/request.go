@@ -42,6 +42,7 @@ type UseRequest struct {
 	ProtectionRule       *FormulaProtectionRule `json:"protection_rule,omitempty"`
 	HeaderRow            int                    `json:"header_row,omitempty"`
 	HeaderMappings       []HeaderMapping        `json:"header_mappings,omitempty"`
+	CarryForwardMappings []CarryForwardMapping  `json:"carry_forward_mappings,omitempty"`
 }
 
 type ValidatedExecutionRequest = runtimevalidate.ValidatedExecutionRequest
@@ -49,6 +50,7 @@ type CellValue = runtimevalidate.CellValue
 type DataValidationRule = runtimevalidate.DataValidationRule
 type FormulaProtectionRule = runtimevalidate.FormulaProtectionRule
 type HeaderMapping = runtimevalidate.HeaderMapping
+type CarryForwardMapping = runtimevalidate.CarryForwardMapping
 
 func LoadRequest(path string) (UseRequest, error) {
 	var req UseRequest

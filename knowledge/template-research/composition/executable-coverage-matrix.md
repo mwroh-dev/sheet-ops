@@ -17,8 +17,8 @@ the first execution target is p0 organism coverage.
 | `add_data_validation` | supported | explicit list/dropdown scope: capability record, TaskSpec/IR, executor, verifier, fixtures |
 | `protect_formula_cells` | supported | explicit formula/input range scope: capability record, TaskSpec/IR, executor, verifier, fixtures |
 | `normalize_headers` | supported | explicit header-row mapping scope: capability record, TaskSpec/IR, executor, verifier, fixtures |
+| `roll_forward_period` | supported | explicit closing-to-opening cell mapping scope: capability record, TaskSpec/IR, executor, verifier, fixtures |
 | `write_values` | runtime primitive | primitive only, not public agent capability |
-| `roll_forward_period` | planned | budget/cash continuity blocker |
 | `reconcile_tables` | planned | inventory reconciliation blocker |
 | `create_pivot_summary` | planned | p2+ summary depth blocker |
 | `generate_printable_form` | planned | invoice document-output blocker |
@@ -28,8 +28,8 @@ the first execution target is p0 organism coverage.
 | Organism | Runtime-Covered Atoms | Missing Runtime Atoms | Immediate Strategy |
 | --- | --- | --- | --- |
 | `invoice_line_item_billing` | `join_lookup`, `group_summarize`, `append_structured_rows`, `extend_table_formulas`, `add_data_validation`, `protect_formula_cells`, `normalize_headers` | `generate_printable_form` | printable form next |
-| `monthly_budget_control` | `group_summarize`, `highlight_threshold`, `extend_table_formulas`, `copy_period_sheet`, `protect_formula_cells` | `roll_forward_period` | roll-forward continuity next |
-| `cash_flow_monitor` | `group_summarize`, `extend_table_formulas`, `copy_period_sheet`, `protect_formula_cells` | `roll_forward_period` | reuse budget period fixture for carry-forward |
+| `monthly_budget_control` | `group_summarize`, `highlight_threshold`, `extend_table_formulas`, `copy_period_sheet`, `protect_formula_cells`, `roll_forward_period` | none in current p0 atom list | broaden organism preview before claiming full template generation |
+| `cash_flow_monitor` | `group_summarize`, `extend_table_formulas`, `copy_period_sheet`, `protect_formula_cells`, `roll_forward_period` | none in current p0 atom list | broaden organism preview before claiming full template generation |
 | `attendance_register` | `group_summarize`, `copy_period_sheet`, `add_data_validation`, `protect_formula_cells`, `normalize_headers` | none in current p0 atom list | broaden organism preview before claiming full template generation |
 | `timesheet_hours_log` | `group_summarize`, `copy_period_sheet`, `append_structured_rows`, `extend_table_formulas`, `add_data_validation`, `protect_formula_cells` | none in current p0 atom list | broaden organism preview before claiming full template generation |
 | `inventory_movement_log` | `join_lookup`, `group_summarize`, `append_structured_rows`, `protect_formula_cells`, `normalize_headers` | `reconcile_tables` | reconciliation next |
@@ -194,3 +194,36 @@ Non-goals for this phase:
 - Advisory claim risk: the runtime must not imply automatic header discovery or
   alias matching. Callers must provide the mapping until a separate verifier
   exists for inference and ambiguity handling.
+
+## Phase 9 Result
+
+Promoted `roll_forward_period` with a deliberately narrow first supported
+scope:
+
+- same-workbook output copy
+- explicit source sheet
+- explicit existing target sheet
+- explicit closing-to-opening cell mappings
+- formula-backed closing values are calculated before carry-forward
+- non-mapped cells and formulas are preserved
+- preserve original workbook
+
+Non-goals for this phase:
+
+- creating the next period sheet
+- period label rewriting
+- input clearing
+- automatic opening/closing field inference
+- multi-sheet workbook calendar generation
+
+## Phase 9 Self-Retro
+
+- P0 gaps reduced: `monthly_budget_control` and `cash_flow_monitor` no longer
+  depend on roll-forward as an unsupported atom for explicit mapping cases.
+- Remaining p0 template needs: `generate_printable_form` blocks invoice-style
+  document output, and `reconcile_tables` blocks inventory movement proof.
+- Verifier strength: the verifier checks source hash preservation, carried
+  closing-to-opening values, non-mapped cell values, and non-mapped formulas.
+- Advisory claim risk: this is carry-forward continuity, not full period
+  generation. Callers must create/copy the target period sheet separately until
+  a richer verifier exists.

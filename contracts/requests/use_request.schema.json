@@ -42,7 +42,8 @@
         "copy_period_sheet",
         "add_data_validation",
         "protect_formula_cells",
-        "normalize_headers"
+        "normalize_headers",
+        "roll_forward_period"
       ]
     },
     "target_sheet": {
@@ -255,6 +256,21 @@
         "properties": {
           "from": { "type": "string", "minLength": 1 },
           "to": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "carry_forward_mappings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["from_cell", "to_cell"],
+        "properties": {
+          "from_sheet": { "type": "string", "minLength": 1 },
+          "from_cell": { "type": "string", "minLength": 1 },
+          "to_sheet": { "type": "string", "minLength": 1 },
+          "to_cell": { "type": "string", "minLength": 1 }
         },
         "additionalProperties": false
       }
@@ -719,6 +735,44 @@
             { "required": ["formula_columns"] },
             { "required": ["validation_rule"] },
             { "required": ["protection_rule"] }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "const": "roll_forward_period"
+          }
+        },
+        "required": ["operation"]
+      },
+      "then": {
+        "required": ["target_sheet", "carry_forward_mappings"],
+        "not": {
+          "anyOf": [
+            { "required": ["summary_mode"] },
+            { "required": ["filters"] },
+            { "required": ["group_by"] },
+            { "required": ["metrics"] },
+            { "required": ["target_column"] },
+            { "required": ["operator"] },
+            { "required": ["threshold"] },
+            { "required": ["highlight_color"] },
+            { "required": ["lookup_sheet"] },
+            { "required": ["join_key"] },
+            { "required": ["include_source_columns"] },
+            { "required": ["append_lookup_columns"] },
+            { "required": ["values"] },
+            { "required": ["formula_source_row"] },
+            { "required": ["target_rows"] },
+            { "required": ["formula_columns"] },
+            { "required": ["validation_rule"] },
+            { "required": ["protection_rule"] },
+            { "required": ["header_row"] },
+            { "required": ["header_mappings"] }
           ]
         }
       }

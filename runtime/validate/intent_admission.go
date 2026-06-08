@@ -39,6 +39,8 @@ func AdmitIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIn
 		return admitProtectFormulaCellsIntent(intent, decision)
 	case "normalize_headers":
 		return admitNormalizeHeadersIntent(intent, decision)
+	case "roll_forward_period":
+		return admitRollForwardPeriodIntent(intent, decision)
 	case "copy_period_sheet":
 		return admitPeriodCopyIntent(intent, decision)
 	default:
@@ -51,6 +53,32 @@ func AdmitIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIn
 		})
 		return admittedIntent{}, &result, err
 	}
+}
+
+func admitRollForwardPeriodIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIntent, *Result, error) {
+	if !intent.Materialization.PreserveOriginal ||
+		intent.Materialization.OutputDestinationMode != "new_workbook" ||
+		intent.Materialization.WriteShape != "in_place_cells" {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"invalid_materialization"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	if intent.RollForwardPeriod.TargetSheet == "" || len(intent.RollForwardPeriod.CarryForwardMappings) == 0 {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"incomplete_roll_forward_period_intent"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	return admittedIntent{
+		decision:             decision,
+		compositionKind:      "period_roll_forward",
+		sourceSheets:         preferredSourceSheets(intent, decision),
+		targetSheet:          intent.RollForwardPeriod.TargetSheet,
+		carryForwardMappings: cloneCarryForwardMappings(intent.RollForwardPeriod.CarryForwardMappings),
+	}, nil, nil
 }
 
 func admitNormalizeHeadersIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIntent, *Result, error) {

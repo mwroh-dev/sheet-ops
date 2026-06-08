@@ -23,7 +23,7 @@
     },
     "composition_candidates": {
       "type": "array",
-      "items": { "enum": ["group_summary", "threshold_highlight", "join_lookup", "structured_row_append", "formula_extension", "period_copy", "data_validation", "formula_protection", "header_normalization"] }
+      "items": { "enum": ["group_summary", "threshold_highlight", "join_lookup", "structured_row_append", "formula_extension", "period_copy", "data_validation", "formula_protection", "header_normalization", "period_roll_forward"] }
     },
     "summary": {
       "type": "object",
@@ -167,6 +167,17 @@
       },
       "additionalProperties": false
     },
+    "roll_forward_period": {
+      "type": "object",
+      "properties": {
+        "target_sheet": { "type": "string", "minLength": 1 },
+        "carry_forward_mappings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/carry_forward_mapping" }
+        }
+      },
+      "additionalProperties": false
+    },
     "materialization": {
       "type": "object",
       "required": ["preserve_original", "output_destination_mode", "write_shape"],
@@ -240,6 +251,17 @@
       "properties": {
         "from": { "type": "string", "minLength": 1 },
         "to": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "carry_forward_mapping": {
+      "type": "object",
+      "required": ["from_cell", "to_cell"],
+      "properties": {
+        "from_sheet": { "type": "string", "minLength": 1 },
+        "from_cell": { "type": "string", "minLength": 1 },
+        "to_sheet": { "type": "string", "minLength": 1 },
+        "to_cell": { "type": "string", "minLength": 1 }
       },
       "additionalProperties": false
     }

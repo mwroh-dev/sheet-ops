@@ -1,22 +1,27 @@
 {
   "name": "roll_forward_period",
-  "status": "planned",
-  "evidence_count": 2,
+  "status": "supported",
+  "evidence_count": 3,
   "source_categories": [
     "Budget Templates",
-    "Project Management"
+    "Project Management",
+    "Budget Control",
+    "Cash Flow"
   ],
   "representative_why": "Users need the same workbook pattern to continue into the next week, month, quarter, or project phase.",
   "representative_how": [
-    "detect current period",
-    "create next period structure",
-    "carry forward relevant balances or open items"
+    "accept explicit closing-to-opening cell mappings",
+    "calculate formula-backed closing values when needed",
+    "write carried values into declared next-period opening cells",
+    "preserve non-mapped period values and formulas"
   ],
   "concrete_workflows": [
     "start next month budget",
-    "roll a project tracker into the next reporting week"
+    "roll a project tracker into the next reporting week",
+    "carry cash-flow closing balance into next period opening balance",
+    "carry budget closing or remaining balance into the next period control sheet"
   ],
-  "verification_strategy": "Verify the next period label, carried values, cleared inputs, and preserved formulas against a fixture workbook.",
+  "verification_strategy": "Supported scope verifies declared closing values are carried into declared opening cells, source workbook hash is preserved, and non-mapped cells/formulas remain unchanged. Sheet creation, period label rewriting, input clearing, and automatic carry-forward inference remain outside supported scope.",
   "related_patterns": [
     "budget",
     "project_gantt"

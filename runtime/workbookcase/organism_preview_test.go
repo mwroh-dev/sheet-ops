@@ -274,3 +274,74 @@ func TestInventoryMovementLogPreviewComposesHeaderNormalization(t *testing.T) {
 		t.Fatalf("Movements!D2 formula=%q err=%v want =B2-C2", got, err)
 	}
 }
+
+func TestCashFlowMonitorPreviewComposesRollForwardPeriod(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "cash-flow.xlsx")
+	outputFile := filepath.Join(tempDir, "cash-flow-rolled.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Jan"); err != nil {
+		t.Fatalf("SetSheetName(Jan): %v", err)
+	}
+	if _, err := file.NewSheet("Feb"); err != nil {
+		t.Fatalf("NewSheet(Feb): %v", err)
+	}
+	for _, sheet := range []string{"Jan", "Feb"} {
+		header := []any{"opening", "inflow", "outflow", "closing"}
+		if err := file.SetSheetRow(sheet, "A1", &header); err != nil {
+			t.Fatalf("SetSheetRow(%s header): %v", sheet, err)
+		}
+	}
+	jan := []any{100, 75, 25}
+	if err := file.SetSheetRow("Jan", "A2", &jan); err != nil {
+		t.Fatalf("SetSheetRow(Jan): %v", err)
+	}
+	if err := file.SetCellFormula("Jan", "D2", "=A2+B2-C2"); err != nil {
+		t.Fatalf("SetCellFormula(Jan D2): %v", err)
+	}
+	feb := []any{0, 20, 10}
+	if err := file.SetSheetRow("Feb", "A2", &feb); err != nil {
+		t.Fatalf("SetSheetRow(Feb): %v", err)
+	}
+	if err := file.SetCellFormula("Feb", "D2", "=A2+B2-C2"); err != nil {
+		t.Fatalf("SetCellFormula(Feb D2): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	rollTask := runtimetaskspec.BuildRollForwardPeriodTask(runtimetaskspec.RollForwardPeriodRequest{
+		RequestText: "cash flow monitor에서 Jan closing balance를 Feb opening balance로 이월한다.",
+		InputFile:   inputFile,
+		SourceSheet: "Jan",
+		TargetSheet: "Feb",
+		OutputFile:  outputFile,
+		CarryForwardMappings: []runtimetaskspec.CarryForwardMapping{
+			{FromSheet: "Jan", FromCell: "D2", ToSheet: "Feb", ToCell: "A2"},
+		},
+	})
+	result, err := Run(Request{ScenarioID: "cash-flow-preview-roll-forward", TaskSpec: rollTask.TaskSpec})
+	if err != nil {
+		t.Fatalf("roll-forward Run: %v", err)
+	}
+	if !result.Verification.Pass {
+		t.Fatalf("roll-forward verification failed: %+v", result.Verification)
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	if got, err := outputHandle.GetCellValue("Feb", "A2"); err != nil || got != "150" {
+		t.Fatalf("Feb!A2=%q err=%v want 150", got, err)
+	}
+	if got, err := outputHandle.GetCellFormula("Feb", "D2"); err != nil || got != "=A2+B2-C2" {
+		t.Fatalf("Feb!D2 formula=%q err=%v want =A2+B2-C2", got, err)
+	}
+}

@@ -108,6 +108,15 @@ func BindFacts(admitted admittedIntent, facts runtimeinspect.WorkbookFacts) (bou
 			return blockedFactBinding("missing_required_columns")
 		}
 		return boundIntent{admittedIntent: admitted, facts: facts, sourceSheet: sourceSheet}, nil, nil
+	case "period_roll_forward":
+		sourceSheet, ok := firstExistingSheet(facts, admitted.sourceSheets)
+		if !ok {
+			return blockedFactBinding("unsupported_source_sheet")
+		}
+		if _, ok := factsSheet(facts, admitted.targetSheet); !ok {
+			return blockedFactBinding("unsupported_target_sheet")
+		}
+		return boundIntent{admittedIntent: admitted, facts: facts, sourceSheet: sourceSheet}, nil, nil
 	default:
 		return blockedFactBinding("unsupported_request")
 	}

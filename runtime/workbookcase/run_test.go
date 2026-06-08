@@ -516,6 +516,90 @@ func TestRunNormalizeHeadersEndToEnd(t *testing.T) {
 	}
 }
 
+func TestRunRollForwardPeriodEndToEnd(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "cash-flow.xlsx")
+	outputFile := filepath.Join(tempDir, "cash-flow-output.xlsx")
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Jan"); err != nil {
+		t.Fatalf("SetSheetName(Jan): %v", err)
+	}
+	if _, err := file.NewSheet("Feb"); err != nil {
+		t.Fatalf("NewSheet(Feb): %v", err)
+	}
+	for _, sheet := range []string{"Jan", "Feb"} {
+		header := []any{"opening", "inflow", "outflow", "closing"}
+		if err := file.SetSheetRow(sheet, "A1", &header); err != nil {
+			t.Fatalf("SetSheetRow(%s header): %v", sheet, err)
+		}
+	}
+	jan := []any{100, 75, 25}
+	if err := file.SetSheetRow("Jan", "A2", &jan); err != nil {
+		t.Fatalf("SetSheetRow(Jan): %v", err)
+	}
+	if err := file.SetCellFormula("Jan", "D2", "=A2+B2-C2"); err != nil {
+		t.Fatalf("SetCellFormula(Jan D2): %v", err)
+	}
+	feb := []any{0, 20, 10}
+	if err := file.SetSheetRow("Feb", "A2", &feb); err != nil {
+		t.Fatalf("SetSheetRow(Feb): %v", err)
+	}
+	if err := file.SetCellFormula("Feb", "D2", "=A2+B2-C2"); err != nil {
+		t.Fatalf("SetCellFormula(Feb D2): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	task := runtimetaskspec.BuildRollForwardPeriodTask(runtimetaskspec.RollForwardPeriodRequest{
+		RequestText: "Jan closing balance를 Feb opening balance로 이월한다.",
+		InputFile:   inputFile,
+		SourceSheet: "Jan",
+		TargetSheet: "Feb",
+		OutputFile:  outputFile,
+		CarryForwardMappings: []runtimetaskspec.CarryForwardMapping{
+			{FromSheet: "Jan", FromCell: "D2", ToSheet: "Feb", ToCell: "A2"},
+		},
+	})
+	result, err := Run(Request{ScenarioID: "workbookcase-roll-forward-period", TaskSpec: task.TaskSpec})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if !result.Verification.Pass {
+		t.Fatalf("verification failed: %+v", result.Verification)
+	}
+	if result.Verification.Operation != RollForwardPeriodOperationName {
+		t.Fatalf("verification operation=%q want %s", result.Verification.Operation, RollForwardPeriodOperationName)
+	}
+	if len(result.Verification.WrittenCells) != 1 || result.Verification.WrittenCells[0] != "Feb!A2" {
+		t.Fatalf("written cells=%v want [Feb!A2]", result.Verification.WrittenCells)
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	got, err := outputHandle.GetCellValue("Feb", "A2")
+	if err != nil {
+		t.Fatalf("GetCellValue Feb A2: %v", err)
+	}
+	if got != "150" {
+		t.Fatalf("Feb!A2=%q want 150", got)
+	}
+	formula, err := outputHandle.GetCellFormula("Feb", "D2")
+	if err != nil {
+		t.Fatalf("GetCellFormula Feb D2: %v", err)
+	}
+	if formula != "=A2+B2-C2" {
+		t.Fatalf("Feb!D2 formula=%q want =A2+B2-C2", formula)
+	}
+}
+
 func TestRunRejectsUnsafeScenarioIDBeforeCreatingArtifacts(t *testing.T) {
 	artifactRoot := t.TempDir()
 	t.Setenv(ArtifactRootEnv, artifactRoot)

@@ -475,6 +475,65 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "operation",
+        "sheet_name",
+        "target_sheet",
+        "carry_forward_mappings",
+        "preserve_original",
+        "output_file"
+      ],
+      "properties": {
+        "operation": {
+          "const": "roll_forward_period"
+        },
+        "sheet_name": {
+          "type": "string"
+        },
+        "target_sheet": {
+          "type": "string"
+        },
+        "carry_forward_mappings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "from_cell",
+              "to_cell"
+            ],
+            "properties": {
+              "from_sheet": {
+                "type": "string",
+                "minLength": 1
+              },
+              "from_cell": {
+                "type": "string",
+                "minLength": 1
+              },
+              "to_sheet": {
+                "type": "string",
+                "minLength": 1
+              },
+              "to_cell": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "preserve_original": {
+          "type": "boolean"
+        },
+        "output_file": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
     }
   ]
 }

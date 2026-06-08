@@ -76,6 +76,9 @@ func resolveRequestedOperation(req UseRequest) (string, string) {
 	if isPeriodCopyRequest(req) {
 		return runtimeworkbookcase.CopyPeriodSheetOperationName, "period_copy_request_signals"
 	}
+	if isPeriodRollForwardRequest(req) {
+		return runtimeworkbookcase.RollForwardPeriodOperationName, "period_roll_forward_request_signals"
+	}
 	if isDataValidationRequest(req) {
 		return runtimeworkbookcase.AddDataValidationOperationName, "data_validation_request_signals"
 	}
@@ -115,6 +118,13 @@ func isPeriodCopyRequest(req UseRequest) bool {
 		strings.Contains(req.RequestText, "period copy") ||
 		strings.Contains(req.RequestText, "copy period") ||
 		strings.Contains(req.RequestText, "copy sheet"))
+}
+
+func isPeriodRollForwardRequest(req UseRequest) bool {
+	return len(req.CarryForwardMappings) > 0 ||
+		strings.Contains(req.RequestText, "이월") ||
+		strings.Contains(req.RequestText, "roll forward") ||
+		strings.Contains(req.RequestText, "carry forward")
 }
 
 func isDataValidationRequest(req UseRequest) bool {
@@ -179,6 +189,8 @@ func buildRoutingNote(selectedOperation, routingAuthority string, knowledge runt
 			return fmt.Sprintf("%s Fallback routed by formula extension request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		case "period_copy_request_signals":
 			return fmt.Sprintf("%s Fallback routed by period copy request signals to %s.", knowledge.FallbackReason, selectedOperation)
+		case "period_roll_forward_request_signals":
+			return fmt.Sprintf("%s Fallback routed by period roll-forward request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		case "data_validation_request_signals":
 			return fmt.Sprintf("%s Fallback routed by data validation request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		case "formula_protection_request_signals":
@@ -226,6 +238,12 @@ func buildRoutingNote(selectedOperation, routingAuthority string, knowledge runt
 	case "formula_protection_request_signals":
 		return fmt.Sprintf(
 			"Loaded %d orchestrator knowledge records; formula protection request signals still selected %s. Knowledge remains advisory only.",
+			knowledge.RecordCount,
+			selectedOperation,
+		)
+	case "period_roll_forward_request_signals":
+		return fmt.Sprintf(
+			"Loaded %d orchestrator knowledge records; period roll-forward request signals still selected %s. Knowledge remains advisory only.",
 			knowledge.RecordCount,
 			selectedOperation,
 		)

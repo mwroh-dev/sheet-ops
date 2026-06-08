@@ -112,7 +112,7 @@ Supported today:
 - select public agent capabilities from `group_summarize`,
   `highlight_threshold`, `join_lookup`, `append_structured_rows`,
   `extend_table_formulas`, `copy_period_sheet`, `add_data_validation`,
-  `protect_formula_cells`, and `normalize_headers`
+  `protect_formula_cells`, `normalize_headers`, and `roll_forward_period`
 - use runtime handoff for schema-authorized deterministic execution,
   verification, and evidence
 - trust the deterministic fixture-backed harness smoke and public preview

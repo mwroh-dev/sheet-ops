@@ -17,6 +17,7 @@ const (
 	AddDataValidationOperationName   = "add_data_validation"
 	ProtectFormulaCellsOperationName = "protect_formula_cells"
 	NormalizeHeadersOperationName    = "normalize_headers"
+	RollForwardPeriodOperationName   = "roll_forward_period"
 	WriteValuesOperationName         = "write_values"
 )
 
@@ -167,6 +168,15 @@ type NormalizeHeadersPlan struct {
 	HeaderMappings   []runtimetaskspec.HeaderMapping `json:"header_mappings"`
 	PreserveOriginal bool                            `json:"preserve_original"`
 	OutputFile       string                          `json:"output_file"`
+}
+
+type RollForwardPeriodPlan struct {
+	Operation            string                                `json:"operation"`
+	SheetName            string                                `json:"sheet_name"`
+	TargetSheet          string                                `json:"target_sheet"`
+	CarryForwardMappings []runtimetaskspec.CarryForwardMapping `json:"carry_forward_mappings"`
+	PreserveOriginal     bool                                  `json:"preserve_original"`
+	OutputFile           string                                `json:"output_file"`
 }
 
 type WritePolicyDecision struct {

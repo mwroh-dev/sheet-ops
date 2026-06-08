@@ -46,7 +46,7 @@ func validateSupportedValidatedExecutionRequest(req ValidatedExecutionRequest) e
 		return fmt.Errorf("unsupported validated execution kind %q", req.ExecutionKind)
 	}
 	switch req.CompositionKind {
-	case "structured_row_append", "formula_extension", "period_copy", "data_validation", "formula_protection", "header_normalization":
+	case "structured_row_append", "formula_extension", "period_copy", "data_validation", "formula_protection", "header_normalization", "period_roll_forward":
 		return nil
 	case "group_summary", "threshold_highlight", "join_lookup":
 		return nil
@@ -101,6 +101,15 @@ func taskSpecFromUseRequest(req UseRequest) runtimetaskspec.TaskSpec {
 			SourceSheet: req.SheetName,
 			TargetSheet: req.TargetSheet,
 			OutputFile:  req.OutputFile,
+		}).TaskSpec
+	case runtimeworkbookcase.RollForwardPeriodOperationName:
+		return runtimetaskspec.BuildRollForwardPeriodTask(runtimetaskspec.RollForwardPeriodRequest{
+			RequestText:          coalesceValidatedRequestText(req.RequestText, "structured period roll-forward request"),
+			InputFile:            req.InputFile,
+			SourceSheet:          req.SheetName,
+			TargetSheet:          req.TargetSheet,
+			OutputFile:           req.OutputFile,
+			CarryForwardMappings: toTaskSpecCarryForwardMappings(req.CarryForwardMappings),
 		}).TaskSpec
 	case runtimeworkbookcase.AddDataValidationOperationName:
 		return runtimetaskspec.BuildAddDataValidationTask(runtimetaskspec.AddDataValidationRequest{
@@ -193,6 +202,15 @@ func taskSpecFromValidatedExecutionRequest(req ValidatedExecutionRequest) (runti
 			SourceSheet: req.SourceSheet,
 			TargetSheet: req.TargetSheet,
 			OutputFile:  req.OutputFile,
+		}).TaskSpec, nil
+	case "period_roll_forward":
+		return runtimetaskspec.BuildRollForwardPeriodTask(runtimetaskspec.RollForwardPeriodRequest{
+			RequestText:          coalesceValidatedRequestText(req.RequestText, "validated period roll-forward request"),
+			InputFile:            req.InputFile,
+			SourceSheet:          req.SourceSheet,
+			TargetSheet:          req.TargetSheet,
+			OutputFile:           req.OutputFile,
+			CarryForwardMappings: toTaskSpecCarryForwardMappings(req.CarryForwardMappings),
 		}).TaskSpec, nil
 	case "data_validation":
 		return runtimetaskspec.BuildAddDataValidationTask(runtimetaskspec.AddDataValidationRequest{
@@ -307,6 +325,8 @@ func validatedOperation(req ValidatedExecutionRequest) string {
 		return runtimeworkbookcase.ExtendFormulasOperationName
 	case "period_copy":
 		return runtimeworkbookcase.CopyPeriodSheetOperationName
+	case "period_roll_forward":
+		return runtimeworkbookcase.RollForwardPeriodOperationName
 	case "data_validation":
 		return runtimeworkbookcase.AddDataValidationOperationName
 	case "formula_protection":
@@ -350,7 +370,7 @@ func defaultJoinSourceColumns(req ValidatedExecutionRequest) ([]string, error) {
 
 func isSupportedOperation(operation string) bool {
 	switch operation {
-	case runtimeworkbookcase.SummaryOperationName, runtimeworkbookcase.HighlightOperationName, runtimeworkbookcase.JoinLookupOperationName, runtimeworkbookcase.AppendRowsOperationName, runtimeworkbookcase.ExtendFormulasOperationName, runtimeworkbookcase.CopyPeriodSheetOperationName, runtimeworkbookcase.AddDataValidationOperationName, runtimeworkbookcase.ProtectFormulaCellsOperationName, runtimeworkbookcase.NormalizeHeadersOperationName:
+	case runtimeworkbookcase.SummaryOperationName, runtimeworkbookcase.HighlightOperationName, runtimeworkbookcase.JoinLookupOperationName, runtimeworkbookcase.AppendRowsOperationName, runtimeworkbookcase.ExtendFormulasOperationName, runtimeworkbookcase.CopyPeriodSheetOperationName, runtimeworkbookcase.AddDataValidationOperationName, runtimeworkbookcase.ProtectFormulaCellsOperationName, runtimeworkbookcase.NormalizeHeadersOperationName, runtimeworkbookcase.RollForwardPeriodOperationName:
 		return true
 	default:
 		return false
@@ -398,6 +418,22 @@ func toTaskSpecHeaderMappings(values []HeaderMapping) []runtimetaskspec.HeaderMa
 	converted := make([]runtimetaskspec.HeaderMapping, 0, len(values))
 	for _, value := range values {
 		converted = append(converted, runtimetaskspec.HeaderMapping{From: value.From, To: value.To})
+	}
+	return converted
+}
+
+func toTaskSpecCarryForwardMappings(values []CarryForwardMapping) []runtimetaskspec.CarryForwardMapping {
+	if len(values) == 0 {
+		return nil
+	}
+	converted := make([]runtimetaskspec.CarryForwardMapping, 0, len(values))
+	for _, value := range values {
+		converted = append(converted, runtimetaskspec.CarryForwardMapping{
+			FromSheet: value.FromSheet,
+			FromCell:  value.FromCell,
+			ToSheet:   value.ToSheet,
+			ToCell:    value.ToCell,
+		})
 	}
 	return converted
 }

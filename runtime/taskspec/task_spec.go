@@ -49,6 +49,13 @@ type HeaderMapping struct {
 	To   string `json:"to"`
 }
 
+type CarryForwardMapping struct {
+	FromSheet string `json:"from_sheet,omitempty"`
+	FromCell  string `json:"from_cell"`
+	ToSheet   string `json:"to_sheet,omitempty"`
+	ToCell    string `json:"to_cell"`
+}
+
 type SourceSpec struct {
 	Kind string `json:"kind"`
 	Path string `json:"path,omitempty"`
@@ -82,6 +89,7 @@ type TaskSpec struct {
 	ProtectionRule       *FormulaProtectionRule `json:"protection_rule,omitempty"`
 	HeaderRow            int                    `json:"header_row,omitempty"`
 	HeaderMappings       []HeaderMapping        `json:"header_mappings,omitempty"`
+	CarryForwardMappings []CarryForwardMapping  `json:"carry_forward_mappings,omitempty"`
 }
 
 type GroupSummarizeTask struct {
@@ -156,6 +164,14 @@ type NormalizeHeadersTask struct {
 	HeaderRow        int
 	HeaderMappings   []HeaderMapping
 	PreserveOriginal bool
+}
+
+type RollForwardPeriodTask struct {
+	TaskSpec             TaskSpec
+	SourceSheet          string
+	TargetSheet          string
+	CarryForwardMappings []CarryForwardMapping
+	PreserveOriginal     bool
 }
 
 type UseRequest struct {
@@ -245,6 +261,15 @@ type NormalizeHeadersRequest struct {
 	HeaderMappings []HeaderMapping
 }
 
+type RollForwardPeriodRequest struct {
+	RequestText          string
+	InputFile            string
+	SourceSheet          string
+	TargetSheet          string
+	OutputFile           string
+	CarryForwardMappings []CarryForwardMapping
+}
+
 const (
 	ExecutionKindComposition             = "composition"
 	CompositionKindGroupSummary          = "group_summary"
@@ -256,6 +281,7 @@ const (
 	CompositionKindDataValidation        = "data_validation"
 	CompositionKindFormulaProtection     = "formula_protection"
 	CompositionKindHeaderNormalization   = "header_normalization"
+	CompositionKindPeriodRollForward     = "period_roll_forward"
 	OperationCreateSummarySheet          = "create_summary_sheet"
 	OperationHighlightThresholdRows      = "highlight_threshold_rows"
 	OperationCreateJoinLookupResultSheet = "create_join_lookup_result_sheet"
@@ -265,6 +291,7 @@ const (
 	OperationAddDataValidation           = "add_data_validation"
 	OperationProtectFormulaCells         = "protect_formula_cells"
 	OperationNormalizeHeaders            = "normalize_headers"
+	OperationRollForwardPeriod           = "roll_forward_period"
 	OperationFamilyGroupSummarize        = "group_summarize"
 	OperationFamilyHighlightThreshold    = "highlight_threshold"
 	OperationFamilyJoinLookup            = "join_lookup"
@@ -274,6 +301,7 @@ const (
 	OperationFamilyAddDataValidation     = "add_data_validation"
 	OperationFamilyProtectFormulaCells   = "protect_formula_cells"
 	OperationFamilyNormalizeHeaders      = "normalize_headers"
+	OperationFamilyRollForwardPeriod     = "roll_forward_period"
 
 	defaultHighlightColumn    = "amount"
 	defaultHighlightOperator  = ">"
@@ -524,6 +552,28 @@ func BuildNormalizeHeadersTask(req NormalizeHeadersRequest) NormalizeHeadersTask
 	}
 }
 
+func BuildRollForwardPeriodTask(req RollForwardPeriodRequest) RollForwardPeriodTask {
+	return RollForwardPeriodTask{
+		TaskSpec: TaskSpec{
+			RequestKind:          "workbook_case",
+			ExecutionKind:        ExecutionKindComposition,
+			CompositionKind:      CompositionKindPeriodRollForward,
+			Source:               SourceSpec{Kind: "natural_language"},
+			RequestText:          req.RequestText,
+			InputWorkbook:        req.InputFile,
+			OutputWorkbook:       req.OutputFile,
+			Operation:            OperationRollForwardPeriod,
+			SourceSheet:          req.SourceSheet,
+			TargetSheet:          req.TargetSheet,
+			CarryForwardMappings: cloneCarryForwardMappings(req.CarryForwardMappings),
+		},
+		SourceSheet:          req.SourceSheet,
+		TargetSheet:          req.TargetSheet,
+		CarryForwardMappings: cloneCarryForwardMappings(req.CarryForwardMappings),
+		PreserveOriginal:     true,
+	}
+}
+
 func cloneFilters(values []FilterSpec) []FilterSpec {
 	if len(values) == 0 {
 		return nil
@@ -593,6 +643,15 @@ func cloneHeaderMappings(values []HeaderMapping) []HeaderMapping {
 		return nil
 	}
 	cloned := make([]HeaderMapping, len(values))
+	copy(cloned, values)
+	return cloned
+}
+
+func cloneCarryForwardMappings(values []CarryForwardMapping) []CarryForwardMapping {
+	if len(values) == 0 {
+		return nil
+	}
+	cloned := make([]CarryForwardMapping, len(values))
 	copy(cloned, values)
 	return cloned
 }

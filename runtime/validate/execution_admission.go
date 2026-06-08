@@ -50,6 +50,9 @@ func (validator Validator) AdmitExecution(bound boundIntent) (Result, error) {
 	case "header_normalization":
 		request.HeaderRow = bound.headerRow
 		request.HeaderMappings = cloneHeaderMappings(bound.headerMappings)
+	case "period_roll_forward":
+		request.TargetSheet = bound.targetSheet
+		request.CarryForwardMappings = cloneCarryForwardMappings(bound.carryForwardMappings)
 	}
 
 	return finalizeResult(Result{

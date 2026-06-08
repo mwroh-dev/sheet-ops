@@ -129,6 +129,10 @@ func Run(req Request) (result RunResult, err error) {
 		if err := orchestrateNormalizeHeaders(req.TaskSpec, paths, &result, mustLog); err != nil {
 			return result, err
 		}
+	case RollForwardPeriodOperationName:
+		if err := orchestrateRollForwardPeriod(req.TaskSpec, paths, &result, mustLog); err != nil {
+			return result, err
+		}
 	default:
 		return result, wrapFailure(
 			"request_validation",
@@ -140,6 +144,79 @@ func Run(req Request) (result RunResult, err error) {
 	}
 	mustLog("agent", "agent_completed", "use-orchestrator", map[string]any{"pass": result.Verification.Pass})
 	return result, nil
+}
+
+func orchestrateRollForwardPeriod(taskSpec runtimetaskspec.TaskSpec, paths RunPaths, result *RunResult, mustLog func(string, string, string, map[string]any)) error {
+	task := rollForwardPeriodTaskFromSpec(taskSpec)
+	inspection, err := runtimecompiler.InspectWorkbook(task.TaskSpec.InputWorkbook, task.SourceSheet, nil, nil, nil)
+	if err != nil {
+		return wrapFailure("inspection", "inspection_failure", "inspect_failed", "inspect the source workbook before planning period roll-forward", err)
+	}
+	result.Inspection = summaryInspectionArtifact(inspection, task.TargetSheet)
+	record := summaryInspectionRecord(inspection, task.TargetSheet)
+	result.SummaryInspection = &record
+	mustLog("agent", "agent_completed", "inspect-workbook", map[string]any{"source_sheet": task.SourceSheet, "target_sheet": task.TargetSheet, "row_count": record.RowCount})
+	if err := writeJSON(paths.InspectionPath, record); err != nil {
+		return wrapFailure("inspection", "artifact_emission_failure", "inspection_artifact_write_failed", "write the roll-forward inspection artifact", err)
+	}
+
+	operationIR, err := runtimecompiler.CompileRollForwardPeriodOperation(task)
+	if err != nil {
+		return wrapFailure("planning", "planning_failure", "operation_ir_compile_failed", "compile workbook period roll-forward operation IR", err)
+	}
+	plan := RollForwardPeriodPlan{
+		Operation:            RollForwardPeriodOperationName,
+		SheetName:            operationIR.SourceSheet,
+		TargetSheet:          operationIR.TargetSheet,
+		CarryForwardMappings: task.CarryForwardMappings,
+		PreserveOriginal:     operationIR.PreserveOriginal,
+		OutputFile:           task.TaskSpec.OutputWorkbook,
+	}
+	if err := runtimeschema.ValidateStruct(repoJoin("contracts", "plans", "use", "operation_plan.schema.json"), plan); err != nil {
+		return wrapFailure("planning", "planning_failure", "plan_invalid", "validate the period roll-forward plan artifact against its contract", err)
+	}
+	result.Plan = plan
+	mustLog("judgment", "plan_built", "request-planner", map[string]any{"operation": plan.Operation, "source_sheet": plan.SheetName, "target_sheet": plan.TargetSheet})
+	if err := writeJSON(paths.PlanPath, plan); err != nil {
+		return wrapFailure("planning", "artifact_emission_failure", "plan_artifact_write_failed", "write the period roll-forward plan artifact", err)
+	}
+	if err := writeRollForwardPeriodRuntimeInputs(task.TaskSpec, operationIR, paths); err != nil {
+		return err
+	}
+
+	policy := evaluateWritePolicyOutput(task.TaskSpec.InputWorkbook, task.TaskSpec.OutputWorkbook, task.PreserveOriginal)
+	if err := runtimeschema.ValidateStruct(repoJoin("contracts", "policy", "write_policy_decision.schema.json"), policy); err != nil {
+		return wrapFailure("policy", "policy_failure", "policy_decision_invalid", "validate the period roll-forward write policy decision", err)
+	}
+	result.Policy = policy
+	if err := writeJSON(paths.PolicyPath, policy); err != nil {
+		return wrapFailure("policy", "artifact_emission_failure", "policy_artifact_write_failed", "write the period roll-forward policy artifact", err)
+	}
+	if !policy.Allow {
+		return wrapFailure("policy", "policy_failure", "policy_denied", "evaluate whether the period roll-forward run may write a distinct output workbook", fmt.Errorf("policy denied execution: %s", strings.Join(policy.Reasons, "; ")))
+	}
+
+	execution, err := runtimeexecute.RunWorkbookOperation(operationIR, task.TaskSpec.InputWorkbook, task.TaskSpec.OutputWorkbook)
+	if err != nil {
+		return wrapFailure("execution", "execution_failure", "execute_failed", "execute the period roll-forward workbook operation and write the output workbook", err)
+	}
+	result.Execution = executionSummaryFromRuntime(execution)
+	if err := writeJSON(paths.ExecutionPath, result.Execution); err != nil {
+		return wrapFailure("execution", "artifact_emission_failure", "execution_artifact_write_failed", "write the period roll-forward execution artifact", err)
+	}
+
+	verification, err := runtimeverify.VerifyWorkbookOperation(operationIR, task.TaskSpec.InputWorkbook, task.TaskSpec.OutputWorkbook, result.Execution.SourceSHA256Before, result.Execution.SourceSHA256After)
+	if err != nil {
+		return wrapFailure("verification", "verification_failure", "verify_failed", "verify the period roll-forward workbook against execution fingerprints", err)
+	}
+	result.Verification = verificationSummaryFromRuntime(task.TaskSpec.Operation, verification)
+	if err := runtimeschema.ValidateStruct(repoJoin("contracts", "verification", "verification_result.schema.json"), result.Verification); err != nil {
+		return wrapFailure("verification", "verification_failure", "verification_result_invalid", "validate the period roll-forward verification artifact against its contract", err)
+	}
+	if err := writeJSON(paths.VerificationPath, result.Verification); err != nil {
+		return wrapFailure("verification", "artifact_emission_failure", "verification_artifact_write_failed", "write the period roll-forward verification artifact", err)
+	}
+	return nil
 }
 
 func orchestrateNormalizeHeaders(taskSpec runtimetaskspec.TaskSpec, paths RunPaths, result *RunResult, mustLog func(string, string, string, map[string]any)) error {
@@ -1555,6 +1632,25 @@ func writeNormalizeHeadersRuntimeInputs(taskSpec runtimetaskspec.TaskSpec, opera
 	return nil
 }
 
+func writeRollForwardPeriodRuntimeInputs(taskSpec runtimetaskspec.TaskSpec, operationIR runtimecompiler.WorkbookOperationIR, paths RunPaths) error {
+	if !shouldPersistSensitiveWorkbookArtifacts() {
+		return nil
+	}
+	if err := runtimeschema.ValidateStruct(repoJoin("contracts", "task", "task_spec.schema.json"), taskSpec); err != nil {
+		return wrapFailure("planning", "planning_failure", "task_spec_invalid", "validate the period roll-forward runtime task spec artifact", err)
+	}
+	if err := writeJSON(paths.TaskSpecPath, taskSpec); err != nil {
+		return wrapFailure("planning", "artifact_emission_failure", "task_spec_artifact_write_failed", "write the period roll-forward runtime task spec artifact", err)
+	}
+	if err := runtimeschema.ValidateStruct(repoJoin("contracts", "ir", "workbook_operation_ir.schema.json"), operationIR); err != nil {
+		return wrapFailure("planning", "planning_failure", "operation_ir_invalid", "validate the period roll-forward operation IR artifact", err)
+	}
+	if err := writeJSON(paths.OperationIRPath, operationIR); err != nil {
+		return wrapFailure("planning", "artifact_emission_failure", "operation_ir_artifact_write_failed", "write the period roll-forward operation IR artifact", err)
+	}
+	return nil
+}
+
 func summaryTaskFromSpec(spec runtimetaskspec.TaskSpec) runtimetaskspec.GroupSummarizeTask {
 	return runtimetaskspec.GroupSummarizeTask{
 		TaskSpec:         spec,
@@ -1663,6 +1759,16 @@ func normalizeHeadersTaskFromSpec(spec runtimetaskspec.TaskSpec) runtimetaskspec
 	}
 }
 
+func rollForwardPeriodTaskFromSpec(spec runtimetaskspec.TaskSpec) runtimetaskspec.RollForwardPeriodTask {
+	return runtimetaskspec.RollForwardPeriodTask{
+		TaskSpec:             spec,
+		SourceSheet:          spec.SourceSheet,
+		TargetSheet:          spec.TargetSheet,
+		CarryForwardMappings: appendTaskSpecCarryForwardMappings(spec.CarryForwardMappings),
+		PreserveOriginal:     true,
+	}
+}
+
 func appendTaskSpecCellValues(values []runtimetaskspec.CellValue) []runtimetaskspec.CellValue {
 	if len(values) == 0 {
 		return nil
@@ -1677,6 +1783,15 @@ func appendTaskSpecHeaderMappings(values []runtimetaskspec.HeaderMapping) []runt
 		return nil
 	}
 	cloned := make([]runtimetaskspec.HeaderMapping, len(values))
+	copy(cloned, values)
+	return cloned
+}
+
+func appendTaskSpecCarryForwardMappings(values []runtimetaskspec.CarryForwardMapping) []runtimetaskspec.CarryForwardMapping {
+	if len(values) == 0 {
+		return nil
+	}
+	cloned := make([]runtimetaskspec.CarryForwardMapping, len(values))
 	copy(cloned, values)
 	return cloned
 }
@@ -1809,6 +1924,8 @@ func operationNameForFamily(family string) string {
 		return WriteValuesOperationName
 	case "normalize_headers":
 		return NormalizeHeadersOperationName
+	case "roll_forward_period":
+		return RollForwardPeriodOperationName
 	default:
 		return family
 	}
