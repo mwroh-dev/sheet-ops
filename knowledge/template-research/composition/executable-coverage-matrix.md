@@ -904,3 +904,33 @@ Extended the template-class draft planner to `student_gradebook`:
   validation rule, formula extension, and protection evidence.
 - Advisory claim risk: this does not infer grading policy, grow arbitrary
   grade matrices, certify grade correctness, or create native pivot summaries.
+
+## Phase 31 Result
+
+Extended the template-class draft planner to `loan_repayment_calculator`:
+
+- `requestcompiler.DraftOrganismExecutionRequest` detects a loan repayment
+  schedule from period, payment, interest, principal, and balance headers
+- the loan draft emits the two-step sequence: extend repayment formulas and
+  protect calculated cells
+- the planner extends formula columns into the next existing payment row and
+  protects the resulting calculation range while leaving payment inputs open
+- tests validate the draft against
+  `contracts/requests/organism_execution_request.schema.json`
+- an open-layer integration test proves the loan draft JSON can execute
+  through `OrchestrateOrganism`, preserve financial non-claims, and produce
+  expected formula evidence in the schedule sheet
+
+## Phase 31 Self-Retro
+
+- Coverage improved: draft synthesis now covers all five first productization
+  classes: invoice, budget, inventory, gradebook, and loan schedule mechanics.
+- Remaining template needs: this is still not broad 21-organism draft
+  synthesis. It covers fixture-shaped workbook facts for the first
+  productization slice.
+- Verifier strength: each first-slice draft path now has schema validation,
+  open-layer execution, template-class evaluation, organism verification, and
+  workbook output checks.
+- Advisory claim risk: loan support remains formula schedule mechanics only.
+  It does not provide financial advice, payoff termination proof, or
+  amortization correctness certification.

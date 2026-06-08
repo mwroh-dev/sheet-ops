@@ -326,6 +326,77 @@ func TestDraftOrganismExecutionRequestBuildsStudentGradebookStepsFromWorkbookFac
 	}
 }
 
+func TestDraftOrganismExecutionRequestBuildsLoanRepaymentStepsFromWorkbookFacts(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "loan.xlsx")
+	outputFile := filepath.Join(tempDir, "loan-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Schedule"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Schedule", "A1", &[]any{"period", "payment", "interest", "principal", "balance"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Schedule", "A2", &[]any{1, 100, nil, nil, 1000}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetCellFormula("Schedule", "C2", "=E2*0.01"); err != nil {
+		t.Fatalf("SetCellFormula(C2): %v", err)
+	}
+	if err := file.SetCellFormula("Schedule", "D2", "=B2-C2"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if err := file.SetCellFormula("Schedule", "E2", "=1000-D2"); err != nil {
+		t.Fatalf("SetCellFormula(E2): %v", err)
+	}
+	if err := file.SetSheetRow("Schedule", "A3", &[]any{2, 100}); err != nil {
+		t.Fatalf("SetSheetRow row3: %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	facts, err := runtimeinspect.InspectWorkbookFacts(inputFile)
+	if err != nil {
+		t.Fatalf("InspectWorkbookFacts: %v", err)
+	}
+	requestText := "Extend loan repayment schedule formulas and protect calculated balance cells"
+	plan := TemplateClassPlanHintForRequest(requestText)
+	if plan == nil {
+		t.Fatal("missing plan")
+	}
+
+	req, ok := DraftOrganismExecutionRequest(OrganismDraftInput{
+		ScenarioID:        "loan-organism-draft",
+		RequestText:       requestText,
+		InputFile:         inputFile,
+		OutputFile:        outputFile,
+		WorkbookFacts:     facts,
+		TemplateClassPlan: *plan,
+	})
+	if !ok {
+		t.Fatal("DraftOrganismExecutionRequest ok=false")
+	}
+	if len(req.Steps) != 2 {
+		t.Fatalf("steps=%d want 2", len(req.Steps))
+	}
+	if req.Steps[0].AtomID != "extend_table_formulas" || req.Steps[0].FormulaSourceRow != 2 || len(req.Steps[0].TargetRows) != 1 || req.Steps[0].TargetRows[0] != 3 {
+		t.Fatalf("formula step=%+v", req.Steps[0])
+	}
+	if len(req.Steps[0].FormulaColumns) != 3 || req.Steps[0].FormulaColumns[0] != "C" {
+		t.Fatalf("formula columns=%+v", req.Steps[0].FormulaColumns)
+	}
+	if req.Steps[1].AtomID != "protect_formula_cells" || req.Steps[1].ProtectionRule == nil || req.Steps[1].ProtectionRule.FormulaRanges[0] != "C2:E3" {
+		t.Fatalf("protection step=%+v", req.Steps[1])
+	}
+	if err := runtimeschema.ValidateStruct(organismExecutionRequestSchemaPathForTest(), req); err != nil {
+		t.Fatalf("draft organism request schema validation: %v", err)
+	}
+}
+
 func cellRowForDraftTest(row int) string {
 	return strconv.Itoa(row)
 }

@@ -76,9 +76,65 @@ func DraftOrganismExecutionRequest(input OrganismDraftInput) (OrganismExecutionR
 		return draftInventoryMovementLog(input)
 	case "student_gradebook":
 		return draftStudentGradebook(input)
+	case "loan_repayment_calculator":
+		return draftLoanRepaymentCalculator(input)
 	default:
 		return OrganismExecutionRequestDraft{}, false
 	}
+}
+
+func draftLoanRepaymentCalculator(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
+	sheet, ok := findLoanRepaymentSheet(input.WorkbookFacts)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumns := formulaColumnsForSheet(sheet)
+	if len(formulaColumns) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumnLetters := make([]string, 0, len(formulaColumns))
+	for _, column := range formulaColumns {
+		if letter, ok := columnLetterForHeader(sheet.Columns, column); ok {
+			formulaColumnLetters = append(formulaColumnLetters, letter)
+		}
+	}
+	if len(formulaColumnLetters) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	minFormulaRow, maxFormulaRow, ok := formulaRowBounds(sheet)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	targetRow := maxFormulaRow + 1
+	if targetRow > sheet.RowCount {
+		return OrganismExecutionRequestDraft{}, false
+	}
+
+	return OrganismExecutionRequestDraft{
+		ScenarioID:  input.ScenarioID,
+		RequestText: input.RequestText,
+		InputFile:   input.InputFile,
+		OutputFile:  input.OutputFile,
+		Steps: []OrganismExecutionStepDraft{
+			{
+				AtomID:           "extend_table_formulas",
+				CompositionKind:  "formula_extension",
+				SourceSheet:      sheet.Name,
+				FormulaSourceRow: minFormulaRow,
+				TargetRows:       []int{targetRow},
+				FormulaColumns:   formulaColumnLetters,
+			},
+			{
+				AtomID:          "protect_formula_cells",
+				CompositionKind: "formula_protection",
+				SourceSheet:     sheet.Name,
+				ProtectionRule: &FormulaProtectionRule{
+					FormulaRanges: []string{formulaRange(formulaColumnLetters, minFormulaRow, targetRow)},
+					InputRanges:   []string{"B2:B20"},
+				},
+			},
+		},
+	}, true
 }
 
 func draftStudentGradebook(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
@@ -455,6 +511,16 @@ func findStudentGradebookSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspe
 	for _, sheet := range facts.Sheets {
 		headers := lowerSet(sheet.Columns)
 		if headers["student"] && headers["assignment"] && headers["score"] && headers["status"] && headers["weighted_score"] {
+			return sheet, true
+		}
+	}
+	return runtimeinspect.SheetFacts{}, false
+}
+
+func findLoanRepaymentSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect.SheetFacts, bool) {
+	for _, sheet := range facts.Sheets {
+		headers := lowerSet(sheet.Columns)
+		if headers["period"] && headers["payment"] && headers["interest"] && headers["principal"] && headers["balance"] {
 			return sheet, true
 		}
 	}
