@@ -1946,3 +1946,33 @@ Extended standalone workbook semantic organism verification to
 - Advisory claim risk: this remains bounded to deterministic workbook evidence
   and does not perform three-way receipt matching, approve invoices, infer
   procurement policy, or certify vendor/payment correctness.
+
+## Phase 64 Result
+
+Extended standalone workbook semantic organism verification to
+`warehouse_reorder_tracker`:
+
+- `runtime/workbookcase.verifyOrganismPlanExecution` now dispatches to a
+  warehouse reorder workbook semantic verifier
+- the verifier checks final workbook evidence for SKU lookup enrichment output,
+  appended reorder-candidate output, reorder formula continuity, SKU validation
+  presence, and protected formula sheet options
+- a regression test proves that passed atom steps are no longer sufficient for
+  warehouse reorder organism verification when the final workbook is missing
+  warehouse reorder evidence
+- the existing warehouse reorder request-compiler orchestration still passes
+  with the stronger organism verifier
+
+## Phase 64 Self-Retro
+
+- Coverage improved: standalone workbook semantic verifier coverage now spans
+  the first reorder-trigger workflow with lookup enrichment, threshold step
+  evidence, append, validation, and formula protection in the organism sequence.
+- Remaining template needs: education, queue, sales, maintenance, compliance,
+  safety, and loan organisms still need tailored final-workbook semantic checks.
+- Verifier strength: warehouse reorder verification now inspects final workbook
+  state across SKU enrichment, reorder candidate append, formula continuity,
+  validation, and sheet protection in one organism acceptance pass.
+- Advisory claim risk: this remains bounded to deterministic workbook evidence
+  and does not infer warehouse policy, calculate reorder quantity policy, or
+  resolve duplicate SKU keys.

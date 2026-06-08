@@ -756,6 +756,49 @@ func TestVerifyOrganismPlanExecutionChecksProcurementWorkbookSemantics(t *testin
 	}
 }
 
+func TestVerifyOrganismPlanExecutionChecksWarehouseWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "warehouse.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Stock"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Stock", "A1", &[]any{"sku", "quantity", "reorder_level", "reorder_gap"}); err != nil {
+		t.Fatalf("SetSheetRow stock header: %v", err)
+	}
+	if err := file.SetSheetRow("Stock", "A2", &[]any{"A001", 3, 5}); err != nil {
+		t.Fatalf("SetSheetRow stock row: %v", err)
+	}
+	if err := file.SetCellFormula("Stock", "D2", "=B2-C2"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "warehouse_reorder_tracker",
+		OperationSequence:     []string{"join_lookup", "highlight_threshold", "append_structured_rows", "add_data_validation", "protect_formula_cells"},
+		RequiredVerifierSpecs: []string{"warehouse_reorder_tracker_verifier"},
+	}, []string{"join_lookup", "highlight_threshold", "append_structured_rows", "add_data_validation", "protect_formula_cells"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "StockEnriched") {
+		t.Fatalf("organism verification reasons=%v want missing warehouse reorder evidence", verification.Reasons)
+	}
+}
+
 func TestRunOrganismPlanExecutesLoanSequenceWithNonClaims(t *testing.T) {
 	setRuntimeRoots(t)
 

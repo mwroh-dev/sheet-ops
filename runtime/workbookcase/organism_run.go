@@ -182,6 +182,8 @@ func verifyOrganismWorkbookSemantics(organismID, outputFile string) []string {
 		return verifyInventoryMovementWorkbook(outputFile)
 	case "procurement_reconciliation":
 		return verifyProcurementReconciliationWorkbook(outputFile)
+	case "warehouse_reorder_tracker":
+		return verifyWarehouseReorderWorkbook(outputFile)
 	default:
 		return nil
 	}
@@ -535,6 +537,42 @@ func verifyProcurementReconciliationWorkbook(outputFile string) []string {
 		reasons = append(reasons, fmt.Sprintf("procurement protection semantic check missing Invoice protection: %v", err))
 	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
 		reasons = append(reasons, "procurement protection semantic check missing Invoice protection options")
+	}
+	return reasons
+}
+
+func verifyWarehouseReorderWorkbook(outputFile string) []string {
+	handle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		return []string{fmt.Sprintf("warehouse reorder workbook semantic check failed to open output: %v", err)}
+	}
+	defer func() { _ = handle.Close() }()
+
+	var reasons []string
+	if got, err := handle.GetCellValue("StockEnriched", "E2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("warehouse reorder lookup semantic check missing StockEnriched!E2: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "warehouse reorder lookup semantic check missing StockEnriched!E2 location value")
+	}
+	if got, err := handle.GetCellValue("StockEnriched", "A3"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("warehouse reorder append semantic check missing StockEnriched!A3: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "warehouse reorder append semantic check missing StockEnriched!A3 sku value")
+	}
+	if got, err := handle.GetCellFormula("Stock", "D2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("warehouse reorder formula semantic check missing Stock!D2 formula: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "warehouse reorder formula semantic check missing Stock!D2 formula")
+	}
+	if validations, err := handle.GetDataValidations("StockEnriched"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("warehouse reorder validation semantic check missing StockEnriched data validation: %v", err))
+	} else if len(validations) == 0 {
+		reasons = append(reasons, "warehouse reorder validation semantic check missing StockEnriched data validation")
+	}
+	if protection, err := handle.GetSheetProtection("Stock"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("warehouse reorder protection semantic check missing Stock protection: %v", err))
+	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
+		reasons = append(reasons, "warehouse reorder protection semantic check missing Stock protection options")
 	}
 	return reasons
 }
