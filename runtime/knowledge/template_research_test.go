@@ -396,6 +396,106 @@ func TestTemplateResearchVerifiedOrganismClassesValidateDepthContracts(t *testin
 	}
 }
 
+func TestTemplateResearchRuntimeProductizationArtifactsValidate(t *testing.T) {
+	root := repoRoot(t)
+	productizationDir := filepath.Join(root, "knowledge", "template-research", "runtime")
+
+	verifierSchema := compileSchema(t, filepath.Join(root, "contracts", "template_research", "organism_verifier_specs.schema.json"))
+	plannerSchema := compileSchema(t, filepath.Join(root, "contracts", "template_research", "operation_planner.schema.json"))
+	harnessSchema := compileSchema(t, filepath.Join(root, "contracts", "template_research", "template_class_harness.schema.json"))
+	promotionSchema := compileSchema(t, filepath.Join(root, "contracts", "template_research", "advanced_atom_promotion.schema.json"))
+
+	verifierPath := filepath.Join(productizationDir, "organism-verifier-specs.json")
+	plannerPath := filepath.Join(productizationDir, "operation-planner.json")
+	harnessPath := filepath.Join(productizationDir, "template-class-harness.json")
+	promotionPath := filepath.Join(productizationDir, "advanced-atom-promotion.json")
+
+	validateJSONDocumentFromFile(t, verifierSchema, verifierPath)
+	validateJSONDocumentFromFile(t, plannerSchema, plannerPath)
+	validateJSONDocumentFromFile(t, harnessSchema, harnessPath)
+	validateJSONDocumentFromFile(t, promotionSchema, promotionPath)
+
+	supportedAtoms := loadSupportedCapabilityNames(t, filepath.Join(root, "contracts", "capabilities", "capability.schema.json"))
+	opportunityAtoms := loadOpportunityCapabilityNames(t, filepath.Join(root, "knowledge", "template-research", "opportunities", "*.json"))
+	coverageTiers := loadTemplateResearchCoverageTiers(t, filepath.Join(root, "knowledge", "template-research", "composition", "executable-organism-coverage.json"))
+
+	verifierSpecs := loadRuntimeProductizationVerifierSpecs(t, verifierPath)
+	for _, organism := range []string{
+		"invoice_line_item_billing",
+		"monthly_budget_control",
+		"inventory_movement_log",
+		"student_gradebook",
+		"loan_repayment_calculator",
+	} {
+		spec, ok := verifierSpecs[organism]
+		if !ok {
+			t.Fatalf("organism verifier spec missing %q", organism)
+		}
+		if len(spec.AcceptanceChecks) < 3 || len(spec.AtomVerifierDependencies) == 0 || len(spec.NonClaims) == 0 {
+			t.Fatalf("organism verifier spec %q is too weak: %+v", organism, spec)
+		}
+		for _, atom := range spec.AtomVerifierDependencies {
+			if !supportedAtoms[atom] {
+				t.Fatalf("organism verifier spec %q references unsupported atom %q", organism, atom)
+			}
+		}
+	}
+
+	plans := loadRuntimeProductizationPlannerPlans(t, plannerPath)
+	if len(plans) < 5 {
+		t.Fatalf("planner plan count=%d want at least 5", len(plans))
+	}
+	for organism, plan := range plans {
+		if coverageTiers[organism] == "" {
+			t.Fatalf("planner references organism %q missing from coverage ladder", organism)
+		}
+		if len(plan.OperationSequence) == 0 || len(plan.RequiredVerifierSpecs) == 0 || plan.FallbackPolicy == "" {
+			t.Fatalf("planner plan %q is incomplete: %+v", organism, plan)
+		}
+		for _, atom := range plan.OperationSequence {
+			if !supportedAtoms[atom] {
+				t.Fatalf("planner plan %q references unsupported atom %q", organism, atom)
+			}
+		}
+	}
+
+	harnessScenarios := loadRuntimeProductizationHarnessScenarios(t, harnessPath)
+	if len(harnessScenarios) < 5 {
+		t.Fatalf("template class harness scenario count=%d want at least 5", len(harnessScenarios))
+	}
+	for _, scenario := range harnessScenarios {
+		if plans[scenario.OrganismID].OrganismID == "" {
+			t.Fatalf("harness scenario %q references organism %q without planner plan", scenario.ScenarioID, scenario.OrganismID)
+		}
+		if len(scenario.Flow) != 5 {
+			t.Fatalf("harness scenario %q flow length=%d want classify/plan/execute/verify/report", scenario.ScenarioID, len(scenario.Flow))
+		}
+		if len(scenario.SuccessEvidence) == 0 || len(scenario.NonClaims) == 0 {
+			t.Fatalf("harness scenario %q has weak evidence/non-claims: %+v", scenario.ScenarioID, scenario)
+		}
+	}
+
+	promotions := loadRuntimeProductizationPromotionDecisions(t, promotionPath)
+	for _, atom := range []string{"create_pivot_summary", "matrix_growth", "timeline_grid_projection", "calculation_schedule_verifier", "printable_render_qa"} {
+		decision, ok := promotions[atom]
+		if !ok {
+			t.Fatalf("advanced atom promotion decision missing %q", atom)
+		}
+		if decision.Status == "promote_now" {
+			t.Fatalf("advanced atom %q must not promote without runtime verifier evidence", atom)
+		}
+		if supportedAtoms[atom] {
+			t.Fatalf("advanced atom %q unexpectedly present in supported capability enum", atom)
+		}
+		if atom == "create_pivot_summary" && !opportunityAtoms[atom] {
+			t.Fatalf("advanced atom %q should remain tracked as an opportunity", atom)
+		}
+		if len(decision.RequiredEvidence) < 2 || decision.Reason == "" {
+			t.Fatalf("advanced atom promotion decision %q is weak: %+v", atom, decision)
+		}
+	}
+}
+
 func TestAtomBuilderLayerValidatesRuntimeMirrorAndPlanningContracts(t *testing.T) {
 	root := repoRoot(t)
 	domainSchema := compileSchema(t, filepath.Join(root, "contracts", "workbook_app", "domain_schema.schema.json"))
@@ -555,6 +655,123 @@ func loadTemplateResearchCoverageTiers(t *testing.T, path string) map[string]str
 		tiers[organism.OrganismID] = organism.CoverageTier
 	}
 	return tiers
+}
+
+type runtimeProductizationVerifierSpec struct {
+	AcceptanceChecks         []string `json:"acceptance_checks"`
+	AtomVerifierDependencies []string `json:"atom_verifier_dependencies"`
+	NonClaims                []string `json:"non_claims"`
+}
+
+func loadRuntimeProductizationVerifierSpecs(t *testing.T, path string) map[string]runtimeProductizationVerifierSpec {
+	t.Helper()
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", path, err)
+	}
+	var catalog struct {
+		Specs []struct {
+			OrganismID               string   `json:"organism_id"`
+			AcceptanceChecks         []string `json:"acceptance_checks"`
+			AtomVerifierDependencies []string `json:"atom_verifier_dependencies"`
+			NonClaims                []string `json:"non_claims"`
+		} `json:"specs"`
+	}
+	if err := json.Unmarshal(raw, &catalog); err != nil {
+		t.Fatalf("Unmarshal(%s): %v", path, err)
+	}
+	specs := map[string]runtimeProductizationVerifierSpec{}
+	for _, spec := range catalog.Specs {
+		specs[spec.OrganismID] = runtimeProductizationVerifierSpec{
+			AcceptanceChecks:         spec.AcceptanceChecks,
+			AtomVerifierDependencies: spec.AtomVerifierDependencies,
+			NonClaims:                spec.NonClaims,
+		}
+	}
+	return specs
+}
+
+type runtimeProductizationPlannerPlan struct {
+	OrganismID            string   `json:"organism_id"`
+	OperationSequence     []string `json:"operation_sequence_atom_ids"`
+	RequiredVerifierSpecs []string `json:"required_verifier_spec_ids"`
+	FallbackPolicy        string   `json:"fallback_policy"`
+}
+
+func loadRuntimeProductizationPlannerPlans(t *testing.T, path string) map[string]runtimeProductizationPlannerPlan {
+	t.Helper()
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", path, err)
+	}
+	var catalog struct {
+		Plans []runtimeProductizationPlannerPlan `json:"plans"`
+	}
+	if err := json.Unmarshal(raw, &catalog); err != nil {
+		t.Fatalf("Unmarshal(%s): %v", path, err)
+	}
+	plans := map[string]runtimeProductizationPlannerPlan{}
+	for _, plan := range catalog.Plans {
+		plans[plan.OrganismID] = plan
+	}
+	return plans
+}
+
+type runtimeProductizationHarnessScenario struct {
+	ScenarioID      string   `json:"scenario_id"`
+	OrganismID      string   `json:"organism_id"`
+	Flow            []string `json:"flow"`
+	SuccessEvidence []string `json:"success_evidence"`
+	NonClaims       []string `json:"non_claims"`
+}
+
+func loadRuntimeProductizationHarnessScenarios(t *testing.T, path string) []runtimeProductizationHarnessScenario {
+	t.Helper()
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", path, err)
+	}
+	var catalog struct {
+		Scenarios []runtimeProductizationHarnessScenario `json:"scenarios"`
+	}
+	if err := json.Unmarshal(raw, &catalog); err != nil {
+		t.Fatalf("Unmarshal(%s): %v", path, err)
+	}
+	return catalog.Scenarios
+}
+
+type runtimeProductizationPromotionDecision struct {
+	Status           string   `json:"status"`
+	Reason           string   `json:"reason"`
+	RequiredEvidence []string `json:"required_evidence"`
+}
+
+func loadRuntimeProductizationPromotionDecisions(t *testing.T, path string) map[string]runtimeProductizationPromotionDecision {
+	t.Helper()
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", path, err)
+	}
+	var catalog struct {
+		Decisions []struct {
+			AtomID           string   `json:"atom_id"`
+			Status           string   `json:"status"`
+			Reason           string   `json:"reason"`
+			RequiredEvidence []string `json:"required_evidence"`
+		} `json:"decisions"`
+	}
+	if err := json.Unmarshal(raw, &catalog); err != nil {
+		t.Fatalf("Unmarshal(%s): %v", path, err)
+	}
+	decisions := map[string]runtimeProductizationPromotionDecision{}
+	for _, decision := range catalog.Decisions {
+		decisions[decision.AtomID] = runtimeProductizationPromotionDecision{
+			Status:           decision.Status,
+			Reason:           decision.Reason,
+			RequiredEvidence: decision.RequiredEvidence,
+		}
+	}
+	return decisions
 }
 
 func loadSupportedCapabilityNames(t *testing.T, schemaPath string) map[string]bool {

@@ -19,9 +19,13 @@ goal. It does not claim full workbook generation or broad Excel automation.
 - All 21 roadmap organisms remain preview-backed by workbookcase evidence.
 - P2 and P3 depth contracts are recorded at `organism_verified_class` tier with
   explicit acceptance criteria, non-claims, and promotion gates.
+- Runtime productization contracts now cover organism-level verifier specs,
+  operation planner sequences, template class harness scenarios, and advanced
+  atom promotion decisions.
 - The knowledge harness validates roadmap coverage, fixture priority alignment,
   advisory authority, supported atom references, absence of planned blockers,
-  preview evidence presence, and verified-class depth contract references.
+  preview evidence presence, verified-class depth contract references, and
+  runtime productization artifact boundaries.
 - Workbookcase preview fixtures cover p0, p1, p2, and p3 organism priorities.
 - Each phase records a self-retro in `executable-coverage-matrix.md`.
 
@@ -38,6 +42,8 @@ goal. It does not claim full workbook generation or broad Excel automation.
 - Preview fixtures are representative, not full template generators.
 - Organism-level verifiers do not exist yet; previews rely on
   operation-specific verifiers.
+- Operation planner and template class harness records are advisory contracts,
+  not autonomous runtime planner execution.
 - Native Excel pivot artifacts are not supported.
 - Matrix auto-growth, rich visual layout QA, full printable pagination QA, and
   domain-specific schedule semantics remain future runtime work.
@@ -47,7 +53,8 @@ goal. It does not claim full workbook generation or broad Excel automation.
 ## Completion Judgment
 
 The advisory ecosystem, runtime bridge, coverage ladder, representative preview
-fixture coverage, and p2/p3 verified-class depth contracts are complete for the
-current 21 roadmap organisms. The remaining limits are explicitly documented as
-future runtime depth, not untracked blockers in the requested advisory-to-depth
+fixture coverage, p2/p3 verified-class depth contracts, and runtime
+productization contracts are complete for the current 21 roadmap organisms.
+The remaining limits are explicitly documented as future runtime implementation
+depth, not untracked blockers in the requested advisory-to-productization
 coverage layer.

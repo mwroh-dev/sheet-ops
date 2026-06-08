@@ -508,3 +508,37 @@ The coverage ladder now distinguishes:
   preview tests.
 - Advisory claim risk: `organism_verified_class` is not a public capability
   and must not be described as full template generation.
+
+## Phase 18 Result
+
+Added the first runtime productization contract layer under
+`knowledge/template-research/runtime/`:
+
+- `organism-verifier-specs.json`: organism-level acceptance checks that
+  aggregate existing atom verifier evidence for invoice, budget, inventory,
+  gradebook, and loan schedule classes
+- `operation-planner.json`: advisory organism-to-supported-atom planning
+  sequences and fallback policies
+- `template-class-harness.json`: request-to-classify-to-plan-to-execute-to-
+  verify-to-report harness scenarios
+- `advanced-atom-promotion.json`: promotion decisions for native pivots,
+  matrix growth, timeline projection, calculation schedule verification, and
+  printable render QA
+
+The knowledge harness validates these records against schemas and checks that
+planner/runtime atom references stay inside the supported capability registry,
+while advanced atoms remain unpromoted until dedicated verifier evidence exists.
+
+## Phase 18 Self-Retro
+
+- Coverage improved: the project now has an explicit bridge from
+  organism coverage to runtime productization planning.
+- Remaining template needs: these are contracts and harness scenarios, not an
+  autonomous classifier, planner, executor, or organism-level verifier
+  implementation.
+- Verifier strength: the harness validates artifact integrity and supported
+  atom boundaries. It does not execute a multi-operation organism plan yet.
+- Advisory claim risk: advanced atom decisions intentionally keep native pivot,
+  matrix growth, timeline projection, calculation schedule verification, and
+  printable render QA out of supported runtime until separate implementations
+  and verifiers exist.

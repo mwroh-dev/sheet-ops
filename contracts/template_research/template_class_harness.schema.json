@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/template_research/template_class_harness.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "authority", "summary", "scenarios"],
+  "properties": {
+    "version": { "type": "integer", "const": 1 },
+    "authority": { "type": "string", "const": "advisory_harness_contract" },
+    "summary": { "type": "string", "minLength": 1 },
+    "scenarios": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/scenario" }
+    }
+  },
+  "$defs": {
+    "non_empty_strings": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "scenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenario_id",
+        "organism_id",
+        "request_shape",
+        "flow",
+        "success_evidence",
+        "non_claims"
+      ],
+      "properties": {
+        "scenario_id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "organism_id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "request_shape": { "type": "string", "minLength": 1 },
+        "flow": {
+          "type": "array",
+          "prefixItems": [
+            { "const": "classify" },
+            { "const": "plan" },
+            { "const": "execute" },
+            { "const": "verify" },
+            { "const": "report" }
+          ],
+          "minItems": 5,
+          "maxItems": 5
+        },
+        "success_evidence": { "$ref": "#/$defs/non_empty_strings" },
+        "non_claims": { "$ref": "#/$defs/non_empty_strings" }
+      }
+    }
+  }
+}

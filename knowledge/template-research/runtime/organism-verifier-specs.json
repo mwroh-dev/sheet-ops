@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "authority": "advisory_runtime_depth",
+  "summary": "Organism-level verifier specs for the first productization slice. These specs aggregate existing atom verifier evidence into document-class acceptance criteria without claiming public organism runtime support.",
+  "specs": [
+    {
+      "spec_id": "invoice_line_item_billing_verifier",
+      "organism_id": "invoice_line_item_billing",
+      "acceptance_checks": [
+        "new line item rows are present in the source table",
+        "line total formulas extend to appended rows",
+        "SKU validation and formula-cell protection are preserved",
+        "printable invoice sheet materializes declared fields and line table"
+      ],
+      "atom_verifier_dependencies": ["append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells", "generate_printable_form"],
+      "non_claims": [
+        "does not infer invoice layout",
+        "does not render PDF or prove pagination",
+        "does not perform tax or accounting advice"
+      ],
+      "promotion_gate": "Promote only after a single organism-level verifier aggregates all invoice preview atom results and workbook inspections."
+    },
+    {
+      "spec_id": "monthly_budget_control_verifier",
+      "organism_id": "monthly_budget_control",
+      "acceptance_checks": [
+        "budget rows summarize by category",
+        "over-budget variance rows are highlighted",
+        "period roll-forward and protected summaries are either verified or explicitly absent from the selected plan"
+      ],
+      "atom_verifier_dependencies": ["group_summarize", "highlight_threshold", "copy_period_sheet", "roll_forward_period", "protect_formula_cells"],
+      "non_claims": [
+        "does not create financial advice",
+        "does not infer budget policy",
+        "does not create native pivot tables"
+      ],
+      "promotion_gate": "Promote only after a budget fixture verifies summary, threshold, period copy, carry-forward, and protected summary in one flow."
+    },
+    {
+      "spec_id": "inventory_movement_log_verifier",
+      "organism_id": "inventory_movement_log",
+      "acceptance_checks": [
+        "movement headers normalize to canonical names",
+        "stock master reconciliation reports matched, missing, and mismatch rows",
+        "movement formulas, lookup enrichment, and protected balance cells are either verified or explicitly absent from the selected plan"
+      ],
+      "atom_verifier_dependencies": ["normalize_headers", "reconcile_tables", "join_lookup", "append_structured_rows", "protect_formula_cells"],
+      "non_claims": [
+        "does not infer warehouse policy",
+        "does not resolve duplicate keys",
+        "does not support fuzzy reconciliation"
+      ],
+      "promotion_gate": "Promote only after an inventory fixture combines movement append, balance formulas, SKU enrichment, and reconciliation verification."
+    },
+    {
+      "spec_id": "student_gradebook_verifier",
+      "organism_id": "student_gradebook",
+      "acceptance_checks": [
+        "score rows summarize by student with deterministic totals",
+        "grade status values are constrained by validation",
+        "native pivot-style score distribution remains excluded from supported runtime claims"
+      ],
+      "atom_verifier_dependencies": ["group_summarize", "add_data_validation", "extend_table_formulas", "protect_formula_cells"],
+      "non_claims": [
+        "does not infer grading policy",
+        "does not auto-grow arbitrary matrices",
+        "does not create native Excel pivots"
+      ],
+      "promotion_gate": "Promote only after score summary, validation, protected formulas, and matrix-growth semantics are checked in one organism verifier."
+    },
+    {
+      "spec_id": "loan_repayment_calculator_verifier",
+      "organism_id": "loan_repayment_calculator",
+      "acceptance_checks": [
+        "payment-row formulas extend without reference drift",
+        "calculated interest, principal, and balance cells are protected",
+        "amortization correctness and financial advice are excluded until a dedicated calculation schedule verifier exists"
+      ],
+      "atom_verifier_dependencies": ["extend_table_formulas", "protect_formula_cells"],
+      "non_claims": [
+        "does not provide financial advice",
+        "does not prove payoff termination",
+        "does not certify amortization correctness"
+      ],
+      "promotion_gate": "Promote only after a calculation schedule verifier checks recurrence, termination policy, protected formulas, and editable inputs together."
+    }
+  ]
+}

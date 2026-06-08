@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "authority": "advisory_harness_contract",
+  "summary": "Template class harness scenarios for request-to-classify-to-plan-to-execute-to-verify flows. These scenarios identify the expected evidence chain but do not create a new runtime execution engine.",
+  "scenarios": [
+    {
+      "scenario_id": "invoice_request_to_verified_class",
+      "organism_id": "invoice_line_item_billing",
+      "request_shape": "Add invoice line items, extend line total formulas, protect formulas, and emit a printable invoice sheet.",
+      "flow": ["classify", "plan", "execute", "verify", "report"],
+      "success_evidence": ["organism classifier chooses invoice_line_item_billing", "planner emits supported atom sequence", "workbookcase preview evidence includes append, formulas, validation, protection, printable form"],
+      "non_claims": ["no inferred layout", "no PDF pagination proof", "no accounting advice"]
+    },
+    {
+      "scenario_id": "budget_request_to_verified_class",
+      "organism_id": "monthly_budget_control",
+      "request_shape": "Summarize monthly budget actuals and flag over-budget variance rows.",
+      "flow": ["classify", "plan", "execute", "verify", "report"],
+      "success_evidence": ["organism classifier chooses monthly_budget_control", "planner emits summary and threshold atoms", "organism verifier confirms deterministic summary and highlighted exceptions"],
+      "non_claims": ["no financial advice", "no native pivot", "no inferred budget policy"]
+    },
+    {
+      "scenario_id": "inventory_request_to_verified_class",
+      "organism_id": "inventory_movement_log",
+      "request_shape": "Normalize inventory movement headers and reconcile movement balances with stock master quantities.",
+      "flow": ["classify", "plan", "execute", "verify", "report"],
+      "success_evidence": ["organism classifier chooses inventory_movement_log", "planner requires explicit reconciliation keys", "workbookcase reconciliation evidence reports deterministic buckets"],
+      "non_claims": ["no fuzzy matching", "no duplicate-key resolution", "no warehouse policy inference"]
+    },
+    {
+      "scenario_id": "gradebook_request_to_verified_class",
+      "organism_id": "student_gradebook",
+      "request_shape": "Summarize student scores and validate completion status values.",
+      "flow": ["classify", "plan", "execute", "verify", "report"],
+      "success_evidence": ["organism classifier chooses student_gradebook", "planner emits group_summarize and add_data_validation", "verified-class contract excludes native pivot and grading policy claims"],
+      "non_claims": ["no grading advice", "no native pivot", "no arbitrary matrix growth"]
+    },
+    {
+      "scenario_id": "loan_request_to_verified_class",
+      "organism_id": "loan_repayment_calculator",
+      "request_shape": "Extend loan payment-row formulas and protect calculated schedule cells.",
+      "flow": ["classify", "plan", "execute", "verify", "report"],
+      "success_evidence": ["organism classifier chooses loan_repayment_calculator", "planner emits formula extension and protection atoms", "verified-class contract excludes amortization correctness and financial advice"],
+      "non_claims": ["no financial advice", "no payoff termination verification", "no amortization certification"]
+    }
+  ]
+}

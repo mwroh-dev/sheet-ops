@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/template_research/advanced_atom_promotion.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "authority", "summary", "decisions"],
+  "properties": {
+    "version": { "type": "integer", "const": 1 },
+    "authority": { "type": "string", "const": "advisory_promotion_review" },
+    "summary": { "type": "string", "minLength": 1 },
+    "decisions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/decision" }
+    }
+  },
+  "$defs": {
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["atom_id", "status", "reason", "required_evidence"],
+      "properties": {
+        "atom_id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "status": {
+          "type": "string",
+          "enum": ["keep_opportunity", "split_before_promotion", "research_only", "promote_now"]
+        },
+        "reason": { "type": "string", "minLength": 1 },
+        "required_evidence": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

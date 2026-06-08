@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "authority": "advisory_planner_contract",
+  "summary": "Planner contracts for turning recognized organism classes into supported atom sequences. These are planning hints, not autonomous runtime execution authority.",
+  "plans": [
+    {
+      "organism_id": "invoice_line_item_billing",
+      "classification_signals": ["invoice", "line item", "SKU", "quantity", "unit price", "printable document"],
+      "operation_sequence_atom_ids": ["append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells", "generate_printable_form"],
+      "required_verifier_spec_ids": ["invoice_line_item_billing_verifier"],
+      "fallback_policy": "If required invoice fields or formula ranges are ambiguous, stop at preview planning and request explicit bindings instead of inferring layout."
+    },
+    {
+      "organism_id": "monthly_budget_control",
+      "classification_signals": ["monthly budget", "actual", "budget", "variance", "overrun", "period"],
+      "operation_sequence_atom_ids": ["group_summarize", "highlight_threshold", "copy_period_sheet", "roll_forward_period", "protect_formula_cells"],
+      "required_verifier_spec_ids": ["monthly_budget_control_verifier"],
+      "fallback_policy": "If period mapping or variance columns are ambiguous, run only deterministic summary and threshold atoms with narrow non-claims."
+    },
+    {
+      "organism_id": "inventory_movement_log",
+      "classification_signals": ["inventory movement", "SKU", "stock master", "balance", "reconciliation"],
+      "operation_sequence_atom_ids": ["normalize_headers", "append_structured_rows", "join_lookup", "protect_formula_cells", "reconcile_tables"],
+      "required_verifier_spec_ids": ["inventory_movement_log_verifier"],
+      "fallback_policy": "If reconciliation keys are ambiguous, require explicit key and compare mappings before planning reconciliation."
+    },
+    {
+      "organism_id": "student_gradebook",
+      "classification_signals": ["gradebook", "student", "assignment", "score", "status"],
+      "operation_sequence_atom_ids": ["group_summarize", "add_data_validation", "extend_table_formulas", "protect_formula_cells"],
+      "required_verifier_spec_ids": ["student_gradebook_verifier"],
+      "fallback_policy": "If matrix growth or grading policy is requested, keep it outside supported scope and plan deterministic summary plus validation only."
+    },
+    {
+      "organism_id": "loan_repayment_calculator",
+      "classification_signals": ["loan", "payment schedule", "interest", "principal", "balance"],
+      "operation_sequence_atom_ids": ["extend_table_formulas", "protect_formula_cells"],
+      "required_verifier_spec_ids": ["loan_repayment_calculator_verifier"],
+      "fallback_policy": "If amortization correctness or financial advice is requested, refuse that claim and plan only formula mechanics with explicit non-claims."
+    }
+  ]
+}

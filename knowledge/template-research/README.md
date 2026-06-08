@@ -26,6 +26,10 @@ bundle, or reuse third-party template files.
   Verified organism class records define advisory acceptance contracts for
   deeper p2/p3 coverage without promoting native pivot tables, financial
   calculators, or organism IDs to public runtime capabilities.
+- `runtime/`: advisory productization contracts for organism-level verifier
+  specs, operation planner sequences, request-to-verify template class harness
+  scenarios, and advanced atom promotion decisions. These records guide future
+  runtime work but do not execute plans by themselves.
 - `patterns/*.json`: normalized template patterns grouped by user workflow and
   spreadsheet mechanics.
 - `opportunities/*.json`: capability backlog candidates that are intentionally
@@ -100,6 +104,10 @@ Promotion status is owned by Agent C:
 - `organism_verified_class` is still advisory. It means representative preview
   evidence plus explicit acceptance criteria and non-claims exist for a
   template class; it does not imply full template generation.
+- Runtime productization artifacts are contracts for the next implementation
+  layer. They must not be read as an autonomous planner, classifier, or
+  organism-level verifier implementation until runtime code and verifier
+  fixtures are added.
 - Atom-builder records are an intermediate planning layer. A supported mirror
   must reference an existing capability record and runtime paths; a planned
   builder must reference an opportunity record and no runtime implementation.
