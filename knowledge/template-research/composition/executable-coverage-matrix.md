@@ -616,3 +616,35 @@ Expanded multi-operation organism harness coverage beyond invoice:
 - Advisory claim risk: gradebook support still excludes grading policy,
   arbitrary matrix growth, and native pivots; loan support still excludes
   financial advice and amortization correctness.
+
+## Phase 22 Result
+
+Completed the first productization-slice multi-operation harness coverage for
+the five deterministic template classes in `runtime/templateclass`:
+
+- `monthly_budget_control`: group summary, variance threshold highlight,
+  period sheet copy, explicit carry-forward, and formula-cell protection in one
+  organism sequence
+- `inventory_movement_log`: explicit header normalization, structured row
+  append, SKU lookup enrichment, formula-cell protection, and deterministic
+  table reconciliation in one organism sequence
+
+Together with earlier invoice, gradebook, and loan sequences, the runtime now
+has multi-operation workbookcase evidence for all five first-slice
+productization classes: invoice, budget, inventory, gradebook, and loan
+schedule mechanics.
+
+## Phase 22 Self-Retro
+
+- Coverage improved: the first runtime productization slice is no longer split
+  between full harnesses and preview-only classes. Each slice now exercises the
+  exact `templateclass` operation sequence and evidence evaluation path.
+- Remaining template needs: the broader 21-organism roadmap is still not fully
+  multi-operation. Many organisms remain preview-backed rather than true
+  organism-harness-backed.
+- Verifier strength: budget and inventory still aggregate operation-specific
+  verifier evidence into a template-class decision. A separate organism-level
+  report verifier is still future work.
+- Advisory claim risk: budget support excludes financial policy inference and
+  native pivots; inventory support excludes warehouse policy inference,
+  duplicate-key resolution, and fuzzy reconciliation.

@@ -25,8 +25,9 @@ goal. It does not claim full workbook generation or broad Excel automation.
 - `runtime/templateclass` provides a deterministic classifier/planner/evidence
   evaluator for the first productization slice.
 - `runtime/workbookcase.RunOrganismPlan` provides multi-operation organism
-  harness slices for invoice line item billing, student gradebook, and loan
-  repayment schedule mechanics.
+  harness slices for the five first productization classes: invoice line item
+  billing, monthly budget control, inventory movement log, student gradebook,
+  and loan repayment schedule mechanics.
 - The knowledge harness validates roadmap coverage, fixture priority alignment,
   advisory authority, supported atom references, absence of planned blockers,
   preview evidence presence, verified-class depth contract references, and
@@ -50,9 +51,9 @@ goal. It does not claim full workbook generation or broad Excel automation.
 - Operation planner and template class harness records are advisory contracts,
   not autonomous runtime planner execution. The `runtime/templateclass` package
   plans and evaluates evidence, but it does not execute workbook operations.
-- The organism harness currently covers invoice, gradebook, and loan classes.
-  Other organism classes still need equivalent multi-operation fixtures before
-  broad organism-runtime claims are appropriate.
+- The organism harness currently covers the first five productization classes.
+  The remaining roadmap organisms still need equivalent multi-operation
+  fixtures before broad 21-organism runtime claims are appropriate.
 - Native Excel pivot artifacts are not supported.
 - Matrix auto-growth, rich visual layout QA, full printable pagination QA, and
   domain-specific schedule semantics remain future runtime work.
@@ -64,7 +65,9 @@ goal. It does not claim full workbook generation or broad Excel automation.
 The advisory ecosystem, runtime bridge, coverage ladder, representative preview
 fixture coverage, p2/p3 verified-class depth contracts, and runtime
 productization contracts are complete for the current 21 roadmap organisms.
-The first deterministic template-class planner/evaluator slice and initial
-multi-operation organism harnesses are also present. The remaining limits are
-explicitly documented as future runtime implementation depth, not untracked
-blockers in the requested advisory-to-productization coverage layer.
+The first deterministic template-class planner/evaluator slice now has
+multi-operation organism harness coverage for all five productization classes.
+The remaining limits are explicitly documented as future runtime implementation
+depth, especially for broad 21-organism harness coverage and true
+organism-level verifiers, not untracked blockers in the requested
+advisory-to-productization coverage layer.

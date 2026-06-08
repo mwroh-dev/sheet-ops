@@ -2,6 +2,7 @@ package workbookcase
 
 import (
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -417,4 +418,327 @@ func TestRunOrganismPlanExecutesGradebookSequenceWithVerifiedClassNonClaims(t *t
 	if got, err := outputHandle.GetCellFormula("Grades", "E4"); err != nil || got != "=C4" {
 		t.Fatalf("Grades!E4 formula=%q err=%v want =C4", got, err)
 	}
+}
+
+func TestRunOrganismPlanExecutesBudgetSequence(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "budget.xlsx")
+	outputFile := filepath.Join(tempDir, "budget-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Budget"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Budget", "A1", &[]any{"category", "actual", "budget", "variance", "review_total", "closing"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	for idx, row := range [][]any{{"Travel", 120, 100, 20}, {"Meals", 80, 90, -10}} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("Budget", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow budget %d: %v", idx, err)
+		}
+		rowNum := idx + 2
+		if err := file.SetCellFormula("Budget", "E"+cellRow(rowNum), "=B"+cellRow(rowNum)+"+C"+cellRow(rowNum)); err != nil {
+			t.Fatalf("SetCellFormula review_total row %d: %v", rowNum, err)
+		}
+		if err := file.SetCellFormula("Budget", "F"+cellRow(rowNum), "=B"+cellRow(rowNum)+"-C"+cellRow(rowNum)); err != nil {
+			t.Fatalf("SetCellFormula closing row %d: %v", rowNum, err)
+		}
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	result, err := RunOrganismPlan(OrganismRunRequest{
+		ScenarioID:  "budget-organism-run",
+		RequestText: "Summarize monthly budget actuals, flag variance, copy period, roll forward closing, and protect formulas",
+		InputFile:   inputFile,
+		OutputFile:  outputFile,
+		Steps: []OrganismStep{
+			{
+				AtomID: "group_summarize",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildGroupSummarizeTask(runtimetaskspec.UseRequest{
+						RequestText: "월 예산 실제 지출을 카테고리별로 요약한다.",
+						InputFile:   input,
+						SourceSheet: "Budget",
+						OutputFile:  output,
+						TargetSheet: "BudgetSummary",
+						SummaryMode: "values",
+						GroupBy:     []string{"category"},
+						Metrics:     []runtimetaskspec.MetricSpec{{Column: "actual", Op: "sum", As: "actual_total"}},
+					}).TaskSpec
+				},
+			},
+			{
+				AtomID: "highlight_threshold",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					threshold := 0.0
+					return runtimetaskspec.BuildHighlightThresholdTask(runtimetaskspec.HighlightThresholdRequest{
+						RequestText:    "예산 초과 variance 행을 표시한다.",
+						InputFile:      input,
+						SourceSheet:    "Budget",
+						OutputFile:     output,
+						Column:         "variance",
+						Operator:       ">",
+						Threshold:      &threshold,
+						HighlightColor: "#FFF59D",
+					}).TaskSpec
+				},
+			},
+			{
+				AtomID: "copy_period_sheet",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildCopyPeriodSheetTask(runtimetaskspec.CopyPeriodSheetRequest{
+						RequestText: "Budget 시트를 NextBudget 기간으로 복사한다.",
+						InputFile:   input,
+						SourceSheet: "Budget",
+						TargetSheet: "NextBudget",
+						OutputFile:  output,
+					}).TaskSpec
+				},
+			},
+			{
+				AtomID: "roll_forward_period",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildRollForwardPeriodTask(runtimetaskspec.RollForwardPeriodRequest{
+						RequestText: "Budget closing 값을 NextBudget opening input으로 이월한다.",
+						InputFile:   input,
+						SourceSheet: "Budget",
+						TargetSheet: "NextBudget",
+						OutputFile:  output,
+						CarryForwardMappings: []runtimetaskspec.CarryForwardMapping{
+							{FromSheet: "Budget", FromCell: "F2", ToSheet: "NextBudget", ToCell: "B3"},
+						},
+					}).TaskSpec
+				},
+			},
+			{
+				AtomID: "protect_formula_cells",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildProtectFormulaCellsTask(runtimetaskspec.ProtectFormulaCellsRequest{
+						RequestText: "NextBudget 계산 cells를 보호하고 budget 입력은 열어둔다.",
+						InputFile:   input,
+						SourceSheet: "NextBudget",
+						OutputFile:  output,
+						ProtectionRule: runtimetaskspec.FormulaProtectionRule{
+							FormulaRanges: []string{"E2:F3"},
+							InputRanges:   []string{"B2:D10"},
+						},
+					}).TaskSpec
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("RunOrganismPlan: %v", err)
+	}
+	if !result.TemplateClassEvaluation.Pass {
+		t.Fatalf("template class evaluation failed: %+v", result.TemplateClassEvaluation)
+	}
+	if result.TemplateClassEvaluation.RuntimeClaim != "template_class_plan_verified_with_non_claims" {
+		t.Fatalf("runtime claim=%q want template_class_plan_verified_with_non_claims", result.TemplateClassEvaluation.RuntimeClaim)
+	}
+	if len(result.StepResults) != 5 {
+		t.Fatalf("step results=%d want 5", len(result.StepResults))
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	if got, err := outputHandle.GetCellValue("BudgetSummary", "B2"); err != nil || got != "120" {
+		t.Fatalf("BudgetSummary!B2=%q err=%v want 120", got, err)
+	}
+	if got, err := outputHandle.GetCellValue("NextBudget", "B3"); err != nil || got != "20" {
+		t.Fatalf("NextBudget!B3=%q err=%v want 20", got, err)
+	}
+	if got, err := outputHandle.GetCellFormula("NextBudget", "E2"); err != nil || got != "=B2+C2" {
+		t.Fatalf("NextBudget!E2 formula=%q err=%v want =B2+C2", got, err)
+	}
+}
+
+func TestRunOrganismPlanExecutesInventorySequence(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "inventory.xlsx")
+	outputFile := filepath.Join(tempDir, "inventory-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Movements"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Movements", "A1", &[]any{"SKU ID", "Qty In", "Qty Out", "Balance"}); err != nil {
+		t.Fatalf("SetSheetRow movements header: %v", err)
+	}
+	for idx, row := range [][]any{{"A001", 10, 0}, {"B002", 3, 1}} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("Movements", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow movement %d: %v", idx, err)
+		}
+		rowNum := idx + 2
+		if err := file.SetCellFormula("Movements", "D"+cellRow(rowNum), "=B"+cellRow(rowNum)+"-C"+cellRow(rowNum)); err != nil {
+			t.Fatalf("SetCellFormula balance row %d: %v", rowNum, err)
+		}
+	}
+	if _, err := file.NewSheet("SKU"); err != nil {
+		t.Fatalf("NewSheet SKU: %v", err)
+	}
+	if err := file.SetSheetRow("SKU", "A1", &[]any{"sku", "location"}); err != nil {
+		t.Fatalf("SetSheetRow SKU header: %v", err)
+	}
+	for idx, row := range [][]any{{"A001", "Aisle 1"}, {"B002", "Aisle 2"}, {"C003", "Aisle 3"}} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("SKU", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow SKU %d: %v", idx, err)
+		}
+	}
+	if _, err := file.NewSheet("StockMaster"); err != nil {
+		t.Fatalf("NewSheet StockMaster: %v", err)
+	}
+	if err := file.SetSheetRow("StockMaster", "A1", &[]any{"sku", "on_hand"}); err != nil {
+		t.Fatalf("SetSheetRow stock header: %v", err)
+	}
+	for idx, row := range [][]any{{"A001", 10}, {"B002", 2}, {"C003", 2}} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("StockMaster", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow stock %d: %v", idx, err)
+		}
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	result, err := RunOrganismPlan(OrganismRunRequest{
+		ScenarioID:  "inventory-organism-run",
+		RequestText: "Normalize inventory movement headers, append SKU movement, lookup SKU metadata, protect balance formulas, and reconcile stock master",
+		InputFile:   inputFile,
+		OutputFile:  outputFile,
+		Steps: []OrganismStep{
+			{
+				AtomID: "normalize_headers",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildNormalizeHeadersTask(runtimetaskspec.NormalizeHeadersRequest{
+						RequestText: "inventory movement log 헤더를 표준 필드명으로 정규화한다.",
+						InputFile:   input,
+						SourceSheet: "Movements",
+						OutputFile:  output,
+						HeaderRow:   1,
+						HeaderMappings: []runtimetaskspec.HeaderMapping{
+							{From: "SKU ID", To: "sku"},
+							{From: "Qty In", To: "quantity_in"},
+							{From: "Qty Out", To: "quantity_out"},
+							{From: "Balance", To: "balance"},
+						},
+					}).TaskSpec
+				},
+			},
+			{
+				AtomID: "append_structured_rows",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildAppendStructuredRowsTask(runtimetaskspec.AppendStructuredRowsRequest{
+						RequestText:          "inventory movement log에 새 SKU movement를 추가한다.",
+						InputFile:            input,
+						SourceSheet:          "Movements",
+						OutputFile:           output,
+						IncludeSourceColumns: []string{"sku", "quantity_in", "quantity_out", "balance"},
+						Values: []runtimetaskspec.CellValue{
+							{Cell: "sku", Value: "C003"},
+							{Cell: "quantity_in", Value: 2},
+							{Cell: "quantity_out", Value: 0},
+							{Cell: "balance", Value: 2},
+						},
+					}).TaskSpec
+				},
+			},
+			{
+				AtomID: "join_lookup",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildJoinLookupTask(runtimetaskspec.JoinLookupRequest{
+						RequestText:          "inventory movement log에 SKU location을 보강한다.",
+						InputFile:            input,
+						SourceSheet:          "Movements",
+						LookupSheet:          "SKU",
+						TargetSheet:          "MovementsEnriched",
+						OutputFile:           output,
+						JoinKey:              "sku",
+						IncludeSourceColumns: []string{"sku", "quantity_in", "quantity_out", "balance"},
+						AppendLookupColumns:  []string{"location"},
+					}).TaskSpec
+				},
+			},
+			{
+				AtomID: "protect_formula_cells",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildProtectFormulaCellsTask(runtimetaskspec.ProtectFormulaCellsRequest{
+						RequestText: "inventory movement balance formula cells를 보호한다.",
+						InputFile:   input,
+						SourceSheet: "Movements",
+						OutputFile:  output,
+						ProtectionRule: runtimetaskspec.FormulaProtectionRule{
+							FormulaRanges: []string{"D2:D3"},
+							InputRanges:   []string{"A2:C20"},
+						},
+					}).TaskSpec
+				},
+			},
+			{
+				AtomID: "reconcile_tables",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildReconcileTablesTask(runtimetaskspec.ReconcileTablesRequest{
+						RequestText: "inventory movement balance를 stock master on_hand와 대조한다.",
+						InputFile:   input,
+						SourceSheet: "MovementsEnriched",
+						LookupSheet: "StockMaster",
+						TargetSheet: "InventoryReconciliation",
+						OutputFile:  output,
+						LeftKey:     "sku",
+						RightKey:    "sku",
+						CompareMappings: []runtimetaskspec.CompareMapping{
+							{LeftColumn: "balance", RightColumn: "on_hand", As: "balance"},
+						},
+					}).TaskSpec
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("RunOrganismPlan: %v", err)
+	}
+	if !result.TemplateClassEvaluation.Pass {
+		t.Fatalf("template class evaluation failed: %+v", result.TemplateClassEvaluation)
+	}
+	if result.TemplateClassEvaluation.RuntimeClaim != "template_class_plan_verified_with_non_claims" {
+		t.Fatalf("runtime claim=%q want template_class_plan_verified_with_non_claims", result.TemplateClassEvaluation.RuntimeClaim)
+	}
+	if len(result.StepResults) != 5 {
+		t.Fatalf("step results=%d want 5", len(result.StepResults))
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	if got, err := outputHandle.GetCellValue("Movements", "A1"); err != nil || got != "sku" {
+		t.Fatalf("Movements!A1=%q err=%v want sku", got, err)
+	}
+	if got, err := outputHandle.GetCellValue("MovementsEnriched", "E4"); err != nil || got != "Aisle 3" {
+		t.Fatalf("MovementsEnriched!E4=%q err=%v want Aisle 3", got, err)
+	}
+	if got, err := outputHandle.GetCellValue("InventoryReconciliation", "B4"); err != nil || got != "C003" {
+		t.Fatalf("InventoryReconciliation!B4=%q err=%v want C003", got, err)
+	}
+}
+
+func cellRow(row int) string {
+	return strconv.Itoa(row)
 }
