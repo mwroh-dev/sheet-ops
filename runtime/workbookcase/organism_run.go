@@ -170,6 +170,8 @@ func verifyOrganismWorkbookSemantics(organismID, outputFile string) []string {
 		return verifyCashFlowWorkbook(outputFile)
 	case "attendance_register":
 		return verifyAttendanceWorkbook(outputFile)
+	case "timesheet_hours_log":
+		return verifyTimesheetWorkbook(outputFile)
 	default:
 		return nil
 	}
@@ -332,6 +334,37 @@ func verifyAttendanceWorkbook(outputFile string) []string {
 		reasons = append(reasons, fmt.Sprintf("attendance protection semantic check missing NextAttendance protection: %v", err))
 	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
 		reasons = append(reasons, "attendance protection semantic check missing NextAttendance protection options")
+	}
+	return reasons
+}
+
+func verifyTimesheetWorkbook(outputFile string) []string {
+	handle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		return []string{fmt.Sprintf("timesheet workbook semantic check failed to open output: %v", err)}
+	}
+	defer func() { _ = handle.Close() }()
+
+	var reasons []string
+	if got, err := handle.GetCellValue("Week2", "B3"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("timesheet append semantic check missing Week2!B3: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "timesheet append semantic check missing Week2!B3 employee value")
+	}
+	if got, err := handle.GetCellFormula("Week2", "F3"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("timesheet pay formula semantic check missing Week2!F3 formula: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "timesheet pay formula semantic check missing Week2!F3 formula")
+	}
+	if validations, err := handle.GetDataValidations("Week2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("timesheet validation semantic check missing Week2 data validation: %v", err))
+	} else if len(validations) == 0 {
+		reasons = append(reasons, "timesheet validation semantic check missing Week2 data validation")
+	}
+	if protection, err := handle.GetSheetProtection("Week2"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("timesheet protection semantic check missing Week2 protection: %v", err))
+	} else if !protection.SelectLockedCells || !protection.SelectUnlockedCells {
+		reasons = append(reasons, "timesheet protection semantic check missing Week2 protection options")
 	}
 	return reasons
 }
