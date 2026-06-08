@@ -60,6 +60,20 @@ func TestPlanForRequestClassifiesCashFlowMonitorContinuity(t *testing.T) {
 	}
 }
 
+func TestPlanForRequestClassifiesTimesheetHoursLog(t *testing.T) {
+	plan, ok := PlanForRequest("Copy weekly timesheet, append employee hours, validate work code, extend pay formulas, and protect totals")
+	if !ok {
+		t.Fatal("PlanForRequest returned ok=false")
+	}
+	if plan.OrganismID != "timesheet_hours_log" {
+		t.Fatalf("organism=%q want timesheet_hours_log", plan.OrganismID)
+	}
+	wantOps := []string{"copy_period_sheet", "append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells"}
+	if !sameStrings(plan.OperationSequence, wantOps) {
+		t.Fatalf("operation sequence=%v want %v", plan.OperationSequence, wantOps)
+	}
+}
+
 func TestPlanForRequestRejectsFinancialAdviceClaim(t *testing.T) {
 	plan, ok := PlanForRequest("Give financial advice and certify the amortization correctness of this loan repayment schedule")
 	if !ok {

@@ -61,11 +61,14 @@
     },
     {
       "organism_id": "timesheet_hours_log",
-      "draft_status": "explicit_request_only",
-      "runtime_entrypoint": "",
-      "evidence_tests": [],
-      "current_limit": "No workbook-facts draft planner for timesheet row append, formula extension, and protected hour totals.",
-      "next_gate": "Add a timesheet fixture with employee/date/hour rows, formula propagation, and protected summaries."
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsTimesheetHoursLogStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerTimesheetDraft"
+      ],
+      "current_limit": "Weekly row-based timesheet facts only; does not calculate payroll taxes or certify billable hours.",
+      "next_gate": "Add timesheet fixtures with breaks, overtime, alternate work-code columns, and protected weekly totals."
     },
     {
       "organism_id": "project_timeline_tracker",

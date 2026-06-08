@@ -74,6 +74,8 @@ func DraftOrganismExecutionRequest(input OrganismDraftInput) (OrganismExecutionR
 		return draftMonthlyBudgetControl(input)
 	case "cash_flow_monitor":
 		return draftCashFlowMonitor(input)
+	case "timesheet_hours_log":
+		return draftTimesheetHoursLog(input)
 	case "inventory_movement_log":
 		return draftInventoryMovementLog(input)
 	case "student_gradebook":
@@ -83,6 +85,82 @@ func DraftOrganismExecutionRequest(input OrganismDraftInput) (OrganismExecutionR
 	default:
 		return OrganismExecutionRequestDraft{}, false
 	}
+}
+
+func draftTimesheetHoursLog(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
+	sheet, ok := findTimesheetHoursSheet(input.WorkbookFacts)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumns := formulaColumnsForSheet(sheet)
+	if len(formulaColumns) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumnLetters := make([]string, 0, len(formulaColumns))
+	for _, column := range formulaColumns {
+		if letter, ok := columnLetterForHeader(sheet.Columns, column); ok {
+			formulaColumnLetters = append(formulaColumnLetters, letter)
+		}
+	}
+	if len(formulaColumnLetters) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	sourceRow, targetRow, ok := formulaRows(sheet)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	nextSheet := "Week2"
+	inputColumns, _ := splitInputAndFormulaColumns(sheet)
+
+	return OrganismExecutionRequestDraft{
+		ScenarioID:  input.ScenarioID,
+		RequestText: input.RequestText,
+		InputFile:   input.InputFile,
+		OutputFile:  input.OutputFile,
+		Steps: []OrganismExecutionStepDraft{
+			{
+				AtomID:          "copy_period_sheet",
+				CompositionKind: "period_copy",
+				SourceSheet:     sheet.Name,
+				TargetSheet:     nextSheet,
+			},
+			{
+				AtomID:               "append_structured_rows",
+				CompositionKind:      "structured_row_append",
+				SourceSheet:          nextSheet,
+				IncludeSourceColumns: append([]string(nil), inputColumns...),
+				Values:               defaultTimesheetValues(inputColumns),
+			},
+			{
+				AtomID:           "extend_table_formulas",
+				CompositionKind:  "formula_extension",
+				SourceSheet:      nextSheet,
+				FormulaSourceRow: sourceRow,
+				TargetRows:       []int{targetRow},
+				FormulaColumns:   formulaColumnLetters,
+			},
+			{
+				AtomID:          "add_data_validation",
+				CompositionKind: "data_validation",
+				SourceSheet:     nextSheet,
+				ValidationRule: &DataValidationRule{
+					Ranges:        []string{"C2:C20"},
+					RuleType:      "list",
+					AllowedValues: []string{"DEV", "OPS", "ADMIN"},
+					AllowBlank:    false,
+				},
+			},
+			{
+				AtomID:          "protect_formula_cells",
+				CompositionKind: "formula_protection",
+				SourceSheet:     nextSheet,
+				ProtectionRule: &FormulaProtectionRule{
+					FormulaRanges: []string{formulaRange(formulaColumnLetters, sourceRow, targetRow)},
+					InputRanges:   []string{"A2:E20"},
+				},
+			},
+		},
+	}, true
 }
 
 func draftCashFlowMonitor(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
@@ -592,6 +670,16 @@ func findCashFlowSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect.Sheet
 	return runtimeinspect.SheetFacts{}, false
 }
 
+func findTimesheetHoursSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect.SheetFacts, bool) {
+	for _, sheet := range facts.Sheets {
+		headers := lowerSet(sheet.Columns)
+		if headers["date"] && headers["employee"] && headers["work_code"] && headers["hours"] && headers["rate"] && headers["pay"] {
+			return sheet, true
+		}
+	}
+	return runtimeinspect.SheetFacts{}, false
+}
+
 func findInventoryMovementSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect.SheetFacts, bool) {
 	for _, sheet := range facts.Sheets {
 		headers := lowerSet(sheet.Columns)
@@ -728,6 +816,25 @@ func defaultInvoiceValues(columns []string) []CellValue {
 			values = append(values, CellValue{Cell: column, Value: 3})
 		case "unit_price":
 			values = append(values, CellValue{Cell: column, Value: 15})
+		}
+	}
+	return values
+}
+
+func defaultTimesheetValues(columns []string) []CellValue {
+	values := make([]CellValue, 0, len(columns))
+	for _, column := range columns {
+		switch strings.ToLower(column) {
+		case "date":
+			values = append(values, CellValue{Cell: column, Value: "2026-06-08"})
+		case "employee":
+			values = append(values, CellValue{Cell: column, Value: "Ben"})
+		case "work_code":
+			values = append(values, CellValue{Cell: column, Value: "DEV"})
+		case "hours":
+			values = append(values, CellValue{Cell: column, Value: 6})
+		case "rate":
+			values = append(values, CellValue{Cell: column, Value: 25})
 		}
 	}
 	return values

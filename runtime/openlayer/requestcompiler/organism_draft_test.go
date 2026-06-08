@@ -240,6 +240,74 @@ func TestDraftOrganismExecutionRequestBuildsCashFlowMonitorStepsFromWorkbookFact
 	}
 }
 
+func TestDraftOrganismExecutionRequestBuildsTimesheetHoursLogStepsFromWorkbookFacts(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "timesheet.xlsx")
+	outputFile := filepath.Join(tempDir, "timesheet-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Week1"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Week1", "A1", &[]any{"date", "employee", "work_code", "hours", "rate", "pay"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Week1", "A2", &[]any{"2026-06-01", "Ada", "DEV", 8, 25}); err != nil {
+		t.Fatalf("SetSheetRow row: %v", err)
+	}
+	if err := file.SetCellFormula("Week1", "F2", "=D2*E2"); err != nil {
+		t.Fatalf("SetCellFormula(F2): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	facts, err := runtimeinspect.InspectWorkbookFacts(inputFile)
+	if err != nil {
+		t.Fatalf("InspectWorkbookFacts: %v", err)
+	}
+	requestText := "Copy weekly timesheet, append employee hours, validate work code, extend pay formulas, and protect totals"
+	plan := TemplateClassPlanHintForRequest(requestText)
+	if plan == nil {
+		t.Fatal("missing plan")
+	}
+
+	req, ok := DraftOrganismExecutionRequest(OrganismDraftInput{
+		ScenarioID:        "timesheet-organism-draft",
+		RequestText:       requestText,
+		InputFile:         inputFile,
+		OutputFile:        outputFile,
+		WorkbookFacts:     facts,
+		TemplateClassPlan: *plan,
+	})
+	if !ok {
+		t.Fatal("DraftOrganismExecutionRequest ok=false")
+	}
+	if len(req.Steps) != 5 {
+		t.Fatalf("steps=%d want 5", len(req.Steps))
+	}
+	if req.Steps[0].AtomID != "copy_period_sheet" || req.Steps[0].TargetSheet != "Week2" {
+		t.Fatalf("copy step=%+v", req.Steps[0])
+	}
+	if req.Steps[1].AtomID != "append_structured_rows" || req.Steps[1].SourceSheet != "Week2" || len(req.Steps[1].Values) != 5 {
+		t.Fatalf("append step=%+v", req.Steps[1])
+	}
+	if req.Steps[2].AtomID != "extend_table_formulas" || req.Steps[2].FormulaSourceRow != 2 || req.Steps[2].TargetRows[0] != 3 {
+		t.Fatalf("formula step=%+v", req.Steps[2])
+	}
+	if req.Steps[3].AtomID != "add_data_validation" || req.Steps[3].ValidationRule == nil || req.Steps[3].ValidationRule.Ranges[0] != "C2:C20" {
+		t.Fatalf("validation step=%+v", req.Steps[3])
+	}
+	if req.Steps[4].AtomID != "protect_formula_cells" || req.Steps[4].ProtectionRule == nil || req.Steps[4].ProtectionRule.FormulaRanges[0] != "F2:F3" {
+		t.Fatalf("protection step=%+v", req.Steps[4])
+	}
+	if err := runtimeschema.ValidateStruct(organismExecutionRequestSchemaPathForTest(), req); err != nil {
+		t.Fatalf("draft organism request schema validation: %v", err)
+	}
+}
+
 func TestDraftOrganismExecutionRequestBuildsInventoryMovementStepsFromWorkbookFacts(t *testing.T) {
 	tempDir := t.TempDir()
 	inputFile := filepath.Join(tempDir, "inventory.xlsx")

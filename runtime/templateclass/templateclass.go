@@ -41,6 +41,12 @@ var plans = []Plan{
 		NonClaims:             []string{"does not create financial advice", "does not infer cash-flow policy", "does not create native pivot tables"},
 	},
 	{
+		OrganismID:            "timesheet_hours_log",
+		OperationSequence:     []string{"copy_period_sheet", "append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells"},
+		RequiredVerifierSpecs: []string{"timesheet_hours_log_verifier"},
+		NonClaims:             []string{"does not calculate payroll taxes", "does not infer labor policy", "does not certify billable hours"},
+	},
+	{
 		OrganismID:            "inventory_movement_log",
 		OperationSequence:     []string{"normalize_headers", "append_structured_rows", "join_lookup", "protect_formula_cells", "reconcile_tables"},
 		RequiredVerifierSpecs: []string{"inventory_movement_log_verifier"},
@@ -69,6 +75,8 @@ func PlanForRequest(requestText string) (Plan, bool) {
 		return planForOrganism("monthly_budget_control")
 	case containsAny(normalized, "cash flow", "cash-flow", "opening balance", "closing balance"):
 		return planForOrganism("cash_flow_monitor")
+	case containsAny(normalized, "timesheet", "time sheet", "employee hours", "billable hours"):
+		return planForOrganism("timesheet_hours_log")
 	case containsAny(normalized, "inventory", "stock", "sku"):
 		return planForOrganism("inventory_movement_log")
 	case containsAny(normalized, "gradebook", "student score", "student scores"):

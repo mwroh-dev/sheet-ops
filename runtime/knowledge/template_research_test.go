@@ -533,6 +533,7 @@ func TestTemplateResearchDraftPlannerCoverageStaysExplicit(t *testing.T) {
 		"invoice_line_item_billing": true,
 		"monthly_budget_control":    true,
 		"cash_flow_monitor":         true,
+		"timesheet_hours_log":       true,
 		"inventory_movement_log":    true,
 		"student_gradebook":         true,
 		"loan_repayment_calculator": true,
