@@ -413,3 +413,41 @@ The executable coverage ladder now marks p0 and p1 roadmap organisms as
 - Advisory claim risk: p1 preview evidence should not be read as broad domain
   automation. It proves that a narrow supported-atom composition executes for
   the organism family.
+
+## Phase 15 Result
+
+Broadened p2 organism preview coverage without promoting
+`create_pivot_summary` into the supported capability registry. The phase uses
+the opportunity record's own first-step guidance: deterministic summary-sheet
+verification before native Excel pivot artifacts.
+
+The following p2 roadmap organisms now have representative workbookcase preview
+fixtures:
+
+- `student_gradebook`: score summary and status validation
+- `training_completion_matrix`: completion summary and printable report
+- `service_ticket_queue`: ticket append and SLA threshold flag
+- `sales_pipeline_tracker`: stage summary and risk threshold flag
+- `maintenance_issue_log`: issue append and overdue threshold flag
+- `compliance_action_register`: status summary and printable report
+- `safety_compliance_register`: risk threshold flag and printable report
+
+The executable coverage ladder now marks p0, p1, and p2 roadmap organisms as
+`preview_fixture`. `create_pivot_summary` remains an opportunity, not a
+supported atom.
+
+## Phase 15 Self-Retro
+
+- Coverage improved: p2 no longer depends on a planned pivot atom before any
+  executable preview can run. Deterministic summary previews cover the first
+  useful runtime layer.
+- Remaining template needs: native pivot tables, matrix auto-growth,
+  score/completion dashboard semantics, and organism-level acceptance criteria
+  remain outside supported scope.
+- Verifier strength: `group_summarize`, `highlight_threshold`,
+  `append_structured_rows`, `add_data_validation`, and
+  `generate_printable_form` verifiers provide the evidence. There is still no
+  native pivot verifier.
+- Advisory claim risk: this phase intentionally avoids pretending that
+  deterministic summary sheets are full Excel pivot tables. Any future native
+  pivot support needs a separate capability, verifier, and fixture path.

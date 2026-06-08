@@ -27,6 +27,16 @@ var p1OrganismPreviewCoverage = map[string]string{
 	"warehouse_reorder_tracker":  "lookup + threshold highlight",
 }
 
+var p2OrganismPreviewCoverage = map[string]string{
+	"student_gradebook":          "score summary + validation",
+	"training_completion_matrix": "completion summary + printable form",
+	"service_ticket_queue":       "append + sla threshold",
+	"sales_pipeline_tracker":     "stage summary + threshold highlight",
+	"maintenance_issue_log":      "append + overdue threshold",
+	"compliance_action_register": "status summary + printable form",
+	"safety_compliance_register": "score threshold + printable form",
+}
+
 func TestP0OrganismPreviewCoverageIncludesEveryP0Organism(t *testing.T) {
 	want := []string{
 		"invoice_line_item_billing",
@@ -63,6 +73,26 @@ func TestP1OrganismPreviewCoverageIncludesEveryP1Organism(t *testing.T) {
 	}
 	if len(p1OrganismPreviewCoverage) != len(want) {
 		t.Fatalf("p1 organism preview coverage count=%d want %d", len(p1OrganismPreviewCoverage), len(want))
+	}
+}
+
+func TestP2OrganismPreviewCoverageIncludesEveryP2Organism(t *testing.T) {
+	want := []string{
+		"student_gradebook",
+		"training_completion_matrix",
+		"service_ticket_queue",
+		"sales_pipeline_tracker",
+		"maintenance_issue_log",
+		"compliance_action_register",
+		"safety_compliance_register",
+	}
+	for _, organism := range want {
+		if p2OrganismPreviewCoverage[organism] == "" {
+			t.Fatalf("missing p2 organism preview coverage for %s", organism)
+		}
+	}
+	if len(p2OrganismPreviewCoverage) != len(want) {
+		t.Fatalf("p2 organism preview coverage count=%d want %d", len(p2OrganismPreviewCoverage), len(want))
 	}
 }
 
@@ -906,6 +936,413 @@ func TestWarehouseReorderTrackerPreviewComposesLookupAndThreshold(t *testing.T) 
 	if len(result.Verification.HighlightedRows) != 1 || result.Verification.HighlightedRows[0] != 2 {
 		t.Fatalf("highlighted rows=%v want [2]", result.Verification.HighlightedRows)
 	}
+}
+
+func TestStudentGradebookPreviewComposesScoreSummaryAndValidation(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "gradebook.xlsx")
+	summaryOutput := filepath.Join(tempDir, "gradebook-summary.xlsx")
+	finalOutput := filepath.Join(tempDir, "gradebook-validated.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Grades"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Grades", "A1", &[]any{"student", "assignment", "score", "status"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	for idx, row := range [][]any{{"Ada", "Quiz 1", 90, "complete"}, {"Ada", "Quiz 2", 80, "complete"}, {"Ben", "Quiz 1", 70, "missing"}} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("Grades", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow grade %d: %v", idx, err)
+		}
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	summaryTask := runtimetaskspec.BuildGroupSummarizeTask(runtimetaskspec.UseRequest{
+		RequestText: "student gradebook 점수를 학생별로 요약한다.",
+		InputFile:   inputFile,
+		SourceSheet: "Grades",
+		OutputFile:  summaryOutput,
+		TargetSheet: "GradeSummary",
+		SummaryMode: "values",
+		GroupBy:     []string{"student"},
+		Metrics:     []runtimetaskspec.MetricSpec{{Column: "score", Op: "sum", As: "score_total"}},
+	})
+	runPreviewTask(t, "gradebook-preview-summary", summaryTask.TaskSpec)
+
+	validationTask := runtimetaskspec.BuildAddDataValidationTask(runtimetaskspec.AddDataValidationRequest{
+		RequestText: "grade status를 허용된 상태로 제한한다.",
+		InputFile:   summaryOutput,
+		SourceSheet: "Grades",
+		OutputFile:  finalOutput,
+		ValidationRule: runtimetaskspec.DataValidationRule{
+			Ranges:        []string{"D2:D20"},
+			RuleType:      "list",
+			AllowedValues: []string{"complete", "missing", "excused"},
+			AllowBlank:    false,
+		},
+	})
+	runPreviewTask(t, "gradebook-preview-validation", validationTask.TaskSpec)
+
+	outputHandle, err := excelize.OpenFile(finalOutput)
+	if err != nil {
+		t.Fatalf("Open final output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	if got, err := outputHandle.GetCellValue("GradeSummary", "B2"); err != nil || got != "170" {
+		t.Fatalf("GradeSummary!B2=%q err=%v want 170", got, err)
+	}
+}
+
+func TestTrainingCompletionMatrixPreviewComposesCompletionSummaryAndPrintableForm(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "training.xlsx")
+	summaryOutput := filepath.Join(tempDir, "training-summary.xlsx")
+	printableOutput := filepath.Join(tempDir, "training-printable.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Training"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Training", "A1", &[]any{"employee", "course", "completed"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	for idx, row := range [][]any{{"Alex", "Safety", 1}, {"Alex", "Privacy", 1}, {"Blair", "Safety", 0}} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("Training", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow training %d: %v", idx, err)
+		}
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	summaryTask := runtimetaskspec.BuildGroupSummarizeTask(runtimetaskspec.UseRequest{
+		RequestText: "training completion을 employee별로 요약한다.",
+		InputFile:   inputFile,
+		SourceSheet: "Training",
+		OutputFile:  summaryOutput,
+		TargetSheet: "TrainingSummary",
+		SummaryMode: "values",
+		GroupBy:     []string{"employee"},
+		Metrics:     []runtimetaskspec.MetricSpec{{Column: "completed", Op: "sum", As: "completed_total"}},
+	})
+	runPreviewTask(t, "training-preview-summary", summaryTask.TaskSpec)
+
+	printableTask := runtimetaskspec.BuildGeneratePrintableFormTask(runtimetaskspec.GeneratePrintableFormRequest{
+		RequestText: "training completion summary를 printable report로 만든다.",
+		InputFile:   summaryOutput,
+		SourceSheet: "TrainingSummary",
+		TargetSheet: "TrainingReport",
+		OutputFile:  printableOutput,
+		FormTitle:   "Training Completion",
+		PrintArea:   "A1:B8",
+		FieldBindings: []runtimetaskspec.FormFieldBinding{
+			{Label: "First Employee", SourceSheet: "TrainingSummary", SourceCell: "A2", LabelCell: "A2", ValueCell: "B2"},
+		},
+		TableBinding: &runtimetaskspec.FormTableBinding{
+			SourceSheet:   "TrainingSummary",
+			SourceColumns: []string{"employee", "completed_total"},
+			HeaderStart:   "A4",
+			DataStart:     "A5",
+		},
+	})
+	runPreviewTask(t, "training-preview-printable-form", printableTask.TaskSpec)
+}
+
+func TestServiceTicketQueuePreviewComposesAppendAndSLAThreshold(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "tickets.xlsx")
+	appendOutput := filepath.Join(tempDir, "tickets-appended.xlsx")
+	finalOutput := filepath.Join(tempDir, "tickets-highlighted.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Tickets"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Tickets", "A1", &[]any{"ticket_id", "status", "days_open"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Tickets", "A2", &[]any{"T-1", "open", 2}); err != nil {
+		t.Fatalf("SetSheetRow row: %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	appendTask := runtimetaskspec.BuildAppendStructuredRowsTask(runtimetaskspec.AppendStructuredRowsRequest{
+		RequestText:          "service ticket queue에 새 ticket을 추가한다.",
+		InputFile:            inputFile,
+		SourceSheet:          "Tickets",
+		OutputFile:           appendOutput,
+		IncludeSourceColumns: []string{"ticket_id", "status", "days_open"},
+		Values: []runtimetaskspec.CellValue{
+			{Cell: "ticket_id", Value: "T-2"},
+			{Cell: "status", Value: "open"},
+			{Cell: "days_open", Value: 8},
+		},
+	})
+	runPreviewTask(t, "ticket-preview-append", appendTask.TaskSpec)
+
+	threshold := 5.0
+	highlightTask := runtimetaskspec.BuildHighlightThresholdTask(runtimetaskspec.HighlightThresholdRequest{
+		RequestText:    "SLA 초과 ticket을 표시한다.",
+		InputFile:      appendOutput,
+		SourceSheet:    "Tickets",
+		OutputFile:     finalOutput,
+		Column:         "days_open",
+		Operator:       ">",
+		Threshold:      &threshold,
+		HighlightColor: "#FFC7CE",
+	})
+	result := runPreviewTask(t, "ticket-preview-threshold", highlightTask.TaskSpec)
+	if len(result.Verification.HighlightedRows) != 1 || result.Verification.HighlightedRows[0] != 3 {
+		t.Fatalf("highlighted rows=%v want [3]", result.Verification.HighlightedRows)
+	}
+}
+
+func TestSalesPipelineTrackerPreviewComposesStageSummaryAndThreshold(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "pipeline.xlsx")
+	summaryOutput := filepath.Join(tempDir, "pipeline-summary.xlsx")
+	finalOutput := filepath.Join(tempDir, "pipeline-highlighted.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Pipeline"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Pipeline", "A1", &[]any{"deal", "stage", "amount", "risk_score"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	for idx, row := range [][]any{{"Deal A", "proposal", 1000, 0.2}, {"Deal B", "proposal", 500, 0.8}} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("Pipeline", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow pipeline %d: %v", idx, err)
+		}
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	summaryTask := runtimetaskspec.BuildGroupSummarizeTask(runtimetaskspec.UseRequest{
+		RequestText: "sales pipeline amount를 stage별로 요약한다.",
+		InputFile:   inputFile,
+		SourceSheet: "Pipeline",
+		OutputFile:  summaryOutput,
+		TargetSheet: "PipelineSummary",
+		SummaryMode: "values",
+		GroupBy:     []string{"stage"},
+		Metrics:     []runtimetaskspec.MetricSpec{{Column: "amount", Op: "sum", As: "amount_total"}},
+	})
+	runPreviewTask(t, "pipeline-preview-summary", summaryTask.TaskSpec)
+
+	threshold := 0.7
+	highlightTask := runtimetaskspec.BuildHighlightThresholdTask(runtimetaskspec.HighlightThresholdRequest{
+		RequestText:    "high-risk opportunity를 표시한다.",
+		InputFile:      summaryOutput,
+		SourceSheet:    "Pipeline",
+		OutputFile:     finalOutput,
+		Column:         "risk_score",
+		Operator:       ">",
+		Threshold:      &threshold,
+		HighlightColor: "#FFF59D",
+	})
+	result := runPreviewTask(t, "pipeline-preview-threshold", highlightTask.TaskSpec)
+	if len(result.Verification.HighlightedRows) != 1 || result.Verification.HighlightedRows[0] != 3 {
+		t.Fatalf("highlighted rows=%v want [3]", result.Verification.HighlightedRows)
+	}
+}
+
+func TestMaintenanceIssueLogPreviewComposesAppendAndOverdueThreshold(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "maintenance.xlsx")
+	appendOutput := filepath.Join(tempDir, "maintenance-appended.xlsx")
+	finalOutput := filepath.Join(tempDir, "maintenance-highlighted.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Issues"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Issues", "A1", &[]any{"issue_id", "status", "days_overdue"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Issues", "A2", &[]any{"M-1", "open", 0}); err != nil {
+		t.Fatalf("SetSheetRow row: %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	appendTask := runtimetaskspec.BuildAppendStructuredRowsTask(runtimetaskspec.AppendStructuredRowsRequest{
+		RequestText:          "maintenance issue log에 새 issue를 추가한다.",
+		InputFile:            inputFile,
+		SourceSheet:          "Issues",
+		OutputFile:           appendOutput,
+		IncludeSourceColumns: []string{"issue_id", "status", "days_overdue"},
+		Values: []runtimetaskspec.CellValue{
+			{Cell: "issue_id", Value: "M-2"},
+			{Cell: "status", Value: "open"},
+			{Cell: "days_overdue", Value: 3},
+		},
+	})
+	runPreviewTask(t, "maintenance-preview-append", appendTask.TaskSpec)
+
+	threshold := 0.0
+	highlightTask := runtimetaskspec.BuildHighlightThresholdTask(runtimetaskspec.HighlightThresholdRequest{
+		RequestText:    "overdue maintenance issue를 표시한다.",
+		InputFile:      appendOutput,
+		SourceSheet:    "Issues",
+		OutputFile:     finalOutput,
+		Column:         "days_overdue",
+		Operator:       ">",
+		Threshold:      &threshold,
+		HighlightColor: "#FFC7CE",
+	})
+	result := runPreviewTask(t, "maintenance-preview-threshold", highlightTask.TaskSpec)
+	if len(result.Verification.HighlightedRows) != 1 || result.Verification.HighlightedRows[0] != 3 {
+		t.Fatalf("highlighted rows=%v want [3]", result.Verification.HighlightedRows)
+	}
+}
+
+func TestComplianceActionRegisterPreviewComposesStatusSummaryAndPrintableForm(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "compliance.xlsx")
+	summaryOutput := filepath.Join(tempDir, "compliance-summary.xlsx")
+	printableOutput := filepath.Join(tempDir, "compliance-printable.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Actions"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Actions", "A1", &[]any{"action_id", "status", "count"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	for idx, row := range [][]any{{"A-1", "open", 1}, {"A-2", "closed", 1}} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("Actions", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow action %d: %v", idx, err)
+		}
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	summaryTask := runtimetaskspec.BuildGroupSummarizeTask(runtimetaskspec.UseRequest{
+		RequestText: "compliance action을 status별로 요약한다.",
+		InputFile:   inputFile,
+		SourceSheet: "Actions",
+		OutputFile:  summaryOutput,
+		TargetSheet: "ActionSummary",
+		SummaryMode: "values",
+		GroupBy:     []string{"status"},
+		Metrics:     []runtimetaskspec.MetricSpec{{Column: "count", Op: "sum", As: "action_count"}},
+	})
+	runPreviewTask(t, "compliance-preview-summary", summaryTask.TaskSpec)
+
+	printableTask := runtimetaskspec.BuildGeneratePrintableFormTask(runtimetaskspec.GeneratePrintableFormRequest{
+		RequestText: "compliance action summary를 printable review로 만든다.",
+		InputFile:   summaryOutput,
+		SourceSheet: "ActionSummary",
+		TargetSheet: "ComplianceReport",
+		OutputFile:  printableOutput,
+		FormTitle:   "Compliance Actions",
+		PrintArea:   "A1:B8",
+		FieldBindings: []runtimetaskspec.FormFieldBinding{
+			{Label: "First Status", SourceSheet: "ActionSummary", SourceCell: "A2", LabelCell: "A2", ValueCell: "B2"},
+		},
+		TableBinding: &runtimetaskspec.FormTableBinding{
+			SourceSheet:   "ActionSummary",
+			SourceColumns: []string{"status", "action_count"},
+			HeaderStart:   "A4",
+			DataStart:     "A5",
+		},
+	})
+	runPreviewTask(t, "compliance-preview-printable-form", printableTask.TaskSpec)
+}
+
+func TestSafetyComplianceRegisterPreviewComposesScoreThresholdAndPrintableForm(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "safety.xlsx")
+	highlightOutput := filepath.Join(tempDir, "safety-highlighted.xlsx")
+	printableOutput := filepath.Join(tempDir, "safety-printable.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Safety"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Safety", "A1", &[]any{"area", "risk_score", "status"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Safety", "A2", &[]any{"Warehouse", 85, "open"}); err != nil {
+		t.Fatalf("SetSheetRow row: %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	threshold := 80.0
+	highlightTask := runtimetaskspec.BuildHighlightThresholdTask(runtimetaskspec.HighlightThresholdRequest{
+		RequestText:    "high-risk safety item을 표시한다.",
+		InputFile:      inputFile,
+		SourceSheet:    "Safety",
+		OutputFile:     highlightOutput,
+		Column:         "risk_score",
+		Operator:       ">",
+		Threshold:      &threshold,
+		HighlightColor: "#FFC7CE",
+	})
+	runPreviewTask(t, "safety-preview-threshold", highlightTask.TaskSpec)
+
+	printableTask := runtimetaskspec.BuildGeneratePrintableFormTask(runtimetaskspec.GeneratePrintableFormRequest{
+		RequestText: "safety compliance register를 printable report로 만든다.",
+		InputFile:   highlightOutput,
+		SourceSheet: "Safety",
+		TargetSheet: "SafetyReport",
+		OutputFile:  printableOutput,
+		FormTitle:   "Safety Compliance",
+		PrintArea:   "A1:C8",
+		FieldBindings: []runtimetaskspec.FormFieldBinding{
+			{Label: "First Area", SourceSheet: "Safety", SourceCell: "A2", LabelCell: "A2", ValueCell: "B2"},
+		},
+		TableBinding: &runtimetaskspec.FormTableBinding{
+			SourceSheet:   "Safety",
+			SourceColumns: []string{"area", "risk_score", "status"},
+			HeaderStart:   "A4",
+			DataStart:     "A5",
+		},
+	})
+	runPreviewTask(t, "safety-preview-printable-form", printableTask.TaskSpec)
 }
 
 func TestInventoryMovementLogPreviewComposesHeaderNormalization(t *testing.T) {
