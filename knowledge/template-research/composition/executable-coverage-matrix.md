@@ -592,3 +592,27 @@ Added the first multi-operation organism runtime harness slice:
   separate organism-level report artifact.
 - Advisory claim risk: this is not a general template generator. It is a
   deterministic multi-step harness for an explicit supported atom sequence.
+
+## Phase 21 Result
+
+Expanded multi-operation organism harness coverage beyond invoice:
+
+- `loan_repayment_calculator`: formula extension followed by formula-cell
+  protection, with financial and amortization non-claims preserved
+- `student_gradebook`: deterministic score summary, status validation,
+  formula extension, and formula-cell protection in one organism sequence
+
+## Phase 21 Self-Retro
+
+- Coverage improved: a p2 verified-class organism and the p3 specialized
+  schedule organism now have actual multi-operation harness paths.
+- Remaining template needs: budget, inventory, and other organism families
+  still need equivalent multi-operation harnesses before broad organism runtime
+  coverage can be claimed.
+- Verifier strength: the harness now proves supported atom sequencing for
+  invoice, gradebook, and loan. It still depends on operation-specific
+  verifiers and templateclass evidence evaluation rather than a standalone
+  organism report verifier.
+- Advisory claim risk: gradebook support still excludes grading policy,
+  arbitrary matrix growth, and native pivots; loan support still excludes
+  financial advice and amortization correctness.
