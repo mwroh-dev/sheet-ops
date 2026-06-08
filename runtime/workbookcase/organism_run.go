@@ -162,6 +162,8 @@ func verifyOrganismWorkbookSemantics(organismID, outputFile string) []string {
 		return verifyInvoiceLineItemWorkbook(outputFile)
 	case "expense_reimbursement":
 		return verifyExpenseReimbursementWorkbook(outputFile)
+	case "purchase_order_control":
+		return verifyPurchaseOrderWorkbook(outputFile)
 	default:
 		return nil
 	}
@@ -215,6 +217,32 @@ func verifyExpenseReimbursementWorkbook(outputFile string) []string {
 		reasons = append(reasons, fmt.Sprintf("expense printable semantic check missing ExpenseClaim!A1: %v", err))
 	} else if strings.TrimSpace(got) == "" {
 		reasons = append(reasons, "expense printable semantic check missing ExpenseClaim!A1 title")
+	}
+	return reasons
+}
+
+func verifyPurchaseOrderWorkbook(outputFile string) []string {
+	handle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		return []string{fmt.Sprintf("purchase order workbook semantic check failed to open output: %v", err)}
+	}
+	defer func() { _ = handle.Close() }()
+
+	var reasons []string
+	if got, err := handle.GetCellValue("PurchaseOrder", "A3"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("purchase order semantic check failed reading PurchaseOrder!A3: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "purchase order semantic check missing appended PurchaseOrder!A3 value")
+	}
+	if got, err := handle.GetCellFormula("PurchaseOrder", "E3"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("purchase order semantic check failed reading PurchaseOrder!E3 formula: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "purchase order semantic check missing PurchaseOrder!E3 formula")
+	}
+	if got, err := handle.GetCellValue("PurchaseOrderPrint", "A1"); err != nil {
+		reasons = append(reasons, fmt.Sprintf("purchase order printable semantic check missing PurchaseOrderPrint!A1: %v", err))
+	} else if strings.TrimSpace(got) == "" {
+		reasons = append(reasons, "purchase order printable semantic check missing PurchaseOrderPrint!A1 title")
 	}
 	return reasons
 }
