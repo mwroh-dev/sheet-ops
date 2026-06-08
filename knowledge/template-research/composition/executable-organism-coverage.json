@@ -1,0 +1,257 @@
+{
+  "version": 1,
+  "generated_from_round": "round-009",
+  "authority": "advisory_coverage_only",
+  "summary": "Coverage ladder connecting roadmap organisms to runtime-supported atom sequences, preview fixture evidence, and remaining blockers. This artifact is advisory and does not promote organism names to public capabilities.",
+  "coverage_tiers": [
+    {
+      "tier": "preview_fixture",
+      "meaning": "At least one representative organism preview runs through workbookcase using supported atoms and operation-specific verifiers."
+    },
+    {
+      "tier": "supported_atom_plan",
+      "meaning": "The organism can be decomposed into currently supported atoms, but no organism preview fixture proves the composition yet."
+    },
+    {
+      "tier": "blocked_by_planned_atom",
+      "meaning": "The organism depends on at least one planned atom that is intentionally outside the supported runtime registry."
+    },
+    {
+      "tier": "advisory_only_gap",
+      "meaning": "The organism remains useful as a research hint, but its core workbook behavior lacks a supported atom sequence."
+    }
+  ],
+  "organisms": [
+    {
+      "organism_id": "invoice_line_item_billing",
+      "fixture_priority": "p0",
+      "coverage_tier": "preview_fixture",
+      "executable_sequence_atom_ids": ["append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells", "generate_printable_form"],
+      "planned_blocker_atom_ids": [],
+      "preview_evidence": ["TestInvoiceLineItemBillingPreviewComposesAppendFormulaExtensionValidationAndProtection"],
+      "coverage_claim": "Representative invoice row input, calculation, validation, formula protection, and printable form materialization are executable.",
+      "remaining_gaps": ["supplier/customer lookup enrichment is supported but not in this preview", "full document layout inference is not supported"],
+      "next_promotion_gate": "Add an organism-level verifier that checks metadata, line totals, printable region, and protected summary in one acceptance pass."
+    },
+    {
+      "organism_id": "expense_reimbursement",
+      "fixture_priority": "p1",
+      "coverage_tier": "supported_atom_plan",
+      "executable_sequence_atom_ids": ["append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells", "generate_printable_form"],
+      "planned_blocker_atom_ids": [],
+      "preview_evidence": [],
+      "coverage_claim": "The reimbursement document can be planned from supported row, formula, validation, protection, summary, and printable-form atoms.",
+      "remaining_gaps": ["no organism preview fixture", "policy eligibility checks are not supported as a separate gate"],
+      "next_promotion_gate": "Create a fixture that appends expense rows, extends reimbursable totals, validates categories, protects totals, and emits a printable claim."
+    },
+    {
+      "organism_id": "purchase_order_control",
+      "fixture_priority": "p1",
+      "coverage_tier": "supported_atom_plan",
+      "executable_sequence_atom_ids": ["join_lookup", "append_structured_rows", "extend_table_formulas", "add_data_validation", "generate_printable_form"],
+      "planned_blocker_atom_ids": [],
+      "preview_evidence": [],
+      "coverage_claim": "The PO workflow can be planned from supported supplier lookup, line rows, status validation, line totals, and printable-form atoms.",
+      "remaining_gaps": ["no organism preview fixture", "multi-document receipt/invoice matching belongs to procurement reconciliation"],
+      "next_promotion_gate": "Create a PO fixture that enriches supplier metadata, appends line items, validates status, and generates a printable PO sheet."
+    },
+    {
+      "organism_id": "monthly_budget_control",
+      "fixture_priority": "p0",
+      "coverage_tier": "preview_fixture",
+      "executable_sequence_atom_ids": ["group_summarize", "highlight_threshold"],
+      "planned_blocker_atom_ids": [],
+      "preview_evidence": ["TestMonthlyBudgetControlPreviewComposesSummaryAndThreshold"],
+      "coverage_claim": "Representative budget summary and over-budget threshold exception handling are executable.",
+      "remaining_gaps": ["period copy, roll-forward, formula extension, and protected summary are supported but not in this preview as one organism flow"],
+      "next_promotion_gate": "Create an organism-level fixture that copies a month, carries closing values, extends formulas, highlights variance, and protects summaries."
+    },
+    {
+      "organism_id": "cash_flow_monitor",
+      "fixture_priority": "p0",
+      "coverage_tier": "preview_fixture",
+      "executable_sequence_atom_ids": ["roll_forward_period"],
+      "planned_blocker_atom_ids": [],
+      "preview_evidence": ["TestCashFlowMonitorPreviewComposesRollForwardPeriod"],
+      "coverage_claim": "Representative closing-to-opening balance continuity is executable.",
+      "remaining_gaps": ["full cash-flow table summarization and protected dashboard regions are not proven in one organism flow"],
+      "next_promotion_gate": "Create an organism-level fixture that combines period copy, roll-forward, formula preservation, summary checks, and protection."
+    },
+    {
+      "organism_id": "attendance_register",
+      "fixture_priority": "p0",
+      "coverage_tier": "preview_fixture",
+      "executable_sequence_atom_ids": ["copy_period_sheet", "add_data_validation", "protect_formula_cells"],
+      "planned_blocker_atom_ids": [],
+      "preview_evidence": ["TestAttendanceRegisterPreviewComposesCopyValidationAndProtection"],
+      "coverage_claim": "Representative attendance period copy, status dropdown validation, and formula protection are executable.",
+      "remaining_gaps": ["matrix auto-growth and calendar projection are advisory molecule gaps", "header normalization is supported but not in this preview"],
+      "next_promotion_gate": "Create an organism-level verifier for roster/date growth, status validation, totals, and protected helper regions."
+    },
+    {
+      "organism_id": "timesheet_hours_log",
+      "fixture_priority": "p0",
+      "coverage_tier": "preview_fixture",
+      "executable_sequence_atom_ids": ["copy_period_sheet"],
+      "planned_blocker_atom_ids": [],
+      "preview_evidence": ["TestTimesheetHoursLogPreviewComposesPeriodCopy"],
+      "coverage_claim": "Representative period sheet copy with formula preservation is executable.",
+      "remaining_gaps": ["row append, formula extension, validation, and protection are supported but not proven together in this organism preview"],
+      "next_promotion_gate": "Create a timesheet fixture that copies a period, appends hours, extends pay formulas, validates allowed fields, and protects totals."
+    },
+    {
+      "organism_id": "project_timeline_tracker",
+      "fixture_priority": "p1",
+      "coverage_tier": "supported_atom_plan",
+      "executable_sequence_atom_ids": ["copy_period_sheet", "extend_table_formulas", "add_data_validation", "group_summarize"],
+      "planned_blocker_atom_ids": [],
+      "preview_evidence": [],
+      "coverage_claim": "Project tracker rows, status validation, period copy, and summaries can be planned from supported atoms.",
+      "remaining_gaps": ["timeline grid projection does not have a dedicated runtime atom", "no organism preview fixture"],
+      "next_promotion_gate": "Create a fixture that updates task rows and proves timeline/status summary behavior with the existing supported atom subset."
+    },
+    {
+      "organism_id": "shift_roster_planner",
+      "fixture_priority": "p1",
+      "coverage_tier": "supported_atom_plan",
+      "executable_sequence_atom_ids": ["copy_period_sheet", "add_data_validation", "protect_formula_cells", "normalize_headers", "group_summarize"],
+      "planned_blocker_atom_ids": [],
+      "preview_evidence": [],
+      "coverage_claim": "Roster period copy, assignment validation, protected totals, header cleanup, and coverage summary can be planned from supported atoms.",
+      "remaining_gaps": ["conflict detection and coverage gap projection lack dedicated organism-level verification", "no organism preview fixture"],
+      "next_promotion_gate": "Create a shift roster fixture that copies a period, validates shift codes, summarizes coverage, and protects summary formulas."
+    },
+    {
+      "organism_id": "construction_cost_tracker",
+      "fixture_priority": "p1",
+      "coverage_tier": "supported_atom_plan",
+      "executable_sequence_atom_ids": ["append_structured_rows", "group_summarize", "highlight_threshold", "roll_forward_period", "protect_formula_cells"],
+      "planned_blocker_atom_ids": [],
+      "preview_evidence": [],
+      "coverage_claim": "Cost row append, cumulative summary, variance threshold, roll-forward, and protected totals can be planned from supported atoms.",
+      "remaining_gaps": ["earned-value style timeline projection is not supported", "no organism preview fixture"],
+      "next_promotion_gate": "Create a fixture that appends cost/change rows, summarizes actuals, flags variance, and preserves protected forecast formulas."
+    },
+    {
+      "organism_id": "inventory_movement_log",
+      "fixture_priority": "p0",
+      "coverage_tier": "preview_fixture",
+      "executable_sequence_atom_ids": ["normalize_headers", "reconcile_tables"],
+      "planned_blocker_atom_ids": [],
+      "preview_evidence": ["TestInventoryMovementLogPreviewComposesHeaderNormalization", "TestInventoryMovementLogPreviewComposesTableReconciliation"],
+      "coverage_claim": "Representative inventory header normalization and stock-master reconciliation are executable.",
+      "remaining_gaps": ["movement row append, lookup enrichment, and protected balance formulas are supported but not in one organism preview"],
+      "next_promotion_gate": "Create an organism-level fixture that appends movements, extends balance formulas, enriches SKU metadata, and reconciles stock master."
+    },
+    {
+      "organism_id": "procurement_reconciliation",
+      "fixture_priority": "p1",
+      "coverage_tier": "supported_atom_plan",
+      "executable_sequence_atom_ids": ["normalize_headers", "add_data_validation", "reconcile_tables", "protect_formula_cells", "group_summarize"],
+      "planned_blocker_atom_ids": [],
+      "preview_evidence": [],
+      "coverage_claim": "Procurement table normalization, status validation, deterministic reconciliation, protection, and summaries can be planned from supported atoms.",
+      "remaining_gaps": ["three-way PO/receipt/invoice reconciliation is not directly supported by one atom", "no organism preview fixture"],
+      "next_promotion_gate": "Create a fixture that normalizes two procurement tables, reconciles keys and amounts, validates status, and protects review formulas."
+    },
+    {
+      "organism_id": "warehouse_reorder_tracker",
+      "fixture_priority": "p1",
+      "coverage_tier": "supported_atom_plan",
+      "executable_sequence_atom_ids": ["join_lookup", "append_structured_rows", "highlight_threshold", "add_data_validation", "group_summarize", "protect_formula_cells"],
+      "planned_blocker_atom_ids": [],
+      "preview_evidence": [],
+      "coverage_claim": "SKU enrichment, stock row append, low-stock threshold highlighting, validation, summary, and protection can be planned from supported atoms.",
+      "remaining_gaps": ["reorder quantity policy calculation is not a dedicated atom", "no organism preview fixture"],
+      "next_promotion_gate": "Create a fixture that updates stock rows, joins SKU metadata, flags reorder thresholds, and protects reorder summaries."
+    },
+    {
+      "organism_id": "student_gradebook",
+      "fixture_priority": "p2",
+      "coverage_tier": "blocked_by_planned_atom",
+      "executable_sequence_atom_ids": ["join_lookup", "extend_table_formulas", "add_data_validation", "protect_formula_cells", "normalize_headers", "group_summarize"],
+      "planned_blocker_atom_ids": ["create_pivot_summary"],
+      "preview_evidence": [],
+      "coverage_claim": "Several gradebook mechanics are supported, but pivot-style score distribution and cross-assignment summaries remain planned.",
+      "remaining_gaps": ["matrix growth lacks a dedicated atom", "create_pivot_summary is planned", "no organism preview fixture"],
+      "next_promotion_gate": "Promote or replace pivot-style summary needs, then create a gradebook fixture with score entry, formula extension, protected summaries, and distribution checks."
+    },
+    {
+      "organism_id": "training_completion_matrix",
+      "fixture_priority": "p2",
+      "coverage_tier": "blocked_by_planned_atom",
+      "executable_sequence_atom_ids": ["add_data_validation", "protect_formula_cells", "group_summarize", "generate_printable_form"],
+      "planned_blocker_atom_ids": ["create_pivot_summary"],
+      "preview_evidence": [],
+      "coverage_claim": "Training completion status entry, protected summary, simple aggregation, and printable reporting are supported, but matrix analytics remain planned.",
+      "remaining_gaps": ["matrix growth lacks a dedicated atom", "create_pivot_summary is planned", "no organism preview fixture"],
+      "next_promotion_gate": "Define whether matrix analytics can be covered by group_summarize or need create_pivot_summary, then add a completion-matrix fixture."
+    },
+    {
+      "organism_id": "service_ticket_queue",
+      "fixture_priority": "p2",
+      "coverage_tier": "blocked_by_planned_atom",
+      "executable_sequence_atom_ids": ["append_structured_rows", "add_data_validation", "highlight_threshold", "protect_formula_cells", "group_summarize"],
+      "planned_blocker_atom_ids": ["create_pivot_summary"],
+      "preview_evidence": [],
+      "coverage_claim": "Ticket append, status validation, SLA threshold flagging, protection, and simple summaries are supported, but queue dashboards remain planned.",
+      "remaining_gaps": ["create_pivot_summary is planned", "no organism preview fixture"],
+      "next_promotion_gate": "Create a ticket queue fixture after deciding whether dashboard summaries use group_summarize or a promoted pivot atom."
+    },
+    {
+      "organism_id": "sales_pipeline_tracker",
+      "fixture_priority": "p2",
+      "coverage_tier": "blocked_by_planned_atom",
+      "executable_sequence_atom_ids": ["add_data_validation", "highlight_threshold", "protect_formula_cells", "group_summarize"],
+      "planned_blocker_atom_ids": ["create_pivot_summary"],
+      "preview_evidence": [],
+      "coverage_claim": "Stage validation, risk/threshold highlighting, protected forecast formulas, and simple summaries are supported, but pipeline dashboard pivots remain planned.",
+      "remaining_gaps": ["create_pivot_summary is planned", "append/edit opportunity preview is missing", "no organism preview fixture"],
+      "next_promotion_gate": "Define forecast summary verification, then add a pipeline fixture or promote the pivot summary atom."
+    },
+    {
+      "organism_id": "maintenance_issue_log",
+      "fixture_priority": "p2",
+      "coverage_tier": "supported_atom_plan",
+      "executable_sequence_atom_ids": ["append_structured_rows", "add_data_validation", "highlight_threshold", "protect_formula_cells", "group_summarize"],
+      "planned_blocker_atom_ids": [],
+      "preview_evidence": [],
+      "coverage_claim": "Issue append, status validation, overdue/risk highlighting, protected summary, and simple rollups can be planned from supported atoms.",
+      "remaining_gaps": ["risk/action register semantics need organism-level acceptance criteria", "no organism preview fixture"],
+      "next_promotion_gate": "Create a fixture that appends issues, validates status, flags overdue or high-risk rows, and summarizes open actions."
+    },
+    {
+      "organism_id": "compliance_action_register",
+      "fixture_priority": "p2",
+      "coverage_tier": "blocked_by_planned_atom",
+      "executable_sequence_atom_ids": ["add_data_validation", "highlight_threshold", "protect_formula_cells", "group_summarize", "generate_printable_form"],
+      "planned_blocker_atom_ids": ["create_pivot_summary"],
+      "preview_evidence": [],
+      "coverage_claim": "Action status validation, threshold flags, protected summaries, simple rollups, and printable reporting are supported, but compliance dashboard pivots remain planned.",
+      "remaining_gaps": ["create_pivot_summary is planned", "closure evidence semantics need organism-level checks", "no organism preview fixture"],
+      "next_promotion_gate": "Create a compliance fixture after deciding whether required summary views fit group_summarize or need the pivot atom."
+    },
+    {
+      "organism_id": "safety_compliance_register",
+      "fixture_priority": "p2",
+      "coverage_tier": "blocked_by_planned_atom",
+      "executable_sequence_atom_ids": ["add_data_validation", "highlight_threshold", "protect_formula_cells", "group_summarize", "generate_printable_form"],
+      "planned_blocker_atom_ids": ["create_pivot_summary"],
+      "preview_evidence": [],
+      "coverage_claim": "Safety status validation, risk/score threshold flags, protected summaries, simple rollups, and printable reporting are supported, but score dashboards remain planned.",
+      "remaining_gaps": ["create_pivot_summary is planned", "score/completion summary semantics need organism-level checks", "no organism preview fixture"],
+      "next_promotion_gate": "Create a safety register fixture after defining score summary acceptance criteria and pivot replacement or promotion."
+    },
+    {
+      "organism_id": "loan_repayment_calculator",
+      "fixture_priority": "p3",
+      "coverage_tier": "supported_atom_plan",
+      "executable_sequence_atom_ids": ["extend_table_formulas", "protect_formula_cells", "group_summarize", "join_lookup"],
+      "planned_blocker_atom_ids": [],
+      "preview_evidence": [],
+      "coverage_claim": "Formula extension, protected summary, lookup enrichment, and simple summaries are supported, but loan schedule semantics are not independently verified.",
+      "remaining_gaps": ["calculation_schedule_block has no dedicated organism-level verifier", "termination condition and cumulative balance checks are not supported as a separate atom", "no organism preview fixture"],
+      "next_promotion_gate": "Create a loan fixture that verifies repeated payment formulas, cumulative balance, payoff termination, and protected summary behavior."
+    }
+  ]
+}

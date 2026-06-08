@@ -351,3 +351,35 @@ Non-goals for this phase:
 - Advisory claim risk: organism names must not be interpreted as supported
   public runtime capabilities. Supported status still comes only from the
   capability registry, runtime contracts, and verifier-backed operation paths.
+
+## Phase 13 Result
+
+Added `executable-organism-coverage.json` and a knowledge harness that maps all
+21 round-009 roadmap organisms to one of four claim tiers:
+
+- `preview_fixture`: representative workbookcase fixture exists
+- `supported_atom_plan`: supported atom sequence can be planned, but no
+  organism preview fixture exists yet
+- `blocked_by_planned_atom`: at least one planned atom, currently
+  `create_pivot_summary`, blocks stronger runtime claims
+- `advisory_only_gap`: core workbook behavior lacks a supported atom sequence
+
+The harness validates that every roadmap organism appears exactly once, fixture
+priority matches the organism catalog, executable sequence atoms are supported
+capabilities, planned blockers are opportunity records, and each entry states a
+claim, remaining gaps, and next promotion gate.
+
+## Phase 13 Self-Retro
+
+- Connection improved: the 21-organism set is no longer only an advisory list.
+  Each organism now has a verified coverage-tier record tying it to supported
+  atoms, preview evidence, or explicit blockers.
+- Remaining template needs: p1 and p2 organisms still lack broad organism
+  preview fixtures. The ladder makes that visible but does not itself execute
+  those organisms.
+- Verifier strength: the new harness checks catalog/roadmap/atom consistency.
+  It does not prove workbook behavior beyond existing operation-specific
+  previews.
+- Advisory claim risk: `supported_atom_plan` must be read as a planning
+  decomposition only. It is weaker than `preview_fixture` and much weaker than
+  full template generation.

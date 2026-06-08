@@ -19,7 +19,9 @@ bundle, or reuse third-party template files.
 - `composition/`: advisory atom, molecule, and organism composition records.
   These include molecule criteria, organism combinations, ecosystem principles,
   atom-builder audit notes, runtime bridge rules for code-generation
-  assistance, and non-runtime organism preview harness notes.
+  assistance, non-runtime organism preview harness notes, and the executable
+  organism coverage ladder that separates fixture-backed previews from
+  supported-atom plans and planned-atom blockers.
 - `patterns/*.json`: normalized template patterns grouped by user workflow and
   spreadsheet mechanics.
 - `opportunities/*.json`: capability backlog candidates that are intentionally
@@ -88,6 +90,9 @@ Promotion status is owned by Agent C:
   runtime contracts, deterministic execution, and operation-specific verifier
   coverage. Template research artifacts are advisory until promoted through
   those release surfaces.
+- The executable organism coverage ladder records claim strength for roadmap
+  organisms. It does not make organism IDs public capabilities and does not
+  replace operation-level verifier coverage.
 - Atom-builder records are an intermediate planning layer. A supported mirror
   must reference an existing capability record and runtime paths; a planned
   builder must reference an opportunity record and no runtime implementation.

@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/template_research/executable_organism_coverage.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "generated_from_round",
+    "authority",
+    "summary",
+    "coverage_tiers",
+    "organisms"
+  ],
+  "properties": {
+    "version": { "type": "integer", "const": 1 },
+    "generated_from_round": { "type": "string", "minLength": 1 },
+    "authority": { "type": "string", "const": "advisory_coverage_only" },
+    "summary": { "type": "string", "minLength": 1 },
+    "coverage_tiers": {
+      "type": "array",
+      "minItems": 4,
+      "items": { "$ref": "#/$defs/coverage_tier" }
+    },
+    "organisms": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/organism_coverage" }
+    }
+  },
+  "$defs": {
+    "coverage_tier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tier", "meaning"],
+      "properties": {
+        "tier": {
+          "type": "string",
+          "enum": [
+            "preview_fixture",
+            "supported_atom_plan",
+            "blocked_by_planned_atom",
+            "advisory_only_gap"
+          ]
+        },
+        "meaning": { "type": "string", "minLength": 1 }
+      }
+    },
+    "organism_coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "organism_id",
+        "fixture_priority",
+        "coverage_tier",
+        "executable_sequence_atom_ids",
+        "planned_blocker_atom_ids",
+        "preview_evidence",
+        "coverage_claim",
+        "remaining_gaps",
+        "next_promotion_gate"
+      ],
+      "properties": {
+        "organism_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "fixture_priority": {
+          "type": "string",
+          "enum": ["p0", "p1", "p2", "p3"]
+        },
+        "coverage_tier": {
+          "type": "string",
+          "enum": [
+            "preview_fixture",
+            "supported_atom_plan",
+            "blocked_by_planned_atom",
+            "advisory_only_gap"
+          ]
+        },
+        "executable_sequence_atom_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          }
+        },
+        "planned_blocker_atom_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          }
+        },
+        "preview_evidence": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "coverage_claim": { "type": "string", "minLength": 1 },
+        "remaining_gaps": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "next_promotion_gate": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
