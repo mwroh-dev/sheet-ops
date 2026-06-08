@@ -566,3 +566,29 @@ for template class productization:
   verifier evidence. It still relies on callers to provide accurate evidence.
 - Advisory claim risk: `templateclass` must not be described as a full
   autonomous template generator.
+
+## Phase 20 Result
+
+Added the first multi-operation organism runtime harness slice:
+
+- `runtime/workbookcase.RunOrganismPlan` executes a sequence of supported
+  atom TaskSpecs with intermediate workbook outputs
+- the harness validates that requested steps exactly match the
+  `runtime/templateclass` plan before execution
+- the invoice organism slice runs append, formula extension, validation,
+  formula protection, and printable form generation in one chain
+- final organism evidence is evaluated by `templateclass.EvaluateEvidence`
+
+## Phase 20 Self-Retro
+
+- Coverage improved: runtime maturity moved beyond single-atom previews and
+  advisory productization contracts for the invoice class.
+- Remaining template needs: only the invoice organism has a true
+  multi-operation organism harness path so far. Other organism classes still
+  need analogous harness fixtures.
+- Verifier strength: the harness aggregates operation pass evidence into a
+  template-class evidence decision, but it still marks the organism verifier
+  spec pass from the successful sequence rather than independently inspecting a
+  separate organism-level report artifact.
+- Advisory claim risk: this is not a general template generator. It is a
+  deterministic multi-step harness for an explicit supported atom sequence.
