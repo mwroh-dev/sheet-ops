@@ -494,6 +494,106 @@ func TestRunCopyPeriodSheetPreservesSourceAndVerifiesCopiedSheet(t *testing.T) {
 	}
 }
 
+func TestRunNormalizeHeadersPreservesRowsAndVerifiesHeaderCells(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "line-items.xlsx")
+	outputFile := filepath.Join(tempDir, "line-items-output.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "LineItems"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	header := []any{"SKU ID", "Qty", "Unit Price", "Line Total"}
+	if err := file.SetSheetRow("LineItems", "A1", &header); err != nil {
+		t.Fatalf("SetSheetRow(header): %v", err)
+	}
+	row := []any{"A001", 2, 10}
+	if err := file.SetSheetRow("LineItems", "A2", &row); err != nil {
+		t.Fatalf("SetSheetRow(row): %v", err)
+	}
+	if err := file.SetCellFormula("LineItems", "D2", "=B2*C2"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	ir := compiler.WorkbookOperationIR{
+		ExecutionKind:    "composition",
+		CompositionKind:  "header_normalization",
+		OperationFamily:  "normalize_headers",
+		SourceSheet:      "LineItems",
+		HeaderRow:        1,
+		PreserveOriginal: true,
+		HeaderMappings: []compiler.HeaderMapping{
+			{From: "SKU ID", To: "sku"},
+			{From: "Qty", To: "quantity"},
+			{From: "Unit Price", To: "unit_price"},
+			{From: "Line Total", To: "line_total"},
+		},
+	}
+	result, err := RunWorkbookOperation(ir, inputFile, outputFile)
+	if err != nil {
+		t.Fatalf("RunWorkbookOperation: %v", err)
+	}
+	if result.OperationFamily != "normalize_headers" {
+		t.Fatalf("operation_family=%q want normalize_headers", result.OperationFamily)
+	}
+	if len(result.WrittenCells) != 4 {
+		t.Fatalf("written_cells=%v want 4 header cells", result.WrittenCells)
+	}
+
+	verification, err := runtimeverify.VerifyWorkbookOperation(ir, inputFile, outputFile, result.SourceSHA256Before, result.SourceSHA256After)
+	if err != nil {
+		t.Fatalf("VerifyWorkbookOperation: %v", err)
+	}
+	if !verification.Pass {
+		t.Fatalf("verification failed: %+v", verification)
+	}
+
+	inputHandle, err := excelize.OpenFile(inputFile)
+	if err != nil {
+		t.Fatalf("Open input: %v", err)
+	}
+	defer func() { _ = inputHandle.Close() }()
+	sourceHeader, err := inputHandle.GetCellValue("LineItems", "A1")
+	if err != nil {
+		t.Fatalf("GetCellValue input A1: %v", err)
+	}
+	if sourceHeader != "SKU ID" {
+		t.Fatalf("input LineItems!A1=%q want unchanged SKU ID", sourceHeader)
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	gotSKU, err := outputHandle.GetCellValue("LineItems", "A1")
+	if err != nil {
+		t.Fatalf("GetCellValue output A1: %v", err)
+	}
+	if gotSKU != "sku" {
+		t.Fatalf("output LineItems!A1=%q want sku", gotSKU)
+	}
+	gotQty, err := outputHandle.GetCellValue("LineItems", "B2")
+	if err != nil {
+		t.Fatalf("GetCellValue output B2: %v", err)
+	}
+	if gotQty != "2" {
+		t.Fatalf("output LineItems!B2=%q want data row preserved", gotQty)
+	}
+	gotFormula, err := outputHandle.GetCellFormula("LineItems", "D2")
+	if err != nil {
+		t.Fatalf("GetCellFormula output D2: %v", err)
+	}
+	if gotFormula != "=B2*C2" {
+		t.Fatalf("output LineItems!D2 formula=%q want =B2*C2", gotFormula)
+	}
+}
+
 func testCellLocked(file *excelize.File, sheet, cell string) (bool, error) {
 	styleID, err := file.GetCellStyle(sheet, cell)
 	if err != nil {

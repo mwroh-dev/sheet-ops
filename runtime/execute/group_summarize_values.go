@@ -53,6 +53,8 @@ func RunWorkbookOperation(ir compiler.WorkbookOperationIR, inputWorkbook, output
 		return RunProtectFormulaCells(ir, inputWorkbook, outputWorkbook)
 	case "copy_period_sheet":
 		return RunCopyPeriodSheet(ir, inputWorkbook, outputWorkbook)
+	case "normalize_headers":
+		return RunNormalizeHeaders(ir, inputWorkbook, outputWorkbook)
 	case "write_values":
 		return RunWriteValues(ir, inputWorkbook, outputWorkbook)
 	default:

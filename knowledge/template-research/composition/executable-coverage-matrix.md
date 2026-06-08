@@ -16,9 +16,9 @@ the first execution target is p0 organism coverage.
 | `copy_period_sheet` | supported | explicit sheet-copy scope: capability record, TaskSpec/IR, executor, verifier, fixtures |
 | `add_data_validation` | supported | explicit list/dropdown scope: capability record, TaskSpec/IR, executor, verifier, fixtures |
 | `protect_formula_cells` | supported | explicit formula/input range scope: capability record, TaskSpec/IR, executor, verifier, fixtures |
+| `normalize_headers` | supported | explicit header-row mapping scope: capability record, TaskSpec/IR, executor, verifier, fixtures |
 | `write_values` | runtime primitive | primitive only, not public agent capability |
 | `roll_forward_period` | planned | budget/cash continuity blocker |
-| `normalize_headers` | planned | invoice/attendance/inventory ambiguity blocker |
 | `reconcile_tables` | planned | inventory reconciliation blocker |
 | `create_pivot_summary` | planned | p2+ summary depth blocker |
 | `generate_printable_form` | planned | invoice document-output blocker |
@@ -27,12 +27,12 @@ the first execution target is p0 organism coverage.
 
 | Organism | Runtime-Covered Atoms | Missing Runtime Atoms | Immediate Strategy |
 | --- | --- | --- | --- |
-| `invoice_line_item_billing` | `join_lookup`, `group_summarize`, `append_structured_rows`, `extend_table_formulas`, `add_data_validation`, `protect_formula_cells` | `generate_printable_form`, `normalize_headers` | printable form or normalize headers next |
+| `invoice_line_item_billing` | `join_lookup`, `group_summarize`, `append_structured_rows`, `extend_table_formulas`, `add_data_validation`, `protect_formula_cells`, `normalize_headers` | `generate_printable_form` | printable form next |
 | `monthly_budget_control` | `group_summarize`, `highlight_threshold`, `extend_table_formulas`, `copy_period_sheet`, `protect_formula_cells` | `roll_forward_period` | roll-forward continuity next |
 | `cash_flow_monitor` | `group_summarize`, `extend_table_formulas`, `copy_period_sheet`, `protect_formula_cells` | `roll_forward_period` | reuse budget period fixture for carry-forward |
-| `attendance_register` | `group_summarize`, `copy_period_sheet`, `add_data_validation`, `protect_formula_cells` | `normalize_headers` | header normalization next |
+| `attendance_register` | `group_summarize`, `copy_period_sheet`, `add_data_validation`, `protect_formula_cells`, `normalize_headers` | none in current p0 atom list | broaden organism preview before claiming full template generation |
 | `timesheet_hours_log` | `group_summarize`, `copy_period_sheet`, `append_structured_rows`, `extend_table_formulas`, `add_data_validation`, `protect_formula_cells` | none in current p0 atom list | broaden organism preview before claiming full template generation |
-| `inventory_movement_log` | `join_lookup`, `group_summarize`, `append_structured_rows`, `protect_formula_cells` | `reconcile_tables`, `normalize_headers` | normalize headers before reconciliation |
+| `inventory_movement_log` | `join_lookup`, `group_summarize`, `append_structured_rows`, `protect_formula_cells`, `normalize_headers` | `reconcile_tables` | reconciliation next |
 
 ## Phase Checklist
 
@@ -113,9 +113,11 @@ Non-goals for this phase:
 
 - P0 gaps reduced: all p0 organisms no longer depend on formula protection as
   an unsupported atom for explicit-range cases.
-- Remaining template needs: period copy/roll-forward is now the largest p0
-  cross-cutting blocker; `normalize_headers`, `reconcile_tables`, and
-  `generate_printable_form` still block specific organism families.
+- Remaining template needs at that checkpoint: period copy/roll-forward was
+  the largest p0 cross-cutting blocker; `normalize_headers`,
+  `reconcile_tables`, and `generate_printable_form` still blocked specific
+  organism families. Phase 8 resolves the explicit-mapping
+  `normalize_headers` portion.
 - Verifier strength: the verifier directly inspects cell protection styles,
   sheet protection options, formulas in protected cells, and source hash
   preservation. It does not prove user-facing Excel edit rejection behavior.
@@ -148,12 +150,47 @@ Non-goals for this phase:
 - P0 gaps reduced: `monthly_budget_control`, `cash_flow_monitor`,
   `attendance_register`, and `timesheet_hours_log` no longer depend on period
   copying as an unsupported atom for explicit sheet-copy cases.
-- Remaining template needs: `roll_forward_period` is now the main blocker for
-  budget and cash-flow continuity; `normalize_headers` blocks invoice,
-  attendance, and inventory paths; `reconcile_tables` and
-  `generate_printable_form` remain family-specific blockers.
+- Remaining template needs at that checkpoint: `roll_forward_period` was the
+  main blocker for budget and cash-flow continuity; `normalize_headers`
+  blocked invoice, attendance, and inventory paths; `reconcile_tables` and
+  `generate_printable_form` remained family-specific blockers. Phase 8 resolves
+  the explicit-mapping `normalize_headers` portion.
 - Verifier strength: the verifier directly compares copied sheet values,
   formulas, styles, target sheet existence, and source hash preservation.
 - Advisory claim risk: period copy must not be described as a full
   roll-forward. Label rewriting, input clearing, and carry-forward mapping
   remain outside supported scope.
+
+## Phase 8 Result
+
+Promoted `normalize_headers` with a deliberately narrow first supported scope:
+
+- same-workbook output copy
+- explicit source sheet
+- explicit header row
+- explicit `from` to `to` header mappings
+- only mapped header-row cells are changed
+- non-header values and formulas are preserved
+- preserve original workbook
+
+Non-goals for this phase:
+
+- fuzzy alias inference
+- duplicate header resolution
+- multi-row header detection
+- semantic canonicalization without explicit mappings
+- table restructuring beyond header-cell rewrites
+
+## Phase 8 Self-Retro
+
+- P0 gaps reduced: `invoice_line_item_billing`, `attendance_register`, and
+  `inventory_movement_log` no longer depend on header normalization as an
+  unsupported atom for explicit mapping cases.
+- Remaining template needs: `roll_forward_period` still blocks budget and
+  cash-flow continuity, `reconcile_tables` blocks inventory movement proof, and
+  `generate_printable_form` blocks document-style invoice output.
+- Verifier strength: the verifier checks source hash preservation, mapped
+  output headers, non-header row values, and non-header formulas.
+- Advisory claim risk: the runtime must not imply automatic header discovery or
+  alias matching. Callers must provide the mapping until a separate verifier
+  exists for inference and ambiguity handling.

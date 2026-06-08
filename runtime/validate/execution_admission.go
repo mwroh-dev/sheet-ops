@@ -47,6 +47,9 @@ func (validator Validator) AdmitExecution(bound boundIntent) (Result, error) {
 	case "formula_protection":
 		rule := cloneFormulaProtectionRule(bound.protectionRule)
 		request.ProtectionRule = &rule
+	case "header_normalization":
+		request.HeaderRow = bound.headerRow
+		request.HeaderMappings = cloneHeaderMappings(bound.headerMappings)
 	}
 
 	return finalizeResult(Result{

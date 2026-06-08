@@ -1,20 +1,25 @@
 {
   "name": "normalize_headers",
-  "status": "planned",
-  "evidence_count": 1,
+  "status": "supported",
+  "evidence_count": 3,
   "source_categories": [
-    "Budget Templates"
+    "Budget Templates",
+    "Invoice Templates",
+    "Attendance Templates",
+    "Inventory Templates"
   ],
   "representative_why": "Users and imported templates often describe the same business field with different header text.",
   "representative_how": [
-    "detect semantically equivalent headers",
-    "map them to canonical field names",
-    "preserve original labels where needed"
+    "accept explicit from/to header mappings",
+    "rewrite only the declared header row cells",
+    "preserve non-header values and formulas"
   ],
   "concrete_workflows": [
-    "map budget category and amount columns before summarizing"
+    "map budget category and amount columns before summarizing",
+    "standardize line-item invoice headers before append or formula extension",
+    "standardize attendance or inventory headers before summaries and reconciliation"
   ],
-  "verification_strategy": "Verify canonical fields bind to the intended source columns and ambiguous mappings are rejected.",
+  "verification_strategy": "Supported scope verifies declared source headers exist, mapped output headers match, source workbook hash is preserved, and non-header rows/formulas are unchanged. Alias inference and duplicate resolution remain outside supported scope.",
   "related_patterns": [
     "budget"
   ]

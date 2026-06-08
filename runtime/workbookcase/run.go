@@ -125,6 +125,10 @@ func Run(req Request) (result RunResult, err error) {
 		if err := orchestrateProtectFormulaCells(req.TaskSpec, paths, &result, mustLog); err != nil {
 			return result, err
 		}
+	case NormalizeHeadersOperationName:
+		if err := orchestrateNormalizeHeaders(req.TaskSpec, paths, &result, mustLog); err != nil {
+			return result, err
+		}
 	default:
 		return result, wrapFailure(
 			"request_validation",
@@ -136,6 +140,79 @@ func Run(req Request) (result RunResult, err error) {
 	}
 	mustLog("agent", "agent_completed", "use-orchestrator", map[string]any{"pass": result.Verification.Pass})
 	return result, nil
+}
+
+func orchestrateNormalizeHeaders(taskSpec runtimetaskspec.TaskSpec, paths RunPaths, result *RunResult, mustLog func(string, string, string, map[string]any)) error {
+	task := normalizeHeadersTaskFromSpec(taskSpec)
+	inspection, err := runtimecompiler.InspectWorkbook(task.TaskSpec.InputWorkbook, task.SourceSheet, nil, nil, nil)
+	if err != nil {
+		return wrapFailure("inspection", "inspection_failure", "inspect_failed", "inspect the source workbook before planning header normalization", err)
+	}
+	result.Inspection = summaryInspectionArtifact(inspection, "")
+	record := summaryInspectionRecord(inspection, "")
+	result.SummaryInspection = &record
+	mustLog("agent", "agent_completed", "inspect-workbook", map[string]any{"source_sheet": task.SourceSheet, "row_count": record.RowCount})
+	if err := writeJSON(paths.InspectionPath, record); err != nil {
+		return wrapFailure("inspection", "artifact_emission_failure", "inspection_artifact_write_failed", "write the header normalization inspection artifact", err)
+	}
+
+	operationIR, err := runtimecompiler.CompileNormalizeHeadersOperation(task)
+	if err != nil {
+		return wrapFailure("planning", "planning_failure", "operation_ir_compile_failed", "compile workbook header normalization operation IR", err)
+	}
+	plan := NormalizeHeadersPlan{
+		Operation:        NormalizeHeadersOperationName,
+		SheetName:        operationIR.SourceSheet,
+		HeaderRow:        operationIR.HeaderRow,
+		HeaderMappings:   task.HeaderMappings,
+		PreserveOriginal: operationIR.PreserveOriginal,
+		OutputFile:       task.TaskSpec.OutputWorkbook,
+	}
+	if err := runtimeschema.ValidateStruct(repoJoin("contracts", "plans", "use", "operation_plan.schema.json"), plan); err != nil {
+		return wrapFailure("planning", "planning_failure", "plan_invalid", "validate the header normalization plan artifact against its contract", err)
+	}
+	result.Plan = plan
+	mustLog("judgment", "plan_built", "request-planner", map[string]any{"operation": plan.Operation, "source_sheet": plan.SheetName, "header_row": plan.HeaderRow})
+	if err := writeJSON(paths.PlanPath, plan); err != nil {
+		return wrapFailure("planning", "artifact_emission_failure", "plan_artifact_write_failed", "write the header normalization plan artifact", err)
+	}
+	if err := writeNormalizeHeadersRuntimeInputs(task.TaskSpec, operationIR, paths); err != nil {
+		return err
+	}
+
+	policy := evaluateWritePolicyOutput(task.TaskSpec.InputWorkbook, task.TaskSpec.OutputWorkbook, task.PreserveOriginal)
+	if err := runtimeschema.ValidateStruct(repoJoin("contracts", "policy", "write_policy_decision.schema.json"), policy); err != nil {
+		return wrapFailure("policy", "policy_failure", "policy_decision_invalid", "validate the header normalization write policy decision", err)
+	}
+	result.Policy = policy
+	if err := writeJSON(paths.PolicyPath, policy); err != nil {
+		return wrapFailure("policy", "artifact_emission_failure", "policy_artifact_write_failed", "write the header normalization policy artifact", err)
+	}
+	if !policy.Allow {
+		return wrapFailure("policy", "policy_failure", "policy_denied", "evaluate whether the header normalization run may write a distinct output workbook", fmt.Errorf("policy denied execution: %s", strings.Join(policy.Reasons, "; ")))
+	}
+
+	execution, err := runtimeexecute.RunWorkbookOperation(operationIR, task.TaskSpec.InputWorkbook, task.TaskSpec.OutputWorkbook)
+	if err != nil {
+		return wrapFailure("execution", "execution_failure", "execute_failed", "execute the header normalization workbook operation and write the output workbook", err)
+	}
+	result.Execution = executionSummaryFromRuntime(execution)
+	if err := writeJSON(paths.ExecutionPath, result.Execution); err != nil {
+		return wrapFailure("execution", "artifact_emission_failure", "execution_artifact_write_failed", "write the header normalization execution artifact", err)
+	}
+
+	verification, err := runtimeverify.VerifyWorkbookOperation(operationIR, task.TaskSpec.InputWorkbook, task.TaskSpec.OutputWorkbook, result.Execution.SourceSHA256Before, result.Execution.SourceSHA256After)
+	if err != nil {
+		return wrapFailure("verification", "verification_failure", "verify_failed", "verify the emitted header-normalized workbook against execution fingerprints", err)
+	}
+	result.Verification = verificationSummaryFromRuntime(task.TaskSpec.Operation, verification)
+	if err := runtimeschema.ValidateStruct(repoJoin("contracts", "verification", "verification_result.schema.json"), result.Verification); err != nil {
+		return wrapFailure("verification", "verification_failure", "verification_result_invalid", "validate the header normalization verification artifact against its contract", err)
+	}
+	if err := writeJSON(paths.VerificationPath, result.Verification); err != nil {
+		return wrapFailure("verification", "artifact_emission_failure", "verification_artifact_write_failed", "write the header normalization verification artifact", err)
+	}
+	return nil
 }
 
 func orchestrateCopyPeriodSheet(taskSpec runtimetaskspec.TaskSpec, paths RunPaths, result *RunResult, mustLog func(string, string, string, map[string]any)) error {
@@ -1459,6 +1536,25 @@ func writeProtectFormulaCellsRuntimeInputs(taskSpec runtimetaskspec.TaskSpec, op
 	return nil
 }
 
+func writeNormalizeHeadersRuntimeInputs(taskSpec runtimetaskspec.TaskSpec, operationIR runtimecompiler.WorkbookOperationIR, paths RunPaths) error {
+	if !shouldPersistSensitiveWorkbookArtifacts() {
+		return nil
+	}
+	if err := runtimeschema.ValidateStruct(repoJoin("contracts", "task", "task_spec.schema.json"), taskSpec); err != nil {
+		return wrapFailure("planning", "planning_failure", "task_spec_invalid", "validate the header normalization runtime task spec artifact", err)
+	}
+	if err := writeJSON(paths.TaskSpecPath, taskSpec); err != nil {
+		return wrapFailure("planning", "artifact_emission_failure", "task_spec_artifact_write_failed", "write the header normalization runtime task spec artifact", err)
+	}
+	if err := runtimeschema.ValidateStruct(repoJoin("contracts", "ir", "workbook_operation_ir.schema.json"), operationIR); err != nil {
+		return wrapFailure("planning", "planning_failure", "operation_ir_invalid", "validate the header normalization operation IR artifact", err)
+	}
+	if err := writeJSON(paths.OperationIRPath, operationIR); err != nil {
+		return wrapFailure("planning", "artifact_emission_failure", "operation_ir_artifact_write_failed", "write the header normalization operation IR artifact", err)
+	}
+	return nil
+}
+
 func summaryTaskFromSpec(spec runtimetaskspec.TaskSpec) runtimetaskspec.GroupSummarizeTask {
 	return runtimetaskspec.GroupSummarizeTask{
 		TaskSpec:         spec,
@@ -1557,11 +1653,30 @@ func protectFormulaCellsTaskFromSpec(spec runtimetaskspec.TaskSpec) runtimetasks
 	}
 }
 
+func normalizeHeadersTaskFromSpec(spec runtimetaskspec.TaskSpec) runtimetaskspec.NormalizeHeadersTask {
+	return runtimetaskspec.NormalizeHeadersTask{
+		TaskSpec:         spec,
+		SourceSheet:      spec.SourceSheet,
+		HeaderRow:        spec.HeaderRow,
+		HeaderMappings:   appendTaskSpecHeaderMappings(spec.HeaderMappings),
+		PreserveOriginal: true,
+	}
+}
+
 func appendTaskSpecCellValues(values []runtimetaskspec.CellValue) []runtimetaskspec.CellValue {
 	if len(values) == 0 {
 		return nil
 	}
 	cloned := make([]runtimetaskspec.CellValue, len(values))
+	copy(cloned, values)
+	return cloned
+}
+
+func appendTaskSpecHeaderMappings(values []runtimetaskspec.HeaderMapping) []runtimetaskspec.HeaderMapping {
+	if len(values) == 0 {
+		return nil
+	}
+	cloned := make([]runtimetaskspec.HeaderMapping, len(values))
 	copy(cloned, values)
 	return cloned
 }
@@ -1692,6 +1807,8 @@ func operationNameForFamily(family string) string {
 		return JoinLookupOperationName
 	case "write_values":
 		return WriteValuesOperationName
+	case "normalize_headers":
+		return NormalizeHeadersOperationName
 	default:
 		return family
 	}

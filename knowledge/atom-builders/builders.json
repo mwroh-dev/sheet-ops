@@ -7,128 +7,367 @@
       "atom_id": "group_summarize",
       "status": "supported",
       "builder_layer": "runtime_mirror",
-      "input_contract": ["source sheet", "filters", "group keys", "metrics", "target sheet", "summary mode"],
-      "inspection_requirements": ["sheet names", "headers", "source rows", "header index"],
-      "plan_outputs": ["summary rows", "formula expectations when summary mode is formulas", "target sheet"],
-      "result_outputs": ["output workbook", "summary sheet", "summary row count", "formula cells"],
-      "verification_assertions": ["source_preserved", "summary_rows_match", "formulas_calculate"],
+      "input_contract": [
+        "source sheet",
+        "filters",
+        "group keys",
+        "metrics",
+        "target sheet",
+        "summary mode"
+      ],
+      "inspection_requirements": [
+        "sheet names",
+        "headers",
+        "source rows",
+        "header index"
+      ],
+      "plan_outputs": [
+        "summary rows",
+        "formula expectations when summary mode is formulas",
+        "target sheet"
+      ],
+      "result_outputs": [
+        "output workbook",
+        "summary sheet",
+        "summary row count",
+        "formula cells"
+      ],
+      "verification_assertions": [
+        "source_preserved",
+        "summary_rows_match",
+        "formulas_calculate"
+      ],
       "capability_record": "contracts/capabilities/records/group_summarize.yaml",
       "opportunity_record": "",
-      "runtime_paths": ["runtime/inspect/group_summarize.go", "runtime/compiler/workbook_compiler.go", "runtime/compiler/group_summarize_plan.go", "runtime/execute/group_summarize_values.go", "runtime/execute/group_summarize_formulas.go", "runtime/verify/group_summarize_verify.go"]
+      "runtime_paths": [
+        "runtime/inspect/group_summarize.go",
+        "runtime/compiler/workbook_compiler.go",
+        "runtime/compiler/group_summarize_plan.go",
+        "runtime/execute/group_summarize_values.go",
+        "runtime/execute/group_summarize_formulas.go",
+        "runtime/verify/group_summarize_verify.go"
+      ]
     },
     {
       "atom_id": "highlight_threshold",
       "status": "supported",
       "builder_layer": "runtime_mirror",
-      "input_contract": ["source sheet", "target column", "operator", "threshold", "highlight color"],
-      "inspection_requirements": ["sheet names", "headers", "target column index", "source rows"],
-      "plan_outputs": ["threshold rule", "matching row candidates", "style target cells"],
-      "result_outputs": ["output workbook", "highlighted rows", "highlighted cells"],
-      "verification_assertions": ["source_preserved", "matching_rows_highlighted", "highlight_color_matches"],
+      "input_contract": [
+        "source sheet",
+        "target column",
+        "operator",
+        "threshold",
+        "highlight color"
+      ],
+      "inspection_requirements": [
+        "sheet names",
+        "headers",
+        "target column index",
+        "source rows"
+      ],
+      "plan_outputs": [
+        "threshold rule",
+        "matching row candidates",
+        "style target cells"
+      ],
+      "result_outputs": [
+        "output workbook",
+        "highlighted rows",
+        "highlighted cells"
+      ],
+      "verification_assertions": [
+        "source_preserved",
+        "matching_rows_highlighted",
+        "highlight_color_matches"
+      ],
       "capability_record": "contracts/capabilities/records/highlight_threshold.yaml",
       "opportunity_record": "",
-      "runtime_paths": ["runtime/inspect/highlight_threshold.go", "runtime/compiler/workbook_compiler.go", "runtime/execute/highlight_threshold.go", "runtime/verify/highlight_threshold.go"]
+      "runtime_paths": [
+        "runtime/inspect/highlight_threshold.go",
+        "runtime/compiler/workbook_compiler.go",
+        "runtime/execute/highlight_threshold.go",
+        "runtime/verify/highlight_threshold.go"
+      ]
     },
     {
       "atom_id": "join_lookup",
       "status": "supported",
       "builder_layer": "runtime_mirror",
-      "input_contract": ["source sheet", "lookup sheet", "join key", "include source columns", "append lookup columns", "target sheet"],
-      "inspection_requirements": ["source headers", "lookup headers", "source rows", "lookup rows"],
-      "plan_outputs": ["lookup key map", "joined output rows", "target sheet"],
-      "result_outputs": ["output workbook", "joined result sheet", "joined row count"],
-      "verification_assertions": ["source_preserved", "lookup_rows_match", "appended_columns_match"],
+      "input_contract": [
+        "source sheet",
+        "lookup sheet",
+        "join key",
+        "include source columns",
+        "append lookup columns",
+        "target sheet"
+      ],
+      "inspection_requirements": [
+        "source headers",
+        "lookup headers",
+        "source rows",
+        "lookup rows"
+      ],
+      "plan_outputs": [
+        "lookup key map",
+        "joined output rows",
+        "target sheet"
+      ],
+      "result_outputs": [
+        "output workbook",
+        "joined result sheet",
+        "joined row count"
+      ],
+      "verification_assertions": [
+        "source_preserved",
+        "lookup_rows_match",
+        "appended_columns_match"
+      ],
       "capability_record": "contracts/capabilities/records/join_lookup.yaml",
       "opportunity_record": "",
-      "runtime_paths": ["runtime/compiler/workbook_compiler.go", "runtime/execute/join_lookup.go", "runtime/verify/join_lookup.go"]
+      "runtime_paths": [
+        "runtime/compiler/workbook_compiler.go",
+        "runtime/execute/join_lookup.go",
+        "runtime/verify/join_lookup.go"
+      ]
     },
     {
       "atom_id": "write_values",
       "status": "runtime_primitive",
       "builder_layer": "runtime_mirror",
-      "input_contract": ["target sheet", "cell values", "output workbook"],
-      "inspection_requirements": ["sheet names"],
-      "plan_outputs": ["target cells", "values"],
-      "result_outputs": ["output workbook", "written cells"],
-      "verification_assertions": ["source_preserved", "written_values_match"],
+      "input_contract": [
+        "target sheet",
+        "cell values",
+        "output workbook"
+      ],
+      "inspection_requirements": [
+        "sheet names"
+      ],
+      "plan_outputs": [
+        "target cells",
+        "values"
+      ],
+      "result_outputs": [
+        "output workbook",
+        "written cells"
+      ],
+      "verification_assertions": [
+        "source_preserved",
+        "written_values_match"
+      ],
       "capability_record": "contracts/capabilities/records/write_values.yaml",
       "opportunity_record": "",
-      "runtime_paths": ["runtime/execute/write_values.go", "runtime/verify/write_values.go"]
+      "runtime_paths": [
+        "runtime/execute/write_values.go",
+        "runtime/verify/write_values.go"
+      ]
     },
     {
       "atom_id": "append_structured_rows",
       "status": "supported",
       "builder_layer": "runtime_mirror",
-      "input_contract": ["source sheet", "canonical columns", "rows to append"],
-      "inspection_requirements": ["sheet names", "header row", "source rows"],
-      "plan_outputs": ["append range", "value writes"],
-      "result_outputs": ["output workbook", "appended row count", "written cells"],
-      "verification_assertions": ["source_preserved", "row_count_increased", "appended_values_match"],
+      "input_contract": [
+        "source sheet",
+        "canonical columns",
+        "rows to append"
+      ],
+      "inspection_requirements": [
+        "sheet names",
+        "header row",
+        "source rows"
+      ],
+      "plan_outputs": [
+        "append range",
+        "value writes"
+      ],
+      "result_outputs": [
+        "output workbook",
+        "appended row count",
+        "written cells"
+      ],
+      "verification_assertions": [
+        "source_preserved",
+        "row_count_increased",
+        "appended_values_match"
+      ],
       "capability_record": "contracts/capabilities/records/append_structured_rows.yaml",
       "opportunity_record": "",
-      "runtime_paths": ["runtime/compiler/workbook_compiler.go", "runtime/execute/append_structured_rows.go", "runtime/verify/append_structured_rows.go"]
+      "runtime_paths": [
+        "runtime/compiler/workbook_compiler.go",
+        "runtime/execute/append_structured_rows.go",
+        "runtime/verify/append_structured_rows.go"
+      ]
     },
     {
       "atom_id": "extend_table_formulas",
       "status": "supported",
       "builder_layer": "runtime_mirror",
-      "input_contract": ["source sheet", "formula source row", "target rows", "formula columns"],
-      "inspection_requirements": ["sheet names", "source formula cells", "relative row references"],
-      "plan_outputs": ["formula source row", "target rows", "target formula cells"],
-      "result_outputs": ["output workbook", "extended formula cells"],
-      "verification_assertions": ["source_preserved", "target_formulas_present", "relative_row_references_translated"],
+      "input_contract": [
+        "source sheet",
+        "formula source row",
+        "target rows",
+        "formula columns"
+      ],
+      "inspection_requirements": [
+        "sheet names",
+        "source formula cells",
+        "relative row references"
+      ],
+      "plan_outputs": [
+        "formula source row",
+        "target rows",
+        "target formula cells"
+      ],
+      "result_outputs": [
+        "output workbook",
+        "extended formula cells"
+      ],
+      "verification_assertions": [
+        "source_preserved",
+        "target_formulas_present",
+        "relative_row_references_translated"
+      ],
       "capability_record": "contracts/capabilities/records/extend_table_formulas.yaml",
       "opportunity_record": "",
-      "runtime_paths": ["runtime/compiler/workbook_compiler.go", "runtime/execute/extend_table_formulas.go", "runtime/verify/extend_table_formulas.go", "runtime/formula/extend.go"]
+      "runtime_paths": [
+        "runtime/compiler/workbook_compiler.go",
+        "runtime/execute/extend_table_formulas.go",
+        "runtime/verify/extend_table_formulas.go",
+        "runtime/formula/extend.go"
+      ]
     },
     {
       "atom_id": "copy_period_sheet",
       "status": "supported",
       "builder_layer": "runtime_mirror",
-      "input_contract": ["source sheet", "target sheet"],
-      "inspection_requirements": ["source sheet exists", "target sheet absent"],
-      "plan_outputs": ["target sheet copy", "preserve original output boundary"],
-      "result_outputs": ["new target sheet", "warnings"],
-      "verification_assertions": ["source_preserved", "target_sheet_exists", "values_match_source", "formulas_match_source", "styles_match_source"],
+      "input_contract": [
+        "source sheet",
+        "target sheet"
+      ],
+      "inspection_requirements": [
+        "source sheet exists",
+        "target sheet absent"
+      ],
+      "plan_outputs": [
+        "target sheet copy",
+        "preserve original output boundary"
+      ],
+      "result_outputs": [
+        "new target sheet",
+        "warnings"
+      ],
+      "verification_assertions": [
+        "source_preserved",
+        "target_sheet_exists",
+        "values_match_source",
+        "formulas_match_source",
+        "styles_match_source"
+      ],
       "capability_record": "contracts/capabilities/records/copy_period_sheet.yaml",
       "opportunity_record": "",
-      "runtime_paths": ["runtime/compiler/workbook_compiler.go", "runtime/execute/copy_period_sheet.go", "runtime/verify/copy_period_sheet.go"]
+      "runtime_paths": [
+        "runtime/compiler/workbook_compiler.go",
+        "runtime/execute/copy_period_sheet.go",
+        "runtime/verify/copy_period_sheet.go"
+      ]
     },
     {
       "atom_id": "roll_forward_period",
       "status": "planned",
       "builder_layer": "planned_contract",
-      "input_contract": ["closing fields", "opening fields", "carry-forward mapping"],
-      "inspection_requirements": ["previous period summary", "next period opening fields", "variance formulas"],
-      "plan_outputs": ["opening value writes", "carry-forward formulas", "continuity expectations"],
-      "result_outputs": ["rolled forward period summary", "warnings"],
-      "verification_assertions": ["closing_equals_next_opening", "variance_consistent", "source_preserved"],
+      "input_contract": [
+        "closing fields",
+        "opening fields",
+        "carry-forward mapping"
+      ],
+      "inspection_requirements": [
+        "previous period summary",
+        "next period opening fields",
+        "variance formulas"
+      ],
+      "plan_outputs": [
+        "opening value writes",
+        "carry-forward formulas",
+        "continuity expectations"
+      ],
+      "result_outputs": [
+        "rolled forward period summary",
+        "warnings"
+      ],
+      "verification_assertions": [
+        "closing_equals_next_opening",
+        "variance_consistent",
+        "source_preserved"
+      ],
       "capability_record": "",
       "opportunity_record": "knowledge/template-research/opportunities/roll_forward_period.json",
       "runtime_paths": []
     },
     {
       "atom_id": "normalize_headers",
-      "status": "planned",
-      "builder_layer": "planned_contract",
-      "input_contract": ["raw headers", "synonym map", "required canonical fields"],
-      "inspection_requirements": ["candidate header rows", "header text", "duplicate headers"],
-      "plan_outputs": ["canonical header map", "missing fields", "duplicate warnings"],
-      "result_outputs": ["normalized header mapping", "warnings"],
-      "verification_assertions": ["required_fields_resolved", "duplicates_reported", "header_map_stable"],
-      "capability_record": "",
-      "opportunity_record": "knowledge/template-research/opportunities/normalize_headers.json",
-      "runtime_paths": []
+      "status": "supported",
+      "builder_layer": "runtime_mirror",
+      "input_contract": [
+        "source sheet",
+        "header row",
+        "explicit from/to header mappings"
+      ],
+      "inspection_requirements": [
+        "source sheet exists",
+        "header row exists",
+        "declared source headers are present"
+      ],
+      "plan_outputs": [
+        "header row",
+        "header mapping writes"
+      ],
+      "result_outputs": [
+        "output workbook",
+        "normalized header cells"
+      ],
+      "verification_assertions": [
+        "source_preserved",
+        "mapped_headers_match",
+        "non_header_rows_unchanged",
+        "non_header_formulas_unchanged"
+      ],
+      "capability_record": "contracts/capabilities/records/normalize_headers.yaml",
+      "opportunity_record": "",
+      "runtime_paths": [
+        "runtime/compiler/workbook_compiler.go",
+        "runtime/execute/normalize_headers.go",
+        "runtime/verify/normalize_headers.go"
+      ]
     },
     {
       "atom_id": "create_pivot_summary",
       "status": "planned",
       "builder_layer": "planned_contract",
-      "input_contract": ["source table", "dimensions", "measures", "output anchor"],
-      "inspection_requirements": ["source headers", "source rows", "dimension values", "measure columns"],
-      "plan_outputs": ["pivot-like summary rows", "output range", "formula expectations"],
-      "result_outputs": ["summary output", "warnings"],
-      "verification_assertions": ["grouped_totals_match_source", "dimensions_complete", "source_preserved"],
+      "input_contract": [
+        "source table",
+        "dimensions",
+        "measures",
+        "output anchor"
+      ],
+      "inspection_requirements": [
+        "source headers",
+        "source rows",
+        "dimension values",
+        "measure columns"
+      ],
+      "plan_outputs": [
+        "pivot-like summary rows",
+        "output range",
+        "formula expectations"
+      ],
+      "result_outputs": [
+        "summary output",
+        "warnings"
+      ],
+      "verification_assertions": [
+        "grouped_totals_match_source",
+        "dimensions_complete",
+        "source_preserved"
+      ],
       "capability_record": "",
       "opportunity_record": "knowledge/template-research/opportunities/create_pivot_summary.json",
       "runtime_paths": []
@@ -137,37 +376,109 @@
       "atom_id": "add_data_validation",
       "status": "supported",
       "builder_layer": "runtime_mirror",
-      "input_contract": ["source sheet", "target ranges", "list rule type", "allowed values", "allow blank"],
-      "inspection_requirements": ["source sheet exists", "target ranges", "allowed values"],
-      "plan_outputs": ["list validation rules", "target ranges"],
-      "result_outputs": ["validation rules", "warnings"],
-      "verification_assertions": ["source_preserved", "validation_rule_present", "allowed_values_match"],
+      "input_contract": [
+        "source sheet",
+        "target ranges",
+        "list rule type",
+        "allowed values",
+        "allow blank"
+      ],
+      "inspection_requirements": [
+        "source sheet exists",
+        "target ranges",
+        "allowed values"
+      ],
+      "plan_outputs": [
+        "list validation rules",
+        "target ranges"
+      ],
+      "result_outputs": [
+        "validation rules",
+        "warnings"
+      ],
+      "verification_assertions": [
+        "source_preserved",
+        "validation_rule_present",
+        "allowed_values_match"
+      ],
       "capability_record": "contracts/capabilities/records/add_data_validation.yaml",
       "opportunity_record": "",
-      "runtime_paths": ["runtime/compiler/workbook_compiler.go", "runtime/execute/add_data_validation.go", "runtime/verify/add_data_validation.go"]
+      "runtime_paths": [
+        "runtime/compiler/workbook_compiler.go",
+        "runtime/execute/add_data_validation.go",
+        "runtime/verify/add_data_validation.go"
+      ]
     },
     {
       "atom_id": "protect_formula_cells",
       "status": "supported",
       "builder_layer": "runtime_mirror",
-      "input_contract": ["source sheet", "formula ranges", "input ranges", "optional password"],
-      "inspection_requirements": ["formula cells", "editable input cells", "existing protection settings"],
-      "plan_outputs": ["locked formula ranges", "editable input ranges", "sheet protection settings"],
-      "result_outputs": ["protected formula cells", "sheet protection settings", "warnings"],
-      "verification_assertions": ["source_preserved", "formula_cells_locked", "input_cells_unlocked", "sheet_protection_enabled"],
+      "input_contract": [
+        "source sheet",
+        "formula ranges",
+        "input ranges",
+        "optional password"
+      ],
+      "inspection_requirements": [
+        "formula cells",
+        "editable input cells",
+        "existing protection settings"
+      ],
+      "plan_outputs": [
+        "locked formula ranges",
+        "editable input ranges",
+        "sheet protection settings"
+      ],
+      "result_outputs": [
+        "protected formula cells",
+        "sheet protection settings",
+        "warnings"
+      ],
+      "verification_assertions": [
+        "source_preserved",
+        "formula_cells_locked",
+        "input_cells_unlocked",
+        "sheet_protection_enabled"
+      ],
       "capability_record": "contracts/capabilities/records/protect_formula_cells.yaml",
       "opportunity_record": "",
-      "runtime_paths": ["runtime/compiler/workbook_compiler.go", "runtime/execute/protect_formula_cells.go", "runtime/verify/protect_formula_cells.go"]
+      "runtime_paths": [
+        "runtime/compiler/workbook_compiler.go",
+        "runtime/execute/protect_formula_cells.go",
+        "runtime/verify/protect_formula_cells.go"
+      ]
     },
     {
       "atom_id": "reconcile_tables",
       "status": "planned",
       "builder_layer": "planned_contract",
-      "input_contract": ["left table", "right table", "key mapping", "match rules"],
-      "inspection_requirements": ["left headers", "right headers", "key columns", "duplicate keys"],
-      "plan_outputs": ["matched bucket", "missing bucket", "mismatched bucket", "summary rows"],
-      "result_outputs": ["reconciliation result table", "warnings"],
-      "verification_assertions": ["matched_rows_correct", "missing_rows_correct", "mismatch_rows_correct"],
+      "input_contract": [
+        "left table",
+        "right table",
+        "key mapping",
+        "match rules"
+      ],
+      "inspection_requirements": [
+        "left headers",
+        "right headers",
+        "key columns",
+        "duplicate keys"
+      ],
+      "plan_outputs": [
+        "matched bucket",
+        "missing bucket",
+        "mismatched bucket",
+        "summary rows"
+      ],
+      "result_outputs": [
+        "reconciliation result table",
+        "warnings"
+      ],
+      "verification_assertions": [
+        "matched_rows_correct",
+        "missing_rows_correct",
+        "mismatch_rows_correct"
+      ],
       "capability_record": "",
       "opportunity_record": "knowledge/template-research/opportunities/reconcile_tables.json",
       "runtime_paths": []
@@ -176,11 +487,32 @@
       "atom_id": "generate_printable_form",
       "status": "planned",
       "builder_layer": "planned_contract",
-      "input_contract": ["metadata fields", "line item table", "totals", "output region"],
-      "inspection_requirements": ["metadata cells", "source rows", "total cells", "output anchors"],
-      "plan_outputs": ["field bindings", "output writes", "total formulas"],
-      "result_outputs": ["printable document region", "warnings"],
-      "verification_assertions": ["required_output_fields_populated", "output_totals_match_source", "output_reflects_latest_inputs"],
+      "input_contract": [
+        "metadata fields",
+        "line item table",
+        "totals",
+        "output region"
+      ],
+      "inspection_requirements": [
+        "metadata cells",
+        "source rows",
+        "total cells",
+        "output anchors"
+      ],
+      "plan_outputs": [
+        "field bindings",
+        "output writes",
+        "total formulas"
+      ],
+      "result_outputs": [
+        "printable document region",
+        "warnings"
+      ],
+      "verification_assertions": [
+        "required_output_fields_populated",
+        "output_totals_match_source",
+        "output_reflects_latest_inputs"
+      ],
       "capability_record": "",
       "opportunity_record": "knowledge/template-research/opportunities/generate_printable_form.json",
       "runtime_paths": []

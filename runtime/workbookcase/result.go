@@ -16,6 +16,7 @@ const (
 	CopyPeriodSheetOperationName     = "copy_period_sheet"
 	AddDataValidationOperationName   = "add_data_validation"
 	ProtectFormulaCellsOperationName = "protect_formula_cells"
+	NormalizeHeadersOperationName    = "normalize_headers"
 	WriteValuesOperationName         = "write_values"
 )
 
@@ -157,6 +158,15 @@ type ProtectFormulaCellsPlan struct {
 	ProtectionRule   runtimetaskspec.FormulaProtectionRule `json:"protection_rule"`
 	PreserveOriginal bool                                  `json:"preserve_original"`
 	OutputFile       string                                `json:"output_file"`
+}
+
+type NormalizeHeadersPlan struct {
+	Operation        string                          `json:"operation"`
+	SheetName        string                          `json:"sheet_name"`
+	HeaderRow        int                             `json:"header_row"`
+	HeaderMappings   []runtimetaskspec.HeaderMapping `json:"header_mappings"`
+	PreserveOriginal bool                            `json:"preserve_original"`
+	OutputFile       string                          `json:"output_file"`
 }
 
 type WritePolicyDecision struct {

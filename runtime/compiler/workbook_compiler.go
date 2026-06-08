@@ -30,6 +30,11 @@ type FormulaProtectionRule struct {
 	Password      string   `json:"password,omitempty"`
 }
 
+type HeaderMapping struct {
+	From string `json:"from"`
+	To   string `json:"to"`
+}
+
 type WorkbookInspection struct {
 	InputWorkbook     string                  `json:"input_workbook"`
 	SheetNames        []string                `json:"sheet_names"`
@@ -67,6 +72,8 @@ type WorkbookOperationIR struct {
 	FormulaColumns       []string               `json:"formula_columns,omitempty"`
 	ValidationRule       *DataValidationRule    `json:"validation_rule,omitempty"`
 	ProtectionRule       *FormulaProtectionRule `json:"protection_rule,omitempty"`
+	HeaderRow            int                    `json:"header_row,omitempty"`
+	HeaderMappings       []HeaderMapping        `json:"header_mappings,omitempty"`
 	PreserveOriginal     bool                   `json:"preserve_original"`
 }
 
@@ -361,6 +368,50 @@ func CompileProtectFormulaCellsOperation(task taskspec.ProtectFormulaCellsTask) 
 	}, nil
 }
 
+func CompileNormalizeHeadersOperation(task taskspec.NormalizeHeadersTask) (WorkbookOperationIR, error) {
+	if task.SourceSheet == "" {
+		return WorkbookOperationIR{}, fmt.Errorf("source sheet must not be empty")
+	}
+	if task.HeaderRow < 1 {
+		return WorkbookOperationIR{}, fmt.Errorf("header row must be positive")
+	}
+	if len(task.HeaderMappings) == 0 {
+		return WorkbookOperationIR{}, fmt.Errorf("header mappings must not be empty")
+	}
+	if err := validateNormalizeHeadersTaskCompositionBoundary(task.TaskSpec); err != nil {
+		return WorkbookOperationIR{}, err
+	}
+	seenFrom := map[string]struct{}{}
+	seenTo := map[string]struct{}{}
+	mappings := make([]HeaderMapping, 0, len(task.HeaderMappings))
+	for _, mapping := range task.HeaderMappings {
+		if strings.TrimSpace(mapping.From) == "" {
+			return WorkbookOperationIR{}, fmt.Errorf("header mapping from must not be empty")
+		}
+		if strings.TrimSpace(mapping.To) == "" {
+			return WorkbookOperationIR{}, fmt.Errorf("header mapping to must not be empty")
+		}
+		if _, ok := seenFrom[mapping.From]; ok {
+			return WorkbookOperationIR{}, fmt.Errorf("duplicate header mapping from %q", mapping.From)
+		}
+		if _, ok := seenTo[mapping.To]; ok {
+			return WorkbookOperationIR{}, fmt.Errorf("duplicate header mapping to %q", mapping.To)
+		}
+		seenFrom[mapping.From] = struct{}{}
+		seenTo[mapping.To] = struct{}{}
+		mappings = append(mappings, HeaderMapping{From: mapping.From, To: mapping.To})
+	}
+	return WorkbookOperationIR{
+		ExecutionKind:    taskspec.ExecutionKindComposition,
+		CompositionKind:  taskspec.CompositionKindHeaderNormalization,
+		OperationFamily:  taskspec.OperationFamilyNormalizeHeaders,
+		SourceSheet:      task.SourceSheet,
+		HeaderRow:        task.HeaderRow,
+		HeaderMappings:   mappings,
+		PreserveOriginal: task.PreserveOriginal,
+	}, nil
+}
+
 func validateHighlightTaskCompositionBoundary(spec taskspec.TaskSpec) error {
 	if spec.ExecutionKind != taskspec.ExecutionKindComposition {
 		return fmt.Errorf("highlight task execution_kind=%q want %q", spec.ExecutionKind, taskspec.ExecutionKindComposition)
@@ -448,6 +499,19 @@ func validateProtectFormulaCellsTaskCompositionBoundary(spec taskspec.TaskSpec) 
 	}
 	if spec.Operation != taskspec.OperationProtectFormulaCells {
 		return fmt.Errorf("protect formula cells task operation=%q want %q", spec.Operation, taskspec.OperationProtectFormulaCells)
+	}
+	return nil
+}
+
+func validateNormalizeHeadersTaskCompositionBoundary(spec taskspec.TaskSpec) error {
+	if spec.ExecutionKind != taskspec.ExecutionKindComposition {
+		return fmt.Errorf("normalize headers task execution_kind=%q want %q", spec.ExecutionKind, taskspec.ExecutionKindComposition)
+	}
+	if spec.CompositionKind != taskspec.CompositionKindHeaderNormalization {
+		return fmt.Errorf("normalize headers task composition_kind=%q want %q", spec.CompositionKind, taskspec.CompositionKindHeaderNormalization)
+	}
+	if spec.Operation != taskspec.OperationNormalizeHeaders {
+		return fmt.Errorf("normalize headers task operation=%q want %q", spec.Operation, taskspec.OperationNormalizeHeaders)
 	}
 	return nil
 }

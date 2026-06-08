@@ -22,6 +22,7 @@
         "copy_period_sheet",
         "add_data_validation",
         "protect_formula_cells",
+        "normalize_headers",
         "write_values"
       ]
     },

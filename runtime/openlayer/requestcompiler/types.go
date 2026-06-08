@@ -9,6 +9,7 @@ const (
 	CompositionCandidatePeriodCopy          = "period_copy"
 	CompositionCandidateDataValidation      = "data_validation"
 	CompositionCandidateFormulaProtection   = "formula_protection"
+	CompositionCandidateHeaderNormalization = "header_normalization"
 
 	OutputDestinationModeNewWorkbook  = "new_workbook"
 	OutputDestinationModeSameWorkbook = "same_workbook"
@@ -77,6 +78,11 @@ type ProtectFormulaCellsIntent struct {
 	ProtectionRule FormulaProtectionRule `json:"protection_rule,omitempty"`
 }
 
+type NormalizeHeadersIntent struct {
+	HeaderRow      int             `json:"header_row,omitempty"`
+	HeaderMappings []HeaderMapping `json:"header_mappings,omitempty"`
+}
+
 type DataValidationRule struct {
 	Ranges        []string `json:"ranges"`
 	RuleType      string   `json:"rule_type"`
@@ -88,6 +94,11 @@ type FormulaProtectionRule struct {
 	FormulaRanges []string `json:"formula_ranges"`
 	InputRanges   []string `json:"input_ranges,omitempty"`
 	Password      string   `json:"password,omitempty"`
+}
+
+type HeaderMapping struct {
+	From string `json:"from"`
+	To   string `json:"to"`
 }
 
 type CellValue struct {
@@ -150,6 +161,7 @@ type NormalizedIntent struct {
 	PeriodCopy            PeriodCopyIntent          `json:"period_copy,omitempty"`
 	AddDataValidation     AddDataValidationIntent   `json:"add_data_validation,omitempty"`
 	ProtectFormulaCells   ProtectFormulaCellsIntent `json:"protect_formula_cells,omitempty"`
+	NormalizeHeaders      NormalizeHeadersIntent    `json:"normalize_headers,omitempty"`
 	Materialization       MaterializationIntent     `json:"materialization"`
 	Ambiguity             AmbiguityIntent           `json:"ambiguity"`
 	Ambiguities           []string                  `json:"-"`

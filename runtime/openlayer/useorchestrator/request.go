@@ -40,12 +40,15 @@ type UseRequest struct {
 	FormulaColumns       []string               `json:"formula_columns,omitempty"`
 	ValidationRule       *DataValidationRule    `json:"validation_rule,omitempty"`
 	ProtectionRule       *FormulaProtectionRule `json:"protection_rule,omitempty"`
+	HeaderRow            int                    `json:"header_row,omitempty"`
+	HeaderMappings       []HeaderMapping        `json:"header_mappings,omitempty"`
 }
 
 type ValidatedExecutionRequest = runtimevalidate.ValidatedExecutionRequest
 type CellValue = runtimevalidate.CellValue
 type DataValidationRule = runtimevalidate.DataValidationRule
 type FormulaProtectionRule = runtimevalidate.FormulaProtectionRule
+type HeaderMapping = runtimevalidate.HeaderMapping
 
 func LoadRequest(path string) (UseRequest, error) {
 	var req UseRequest

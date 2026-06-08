@@ -23,7 +23,7 @@
     },
     "composition_candidates": {
       "type": "array",
-      "items": { "enum": ["group_summary", "threshold_highlight", "join_lookup", "structured_row_append", "formula_extension", "period_copy", "data_validation", "formula_protection"] }
+      "items": { "enum": ["group_summary", "threshold_highlight", "join_lookup", "structured_row_append", "formula_extension", "period_copy", "data_validation", "formula_protection", "header_normalization"] }
     },
     "summary": {
       "type": "object",
@@ -153,6 +153,20 @@
       },
       "additionalProperties": false
     },
+    "normalize_headers": {
+      "type": "object",
+      "properties": {
+        "header_row": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "header_mappings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/header_mapping" }
+        }
+      },
+      "additionalProperties": false
+    },
     "materialization": {
       "type": "object",
       "required": ["preserve_original", "output_destination_mode", "write_shape"],
@@ -217,6 +231,15 @@
             { "type": "null" }
           ]
         }
+      },
+      "additionalProperties": false
+    },
+    "header_mapping": {
+      "type": "object",
+      "required": ["from", "to"],
+      "properties": {
+        "from": { "type": "string", "minLength": 1 },
+        "to": { "type": "string", "minLength": 1 }
       },
       "additionalProperties": false
     }

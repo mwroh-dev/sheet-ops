@@ -82,6 +82,9 @@ func resolveRequestedOperation(req UseRequest) (string, string) {
 	if isFormulaProtectionRequest(req) {
 		return runtimeworkbookcase.ProtectFormulaCellsOperationName, "formula_protection_request_signals"
 	}
+	if isHeaderNormalizationRequest(req) {
+		return runtimeworkbookcase.NormalizeHeadersOperationName, "header_normalization_request_signals"
+	}
 	if isJoinLookupRequest(req) {
 		return runtimeworkbookcase.JoinLookupOperationName, "join_lookup_request_signals"
 	}
@@ -126,6 +129,13 @@ func isFormulaProtectionRequest(req UseRequest) bool {
 		strings.Contains(req.RequestText, "수식 보호") ||
 		strings.Contains(req.RequestText, "formula protection") ||
 		strings.Contains(req.RequestText, "protect formula")
+}
+
+func isHeaderNormalizationRequest(req UseRequest) bool {
+	return len(req.HeaderMappings) > 0 ||
+		strings.Contains(req.RequestText, "헤더 정규화") ||
+		strings.Contains(req.RequestText, "header normalization") ||
+		strings.Contains(req.RequestText, "normalize headers")
 }
 
 func isSummaryRequest(req UseRequest) bool {
@@ -173,6 +183,8 @@ func buildRoutingNote(selectedOperation, routingAuthority string, knowledge runt
 			return fmt.Sprintf("%s Fallback routed by data validation request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		case "formula_protection_request_signals":
 			return fmt.Sprintf("%s Fallback routed by formula protection request signals to %s.", knowledge.FallbackReason, selectedOperation)
+		case "header_normalization_request_signals":
+			return fmt.Sprintf("%s Fallback routed by header normalization request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		case "highlight_request_signals":
 			return fmt.Sprintf("%s Fallback routed by highlight request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		default:
@@ -214,6 +226,12 @@ func buildRoutingNote(selectedOperation, routingAuthority string, knowledge runt
 	case "formula_protection_request_signals":
 		return fmt.Sprintf(
 			"Loaded %d orchestrator knowledge records; formula protection request signals still selected %s. Knowledge remains advisory only.",
+			knowledge.RecordCount,
+			selectedOperation,
+		)
+	case "header_normalization_request_signals":
+		return fmt.Sprintf(
+			"Loaded %d orchestrator knowledge records; header normalization request signals still selected %s. Knowledge remains advisory only.",
 			knowledge.RecordCount,
 			selectedOperation,
 		)

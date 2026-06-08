@@ -46,7 +46,7 @@ func validateSupportedValidatedExecutionRequest(req ValidatedExecutionRequest) e
 		return fmt.Errorf("unsupported validated execution kind %q", req.ExecutionKind)
 	}
 	switch req.CompositionKind {
-	case "structured_row_append", "formula_extension", "period_copy", "data_validation", "formula_protection":
+	case "structured_row_append", "formula_extension", "period_copy", "data_validation", "formula_protection", "header_normalization":
 		return nil
 	case "group_summary", "threshold_highlight", "join_lookup":
 		return nil
@@ -117,6 +117,15 @@ func taskSpecFromUseRequest(req UseRequest) runtimetaskspec.TaskSpec {
 			SourceSheet:    req.SheetName,
 			OutputFile:     req.OutputFile,
 			ProtectionRule: toTaskSpecFormulaProtectionRule(req.ProtectionRule),
+		}).TaskSpec
+	case runtimeworkbookcase.NormalizeHeadersOperationName:
+		return runtimetaskspec.BuildNormalizeHeadersTask(runtimetaskspec.NormalizeHeadersRequest{
+			RequestText:    coalesceValidatedRequestText(req.RequestText, "structured header normalization request"),
+			InputFile:      req.InputFile,
+			SourceSheet:    req.SheetName,
+			OutputFile:     req.OutputFile,
+			HeaderRow:      req.HeaderRow,
+			HeaderMappings: toTaskSpecHeaderMappings(req.HeaderMappings),
 		}).TaskSpec
 	case runtimeworkbookcase.SummaryOperationName:
 		return runtimetaskspec.BuildGroupSummarizeTask(runtimetaskspec.UseRequest{
@@ -200,6 +209,15 @@ func taskSpecFromValidatedExecutionRequest(req ValidatedExecutionRequest) (runti
 			SourceSheet:    req.SourceSheet,
 			OutputFile:     req.OutputFile,
 			ProtectionRule: toTaskSpecFormulaProtectionRule(req.ProtectionRule),
+		}).TaskSpec, nil
+	case "header_normalization":
+		return runtimetaskspec.BuildNormalizeHeadersTask(runtimetaskspec.NormalizeHeadersRequest{
+			RequestText:    coalesceValidatedRequestText(req.RequestText, "validated header normalization request"),
+			InputFile:      req.InputFile,
+			SourceSheet:    req.SourceSheet,
+			OutputFile:     req.OutputFile,
+			HeaderRow:      req.HeaderRow,
+			HeaderMappings: toTaskSpecHeaderMappings(req.HeaderMappings),
 		}).TaskSpec, nil
 	case "join_lookup":
 		includeSourceColumns, err := defaultJoinSourceColumns(req)
@@ -293,6 +311,8 @@ func validatedOperation(req ValidatedExecutionRequest) string {
 		return runtimeworkbookcase.AddDataValidationOperationName
 	case "formula_protection":
 		return runtimeworkbookcase.ProtectFormulaCellsOperationName
+	case "header_normalization":
+		return runtimeworkbookcase.NormalizeHeadersOperationName
 	case "join_lookup":
 		return runtimeworkbookcase.JoinLookupOperationName
 	case "threshold_highlight":
@@ -330,7 +350,7 @@ func defaultJoinSourceColumns(req ValidatedExecutionRequest) ([]string, error) {
 
 func isSupportedOperation(operation string) bool {
 	switch operation {
-	case runtimeworkbookcase.SummaryOperationName, runtimeworkbookcase.HighlightOperationName, runtimeworkbookcase.JoinLookupOperationName, runtimeworkbookcase.AppendRowsOperationName, runtimeworkbookcase.ExtendFormulasOperationName, runtimeworkbookcase.CopyPeriodSheetOperationName, runtimeworkbookcase.AddDataValidationOperationName, runtimeworkbookcase.ProtectFormulaCellsOperationName:
+	case runtimeworkbookcase.SummaryOperationName, runtimeworkbookcase.HighlightOperationName, runtimeworkbookcase.JoinLookupOperationName, runtimeworkbookcase.AppendRowsOperationName, runtimeworkbookcase.ExtendFormulasOperationName, runtimeworkbookcase.CopyPeriodSheetOperationName, runtimeworkbookcase.AddDataValidationOperationName, runtimeworkbookcase.ProtectFormulaCellsOperationName, runtimeworkbookcase.NormalizeHeadersOperationName:
 		return true
 	default:
 		return false
@@ -369,6 +389,17 @@ func toTaskSpecFormulaProtectionRule(rule *FormulaProtectionRule) runtimetaskspe
 		InputRanges:   append([]string(nil), rule.InputRanges...),
 		Password:      rule.Password,
 	}
+}
+
+func toTaskSpecHeaderMappings(values []HeaderMapping) []runtimetaskspec.HeaderMapping {
+	if len(values) == 0 {
+		return nil
+	}
+	converted := make([]runtimetaskspec.HeaderMapping, 0, len(values))
+	for _, value := range values {
+		converted = append(converted, runtimetaskspec.HeaderMapping{From: value.From, To: value.To})
+	}
+	return converted
 }
 
 func toTaskSpecFilters(filters []FilterSpec) []runtimetaskspec.FilterSpec {

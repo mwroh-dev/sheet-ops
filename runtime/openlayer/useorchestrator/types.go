@@ -23,11 +23,11 @@ type RunPaths = runtimeworkbookcase.RunPaths
 type RunResult = runtimeworkbookcase.RunResult
 
 type OrchestratorDecision struct {
-	ScenarioID               string                             `json:"scenario_id"`
-	Decision                 string                             `json:"decision"`
-	RequestCompilerLoopState runtimesubagent.SubagentLoopState  `json:"request_compiler_loop_state"`
+	ScenarioID                string                            `json:"scenario_id"`
+	Decision                  string                            `json:"decision"`
+	RequestCompilerLoopState  runtimesubagent.SubagentLoopState `json:"request_compiler_loop_state"`
 	ValidatedExecutionRequest *ValidatedExecutionRequest        `json:"validated_execution_request,omitempty"`
-	RepairAdvice             *runtimeworkbookcase.RepairAdvice  `json:"repair_advice,omitempty"`
+	RepairAdvice              *runtimeworkbookcase.RepairAdvice `json:"repair_advice,omitempty"`
 }
 
 type ResultVerifierOutcome struct {

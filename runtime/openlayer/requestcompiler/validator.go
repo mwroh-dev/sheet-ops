@@ -268,6 +268,19 @@ func compileDecision(intent NormalizedIntent) Decision {
 		}
 	}
 
+	if slices.Contains(intent.CompositionCandidates, CompositionCandidateHeaderNormalization) && normalizeHeadersIntentReady(intent) {
+		return Decision{
+			Status:            StatusCompiled,
+			SelectedOperation: "normalize_headers",
+			Confidence:        0.98,
+			Notes: []string{
+				"the normalized intent maps cleanly to the supported explicit header normalization runtime operation",
+			},
+			SheetCandidates:   supportedSheetCandidates(intent),
+			StructuralSignals: []string{"header_normalization_request", "preserve_original"},
+		}
+	}
+
 	if slices.Contains(intent.CompositionCandidates, CompositionCandidateJoinLookup) && joinLookupIntentReady(intent) {
 		return Decision{
 			Status:            StatusCompiled,
@@ -444,6 +457,10 @@ func toRuntimeIntent(intent NormalizedIntent) runtimevalidate.NormalizedIntent {
 				Password:      intent.ProtectFormulaCells.ProtectionRule.Password,
 			},
 		},
+		NormalizeHeaders: runtimevalidate.NormalizeHeadersIntent{
+			HeaderRow:      intent.NormalizeHeaders.HeaderRow,
+			HeaderMappings: toRuntimeHeaderMappings(intent.NormalizeHeaders.HeaderMappings),
+		},
 		Materialization: runtimevalidate.MaterializationIntent{
 			PreserveOriginal:      intent.Materialization.PreserveOriginal,
 			OutputDestinationMode: intent.Materialization.OutputDestinationMode,
@@ -573,6 +590,22 @@ func periodCopyIntentReady(intent NormalizedIntent) bool {
 func formulaProtectionIntentReady(intent NormalizedIntent) bool {
 	return len(intent.SourceSheetCandidates) > 0 &&
 		len(intent.ProtectFormulaCells.ProtectionRule.FormulaRanges) > 0
+}
+
+func normalizeHeadersIntentReady(intent NormalizedIntent) bool {
+	return len(intent.SourceSheetCandidates) > 0 &&
+		len(intent.NormalizeHeaders.HeaderMappings) > 0
+}
+
+func toRuntimeHeaderMappings(values []HeaderMapping) []runtimevalidate.HeaderMapping {
+	if len(values) == 0 {
+		return []runtimevalidate.HeaderMapping{}
+	}
+	converted := make([]runtimevalidate.HeaderMapping, 0, len(values))
+	for _, value := range values {
+		converted = append(converted, runtimevalidate.HeaderMapping{From: value.From, To: value.To})
+	}
+	return converted
 }
 
 func toRuntimeCellValues(values []CellValue) []runtimevalidate.CellValue {

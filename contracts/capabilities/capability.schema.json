@@ -51,6 +51,7 @@
         "copy_period_sheet",
         "add_data_validation",
         "protect_formula_cells",
+        "normalize_headers",
         "write_values"
       ]
     },
@@ -64,6 +65,7 @@
         "copy_period_sheet",
         "add_data_validation",
         "protect_formula_cells",
+        "normalize_headers",
         "write_values"
       ]
     },
@@ -230,6 +232,22 @@
         "properties": {
           "operation_family": {
             "const": "protect_formula_cells"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "normalize_headers"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "operation_family": {
+            "const": "normalize_headers"
           }
         }
       }

@@ -44,6 +44,11 @@ type FormulaProtectionRule struct {
 	Password      string   `json:"password,omitempty"`
 }
 
+type HeaderMapping struct {
+	From string `json:"from"`
+	To   string `json:"to"`
+}
+
 type SourceSpec struct {
 	Kind string `json:"kind"`
 	Path string `json:"path,omitempty"`
@@ -75,6 +80,8 @@ type TaskSpec struct {
 	FormulaColumns       []string               `json:"formula_columns,omitempty"`
 	ValidationRule       *DataValidationRule    `json:"validation_rule,omitempty"`
 	ProtectionRule       *FormulaProtectionRule `json:"protection_rule,omitempty"`
+	HeaderRow            int                    `json:"header_row,omitempty"`
+	HeaderMappings       []HeaderMapping        `json:"header_mappings,omitempty"`
 }
 
 type GroupSummarizeTask struct {
@@ -140,6 +147,14 @@ type ProtectFormulaCellsTask struct {
 	TaskSpec         TaskSpec
 	SourceSheet      string
 	ProtectionRule   FormulaProtectionRule
+	PreserveOriginal bool
+}
+
+type NormalizeHeadersTask struct {
+	TaskSpec         TaskSpec
+	SourceSheet      string
+	HeaderRow        int
+	HeaderMappings   []HeaderMapping
 	PreserveOriginal bool
 }
 
@@ -221,6 +236,15 @@ type ProtectFormulaCellsRequest struct {
 	ProtectionRule FormulaProtectionRule
 }
 
+type NormalizeHeadersRequest struct {
+	RequestText    string
+	InputFile      string
+	SourceSheet    string
+	OutputFile     string
+	HeaderRow      int
+	HeaderMappings []HeaderMapping
+}
+
 const (
 	ExecutionKindComposition             = "composition"
 	CompositionKindGroupSummary          = "group_summary"
@@ -231,6 +255,7 @@ const (
 	CompositionKindPeriodCopy            = "period_copy"
 	CompositionKindDataValidation        = "data_validation"
 	CompositionKindFormulaProtection     = "formula_protection"
+	CompositionKindHeaderNormalization   = "header_normalization"
 	OperationCreateSummarySheet          = "create_summary_sheet"
 	OperationHighlightThresholdRows      = "highlight_threshold_rows"
 	OperationCreateJoinLookupResultSheet = "create_join_lookup_result_sheet"
@@ -239,6 +264,7 @@ const (
 	OperationCopyPeriodSheet             = "copy_period_sheet"
 	OperationAddDataValidation           = "add_data_validation"
 	OperationProtectFormulaCells         = "protect_formula_cells"
+	OperationNormalizeHeaders            = "normalize_headers"
 	OperationFamilyGroupSummarize        = "group_summarize"
 	OperationFamilyHighlightThreshold    = "highlight_threshold"
 	OperationFamilyJoinLookup            = "join_lookup"
@@ -247,6 +273,7 @@ const (
 	OperationFamilyCopyPeriodSheet       = "copy_period_sheet"
 	OperationFamilyAddDataValidation     = "add_data_validation"
 	OperationFamilyProtectFormulaCells   = "protect_formula_cells"
+	OperationFamilyNormalizeHeaders      = "normalize_headers"
 
 	defaultHighlightColumn    = "amount"
 	defaultHighlightOperator  = ">"
@@ -471,6 +498,32 @@ func BuildProtectFormulaCellsTask(req ProtectFormulaCellsRequest) ProtectFormula
 	}
 }
 
+func BuildNormalizeHeadersTask(req NormalizeHeadersRequest) NormalizeHeadersTask {
+	headerRow := req.HeaderRow
+	if headerRow == 0 {
+		headerRow = 1
+	}
+	return NormalizeHeadersTask{
+		TaskSpec: TaskSpec{
+			RequestKind:     "workbook_case",
+			ExecutionKind:   ExecutionKindComposition,
+			CompositionKind: CompositionKindHeaderNormalization,
+			Source:          SourceSpec{Kind: "natural_language"},
+			RequestText:     req.RequestText,
+			InputWorkbook:   req.InputFile,
+			OutputWorkbook:  req.OutputFile,
+			Operation:       OperationNormalizeHeaders,
+			SourceSheet:     req.SourceSheet,
+			HeaderRow:       headerRow,
+			HeaderMappings:  cloneHeaderMappings(req.HeaderMappings),
+		},
+		SourceSheet:      req.SourceSheet,
+		HeaderRow:        headerRow,
+		HeaderMappings:   cloneHeaderMappings(req.HeaderMappings),
+		PreserveOriginal: true,
+	}
+}
+
 func cloneFilters(values []FilterSpec) []FilterSpec {
 	if len(values) == 0 {
 		return nil
@@ -533,4 +586,13 @@ func cloneFormulaProtectionRule(value FormulaProtectionRule) *FormulaProtectionR
 	cloned.FormulaRanges = cloneStrings(value.FormulaRanges)
 	cloned.InputRanges = cloneStrings(value.InputRanges)
 	return &cloned
+}
+
+func cloneHeaderMappings(values []HeaderMapping) []HeaderMapping {
+	if len(values) == 0 {
+		return nil
+	}
+	cloned := make([]HeaderMapping, len(values))
+	copy(cloned, values)
+	return cloned
 }

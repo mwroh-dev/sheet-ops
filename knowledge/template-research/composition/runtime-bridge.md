@@ -29,7 +29,7 @@ UseRequest / ValidatedExecutionRequest
 Atom builder records mirror this path for `group_summarize`,
 `highlight_threshold`, `join_lookup`, `append_structured_rows`,
 `extend_table_formulas`, `copy_period_sheet`, `add_data_validation`,
-`protect_formula_cells`, and `write_values`. The supported `add_data_validation` scope is explicit
+`protect_formula_cells`, `normalize_headers`, and `write_values`. The supported `add_data_validation` scope is explicit
 list/dropdown rules on declared ranges; richer validation forms remain
 opportunity scope. The supported `protect_formula_cells` scope is explicit
 formula/input ranges with sheet protection enabled; automatic formula discovery
@@ -37,7 +37,9 @@ and collaborative permission policies remain opportunity scope. Atom builder
 records do not add new runtime support by themselves. The supported
 `copy_period_sheet` scope copies an explicit source sheet to a target sheet;
 label updates, input clearing, and carry-forward continuity remain
-`roll_forward_period` opportunity scope.
+`roll_forward_period` opportunity scope. The supported `normalize_headers`
+scope rewrites only explicitly mapped header-row cells; alias inference,
+duplicate resolution, and multi-row header detection remain opportunity scope.
 
 ## Promotion Rule
 

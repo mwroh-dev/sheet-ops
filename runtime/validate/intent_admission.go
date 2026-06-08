@@ -37,6 +37,8 @@ func AdmitIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIn
 		return admitAddDataValidationIntent(intent, decision)
 	case "protect_formula_cells":
 		return admitProtectFormulaCellsIntent(intent, decision)
+	case "normalize_headers":
+		return admitNormalizeHeadersIntent(intent, decision)
 	case "copy_period_sheet":
 		return admitPeriodCopyIntent(intent, decision)
 	default:
@@ -49,6 +51,36 @@ func AdmitIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIn
 		})
 		return admittedIntent{}, &result, err
 	}
+}
+
+func admitNormalizeHeadersIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIntent, *Result, error) {
+	if !intent.Materialization.PreserveOriginal ||
+		intent.Materialization.OutputDestinationMode != "new_workbook" ||
+		intent.Materialization.WriteShape != "in_place_cells" {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"invalid_materialization"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	headerRow := intent.NormalizeHeaders.HeaderRow
+	if headerRow == 0 {
+		headerRow = 1
+	}
+	if len(intent.NormalizeHeaders.HeaderMappings) == 0 {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"incomplete_header_normalization_intent"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	return admittedIntent{
+		decision:        decision,
+		compositionKind: "header_normalization",
+		sourceSheets:    preferredSourceSheets(intent, decision),
+		headerRow:       headerRow,
+		headerMappings:  cloneHeaderMappings(intent.NormalizeHeaders.HeaderMappings),
+	}, nil, nil
 }
 
 func admitSummaryIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIntent, *Result, error) {

@@ -181,6 +181,24 @@
       },
       "additionalProperties": false
     },
+    "header_mapping": {
+      "type": "object",
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "type": "string",
+          "minLength": 1
+        },
+        "to": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
     "non_empty_string_array": {
       "type": "array",
       "minItems": 1,
@@ -216,7 +234,8 @@
         "formula_extension",
         "period_copy",
         "data_validation",
-        "formula_protection"
+        "formula_protection",
+        "header_normalization"
       ]
     },
     "source": {
@@ -243,7 +262,8 @@
         "extend_table_formulas",
         "copy_period_sheet",
         "add_data_validation",
-        "protect_formula_cells"
+        "protect_formula_cells",
+        "normalize_headers"
       ]
     },
     "source_sheet": {
@@ -327,6 +347,17 @@
     },
     "protection_rule": {
       "$ref": "#/$defs/formula_protection_rule"
+    },
+    "header_row": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "header_mappings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/header_mapping"
+      }
     }
   },
   "allOf": [
@@ -794,6 +825,50 @@
             { "required": ["target_rows"] },
             { "required": ["formula_columns"] },
             { "required": ["validation_rule"] }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "operation": {
+            "const": "normalize_headers"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "execution_kind": {
+            "const": "composition"
+          },
+          "composition_kind": {
+            "const": "header_normalization"
+          }
+        },
+        "required": [
+          "composition_kind",
+          "header_row",
+          "header_mappings"
+        ],
+        "not": {
+          "anyOf": [
+            { "required": ["target_sheet"] },
+            { "required": ["filters"] },
+            { "required": ["group_by"] },
+            { "required": ["metrics"] },
+            { "required": ["summary_mode"] },
+            { "required": ["threshold_rule"] },
+            { "required": ["lookup_sheet"] },
+            { "required": ["join_key"] },
+            { "required": ["include_source_columns"] },
+            { "required": ["append_lookup_columns"] },
+            { "required": ["values"] },
+            { "required": ["formula_source_row"] },
+            { "required": ["target_rows"] },
+            { "required": ["formula_columns"] },
+            { "required": ["validation_rule"] },
+            { "required": ["protection_rule"] }
           ]
         }
       }

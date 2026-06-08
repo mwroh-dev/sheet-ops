@@ -100,6 +100,9 @@ func normalizeIntent(intent NormalizedIntent) NormalizedIntent {
 	if intent.ProtectFormulaCells.ProtectionRule.InputRanges == nil {
 		intent.ProtectFormulaCells.ProtectionRule.InputRanges = []string{}
 	}
+	if intent.NormalizeHeaders.HeaderMappings == nil {
+		intent.NormalizeHeaders.HeaderMappings = []HeaderMapping{}
+	}
 	if intent.Ambiguities != nil {
 		intent.Ambiguity.Markers = append([]string(nil), intent.Ambiguities...)
 	} else if intent.Ambiguity.Markers != nil {

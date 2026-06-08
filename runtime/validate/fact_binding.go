@@ -99,6 +99,15 @@ func BindFacts(admitted admittedIntent, facts runtimeinspect.WorkbookFacts) (bou
 			return blockedFactBinding("unsupported_source_sheet")
 		}
 		return boundIntent{admittedIntent: admitted, facts: facts, sourceSheet: sourceSheet}, nil, nil
+	case "header_normalization":
+		sourceSheet, ok := firstExistingSheet(facts, admitted.sourceSheets)
+		if !ok {
+			return blockedFactBinding("unsupported_source_sheet")
+		}
+		if missingColumns := missingWorkbookColumns(facts, sourceSheet, headerMappingSourceColumns(admitted)); len(missingColumns) > 0 {
+			return blockedFactBinding("missing_required_columns")
+		}
+		return boundIntent{admittedIntent: admitted, facts: facts, sourceSheet: sourceSheet}, nil, nil
 	default:
 		return blockedFactBinding("unsupported_request")
 	}
@@ -162,6 +171,14 @@ func requiredJoinSourceColumns(admitted admittedIntent) []string {
 func requiredJoinLookupColumns(admitted admittedIntent) []string {
 	columns := []string{admitted.joinKey}
 	columns = append(columns, admitted.appendLookupColumns...)
+	return columns
+}
+
+func headerMappingSourceColumns(admitted admittedIntent) []string {
+	columns := make([]string, 0, len(admitted.headerMappings))
+	for _, mapping := range admitted.headerMappings {
+		columns = append(columns, mapping.From)
+	}
 	return columns
 }
 

@@ -74,6 +74,11 @@ type ProtectFormulaCellsIntent struct {
 	ProtectionRule FormulaProtectionRule
 }
 
+type NormalizeHeadersIntent struct {
+	HeaderRow      int
+	HeaderMappings []HeaderMapping
+}
+
 type DataValidationRule struct {
 	Ranges        []string `json:"ranges"`
 	RuleType      string   `json:"rule_type"`
@@ -85,6 +90,11 @@ type FormulaProtectionRule struct {
 	FormulaRanges []string `json:"formula_ranges"`
 	InputRanges   []string `json:"input_ranges,omitempty"`
 	Password      string   `json:"password,omitempty"`
+}
+
+type HeaderMapping struct {
+	From string `json:"from"`
+	To   string `json:"to"`
 }
 
 type MaterializationIntent struct {
@@ -113,6 +123,7 @@ type NormalizedIntent struct {
 	PeriodCopy            PeriodCopyIntent
 	AddDataValidation     AddDataValidationIntent
 	ProtectFormulaCells   ProtectFormulaCellsIntent
+	NormalizeHeaders      NormalizeHeadersIntent
 	Materialization       MaterializationIntent
 	Ambiguity             AmbiguityIntent
 }
@@ -181,6 +192,8 @@ type ValidatedExecutionRequest struct {
 	FormulaColumns       []string               `json:"formula_columns,omitempty"`
 	ValidationRule       *DataValidationRule    `json:"validation_rule,omitempty"`
 	ProtectionRule       *FormulaProtectionRule `json:"protection_rule,omitempty"`
+	HeaderRow            int                    `json:"header_row,omitempty"`
+	HeaderMappings       []HeaderMapping        `json:"header_mappings,omitempty"`
 }
 
 type CellValue struct {
@@ -227,6 +240,8 @@ type admittedIntent struct {
 	formulaColumns       []string
 	validationRule       DataValidationRule
 	protectionRule       FormulaProtectionRule
+	headerRow            int
+	headerMappings       []HeaderMapping
 }
 
 type boundIntent struct {
@@ -270,6 +285,15 @@ func cloneFormulaProtectionRule(value FormulaProtectionRule) FormulaProtectionRu
 		InputRanges:   append([]string(nil), value.InputRanges...),
 		Password:      value.Password,
 	}
+}
+
+func cloneHeaderMappings(values []HeaderMapping) []HeaderMapping {
+	if len(values) == 0 {
+		return []HeaderMapping{}
+	}
+	cloned := make([]HeaderMapping, len(values))
+	copy(cloned, values)
+	return cloned
 }
 
 func finalizeResult(result Result) (Result, error) {

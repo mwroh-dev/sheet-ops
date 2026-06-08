@@ -9,10 +9,31 @@
       "korean_name": "청구서 항목 과금 문서",
       "why": "고객과 문서 식별자, 반복 청구 항목, 합계, 출력 문서가 함께 필요한 billing workflow를 설명한다.",
       "primary_workflow": "draft_invoice_to_reviewable_billing_document",
-      "required_molecule_ids": ["metadata_header", "repeating_row_input_block", "line_item_total_block", "printable_document_region", "protected_summary_region"],
-      "supporting_atom_ids": ["join_lookup", "group_summarize", "append_structured_rows", "extend_table_formulas", "generate_printable_form", "protect_formula_cells", "add_data_validation", "normalize_headers"],
-      "planned_or_unsupported_atom_ids": ["generate_printable_form", "normalize_headers"],
-      "verifier_focus": ["line item total matches source rows", "metadata appears in output region", "formula and summary cells remain protected"],
+      "required_molecule_ids": [
+        "metadata_header",
+        "repeating_row_input_block",
+        "line_item_total_block",
+        "printable_document_region",
+        "protected_summary_region"
+      ],
+      "supporting_atom_ids": [
+        "join_lookup",
+        "group_summarize",
+        "append_structured_rows",
+        "extend_table_formulas",
+        "generate_printable_form",
+        "protect_formula_cells",
+        "add_data_validation",
+        "normalize_headers"
+      ],
+      "planned_or_unsupported_atom_ids": [
+        "generate_printable_form"
+      ],
+      "verifier_focus": [
+        "line item total matches source rows",
+        "metadata appears in output region",
+        "formula and summary cells remain protected"
+      ],
       "fixture_priority": "p0",
       "advisory_status": "advisory_only",
       "rationale": "청구서는 단순 table append가 아니라 document identity, line item calculation, printable output이 함께 있어야 organism으로 성립한다."
@@ -22,10 +43,30 @@
       "korean_name": "경비 정산 문서",
       "why": "직원이나 프로젝트 기준 경비 항목을 모아 reimbursable total과 검토 가능한 문서로 만드는 workflow다.",
       "primary_workflow": "submit_expense_items_for_reimbursement_review",
-      "required_molecule_ids": ["metadata_header", "repeating_row_input_block", "line_item_total_block", "printable_document_region", "protected_summary_region"],
-      "supporting_atom_ids": ["group_summarize", "append_structured_rows", "extend_table_formulas", "generate_printable_form", "protect_formula_cells", "add_data_validation", "normalize_headers"],
-      "planned_or_unsupported_atom_ids": ["generate_printable_form", "normalize_headers"],
-      "verifier_focus": ["eligible expense rows roll into reimbursement total", "required metadata is present", "output document reflects latest totals"],
+      "required_molecule_ids": [
+        "metadata_header",
+        "repeating_row_input_block",
+        "line_item_total_block",
+        "printable_document_region",
+        "protected_summary_region"
+      ],
+      "supporting_atom_ids": [
+        "group_summarize",
+        "append_structured_rows",
+        "extend_table_formulas",
+        "generate_printable_form",
+        "protect_formula_cells",
+        "add_data_validation",
+        "normalize_headers"
+      ],
+      "planned_or_unsupported_atom_ids": [
+        "generate_printable_form"
+      ],
+      "verifier_focus": [
+        "eligible expense rows roll into reimbursement total",
+        "required metadata is present",
+        "output document reflects latest totals"
+      ],
       "fixture_priority": "p1",
       "advisory_status": "advisory_only",
       "rationale": "invoice와 유사하지만 고객 과금이 아니라 제출/승인 가능한 비용 정산 산출물이 핵심이다."
@@ -35,10 +76,30 @@
       "korean_name": "구매 주문 관리 문서",
       "why": "구매 항목, 공급자 식별자, 주문 상태, 출력 가능한 PO 문서를 하나의 control workflow로 묶는다.",
       "primary_workflow": "create_and_track_purchase_order_status",
-      "required_molecule_ids": ["metadata_header", "repeating_row_input_block", "line_item_total_block", "status_pipeline_block", "printable_document_region"],
-      "supporting_atom_ids": ["join_lookup", "group_summarize", "append_structured_rows", "extend_table_formulas", "generate_printable_form", "add_data_validation", "normalize_headers"],
-      "planned_or_unsupported_atom_ids": ["generate_printable_form", "normalize_headers"],
-      "verifier_focus": ["PO line totals match item rows", "allowed status values drive status summary", "supplier metadata is carried into the document"],
+      "required_molecule_ids": [
+        "metadata_header",
+        "repeating_row_input_block",
+        "line_item_total_block",
+        "status_pipeline_block",
+        "printable_document_region"
+      ],
+      "supporting_atom_ids": [
+        "join_lookup",
+        "group_summarize",
+        "append_structured_rows",
+        "extend_table_formulas",
+        "generate_printable_form",
+        "add_data_validation",
+        "normalize_headers"
+      ],
+      "planned_or_unsupported_atom_ids": [
+        "generate_printable_form"
+      ],
+      "verifier_focus": [
+        "PO line totals match item rows",
+        "allowed status values drive status summary",
+        "supplier metadata is carried into the document"
+      ],
       "fixture_priority": "p1",
       "advisory_status": "advisory_only",
       "rationale": "구매 주문은 문서형 molecule에 상태 파이프라인이 결합될 때 invoice/expense와 구분된다."
@@ -48,10 +109,29 @@
       "korean_name": "월간 예산 통제표",
       "why": "월별 계획 대비 실제 지출, variance, 초과 예외, 다음 기간 연속성을 관리한다.",
       "primary_workflow": "roll_budget_period_and_review_variance",
-      "required_molecule_ids": ["period_copy_block", "carry_forward_summary_block", "formula_extension_block", "threshold_exception_block", "protected_summary_region"],
-      "supporting_atom_ids": ["group_summarize", "highlight_threshold", "copy_period_sheet", "roll_forward_period", "extend_table_formulas", "protect_formula_cells"],
-      "planned_or_unsupported_atom_ids": ["roll_forward_period"],
-      "verifier_focus": ["new period preserves formulas", "closing values carry into next period", "budget overruns are highlighted"],
+      "required_molecule_ids": [
+        "period_copy_block",
+        "carry_forward_summary_block",
+        "formula_extension_block",
+        "threshold_exception_block",
+        "protected_summary_region"
+      ],
+      "supporting_atom_ids": [
+        "group_summarize",
+        "highlight_threshold",
+        "copy_period_sheet",
+        "roll_forward_period",
+        "extend_table_formulas",
+        "protect_formula_cells"
+      ],
+      "planned_or_unsupported_atom_ids": [
+        "roll_forward_period"
+      ],
+      "verifier_focus": [
+        "new period preserves formulas",
+        "closing values carry into next period",
+        "budget overruns are highlighted"
+      ],
       "fixture_priority": "p0",
       "advisory_status": "advisory_only",
       "rationale": "예산은 기간 복사와 이월/마감 연속성, 임계값 예외가 동시에 필요하므로 단순 summary가 아니다."
@@ -61,10 +141,27 @@
       "korean_name": "현금 흐름 모니터",
       "why": "opening balance, inflow, outflow, closing balance의 기간별 연속성을 확인한다.",
       "primary_workflow": "track_opening_to_closing_cash_continuity",
-      "required_molecule_ids": ["period_copy_block", "carry_forward_summary_block", "formula_extension_block", "protected_summary_region"],
-      "supporting_atom_ids": ["group_summarize", "copy_period_sheet", "roll_forward_period", "extend_table_formulas", "protect_formula_cells"],
-      "planned_or_unsupported_atom_ids": ["roll_forward_period"],
-      "verifier_focus": ["closing balance equals next opening balance", "inflow/outflow formulas remain intact", "summary is protected"],
+      "required_molecule_ids": [
+        "period_copy_block",
+        "carry_forward_summary_block",
+        "formula_extension_block",
+        "protected_summary_region"
+      ],
+      "supporting_atom_ids": [
+        "group_summarize",
+        "copy_period_sheet",
+        "roll_forward_period",
+        "extend_table_formulas",
+        "protect_formula_cells"
+      ],
+      "planned_or_unsupported_atom_ids": [
+        "roll_forward_period"
+      ],
+      "verifier_focus": [
+        "closing balance equals next opening balance",
+        "inflow/outflow formulas remain intact",
+        "summary is protected"
+      ],
       "fixture_priority": "p0",
       "advisory_status": "advisory_only",
       "rationale": "cash flow는 예산처럼 기간형이지만 핵심 검증은 초과 표시보다 balance continuity다."
@@ -74,10 +171,25 @@
       "korean_name": "출석부",
       "why": "사람과 날짜 또는 수업 회차가 교차하는 matrix에서 출석 상태와 합계를 관리한다.",
       "primary_workflow": "mark_attendance_across_period_grid",
-      "required_molecule_ids": ["period_copy_block", "matrix_growth_block", "timeline_grid_projection_block", "protected_summary_region"],
-      "supporting_atom_ids": ["group_summarize", "copy_period_sheet", "protect_formula_cells", "add_data_validation", "normalize_headers"],
-      "planned_or_unsupported_atom_ids": ["normalize_headers"],
-      "verifier_focus": ["new dates or learners are included in totals", "attendance statuses are valid", "period grid formulas remain intact"],
+      "required_molecule_ids": [
+        "period_copy_block",
+        "matrix_growth_block",
+        "timeline_grid_projection_block",
+        "protected_summary_region"
+      ],
+      "supporting_atom_ids": [
+        "group_summarize",
+        "copy_period_sheet",
+        "protect_formula_cells",
+        "add_data_validation",
+        "normalize_headers"
+      ],
+      "planned_or_unsupported_atom_ids": [],
+      "verifier_focus": [
+        "new dates or learners are included in totals",
+        "attendance statuses are valid",
+        "period grid formulas remain intact"
+      ],
       "fixture_priority": "p0",
       "advisory_status": "advisory_only",
       "rationale": "출석부는 row append보다 matrix growth와 period grid 검증이 중심이다."
@@ -87,10 +199,26 @@
       "korean_name": "근무 시간 기록표",
       "why": "기간별 업무 시간 행을 추가하고 합계와 overtime 같은 계산을 유지한다.",
       "primary_workflow": "log_period_hours_and_summarize_totals",
-      "required_molecule_ids": ["period_copy_block", "repeating_row_input_block", "formula_extension_block", "protected_summary_region"],
-      "supporting_atom_ids": ["group_summarize", "copy_period_sheet", "append_structured_rows", "extend_table_formulas", "protect_formula_cells", "add_data_validation"],
+      "required_molecule_ids": [
+        "period_copy_block",
+        "repeating_row_input_block",
+        "formula_extension_block",
+        "protected_summary_region"
+      ],
+      "supporting_atom_ids": [
+        "group_summarize",
+        "copy_period_sheet",
+        "append_structured_rows",
+        "extend_table_formulas",
+        "protect_formula_cells",
+        "add_data_validation"
+      ],
       "planned_or_unsupported_atom_ids": [],
-      "verifier_focus": ["new time rows are included in totals", "hour formulas extend to appended rows", "period copies preserve summary formulas"],
+      "verifier_focus": [
+        "new time rows are included in totals",
+        "hour formulas extend to appended rows",
+        "period copies preserve summary formulas"
+      ],
       "fixture_priority": "p0",
       "advisory_status": "advisory_only",
       "rationale": "timesheet은 matrix보다 반복 행 입력과 기간별 formula preservation이 우선이다."
@@ -100,10 +228,24 @@
       "korean_name": "프로젝트 타임라인 추적표",
       "why": "task의 시작/종료, phase, 상태를 timeline view에 반영해 일정 진행을 추적한다.",
       "primary_workflow": "project_tasks_to_timeline_view",
-      "required_molecule_ids": ["timeline_grid_projection_block", "period_copy_block", "status_pipeline_block", "formula_extension_block"],
-      "supporting_atom_ids": ["group_summarize", "copy_period_sheet", "extend_table_formulas", "add_data_validation"],
+      "required_molecule_ids": [
+        "timeline_grid_projection_block",
+        "period_copy_block",
+        "status_pipeline_block",
+        "formula_extension_block"
+      ],
+      "supporting_atom_ids": [
+        "group_summarize",
+        "copy_period_sheet",
+        "extend_table_formulas",
+        "add_data_validation"
+      ],
       "planned_or_unsupported_atom_ids": [],
-      "verifier_focus": ["task date changes move timeline projection", "new tasks appear in timeline", "status summary matches task rows"],
+      "verifier_focus": [
+        "task date changes move timeline projection",
+        "new tasks appear in timeline",
+        "status summary matches task rows"
+      ],
       "fixture_priority": "p1",
       "advisory_status": "advisory_only",
       "rationale": "프로젝트 타임라인은 날짜 값을 단순 저장하지 않고 grid/timeline projection으로 변환해야 한다."
@@ -113,10 +255,25 @@
       "korean_name": "근무 교대 편성표",
       "why": "사람과 날짜/shift grid를 만들어 근무 배정과 coverage를 관리한다.",
       "primary_workflow": "assign_people_to_shift_grid",
-      "required_molecule_ids": ["timeline_grid_projection_block", "period_copy_block", "matrix_growth_block", "protected_summary_region"],
-      "supporting_atom_ids": ["group_summarize", "copy_period_sheet", "protect_formula_cells", "add_data_validation", "normalize_headers"],
-      "planned_or_unsupported_atom_ids": ["normalize_headers"],
-      "verifier_focus": ["shift assignments remain within valid choices", "coverage totals include new shifts", "period copy preserves roster structure"],
+      "required_molecule_ids": [
+        "timeline_grid_projection_block",
+        "period_copy_block",
+        "matrix_growth_block",
+        "protected_summary_region"
+      ],
+      "supporting_atom_ids": [
+        "group_summarize",
+        "copy_period_sheet",
+        "protect_formula_cells",
+        "add_data_validation",
+        "normalize_headers"
+      ],
+      "planned_or_unsupported_atom_ids": [],
+      "verifier_focus": [
+        "shift assignments remain within valid choices",
+        "coverage totals include new shifts",
+        "period copy preserves roster structure"
+      ],
       "fixture_priority": "p1",
       "advisory_status": "advisory_only",
       "rationale": "shift roster는 attendance와 비슷하지만 입력 의미가 출석 기록이 아니라 미래 배정과 coverage다."
@@ -126,10 +283,27 @@
       "korean_name": "공사 비용 추적표",
       "why": "공정이나 phase별 비용 항목, 누적 지출, 예산 초과 예외를 관리한다.",
       "primary_workflow": "track_phase_costs_against_budget",
-      "required_molecule_ids": ["timeline_grid_projection_block", "line_item_total_block", "carry_forward_summary_block", "threshold_exception_block"],
-      "supporting_atom_ids": ["group_summarize", "highlight_threshold", "protect_formula_cells", "roll_forward_period", "append_structured_rows"],
-      "planned_or_unsupported_atom_ids": ["roll_forward_period"],
-      "verifier_focus": ["phase totals equal cost line items", "budget exceptions are flagged", "carry-forward totals remain consistent"],
+      "required_molecule_ids": [
+        "timeline_grid_projection_block",
+        "line_item_total_block",
+        "carry_forward_summary_block",
+        "threshold_exception_block"
+      ],
+      "supporting_atom_ids": [
+        "group_summarize",
+        "highlight_threshold",
+        "protect_formula_cells",
+        "roll_forward_period",
+        "append_structured_rows"
+      ],
+      "planned_or_unsupported_atom_ids": [
+        "roll_forward_period"
+      ],
+      "verifier_focus": [
+        "phase totals equal cost line items",
+        "budget exceptions are flagged",
+        "carry-forward totals remain consistent"
+      ],
       "fixture_priority": "p1",
       "advisory_status": "advisory_only",
       "rationale": "공사비는 timeline과 비용 line item, 누적 예산 통제가 결합되는 organism이다."
@@ -139,10 +313,28 @@
       "korean_name": "재고 입출고 기록표",
       "why": "SKU별 입고/출고 행을 기록하고 master lookup과 대조 결과로 재고 변화를 설명한다.",
       "primary_workflow": "log_stock_movements_and_reconcile_balance",
-      "required_molecule_ids": ["repeating_row_input_block", "lookup_master_link_block", "reconciliation_result_block", "protected_summary_region"],
-      "supporting_atom_ids": ["join_lookup", "group_summarize", "append_structured_rows", "reconcile_tables", "normalize_headers", "protect_formula_cells"],
-      "planned_or_unsupported_atom_ids": ["reconcile_tables", "normalize_headers"],
-      "verifier_focus": ["movement rows change SKU balance", "lookup enrichment matches SKU master", "mismatch buckets explain missing or inconsistent rows"],
+      "required_molecule_ids": [
+        "repeating_row_input_block",
+        "lookup_master_link_block",
+        "reconciliation_result_block",
+        "protected_summary_region"
+      ],
+      "supporting_atom_ids": [
+        "join_lookup",
+        "group_summarize",
+        "append_structured_rows",
+        "reconcile_tables",
+        "normalize_headers",
+        "protect_formula_cells"
+      ],
+      "planned_or_unsupported_atom_ids": [
+        "reconcile_tables"
+      ],
+      "verifier_focus": [
+        "movement rows change SKU balance",
+        "lookup enrichment matches SKU master",
+        "mismatch buckets explain missing or inconsistent rows"
+      ],
       "fixture_priority": "p0",
       "advisory_status": "advisory_only",
       "rationale": "inventory movement는 단순 재고 목록이 아니라 movement log와 reconciliation proof가 필요하다."
@@ -152,10 +344,28 @@
       "korean_name": "구매 대조표",
       "why": "PO, receipt, invoice 같은 source table을 비교해 누락과 불일치를 audit 가능한 결과로 만든다.",
       "primary_workflow": "compare_procurement_sources_and_explain_exceptions",
-      "required_molecule_ids": ["reconciliation_result_block", "lookup_master_link_block", "status_pipeline_block", "protected_summary_region"],
-      "supporting_atom_ids": ["join_lookup", "group_summarize", "reconcile_tables", "normalize_headers", "add_data_validation", "protect_formula_cells"],
-      "planned_or_unsupported_atom_ids": ["reconcile_tables", "normalize_headers"],
-      "verifier_focus": ["matched missing and mismatched buckets are correct", "normalized keys match across sources", "exception status summary matches details"],
+      "required_molecule_ids": [
+        "reconciliation_result_block",
+        "lookup_master_link_block",
+        "status_pipeline_block",
+        "protected_summary_region"
+      ],
+      "supporting_atom_ids": [
+        "join_lookup",
+        "group_summarize",
+        "reconcile_tables",
+        "normalize_headers",
+        "add_data_validation",
+        "protect_formula_cells"
+      ],
+      "planned_or_unsupported_atom_ids": [
+        "reconcile_tables"
+      ],
+      "verifier_focus": [
+        "matched missing and mismatched buckets are correct",
+        "normalized keys match across sources",
+        "exception status summary matches details"
+      ],
       "fixture_priority": "p1",
       "advisory_status": "advisory_only",
       "rationale": "구매 대조는 enrich보다 mismatch explanation이 중심이므로 reconciliation molecule을 primary로 둔다."
@@ -165,10 +375,26 @@
       "korean_name": "창고 재주문 추적표",
       "why": "SKU master, 현재 수량, reorder point를 연결해 부족 재고와 재주문 후보를 표시한다.",
       "primary_workflow": "detect_low_stock_and_reorder_candidates",
-      "required_molecule_ids": ["lookup_master_link_block", "threshold_exception_block", "repeating_row_input_block", "protected_summary_region"],
-      "supporting_atom_ids": ["join_lookup", "highlight_threshold", "group_summarize", "append_structured_rows", "add_data_validation", "protect_formula_cells"],
+      "required_molecule_ids": [
+        "lookup_master_link_block",
+        "threshold_exception_block",
+        "repeating_row_input_block",
+        "protected_summary_region"
+      ],
+      "supporting_atom_ids": [
+        "join_lookup",
+        "highlight_threshold",
+        "group_summarize",
+        "append_structured_rows",
+        "add_data_validation",
+        "protect_formula_cells"
+      ],
       "planned_or_unsupported_atom_ids": [],
-      "verifier_focus": ["low stock rows are highlighted", "reorder thresholds come from master data", "summary matches flagged rows"],
+      "verifier_focus": [
+        "low stock rows are highlighted",
+        "reorder thresholds come from master data",
+        "summary matches flagged rows"
+      ],
       "fixture_priority": "p1",
       "advisory_status": "advisory_only",
       "rationale": "reorder tracker는 inventory log보다 threshold exception과 master lookup이 더 강하다."
@@ -178,10 +404,29 @@
       "korean_name": "성적부",
       "why": "학생과 과제 matrix에서 점수, 가중치, 총점, 등급을 계산한다.",
       "primary_workflow": "score_students_across_assessment_matrix",
-      "required_molecule_ids": ["matrix_growth_block", "score_completion_summary_block", "formula_extension_block", "protected_summary_region"],
-      "supporting_atom_ids": ["group_summarize", "join_lookup", "extend_table_formulas", "protect_formula_cells", "add_data_validation", "normalize_headers", "create_pivot_summary"],
-      "planned_or_unsupported_atom_ids": ["normalize_headers", "create_pivot_summary"],
-      "verifier_focus": ["new assessment columns roll into grade totals", "score validation bounds are enforced", "protected grade formulas remain intact"],
+      "required_molecule_ids": [
+        "matrix_growth_block",
+        "score_completion_summary_block",
+        "formula_extension_block",
+        "protected_summary_region"
+      ],
+      "supporting_atom_ids": [
+        "group_summarize",
+        "join_lookup",
+        "extend_table_formulas",
+        "protect_formula_cells",
+        "add_data_validation",
+        "normalize_headers",
+        "create_pivot_summary"
+      ],
+      "planned_or_unsupported_atom_ids": [
+        "create_pivot_summary"
+      ],
+      "verifier_focus": [
+        "new assessment columns roll into grade totals",
+        "score validation bounds are enforced",
+        "protected grade formulas remain intact"
+      ],
       "fixture_priority": "p2",
       "advisory_status": "advisory_only",
       "rationale": "성적부는 matrix growth와 score/completion summary가 결합될 때 일반 attendance matrix와 구분된다."
@@ -191,10 +436,28 @@
       "korean_name": "교육 이수 매트릭스",
       "why": "직원 또는 대상자별 교육 항목의 완료 상태와 완료율을 관리한다.",
       "primary_workflow": "track_people_against_required_training_items",
-      "required_molecule_ids": ["matrix_growth_block", "score_completion_summary_block", "printable_document_region", "protected_summary_region"],
-      "supporting_atom_ids": ["group_summarize", "protect_formula_cells", "add_data_validation", "generate_printable_form", "create_pivot_summary"],
-      "planned_or_unsupported_atom_ids": ["generate_printable_form", "create_pivot_summary"],
-      "verifier_focus": ["completion rate matches matrix statuses", "invalid training statuses are rejected", "review output reflects completion summary"],
+      "required_molecule_ids": [
+        "matrix_growth_block",
+        "score_completion_summary_block",
+        "printable_document_region",
+        "protected_summary_region"
+      ],
+      "supporting_atom_ids": [
+        "group_summarize",
+        "protect_formula_cells",
+        "add_data_validation",
+        "generate_printable_form",
+        "create_pivot_summary"
+      ],
+      "planned_or_unsupported_atom_ids": [
+        "generate_printable_form",
+        "create_pivot_summary"
+      ],
+      "verifier_focus": [
+        "completion rate matches matrix statuses",
+        "invalid training statuses are rejected",
+        "review output reflects completion summary"
+      ],
       "fixture_priority": "p2",
       "advisory_status": "advisory_only",
       "rationale": "training matrix는 점수보다는 required item completion과 review output이 중요하다."
@@ -204,10 +467,28 @@
       "korean_name": "서비스 티켓 큐",
       "why": "티켓 행의 상태, 담당자, 우선순위, 마감일을 관리하고 overdue 예외를 표시한다.",
       "primary_workflow": "triage_and_track_service_tickets",
-      "required_molecule_ids": ["repeating_row_input_block", "status_pipeline_block", "threshold_exception_block", "protected_summary_region"],
-      "supporting_atom_ids": ["group_summarize", "highlight_threshold", "append_structured_rows", "add_data_validation", "protect_formula_cells", "create_pivot_summary"],
-      "planned_or_unsupported_atom_ids": ["create_pivot_summary"],
-      "verifier_focus": ["status summary updates after status changes", "overdue tickets are flagged", "new tickets inherit validations"],
+      "required_molecule_ids": [
+        "repeating_row_input_block",
+        "status_pipeline_block",
+        "threshold_exception_block",
+        "protected_summary_region"
+      ],
+      "supporting_atom_ids": [
+        "group_summarize",
+        "highlight_threshold",
+        "append_structured_rows",
+        "add_data_validation",
+        "protect_formula_cells",
+        "create_pivot_summary"
+      ],
+      "planned_or_unsupported_atom_ids": [
+        "create_pivot_summary"
+      ],
+      "verifier_focus": [
+        "status summary updates after status changes",
+        "overdue tickets are flagged",
+        "new tickets inherit validations"
+      ],
       "fixture_priority": "p2",
       "advisory_status": "advisory_only",
       "rationale": "ticket queue는 workflow status와 overdue exception이 반복 행 입력보다 더 중요한 판단 축이다."
@@ -217,10 +498,26 @@
       "korean_name": "영업 파이프라인 추적표",
       "why": "deal 상태와 금액을 stage별로 모아 pipeline summary와 risk/exception을 보여준다.",
       "primary_workflow": "track_deals_through_sales_stages",
-      "required_molecule_ids": ["status_pipeline_block", "protected_summary_region", "threshold_exception_block"],
-      "supporting_atom_ids": ["group_summarize", "highlight_threshold", "add_data_validation", "create_pivot_summary", "protect_formula_cells"],
-      "planned_or_unsupported_atom_ids": ["create_pivot_summary"],
-      "verifier_focus": ["stage summary matches deal rows", "stale or risky deals are flagged", "allowed stage values are enforced"],
+      "required_molecule_ids": [
+        "status_pipeline_block",
+        "protected_summary_region",
+        "threshold_exception_block"
+      ],
+      "supporting_atom_ids": [
+        "group_summarize",
+        "highlight_threshold",
+        "add_data_validation",
+        "create_pivot_summary",
+        "protect_formula_cells"
+      ],
+      "planned_or_unsupported_atom_ids": [
+        "create_pivot_summary"
+      ],
+      "verifier_focus": [
+        "stage summary matches deal rows",
+        "stale or risky deals are flagged",
+        "allowed stage values are enforced"
+      ],
       "fixture_priority": "p2",
       "advisory_status": "advisory_only",
       "rationale": "sales pipeline은 document output보다 status stage aggregation이 organism identity다."
@@ -230,10 +527,25 @@
       "korean_name": "정비 이슈 기록표",
       "why": "설비나 장소별 issue, 담당자, 심각도, 조치 상태, overdue를 관리한다.",
       "primary_workflow": "record_maintenance_issues_and_track_closure",
-      "required_molecule_ids": ["repeating_row_input_block", "status_pipeline_block", "threshold_exception_block", "risk_action_register_block"],
-      "supporting_atom_ids": ["group_summarize", "highlight_threshold", "append_structured_rows", "add_data_validation", "protect_formula_cells"],
+      "required_molecule_ids": [
+        "repeating_row_input_block",
+        "status_pipeline_block",
+        "threshold_exception_block",
+        "risk_action_register_block"
+      ],
+      "supporting_atom_ids": [
+        "group_summarize",
+        "highlight_threshold",
+        "append_structured_rows",
+        "add_data_validation",
+        "protect_formula_cells"
+      ],
       "planned_or_unsupported_atom_ids": [],
-      "verifier_focus": ["open issue summary matches details", "overdue and severity exceptions are flagged", "closure status changes update risk/action summary"],
+      "verifier_focus": [
+        "open issue summary matches details",
+        "overdue and severity exceptions are flagged",
+        "closure status changes update risk/action summary"
+      ],
       "fixture_priority": "p2",
       "advisory_status": "advisory_only",
       "rationale": "maintenance는 일반 ticket queue와 닮았지만 severity와 action closure가 강해 risk/action register를 포함한다."
@@ -243,10 +555,29 @@
       "korean_name": "컴플라이언스 조치 등록부",
       "why": "규정 조치 항목의 담당자, 기한, 위험도, 종료 증거를 audit 가능한 register로 관리한다.",
       "primary_workflow": "track_compliance_actions_to_closure",
-      "required_molecule_ids": ["status_pipeline_block", "risk_action_register_block", "printable_document_region", "protected_summary_region"],
-      "supporting_atom_ids": ["group_summarize", "highlight_threshold", "add_data_validation", "protect_formula_cells", "generate_printable_form", "create_pivot_summary"],
-      "planned_or_unsupported_atom_ids": ["generate_printable_form", "create_pivot_summary"],
-      "verifier_focus": ["open and closed action summaries match rows", "overdue high-risk actions are flagged", "review output includes current action status"],
+      "required_molecule_ids": [
+        "status_pipeline_block",
+        "risk_action_register_block",
+        "printable_document_region",
+        "protected_summary_region"
+      ],
+      "supporting_atom_ids": [
+        "group_summarize",
+        "highlight_threshold",
+        "add_data_validation",
+        "protect_formula_cells",
+        "generate_printable_form",
+        "create_pivot_summary"
+      ],
+      "planned_or_unsupported_atom_ids": [
+        "generate_printable_form",
+        "create_pivot_summary"
+      ],
+      "verifier_focus": [
+        "open and closed action summaries match rows",
+        "overdue high-risk actions are flagged",
+        "review output includes current action status"
+      ],
       "fixture_priority": "p2",
       "advisory_status": "advisory_only",
       "rationale": "compliance action은 workflow queue이지만 printable/review output과 audit semantics가 필수다."
@@ -256,10 +587,29 @@
       "korean_name": "안전 준수 등록부",
       "why": "안전 점검 항목의 위험도, 완료율, 예외, 검토 문서를 함께 관리한다.",
       "primary_workflow": "review_safety_items_and_exception_actions",
-      "required_molecule_ids": ["risk_action_register_block", "score_completion_summary_block", "threshold_exception_block", "printable_document_region"],
-      "supporting_atom_ids": ["group_summarize", "highlight_threshold", "add_data_validation", "protect_formula_cells", "generate_printable_form", "create_pivot_summary"],
-      "planned_or_unsupported_atom_ids": ["generate_printable_form", "create_pivot_summary"],
-      "verifier_focus": ["safety completion rate matches item statuses", "high-risk or overdue items are flagged", "review output matches current register"],
+      "required_molecule_ids": [
+        "risk_action_register_block",
+        "score_completion_summary_block",
+        "threshold_exception_block",
+        "printable_document_region"
+      ],
+      "supporting_atom_ids": [
+        "group_summarize",
+        "highlight_threshold",
+        "add_data_validation",
+        "protect_formula_cells",
+        "generate_printable_form",
+        "create_pivot_summary"
+      ],
+      "planned_or_unsupported_atom_ids": [
+        "generate_printable_form",
+        "create_pivot_summary"
+      ],
+      "verifier_focus": [
+        "safety completion rate matches item statuses",
+        "high-risk or overdue items are flagged",
+        "review output matches current register"
+      ],
       "fixture_priority": "p2",
       "advisory_status": "advisory_only",
       "rationale": "safety register는 compliance와 닮았지만 score/completion summary와 high-risk exception이 더 강하다."
@@ -269,10 +619,24 @@
       "korean_name": "대출 상환 계산표",
       "why": "대출 입력 조건에서 기간별 상환 schedule, 이자, 원금, 잔액을 계산한다.",
       "primary_workflow": "generate_repayment_schedule_from_loan_assumptions",
-      "required_molecule_ids": ["calculation_schedule_block", "formula_extension_block", "protected_summary_region", "lookup_master_link_block"],
-      "supporting_atom_ids": ["group_summarize", "join_lookup", "extend_table_formulas", "protect_formula_cells"],
+      "required_molecule_ids": [
+        "calculation_schedule_block",
+        "formula_extension_block",
+        "protected_summary_region",
+        "lookup_master_link_block"
+      ],
+      "supporting_atom_ids": [
+        "group_summarize",
+        "join_lookup",
+        "extend_table_formulas",
+        "protect_formula_cells"
+      ],
       "planned_or_unsupported_atom_ids": [],
-      "verifier_focus": ["schedule formulas recalculate from assumptions", "running balance reaches expected final condition", "formula cells remain protected"],
+      "verifier_focus": [
+        "schedule formulas recalculate from assumptions",
+        "running balance reaches expected final condition",
+        "formula cells remain protected"
+      ],
       "fixture_priority": "p3",
       "advisory_status": "advisory_only",
       "rationale": "대출 계산표는 period copy가 아니라 formula-generated schedule이므로 calculation schedule molecule로 보강한다."

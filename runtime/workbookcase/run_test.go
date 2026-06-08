@@ -441,6 +441,81 @@ func TestRunCopyPeriodSheetEndToEnd(t *testing.T) {
 	}
 }
 
+func TestRunNormalizeHeadersEndToEnd(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "inventory.xlsx")
+	outputFile := filepath.Join(tempDir, "inventory-output.xlsx")
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Movements"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	header := []any{"SKU ID", "Qty In", "Qty Out", "Balance"}
+	if err := file.SetSheetRow("Movements", "A1", &header); err != nil {
+		t.Fatalf("SetSheetRow(header): %v", err)
+	}
+	row := []any{"A001", 5, 1}
+	if err := file.SetSheetRow("Movements", "A2", &row); err != nil {
+		t.Fatalf("SetSheetRow(row): %v", err)
+	}
+	if err := file.SetCellFormula("Movements", "D2", "=B2-C2"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	task := runtimetaskspec.BuildNormalizeHeadersTask(runtimetaskspec.NormalizeHeadersRequest{
+		RequestText: "Movements 시트 헤더를 표준 필드명으로 정규화한다.",
+		InputFile:   inputFile,
+		SourceSheet: "Movements",
+		OutputFile:  outputFile,
+		HeaderRow:   1,
+		HeaderMappings: []runtimetaskspec.HeaderMapping{
+			{From: "SKU ID", To: "sku"},
+			{From: "Qty In", To: "quantity_in"},
+			{From: "Qty Out", To: "quantity_out"},
+			{From: "Balance", To: "balance"},
+		},
+	})
+	result, err := Run(Request{ScenarioID: "workbookcase-normalize-headers", TaskSpec: task.TaskSpec})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if !result.Verification.Pass {
+		t.Fatalf("verification failed: %+v", result.Verification)
+	}
+	if result.Verification.Operation != NormalizeHeadersOperationName {
+		t.Fatalf("verification operation=%q want %s", result.Verification.Operation, NormalizeHeadersOperationName)
+	}
+	if len(result.Verification.WrittenCells) != 4 {
+		t.Fatalf("written cells=%v want 4", result.Verification.WrittenCells)
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	got, err := outputHandle.GetCellValue("Movements", "B1")
+	if err != nil {
+		t.Fatalf("GetCellValue B1: %v", err)
+	}
+	if got != "quantity_in" {
+		t.Fatalf("Movements!B1=%q want quantity_in", got)
+	}
+	formula, err := outputHandle.GetCellFormula("Movements", "D2")
+	if err != nil {
+		t.Fatalf("GetCellFormula D2: %v", err)
+	}
+	if formula != "=B2-C2" {
+		t.Fatalf("Movements!D2 formula=%q want =B2-C2", formula)
+	}
+}
+
 func TestRunRejectsUnsafeScenarioIDBeforeCreatingArtifacts(t *testing.T) {
 	artifactRoot := t.TempDir()
 	t.Setenv(ArtifactRootEnv, artifactRoot)
