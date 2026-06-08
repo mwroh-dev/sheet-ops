@@ -74,9 +74,89 @@ func DraftOrganismExecutionRequest(input OrganismDraftInput) (OrganismExecutionR
 		return draftMonthlyBudgetControl(input)
 	case "inventory_movement_log":
 		return draftInventoryMovementLog(input)
+	case "student_gradebook":
+		return draftStudentGradebook(input)
 	default:
 		return OrganismExecutionRequestDraft{}, false
 	}
+}
+
+func draftStudentGradebook(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
+	sheet, ok := findStudentGradebookSheet(input.WorkbookFacts)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumns := formulaColumnsForSheet(sheet)
+	if len(formulaColumns) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	formulaColumnLetters := make([]string, 0, len(formulaColumns))
+	for _, column := range formulaColumns {
+		if letter, ok := columnLetterForHeader(sheet.Columns, column); ok {
+			formulaColumnLetters = append(formulaColumnLetters, letter)
+		}
+	}
+	if len(formulaColumnLetters) == 0 {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	minFormulaRow, maxFormulaRow, ok := formulaRowBounds(sheet)
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	targetRow := maxFormulaRow + 1
+	if targetRow > sheet.RowCount {
+		return OrganismExecutionRequestDraft{}, false
+	}
+	statusColumnLetter, ok := columnLetterForHeader(sheet.Columns, "status")
+	if !ok {
+		return OrganismExecutionRequestDraft{}, false
+	}
+
+	return OrganismExecutionRequestDraft{
+		ScenarioID:  input.ScenarioID,
+		RequestText: input.RequestText,
+		InputFile:   input.InputFile,
+		OutputFile:  input.OutputFile,
+		Steps: []OrganismExecutionStepDraft{
+			{
+				AtomID:          "group_summarize",
+				CompositionKind: "group_summary",
+				SourceSheet:     sheet.Name,
+				TargetSheet:     "GradeSummary",
+				SummaryMode:     "values",
+				GroupBy:         []string{"student"},
+				Metrics:         []MetricSpec{{Column: "score", Op: "sum", As: "score_total"}},
+			},
+			{
+				AtomID:          "add_data_validation",
+				CompositionKind: "data_validation",
+				SourceSheet:     sheet.Name,
+				ValidationRule: &DataValidationRule{
+					Ranges:        []string{statusColumnLetter + "2:" + statusColumnLetter + "20"},
+					RuleType:      "list",
+					AllowedValues: []string{"complete", "missing", "excused"},
+					AllowBlank:    false,
+				},
+			},
+			{
+				AtomID:           "extend_table_formulas",
+				CompositionKind:  "formula_extension",
+				SourceSheet:      sheet.Name,
+				FormulaSourceRow: minFormulaRow,
+				TargetRows:       []int{targetRow},
+				FormulaColumns:   formulaColumnLetters,
+			},
+			{
+				AtomID:          "protect_formula_cells",
+				CompositionKind: "formula_protection",
+				SourceSheet:     sheet.Name,
+				ProtectionRule: &FormulaProtectionRule{
+					FormulaRanges: []string{formulaRange(formulaColumnLetters, minFormulaRow, targetRow)},
+					InputRanges:   []string{"C2:D20"},
+				},
+			},
+		},
+	}, true
 }
 
 func draftInventoryMovementLog(input OrganismDraftInput) (OrganismExecutionRequestDraft, bool) {
@@ -365,6 +445,16 @@ func findInventoryMovementSheet(facts runtimeinspect.WorkbookFacts) (runtimeinsp
 	for _, sheet := range facts.Sheets {
 		headers := lowerSet(sheet.Columns)
 		if headers["sku id"] && headers["qty in"] && headers["qty out"] && headers["balance"] {
+			return sheet, true
+		}
+	}
+	return runtimeinspect.SheetFacts{}, false
+}
+
+func findStudentGradebookSheet(facts runtimeinspect.WorkbookFacts) (runtimeinspect.SheetFacts, bool) {
+	for _, sheet := range facts.Sheets {
+		headers := lowerSet(sheet.Columns)
+		if headers["student"] && headers["assignment"] && headers["score"] && headers["status"] && headers["weighted_score"] {
 			return sheet, true
 		}
 	}

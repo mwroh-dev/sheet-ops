@@ -255,6 +255,77 @@ func TestDraftOrganismExecutionRequestBuildsInventoryMovementStepsFromWorkbookFa
 	}
 }
 
+func TestDraftOrganismExecutionRequestBuildsStudentGradebookStepsFromWorkbookFacts(t *testing.T) {
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "gradebook.xlsx")
+	outputFile := filepath.Join(tempDir, "gradebook-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Grades"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Grades", "A1", &[]any{"student", "assignment", "score", "status", "weighted_score"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	for idx, row := range [][]any{{"Ada", "Quiz 1", 90, "complete"}, {"Ben", "Quiz 1", 70, "missing"}, {"Ada", "Quiz 2", 80, "complete"}} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("Grades", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow grade %d: %v", idx, err)
+		}
+	}
+	if err := file.SetCellFormula("Grades", "E2", "=C2"); err != nil {
+		t.Fatalf("SetCellFormula(E2): %v", err)
+	}
+	if err := file.SetCellFormula("Grades", "E3", "=C3"); err != nil {
+		t.Fatalf("SetCellFormula(E3): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	facts, err := runtimeinspect.InspectWorkbookFacts(inputFile)
+	if err != nil {
+		t.Fatalf("InspectWorkbookFacts: %v", err)
+	}
+	requestText := "Summarize student scores in a gradebook, validate completion status, extend formulas, and protect calculated cells"
+	plan := TemplateClassPlanHintForRequest(requestText)
+	if plan == nil {
+		t.Fatal("missing plan")
+	}
+
+	req, ok := DraftOrganismExecutionRequest(OrganismDraftInput{
+		ScenarioID:        "gradebook-organism-draft",
+		RequestText:       requestText,
+		InputFile:         inputFile,
+		OutputFile:        outputFile,
+		WorkbookFacts:     facts,
+		TemplateClassPlan: *plan,
+	})
+	if !ok {
+		t.Fatal("DraftOrganismExecutionRequest ok=false")
+	}
+	if req.Steps[0].AtomID != "group_summarize" || req.Steps[0].TargetSheet != "GradeSummary" {
+		t.Fatalf("summary step=%+v", req.Steps[0])
+	}
+	if len(req.Steps[0].Metrics) != 1 || req.Steps[0].Metrics[0].Column != "score" || req.Steps[0].Metrics[0].As != "score_total" {
+		t.Fatalf("summary metrics=%+v", req.Steps[0].Metrics)
+	}
+	if req.Steps[1].AtomID != "add_data_validation" || req.Steps[1].ValidationRule == nil || req.Steps[1].ValidationRule.Ranges[0] != "D2:D20" {
+		t.Fatalf("validation step=%+v", req.Steps[1])
+	}
+	if req.Steps[2].AtomID != "extend_table_formulas" || req.Steps[2].FormulaSourceRow != 2 || len(req.Steps[2].TargetRows) != 1 || req.Steps[2].TargetRows[0] != 4 {
+		t.Fatalf("formula step=%+v", req.Steps[2])
+	}
+	if req.Steps[3].AtomID != "protect_formula_cells" || req.Steps[3].ProtectionRule == nil || req.Steps[3].ProtectionRule.FormulaRanges[0] != "E2:E4" {
+		t.Fatalf("protection step=%+v", req.Steps[3])
+	}
+	if err := runtimeschema.ValidateStruct(organismExecutionRequestSchemaPathForTest(), req); err != nil {
+		t.Fatalf("draft organism request schema validation: %v", err)
+	}
+}
+
 func cellRowForDraftTest(row int) string {
 	return strconv.Itoa(row)
 }

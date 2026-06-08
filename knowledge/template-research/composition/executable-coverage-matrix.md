@@ -873,3 +873,34 @@ Extended the template-class draft planner to `inventory_movement_log`:
   header normalization, and reconciliation output checks.
 - Advisory claim risk: this does not infer warehouse policy, resolve duplicate
   SKU keys, perform fuzzy matching, or certify stock accounting correctness.
+
+## Phase 30 Result
+
+Extended the template-class draft planner to `student_gradebook`:
+
+- `requestcompiler.DraftOrganismExecutionRequest` detects a gradebook sheet
+  from student, assignment, score, status, and weighted score headers
+- the gradebook draft emits the four-step sequence: group score summary, add
+  status validation, extend weighted-score formulas, and protect calculated
+  cells
+- the planner distinguishes this pattern from invoice row append by extending
+  formulas into the first existing data row after the current formula rows
+- tests validate the draft against
+  `contracts/requests/organism_execution_request.schema.json`
+- an open-layer integration test proves the gradebook draft JSON can execute
+  through `OrchestrateOrganism` and produce expected workbook evidence in
+  `GradeSummary` and the extended `Grades` formula column
+
+## Phase 30 Self-Retro
+
+- Coverage improved: draft synthesis now covers four productization classes:
+  invoice line-item billing, monthly budget control, inventory movement log,
+  and student gradebook.
+- Remaining template needs: loan repayment still requires a hand-authored
+  explicit organism request. Gradebook support remains a narrow deterministic
+  score/status/formula slice.
+- Verifier strength: the gradebook path covers schema validation, open-layer
+  execution, template-class evaluation, organism verification, score summary,
+  validation rule, formula extension, and protection evidence.
+- Advisory claim risk: this does not infer grading policy, grow arbitrary
+  grade matrices, certify grade correctness, or create native pivot summaries.
