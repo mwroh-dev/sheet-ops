@@ -383,3 +383,33 @@ claim, remaining gaps, and next promotion gate.
 - Advisory claim risk: `supported_atom_plan` must be read as a planning
   decomposition only. It is weaker than `preview_fixture` and much weaker than
   full template generation.
+
+## Phase 14 Result
+
+Broadened p1 organism preview coverage. The following p1 roadmap organisms now
+have representative workbookcase preview fixtures:
+
+- `expense_reimbursement`: append expense rows, extend reimbursable formula,
+  generate printable claim
+- `purchase_order_control`: enrich supplier metadata, validate PO status
+- `project_timeline_tracker`: copy timeline period, validate task status
+- `shift_roster_planner`: copy roster period, validate shift codes
+- `construction_cost_tracker`: append cost row, highlight overrun variance
+- `procurement_reconciliation`: reconcile PO and invoice amount tables
+- `warehouse_reorder_tracker`: enrich SKU metadata, highlight low-stock rows
+
+The executable coverage ladder now marks p0 and p1 roadmap organisms as
+`preview_fixture`.
+
+## Phase 14 Self-Retro
+
+- Coverage improved: p1 no longer stops at supported-atom planning. Each p1
+  organism has at least one fixture-backed execution path.
+- Remaining template needs: these previews are intentionally representative.
+  They do not prove every molecule in each organism, organism-level acceptance
+  criteria, or full template generation.
+- Verifier strength: each preview still relies on operation-specific verifiers.
+  Cross-operation organism verifiers remain future work.
+- Advisory claim risk: p1 preview evidence should not be read as broad domain
+  automation. It proves that a narrow supported-atom composition executes for
+  the organism family.
