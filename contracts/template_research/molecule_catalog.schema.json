@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/template_research/molecule_catalog.schema.json",
+  "title": "TemplateResearchMoleculeCatalog",
+  "type": "object",
+  "$defs": {
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "molecule": {
+      "type": "object",
+      "required": [
+        "molecule_id",
+        "korean_name",
+        "definition",
+        "why_this_molecule",
+        "include_criteria",
+        "exclude_criteria",
+        "used_by_organisms",
+        "required_atoms",
+        "verification_methods",
+        "rationale"
+      ],
+      "properties": {
+        "molecule_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        },
+        "korean_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "definition": {
+          "type": "string",
+          "minLength": 1
+        },
+        "why_this_molecule": {
+          "type": "string",
+          "minLength": 1
+        },
+        "include_criteria": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "exclude_criteria": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "used_by_organisms": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "required_atoms": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "verification_methods": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "version",
+    "generated_from_round",
+    "summary",
+    "molecules"
+  ],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "generated_from_round": {
+      "const": "round-009"
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "molecules": {
+      "type": "array",
+      "minItems": 16,
+      "items": {
+        "$ref": "#/$defs/molecule"
+      }
+    }
+  },
+  "additionalProperties": false
+}

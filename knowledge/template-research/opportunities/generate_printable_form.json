@@ -1,0 +1,24 @@
+{
+  "name": "generate_printable_form",
+  "status": "research_only",
+  "evidence_count": 2,
+  "source_categories": [
+    "Invoice Templates",
+    "Project Management"
+  ],
+  "representative_why": "Users often need a workbook view that can be sent, printed, or reviewed by someone who is not editing the data table.",
+  "representative_how": [
+    "separate input data from presentation view",
+    "populate a fixed output region",
+    "set print-friendly layout metadata"
+  ],
+  "concrete_workflows": [
+    "generate invoice form",
+    "generate project schedule snapshot"
+  ],
+  "verification_strategy": "Render the workbook and verify the expected output region exists with stable populated fields.",
+  "related_patterns": [
+    "invoice",
+    "project_gantt"
+  ]
+}

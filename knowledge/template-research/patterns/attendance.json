@@ -1,0 +1,44 @@
+{
+  "pattern_id": "attendance",
+  "title": "Attendance and participation tracking",
+  "domain": "education",
+  "why": "Record presence or absence across people and sessions, then summarize participation or missing attendance.",
+  "visual_patterns": [
+    "monthly_matrix",
+    "status_color",
+    "input_area",
+    "dashboard"
+  ],
+  "data_patterns": [
+    "entity_table",
+    "aggregate",
+    "period_rollup",
+    "category_mapping"
+  ],
+  "validation_patterns": [
+    "required_fields",
+    "dropdown_values",
+    "date_windows",
+    "duplicate_detection"
+  ],
+  "workflow_patterns": [
+    "submitted_approved",
+    "period_close",
+    "variance_review"
+  ],
+  "source_observations": [
+    "vertex42_attendance_seed",
+    "spreadsheet123_attendance_form_seed"
+  ],
+  "existing_capabilities": [
+    "group_summarize",
+    "highlight_threshold"
+  ],
+  "missing_capability_candidates": [
+    "add_data_validation",
+    "roll_forward_period",
+    "create_pivot_summary"
+  ],
+  "recurrence_status": "recurring",
+  "promotion_note": "Recurring source evidence supports attendance as a near-term pattern fixture family."
+}

@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/template_research/judgment_registry.schema.json",
+  "title": "TemplateResearchJudgmentRegistry",
+  "type": "object",
+  "$defs": {
+    "string_array": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "judgment": {
+      "type": "object",
+      "required": [
+        "pattern_id",
+        "title",
+        "domain",
+        "status",
+        "evidence_count",
+        "evidence_record_ids",
+        "hypothesis_ids",
+        "triggers",
+        "capability_candidates",
+        "judge_note"
+      ],
+      "properties": {
+        "pattern_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "domain": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "hypothesis_only",
+            "observed",
+            "recurring",
+            "roadmap_candidate",
+            "rejected"
+          ]
+        },
+        "evidence_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "evidence_record_ids": {
+          "$ref": "#/$defs/string_array"
+        },
+        "hypothesis_ids": {
+          "$ref": "#/$defs/string_array"
+        },
+        "triggers": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "capability_candidates": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "judge_note": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "version",
+    "generated_by",
+    "round_id",
+    "judgments"
+  ],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "generated_by": {
+      "const": "judge_synthesizer"
+    },
+    "round_id": {
+      "type": "string",
+      "pattern": "^round-[0-9]{3}$"
+    },
+    "judgments": {
+      "type": "array",
+      "minItems": 10,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/judgment"
+      }
+    }
+  },
+  "additionalProperties": false
+}

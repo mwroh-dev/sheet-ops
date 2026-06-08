@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/template_research/classification_sweep.schema.json",
+  "title": "TemplateResearchClassificationSweep",
+  "type": "object",
+  "$defs": {
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "sweep_item": {
+      "type": "object",
+      "required": [
+        "pattern_id",
+        "current_group",
+        "alternative_groups",
+        "ambiguity",
+        "decision",
+        "rationale",
+        "boundary_rule",
+        "reclassification_trigger"
+      ],
+      "properties": {
+        "pattern_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        },
+        "current_group": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        },
+        "alternative_groups": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "ambiguity": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decision": {
+          "enum": [
+            "keep_current",
+            "move_group",
+            "split_subtype",
+            "monitor"
+          ]
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "boundary_rule": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reclassification_trigger": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "version",
+    "generated_from_round",
+    "summary",
+    "items"
+  ],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "generated_from_round": {
+      "const": "round-009"
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "items": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "$ref": "#/$defs/sweep_item"
+      }
+    }
+  },
+  "additionalProperties": false
+}

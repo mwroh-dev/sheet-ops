@@ -1,0 +1,239 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/template_research/round_scoring.schema.json",
+  "title": "TemplateResearchRoundScoring",
+  "type": "object",
+  "$defs": {
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "score": {
+      "type": "object",
+      "required": [
+        "current_level",
+        "numeric_score",
+        "rationale"
+      ],
+      "properties": {
+        "current_level": {
+          "enum": [
+            "L1",
+            "L2",
+            "L3",
+            "L4",
+            "L5"
+          ]
+        },
+        "numeric_score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "finding": {
+      "type": "object",
+      "required": [
+        "id",
+        "severity",
+        "status",
+        "summary",
+        "evidence",
+        "required_action"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        },
+        "severity": {
+          "enum": [
+            "critical",
+            "high",
+            "medium",
+            "low"
+          ]
+        },
+        "status": {
+          "enum": [
+            "open",
+            "resolved",
+            "backlogged",
+            "rejected"
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "required_action": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resolution": {
+          "type": "string",
+          "minLength": 1
+        },
+        "backlog_target": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "version",
+    "round_id",
+    "generated_by",
+    "score",
+    "counts",
+    "findings",
+    "next_round_medium_backlog"
+  ],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "round_id": {
+      "type": "string",
+      "pattern": "^round-[0-9]{3}$"
+    },
+    "generated_by": {
+      "const": "judge_synthesizer"
+    },
+    "score": {
+      "$ref": "#/$defs/score"
+    },
+    "counts": {
+      "type": "object",
+      "required": [
+        "observations_total",
+        "raw_shards",
+        "hypotheses",
+        "judgments",
+        "roadmap_candidates",
+        "recurring",
+        "observed",
+        "rejected"
+      ],
+      "properties": {
+        "observations_total": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "raw_shards": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "hypotheses": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "judgments": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "roadmap_candidates": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "recurring": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "observed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rejected": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/finding"
+      }
+    },
+    "next_round_medium_backlog": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/finding"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "findings": {
+            "contains": {
+              "properties": {
+                "severity": {
+                  "enum": [
+                    "critical",
+                    "high"
+                  ]
+                }
+              },
+              "required": [
+                "severity"
+              ]
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "findings": {
+            "items": {
+              "if": {
+                "properties": {
+                  "severity": {
+                    "enum": [
+                      "critical",
+                      "high"
+                    ]
+                  }
+                },
+                "required": [
+                  "severity"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "status": {
+                    "const": "resolved"
+                  }
+                },
+                "required": [
+                  "resolution"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

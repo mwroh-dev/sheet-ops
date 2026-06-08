@@ -1,0 +1,38 @@
+{
+  "pattern_id": "loan_calculator",
+  "title": "Loan amortization calculator",
+  "domain": "finance",
+  "why": "Generate a payment schedule that explains principal, interest, payoff progress, and the impact of extra payments.",
+  "visual_patterns": [
+    "input_area",
+    "line_item_table",
+    "dashboard",
+    "protected_formula_area"
+  ],
+  "data_patterns": [
+    "formula_propagation",
+    "period_rollup",
+    "date_range_expansion",
+    "aggregate"
+  ],
+  "validation_patterns": [
+    "numeric_bounds",
+    "date_windows",
+    "required_fields"
+  ],
+  "workflow_patterns": [
+    "scenario_review",
+    "period_close"
+  ],
+  "source_observations": [
+    "vertex42_mortgage_calculator_seed"
+  ],
+  "existing_capabilities": [],
+  "missing_capability_candidates": [
+    "extend_table_formulas",
+    "protect_formula_cells",
+    "generate_printable_form"
+  ],
+  "recurrence_status": "single_source_seed",
+  "promotion_note": "Calculator templates likely require formula tracing and scenario verification before roadmap promotion."
+}

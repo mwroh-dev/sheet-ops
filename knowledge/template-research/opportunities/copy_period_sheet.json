@@ -1,0 +1,21 @@
+{
+  "name": "copy_period_sheet",
+  "status": "planned",
+  "evidence_count": 1,
+  "source_categories": [
+    "Budget Templates"
+  ],
+  "representative_why": "Users need to reuse a monthly or weekly workbook structure for the next reporting period.",
+  "representative_how": [
+    "copy a sheet or period block",
+    "update period labels",
+    "clear input cells while preserving formulas"
+  ],
+  "concrete_workflows": [
+    "create next month budget sheet"
+  ],
+  "verification_strategy": "Verify the new period exists, input cells are blank where expected, and formula cells match the source period pattern.",
+  "related_patterns": [
+    "budget"
+  ]
+}

@@ -1,0 +1,1134 @@
+{
+  "version": 1,
+  "generated_by": "judge_synthesizer",
+  "round_id": "round-009",
+  "judgments": [
+    {
+      "pattern_id": "invoice_line_item_billing",
+      "title": "Invoice line-item billing",
+      "domain": "sales_admin",
+      "status": "roadmap_candidate",
+      "evidence_count": 10,
+      "evidence_record_ids": [
+        "vertex42_invoice_seed",
+        "spreadsheet123_service_invoice_seed",
+        "smartsheet_invoice_billing_001",
+        "smartsheet_invoice_blank_002",
+        "smartsheet_invoice_service_003",
+        "smartsheet_invoice_job_006",
+        "smartsheet_invoice_commercial_007",
+        "smartsheet_invoice_receipt_008",
+        "microsoft_accounting_templates_seed",
+        "microsoft_business_spreadsheets_seed"
+      ],
+      "hypothesis_ids": [
+        "invoice_line_item_billing"
+      ],
+      "triggers": [
+        "vis_multi_block_form",
+        "data_append_rows",
+        "val_required_identity",
+        "wf_quote_to_invoice"
+      ],
+      "capability_candidates": [
+        "append_structured_rows",
+        "extend_table_formulas",
+        "add_data_validation",
+        "protect_formula_cells",
+        "generate_printable_form",
+        "join_lookup",
+        "group_summarize"
+      ],
+      "judge_note": "Recurring multi-source invoice forms converge on customer header fields, repeated billable lines, calculated totals, and a print-safe output area. Concrete Sheet Ops candidates are append_structured_rows, extend_table_formulas, add_data_validation, protect_formula_cells, and generate_printable_form; a plausible verifier is to add line rows, preserve totals and tax formulas, and confirm the printable invoice still balances."
+    },
+    {
+      "pattern_id": "monthly_budget_control",
+      "title": "Monthly budget control",
+      "domain": "finance",
+      "status": "roadmap_candidate",
+      "evidence_count": 5,
+      "evidence_record_ids": [
+        "spreadsheet123_budget_seed",
+        "edgeryders_budget_template_v3_017",
+        "microsoft_accounting_templates_seed",
+        "round004_budget_close_template_net_seed",
+        "round005_budget_template_net_control_030"
+      ],
+      "hypothesis_ids": [
+        "monthly_budget_control"
+      ],
+      "triggers": [
+        "vis_month_sectioning",
+        "data_table_rollup",
+        "val_numeric_ranges",
+        "wf_period_close"
+      ],
+      "capability_candidates": [
+        "copy_period_sheet",
+        "extend_table_formulas",
+        "add_data_validation",
+        "protect_formula_cells",
+        "group_summarize",
+        "create_pivot_summary"
+      ],
+      "judge_note": "Rounds 001-005 now keep this pattern anchored on plan-versus-actual variance control, repeated monthly sections, and close review rather than generic project-cost budgeting. Concrete Sheet Ops candidates are copy_period_sheet, extend_table_formulas, add_data_validation, protect_formula_cells, group_summarize, and create_pivot_summary; a plausible verifier is to roll a new month, edit budget, actual, or forecast values, and confirm variance, over-budget flags, and locked summary regions stay intact through close."
+    },
+    {
+      "pattern_id": "project_timeline_tracker",
+      "title": "Project timeline tracker",
+      "domain": "project_management",
+      "status": "roadmap_candidate",
+      "evidence_count": 4,
+      "evidence_record_ids": [
+        "vertex42_project_gantt_seed",
+        "smartsheet_gantt_simple_project_plan_001",
+        "smartsheet_gantt_simple_002",
+        "smartsheet_project_schedule_dependencies_003"
+      ],
+      "hypothesis_ids": [
+        "project_timeline_tracker"
+      ],
+      "triggers": [
+        "vis_gantt_timeline",
+        "data_append_rows",
+        "wf_review_approval",
+        "val_date_windows"
+      ],
+      "capability_candidates": [
+        "copy_period_sheet",
+        "add_data_validation",
+        "protect_formula_cells",
+        "group_summarize",
+        "generate_printable_form"
+      ],
+      "judge_note": "The refined round-003 boundary holds: these sheets are task-and-date schedules with visible timeline bands, not generic dashboards. Concrete Sheet Ops candidates are copy_period_sheet, add_data_validation, protect_formula_cells, group_summarize, and generate_printable_form; a plausible verifier is to edit task dates, owners, or dependencies and confirm the dated task table and timeline placement stay synchronized."
+    },
+    {
+      "pattern_id": "attendance_register",
+      "title": "Matrix attendance register",
+      "domain": "education",
+      "status": "roadmap_candidate",
+      "evidence_count": 22,
+      "evidence_record_ids": [
+        "vertex42_attendance_seed",
+        "spreadsheet123_attendance_form_seed",
+        "round004_attendance_matrix_excel_template_seed",
+        "round005_attendance_vertex42_sheet_027",
+        "round005_attendance_smartsheet_spreadsheet_028",
+        "round006_attendance_smartsheet_weekly_005",
+        "round006_attendance_smartsheet_student_006",
+        "round006_attendance_smartsheet_tracking_007",
+        "round007_attendance_smartsheet_excel_tracking_010",
+        "round007_attendance_smartsheet_hr_012",
+        "round007_attendance_vertex42_schoolyear_014",
+        "round007_attendance_vertex42_record_015",
+        "round007_attendance_template_net_excel_016",
+        "round008_attendance_smartsheet_tracking_003",
+        "round008_attendance_smartsheet_dashboard_004",
+        "round008_attendance_smartsheet_monthlyrecord_007",
+        "round008_attendance_microsoftqa_record_009",
+        "round008_attendance_microsoftqa_fiscal_010",
+        "round008_attendance_microsoftqa_absence_014",
+        "round008_attendance_smartsheet_formula_017",
+        "round008_attendance_smartsheet_lock_018",
+        "round008_attendance_smartsheet_helper_019"
+      ],
+      "hypothesis_ids": [
+        "attendance_register"
+      ],
+      "triggers": [
+        "vis_calendar_grid",
+        "vis_frozen_reference_band",
+        "data_period_rollforward",
+        "data_formula_cascade"
+      ],
+      "capability_candidates": [
+        "copy_period_sheet",
+        "protect_formula_cells",
+        "extend_table_formulas",
+        "normalize_headers",
+        "append_structured_rows"
+      ],
+      "judge_note": "Across rounds 001-009 the matrix boundary remains roadmap-ready rather than merely recurring: the corpus still combines fixed roster bands, school-year and fiscal roll-forward variants, explicit month and year totals, copy-forward formulas, auto-filled new-row calculations, locked rows or columns, and hidden helper-column control across Smartsheet, Vertex42, Template.net, Microsoft Q&A, and earlier seeds, and round-009 adds no counter-evidence that would widen it back into append-only sign-in logs. Concrete Sheet Ops candidates are copy_period_sheet, protect_formula_cells, extend_table_formulas, normalize_headers, and append_structured_rows; a plausible verifier is to roll the workbook into a new week, month, or fiscal period, add a roster row, and confirm locked totals, helper-column logic, date formulas, and year-to-date summaries survive growth without breaking the matrix."
+    },
+    {
+      "pattern_id": "inventory_movement_log",
+      "title": "Inventory movement and reconciliation log",
+      "domain": "operations",
+      "status": "roadmap_candidate",
+      "evidence_count": 6,
+      "evidence_record_ids": [
+        "vertex42_inventory_seed",
+        "spreadsheet123_stocktake_seed",
+        "anydb_inventory_transaction_001",
+        "prelude_stock_movements_002",
+        "xorosoft_inventory_movement_003",
+        "syspro_inventory_movements_004"
+      ],
+      "hypothesis_ids": [
+        "inventory_movement_log"
+      ],
+      "triggers": [
+        "data_append_rows",
+        "data_reconcile_sources",
+        "val_duplicate_prevention",
+        "wf_reconciliation_cycle"
+      ],
+      "capability_candidates": [
+        "add_data_validation",
+        "extend_table_formulas",
+        "flag_outliers",
+        "append_structured_rows",
+        "reconcile_tables"
+      ],
+      "judge_note": "Round-003 closes the main gap from round-002 by adding direct transaction-led inventory records for receipts, issues, adjustments, and transfers. Concrete Sheet Ops candidates are append_structured_rows, reconcile_tables, add_data_validation, extend_table_formulas, and flag_outliers; a plausible verifier is to append movement rows, preserve item identifiers, and confirm running movement and reconciliation outputs stay aligned with stock balances."
+    },
+    {
+      "pattern_id": "expense_reimbursement",
+      "title": "Expense reimbursement form",
+      "domain": "finance",
+      "status": "roadmap_candidate",
+      "evidence_count": 8,
+      "evidence_record_ids": [
+        "smartsheet_cost_tracking_008",
+        "vertex42_expense_report_020",
+        "round004_expense_policy_clicktime_seed",
+        "round005_expense_policy_smartsheet_expense_report_001",
+        "round005_expense_policy_smartsheet_tracking_002",
+        "round005_expense_policy_smartsheet_printable_form_003",
+        "round005_expense_policy_template_net_reimbursement_form_004",
+        "round005_expense_policy_vertex42_expense_report_007"
+      ],
+      "hypothesis_ids": [
+        "expense_reimbursement"
+      ],
+      "triggers": [
+        "vis_multi_block_form",
+        "data_append_rows",
+        "val_required_comment",
+        "val_numeric_ranges"
+      ],
+      "capability_candidates": [
+        "add_data_validation",
+        "append_structured_rows",
+        "normalize_headers",
+        "generate_printable_form",
+        "protect_formula_cells",
+        "group_summarize"
+      ],
+      "judge_note": "Rounds 003-005 now show a stable reimbursement pattern across Smartsheet, Vertex42, Template.net, and ClickTime: itemized claim rows, receipt-required completeness, approval-state capture, and reimbursement totals remain consistent. Concrete Sheet Ops candidates are add_data_validation, append_structured_rows, normalize_headers, generate_printable_form, protect_formula_cells, and group_summarize; a plausible verifier is to append claim lines, toggle receipt or approval states, and confirm payable totals, exception cues, and printable reimbursement output stay synchronized."
+    },
+    {
+      "pattern_id": "service_ticket_queue",
+      "title": "Service ticket queue",
+      "domain": "support",
+      "status": "roadmap_candidate",
+      "evidence_count": 9,
+      "evidence_record_ids": [
+        "smartsheet_customer_issue_tracking_013",
+        "jotform_issue_tracker_028",
+        "round004_service_queue_airtable_seed",
+        "round005_service_queue_smartsheet_it_requests_008",
+        "round005_service_queue_smartsheet_issue_tracking_009",
+        "round005_service_queue_airtable_ticketing_013",
+        "round006_support_documentero_ticketlog_023",
+        "round006_support_templatenet_ticket_024",
+        "round006_support_ideaplan_triage_025"
+      ],
+      "hypothesis_ids": [
+        "service_ticket_queue"
+      ],
+      "triggers": [
+        "data_status_pipeline",
+        "data_append_rows",
+        "val_status_lists",
+        "vis_table_with_emphasis"
+      ],
+      "capability_candidates": [
+        "add_data_validation",
+        "append_structured_rows",
+        "protect_formula_cells",
+        "group_summarize",
+        "create_pivot_summary"
+      ],
+      "judge_note": "Rounds 004-006 now hold this judgment on queue-first support sheets across Smartsheet, Airtable, Jotform, Documentero, Template.net, and IdeaPlan while excluding intake-form-first request trackers from the registry entry. Concrete Sheet Ops candidates are add_data_validation, append_structured_rows, protect_formula_cells, group_summarize, and create_pivot_summary; a plausible verifier is to append tickets, update owner, priority, severity, or status, and confirm open, unresolved, overdue, and metrics-sheet summaries remain aligned with the queue table."
+    },
+    {
+      "pattern_id": "maintenance_issue_log",
+      "title": "Scheduled maintenance log",
+      "domain": "facilities",
+      "status": "roadmap_candidate",
+      "evidence_count": 8,
+      "evidence_record_ids": [
+        "vertex42_vehicle_maintenance_seed",
+        "vertex42_vehicle_maintenance_017",
+        "round004_maintenance_log_templatearchive_seed",
+        "round004_maintenance_log_template_net_seed",
+        "round005_maintenance_template_net_fleet_024",
+        "round006_maintenance_template_net_startup_017",
+        "round006_maintenance_template_net_office_018",
+        "round006_maintenance_template_net_schedule_019"
+      ],
+      "hypothesis_ids": [
+        "maintenance_issue_log"
+      ],
+      "triggers": [
+        "data_append_rows",
+        "vis_table_with_emphasis",
+        "val_date_windows",
+        "data_summary_snapshot"
+      ],
+      "capability_candidates": [
+        "add_data_validation",
+        "copy_period_sheet",
+        "protect_formula_cells",
+        "append_structured_rows",
+        "flag_outliers"
+      ],
+      "judge_note": "Rounds 003-006 now show scheduled maintenance as a stable workbook pattern across vehicle, fleet, startup equipment, office equipment, and broader facility schedule variants. Concrete Sheet Ops candidates are add_data_validation, copy_period_sheet, protect_formula_cells, append_structured_rows, and flag_outliers; a plausible verifier is to append service rows, update next-due timing or ownership, and confirm due-state, cost-history, and schedule summaries stay aligned across equipment and facility maintenance views."
+    },
+    {
+      "pattern_id": "health_metrics_tracker",
+      "title": "Health metrics tracker",
+      "domain": "health",
+      "status": "recurring",
+      "evidence_count": 27,
+      "evidence_record_ids": [
+        "vertex42_health_log_seed",
+        "vertex42_blood_pressure_018",
+        "round004_health_tracker_template_net_seed",
+        "round005_health_vertex42_exercise_025",
+        "round006_health_vertex42_med_schedule_010",
+        "round006_health_vertex42_immunization_011",
+        "round007_health_vertex42_bp_017",
+        "round007_health_template_net_body_measurement_023",
+        "round007_health_template_net_calorie_024",
+        "round008_health_templatenet_tracker_020",
+        "round008_health_templatenet_activity_021",
+        "round008_health_templatenet_measurement_024",
+        "round008_health_templatenet_bplog_029",
+        "round008_health_templatenet_bpcharts_030",
+        "round008_health_smartsheet_progress_031",
+        "round009_vertex42_blood_count_tracker_001",
+        "round009_vertex42_weight_loss_chart_004",
+        "round009_vertex42_infant_growth_chart_005",
+        "round009_template_blood_sugar_log_006",
+        "round009_template_blood_glucose_monitoring_log_007",
+        "round009_template_blood_sugar_levels_tracking_chart_008",
+        "round009_template_high_low_blood_sugar_chart_011",
+        "round009_template_blood_sugar_blood_pressure_chart_012",
+        "round009_template_blood_sugar_after_exercise_chart_013",
+        "round009_template_food_tracking_sheet_016",
+        "round009_template_weight_loss_goal_sheet_017",
+        "round009_smartsheet_medical_progress_template_018"
+      ],
+      "hypothesis_ids": [
+        "health_metrics_tracker"
+      ],
+      "triggers": [
+        "data_summary_snapshot",
+        "val_threshold_alerts",
+        "vis_color_key",
+        "wf_repeating_check_in"
+      ],
+      "capability_candidates": [
+        "add_data_validation",
+        "normalize_headers",
+        "create_pivot_summary",
+        "flag_outliers",
+        "protect_formula_cells"
+      ],
+      "judge_note": "Rounds 003-009 now cover repeated health measurements plus explicit target and progress variants across blood-pressure, blood-count, glucose, exercise, medication, immunization, body-measurement, weight-loss, calorie-control, activity-goal, growth, and medical-progress sheets. Concrete Sheet Ops candidates are add_data_validation, normalize_headers, create_pivot_summary, flag_outliers, and protect_formula_cells; a plausible verifier is to append new measurements or goals, preserve threshold comparisons and summaries, and keep durable progress views coherent. I am still holding it below roadmap because round-009 resolves the research question in the negative rather than promoting it: the new evidence sharpens the threshold-aware measurement family, but too much of the remaining corpus still leans on printable charts, reference-band comparisons, or light logs instead of workbook-native protected summaries or in-sheet control gates. That is enough to stop further collection and keep the pattern as a recurring non-roadmap boundary, but not enough to pull it into the implementation fixture set."
+    },
+    {
+      "pattern_id": "loan_repayment_calculator",
+      "title": "Loan repayment calculator",
+      "domain": "finance",
+      "status": "roadmap_candidate",
+      "evidence_count": 7,
+      "evidence_record_ids": [
+        "vertex42_mortgage_calculator_seed",
+        "my_loan_tracker_amortization_020",
+        "dataresearchlabs_my_loan_tracker_025",
+        "smartsheet_amortization_general_026",
+        "smartsheet_amortization_home_equity_027",
+        "smartsheet_amortization_balloon_028",
+        "smartsheet_mortgage_payment_schedule_029"
+      ],
+      "hypothesis_ids": [
+        "loan_repayment_calculator"
+      ],
+      "triggers": [
+        "data_lookup_rates",
+        "val_numeric_ranges",
+        "val_formula_lock",
+        "data_formula_cascade"
+      ],
+      "capability_candidates": [
+        "add_data_validation",
+        "extend_table_formulas",
+        "join_lookup",
+        "protect_formula_cells"
+      ],
+      "judge_note": "Amortization schedules are robustly supported across template sites and open-source workbooks, including extra-payment and balloon-loan variants. Concrete Sheet Ops candidates are protect_formula_cells, extend_table_formulas, add_data_validation, and join_lookup; a plausible verifier is to change loan inputs or extra payments and confirm the schedule, payoff date, and remaining-balance columns recalculate without manual repair."
+    },
+    {
+      "pattern_id": "project_status_dashboard",
+      "title": "Project status dashboard",
+      "domain": "project_management",
+      "status": "rejected",
+      "evidence_count": 1,
+      "evidence_record_ids": [
+        "edgeryders_magic_spreadsheet_v1_018"
+      ],
+      "hypothesis_ids": [
+        "project_status_dashboard"
+      ],
+      "triggers": [
+        "vis_dashboard_tiles",
+        "vis_progress_bar",
+        "data_table_rollup",
+        "val_status_lists"
+      ],
+      "capability_candidates": [
+        "generate_printable_form",
+        "add_data_validation",
+        "create_pivot_summary",
+        "group_summarize"
+      ],
+      "judge_note": "Rejected as too broad: the lone operating-monitoring sheet is a generic management workbook, not a stable spreadsheet-native project dashboard pattern with a repeatable row-to-summary structure."
+    },
+    {
+      "pattern_id": "purchase_order_control",
+      "title": "Purchase order control",
+      "domain": "procurement",
+      "status": "roadmap_candidate",
+      "evidence_count": 6,
+      "evidence_record_ids": [
+        "smartsheet_invoice_purchase_order_005",
+        "smartsheet_purchase_request_approval_007",
+        "simplesheets_po_management_014",
+        "round006_po_smartsheet_order_forms_020",
+        "round006_po_smartsheet_tracking_021",
+        "round006_po_smartsheet_delivery_022"
+      ],
+      "hypothesis_ids": [
+        "purchase_order_control"
+      ],
+      "triggers": [
+        "vis_multi_block_form",
+        "wf_request_fulfillment",
+        "val_required_identity"
+      ],
+      "capability_candidates": [
+        "add_data_validation",
+        "generate_printable_form",
+        "protect_formula_cells",
+        "append_structured_rows",
+        "group_summarize"
+      ],
+      "judge_note": "Across rounds 001-006 the evidence now converges on a bounded PO-control workflow: request and approval intake, printable PO issuance, status-bearing order tracking, and receipt or invoice handoff checkpoints before full reconciliation begins. Concrete Sheet Ops candidates are add_data_validation, generate_printable_form, protect_formula_cells, append_structured_rows, and group_summarize; a plausible verifier is to create or extend purchase-order rows, update approval, delivery, payment, or receipt checkpoints, and confirm the PO sheet preserves totals and handoff state without drifting into three-way-match logic."
+    },
+    {
+      "pattern_id": "asset_lifecycle_register",
+      "title": "Asset lifecycle register",
+      "domain": "operations",
+      "status": "rejected",
+      "evidence_count": 2,
+      "evidence_record_ids": [
+        "vertex42_inventory_seed",
+        "vertex42_vehicle_maintenance_seed"
+      ],
+      "hypothesis_ids": [
+        "asset_lifecycle_register"
+      ],
+      "triggers": [
+        "data_unique_id_tracking",
+        "wf_period_close",
+        "val_duplicate_prevention",
+        "data_summary_snapshot"
+      ],
+      "capability_candidates": [
+        "reconcile_tables",
+        "add_data_validation",
+        "copy_period_sheet",
+        "normalize_headers",
+        "append_structured_rows"
+      ],
+      "judge_note": "Rejected as duplicate: the current evidence collapses into inventory control plus maintenance logging, without a distinct acquisition-to-retirement register pattern."
+    },
+    {
+      "pattern_id": "cash_flow_monitor",
+      "title": "Cash flow monitor",
+      "domain": "finance",
+      "status": "roadmap_candidate",
+      "evidence_count": 8,
+      "evidence_record_ids": [
+        "vertex42_financial_statement_seed",
+        "edgeryders_budget_template_v3_017",
+        "runway_tool_cash_budget_019",
+        "smartsheet_projectcost_schedule_010",
+        "vertex42_cash_flow_statement_030",
+        "financialaha_cash_flow_031",
+        "basicexceltutorial_open_close_032",
+        "round004_cash_flow_corporatefinance_seed"
+      ],
+      "hypothesis_ids": [
+        "cash_flow_monitor"
+      ],
+      "triggers": [
+        "data_period_rollforward",
+        "vis_sidebar_totals",
+        "data_table_rollup",
+        "wf_period_close"
+      ],
+      "capability_candidates": [
+        "copy_period_sheet",
+        "roll_forward_period",
+        "protect_formula_cells",
+        "extend_table_formulas",
+        "group_summarize",
+        "create_pivot_summary"
+      ],
+      "judge_note": "Round-003 strengthens the opening-to-closing balance continuity boundary with direct cash-statement, forecast, and carry-forward examples. Concrete Sheet Ops candidates are roll_forward_period, copy_period_sheet, protect_formula_cells, extend_table_formulas, group_summarize, and create_pivot_summary; a plausible verifier is to roll a period forward, edit inflow or outflow lines, and confirm the closing balance propagates cleanly into the next period."
+    },
+    {
+      "pattern_id": "sales_pipeline_tracker",
+      "title": "Sales pipeline tracker",
+      "domain": "sales",
+      "status": "roadmap_candidate",
+      "evidence_count": 4,
+      "evidence_record_ids": [
+        "smartsheet_sales_pipeline_010",
+        "smartsheet_sales_pipeline_report_011",
+        "spreadsheetpartners_sales_pipeline_026",
+        "hubspot_sales_pipeline_027"
+      ],
+      "hypothesis_ids": [
+        "sales_pipeline_tracker"
+      ],
+      "triggers": [
+        "data_status_pipeline",
+        "val_status_lists",
+        "data_table_rollup"
+      ],
+      "capability_candidates": [
+        "add_data_validation",
+        "normalize_headers",
+        "generate_printable_form",
+        "create_pivot_summary",
+        "group_summarize"
+      ],
+      "judge_note": "Round-003 resolves the single-publisher concern: stage-driven opportunity tables, weighted forecasts, and close-date review now recur across multiple source families. Concrete Sheet Ops candidates are add_data_validation, normalize_headers, create_pivot_summary, group_summarize, and generate_printable_form; a plausible verifier is to append or edit opportunities, update stage or probability, and confirm forecast totals and stage summaries refresh without manual cleanup."
+    },
+    {
+      "pattern_id": "student_gradebook",
+      "title": "Student gradebook",
+      "domain": "education",
+      "status": "roadmap_candidate",
+      "evidence_count": 6,
+      "evidence_record_ids": [
+        "vertex42_gradebook_seed",
+        "dassl_gradebook_019",
+        "round004_gradebook_template_net_seed",
+        "round004_gradebook_google_sheets_seed",
+        "round005_gradebook_vertex42_weighted_021",
+        "round005_gradebook_template_net_weighted_022"
+      ],
+      "hypothesis_ids": [
+        "student_gradebook"
+      ],
+      "triggers": [
+        "vis_frozen_reference_band",
+        "val_formula_lock",
+        "data_lookup_master",
+        "data_summary_snapshot"
+      ],
+      "capability_candidates": [
+        "add_data_validation",
+        "extend_table_formulas",
+        "group_summarize",
+        "join_lookup",
+        "protect_formula_cells"
+      ],
+      "judge_note": "Rounds 003-005 now reinforce the roadmap case with weighted categories, excused-work handling, grading-scale variation, and assignment-column growth across multiple workbook families. Concrete Sheet Ops candidates are add_data_validation, extend_table_formulas, group_summarize, join_lookup, and protect_formula_cells; a plausible verifier is to add an assessment column, update scores, weights, or excused flags, and confirm student totals, class summaries, and locked grading formulas remain synchronized."
+    },
+    {
+      "pattern_id": "safety_compliance_register",
+      "title": "Safety compliance register",
+      "domain": "compliance",
+      "status": "roadmap_candidate",
+      "evidence_count": 4,
+      "evidence_record_ids": [
+        "smartsheet_compliance_risk_register_014",
+        "smartsheet_safety_risk_register_015",
+        "round004_safety_risk_register_projectmanager_seed",
+        "round004_safety_register_safetymint_seed"
+      ],
+      "hypothesis_ids": [
+        "safety_compliance_register"
+      ],
+      "triggers": [
+        "vis_table_with_emphasis",
+        "val_threshold_alerts",
+        "wf_audit_trail",
+        "data_summary_snapshot"
+      ],
+      "capability_candidates": [
+        "add_data_validation",
+        "protect_formula_cells",
+        "generate_printable_form",
+        "flag_outliers",
+        "group_summarize"
+      ],
+      "judge_note": "Round-004 resolves the one-publisher problem with direct non-Smartsheet risk-register evidence that preserves risk rows, ratings, mitigation ownership, and open-risk review. Concrete Sheet Ops candidates are add_data_validation, protect_formula_cells, generate_printable_form, flag_outliers, and group_summarize; a plausible verifier is to append or edit risk rows, change severity or status, and confirm the prioritized open-risk summary still matches the underlying register."
+    },
+    {
+      "pattern_id": "timesheet_hours_log",
+      "title": "Timesheet hours log",
+      "domain": "hr",
+      "status": "roadmap_candidate",
+      "evidence_count": 5,
+      "evidence_record_ids": [
+        "vertex42_timesheet_seed",
+        "smartsheet_timesheet_standard_004",
+        "smartsheet_timesheet_lunch_005",
+        "smartsheet_simple_payroll_006",
+        "microsoft_accounting_templates_seed"
+      ],
+      "hypothesis_ids": [
+        "timesheet_hours_log"
+      ],
+      "triggers": [
+        "vis_month_sectioning",
+        "data_append_rows",
+        "val_numeric_ranges",
+        "data_table_rollup"
+      ],
+      "capability_candidates": [
+        "extend_table_formulas",
+        "add_data_validation",
+        "normalize_headers",
+        "append_structured_rows",
+        "copy_period_sheet"
+      ],
+      "judge_note": "Timesheet evidence spans dated hour entry, breaks, overtime, and payroll-adjacent totals across multiple sources. Concrete Sheet Ops candidates are append_structured_rows, extend_table_formulas, add_data_validation, normalize_headers, and copy_period_sheet; a plausible verifier is to add dated work entries and break values, then confirm daily totals, overtime, and pay rollups stay correct."
+    },
+    {
+      "pattern_id": "procurement_reconciliation",
+      "title": "Procurement reconciliation sheet",
+      "domain": "procurement",
+      "status": "roadmap_candidate",
+      "evidence_count": 5,
+      "evidence_record_ids": [
+        "smartsheet_ap_ledger_009",
+        "auditboard_3waymatch_013",
+        "simplesheets_po_management_014",
+        "ininvoice_three_way_015",
+        "purchasecontrol_po_reconciliation_016"
+      ],
+      "hypothesis_ids": [
+        "procurement_reconciliation"
+      ],
+      "triggers": [
+        "data_reconcile_sources",
+        "wf_reconciliation_cycle",
+        "val_cross_field_rule",
+        "vis_sidebar_totals"
+      ],
+      "capability_candidates": [
+        "protect_formula_cells",
+        "normalize_headers",
+        "add_data_validation",
+        "reconcile_tables",
+        "create_pivot_summary"
+      ],
+      "judge_note": "Round-003 turns procurement reconciliation into a stable document-match pattern centered on PO, receipt, and invoice alignment. Concrete Sheet Ops candidates are reconcile_tables, normalize_headers, add_data_validation, protect_formula_cells, and create_pivot_summary; a plausible verifier is to import or update PO, receipt, and invoice tables and confirm mismatch flags and match summaries update deterministically."
+    },
+    {
+      "pattern_id": "warehouse_reorder_tracker",
+      "title": "Warehouse reorder tracker",
+      "domain": "logistics",
+      "status": "roadmap_candidate",
+      "evidence_count": 4,
+      "evidence_record_ids": [
+        "vertex42_inventory_seed",
+        "smartsheet_inventory_simple_013",
+        "smartsheet_inventory_printable_014",
+        "smartsheet_inventory_office_supply_015"
+      ],
+      "hypothesis_ids": [
+        "warehouse_reorder_tracker"
+      ],
+      "triggers": [
+        "val_threshold_alerts",
+        "data_summary_snapshot",
+        "vis_table_with_emphasis",
+        "val_category_lists"
+      ],
+      "capability_candidates": [
+        "add_data_validation",
+        "join_lookup",
+        "normalize_headers",
+        "flag_outliers",
+        "create_pivot_summary"
+      ],
+      "judge_note": "The refined snapshot-based inventory pattern is clearly supported by reorder-oriented stock lists with on-hand quantity, cost, and low-stock signaling. Concrete Sheet Ops candidates are flag_outliers, create_pivot_summary, add_data_validation, normalize_headers, and join_lookup; a plausible verifier is to change on-hand quantities or reorder thresholds and confirm restock flags and summary values refresh without breaking the table."
+    },
+    {
+      "pattern_id": "training_completion_matrix",
+      "title": "Training completion matrix",
+      "domain": "hr",
+      "status": "roadmap_candidate",
+      "evidence_count": 7,
+      "evidence_record_ids": [
+        "smartsheet_training_matrix_employee_018",
+        "smartsheet_training_matrix_cross_019",
+        "smartsheet_training_matrix_health_safety_020",
+        "trainingwise_training_matrix_005",
+        "excelskillsmatrix_training_006",
+        "projectmanager_training_007",
+        "deel_training_008"
+      ],
+      "hypothesis_ids": [
+        "training_completion_matrix"
+      ],
+      "triggers": [
+        "vis_frozen_reference_band",
+        "data_lookup_master",
+        "val_category_lists",
+        "data_summary_snapshot"
+      ],
+      "capability_candidates": [
+        "add_data_validation",
+        "normalize_headers",
+        "extend_table_formulas",
+        "generate_printable_form",
+        "group_summarize",
+        "create_pivot_summary"
+      ],
+      "judge_note": "Round-003 resolves the round-002 source-family concentration by adding several non-Smartsheet person-by-requirement matrices with completion or proficiency states. Concrete Sheet Ops candidates are add_data_validation, normalize_headers, extend_table_formulas, group_summarize, create_pivot_summary, and generate_printable_form; a plausible verifier is to add employees or requirements, update completion states, and confirm the grid and gap summaries stay aligned."
+    },
+    {
+      "pattern_id": "event_planning_runbook",
+      "title": "Event planning runbook",
+      "domain": "operations",
+      "status": "rejected",
+      "evidence_count": 5,
+      "evidence_record_ids": [
+        "vertex42_calendar_seed",
+        "spreadsheet123_meal_planner_seed",
+        "smartsheet_inventory_moving_016",
+        "round004_event_planning_monday_seed",
+        "round004_event_budget_smartsheet_seed"
+      ],
+      "hypothesis_ids": [
+        "event_planning_runbook"
+      ],
+      "triggers": [
+        "vis_multi_block_form",
+        "val_date_windows",
+        "vis_progress_bar",
+        "data_status_pipeline"
+      ],
+      "capability_candidates": [
+        "copy_period_sheet",
+        "add_data_validation",
+        "protect_formula_cells",
+        "generate_printable_form",
+        "group_summarize"
+      ],
+      "judge_note": "Rejected as too broad: round-004 cleans up the trigger mapping, but the added evidence only reinforces that event task boards drift into generic project tracking while event budgets drift into budget-control sheets, not one coherent spreadsheet-native runbook pattern."
+    },
+    {
+      "pattern_id": "client_contact_master",
+      "title": "Client contact master",
+      "domain": "sales",
+      "status": "rejected",
+      "evidence_count": 1,
+      "evidence_record_ids": [
+        "microsoft_business_spreadsheets_seed"
+      ],
+      "hypothesis_ids": [
+        "client_contact_master"
+      ],
+      "triggers": [
+        "data_unique_id_tracking",
+        "data_lookup_master",
+        "val_duplicate_prevention",
+        "vis_frozen_reference_band"
+      ],
+      "capability_candidates": [
+        "append_structured_rows",
+        "add_data_validation",
+        "join_lookup",
+        "normalize_headers"
+      ],
+      "judge_note": "Rejected as unsupported: the business-template catalog mentions many entities, but it does not provide a direct client-master workbook shape."
+    },
+    {
+      "pattern_id": "quality_inspection_log",
+      "title": "Quality inspection log",
+      "domain": "manufacturing",
+      "status": "rejected",
+      "evidence_count": 1,
+      "evidence_record_ids": [
+        "smartsheet_compliance_risk_register_014"
+      ],
+      "hypothesis_ids": [
+        "quality_inspection_log"
+      ],
+      "triggers": [
+        "val_threshold_alerts",
+        "wf_exception_escalation",
+        "vis_table_with_emphasis",
+        "data_append_rows"
+      ],
+      "capability_candidates": [
+        "add_data_validation",
+        "protect_formula_cells",
+        "generate_printable_form",
+        "append_structured_rows",
+        "flag_outliers"
+      ],
+      "judge_note": "Rejected as unsupported: risk and corrective-action sheets are adjacent, but they are not inspection logs with measured values and pass-fail outcomes."
+    },
+    {
+      "pattern_id": "vendor_performance_scorecard",
+      "title": "Vendor performance scorecard",
+      "domain": "procurement",
+      "status": "rejected",
+      "evidence_count": 1,
+      "evidence_record_ids": [
+        "smartsheet_projectcost_comparison_012"
+      ],
+      "hypothesis_ids": [
+        "vendor_performance_scorecard"
+      ],
+      "triggers": [
+        "vis_dashboard_tiles",
+        "data_table_rollup",
+        "wf_status_review",
+        "val_category_lists"
+      ],
+      "capability_candidates": [
+        "normalize_headers",
+        "add_data_validation",
+        "protect_formula_cells",
+        "group_summarize",
+        "create_pivot_summary"
+      ],
+      "judge_note": "Rejected as unsupported: bid comparison is adjacent procurement analysis, not a repeated supplier performance scorecard."
+    },
+    {
+      "pattern_id": "insurance_claim_tracker",
+      "title": "Insurance claim tracker",
+      "domain": "finance",
+      "status": "rejected",
+      "evidence_count": 0,
+      "evidence_record_ids": [],
+      "hypothesis_ids": [
+        "insurance_claim_tracker"
+      ],
+      "triggers": [
+        "data_status_pipeline",
+        "wf_audit_trail",
+        "val_required_identity",
+        "data_summary_snapshot"
+      ],
+      "capability_candidates": [
+        "add_data_validation",
+        "generate_printable_form",
+        "protect_formula_cells",
+        "group_summarize",
+        "create_pivot_summary"
+      ],
+      "judge_note": "Rejected as unsupported: none of the extracted or raw evidence rounds contains a direct insurance-claims workbook with claim status, follow-up dates, and document control."
+    },
+    {
+      "pattern_id": "research_data_log",
+      "title": "Research data log",
+      "domain": "analytics",
+      "status": "rejected",
+      "evidence_count": 1,
+      "evidence_record_ids": [
+        "github_odcs_excel_template_seed"
+      ],
+      "hypothesis_ids": [
+        "research_data_log"
+      ],
+      "triggers": [
+        "data_append_rows",
+        "val_duplicate_prevention",
+        "wf_audit_trail",
+        "data_summary_snapshot"
+      ],
+      "capability_candidates": [
+        "add_data_validation",
+        "normalize_headers",
+        "protect_formula_cells",
+        "append_structured_rows",
+        "create_pivot_summary"
+      ],
+      "judge_note": "Rejected as not spreadsheet-specific for this taxonomy: the data-contract authoring workbook is structured metadata capture, not a recurring research-log pattern."
+    },
+    {
+      "pattern_id": "construction_cost_tracker",
+      "title": "Construction cost tracker",
+      "domain": "construction",
+      "status": "roadmap_candidate",
+      "evidence_count": 8,
+      "evidence_record_ids": [
+        "smartsheet_projectcost_tracking_011",
+        "round005_construction_smartsheet_cost_tracking_014",
+        "round005_construction_vertex42_project_budget_018",
+        "round005_construction_template_net_cost_020",
+        "round006_construction_smartsheet_change_forms_013",
+        "round006_construction_smartsheet_change_process_014",
+        "round006_construction_vertex42_budget_015",
+        "round006_construction_vertex42_evm_016"
+      ],
+      "hypothesis_ids": [
+        "construction_cost_tracker"
+      ],
+      "triggers": [
+        "vis_table_with_emphasis",
+        "data_append_rows",
+        "data_table_rollup",
+        "val_numeric_ranges"
+      ],
+      "capability_candidates": [
+        "extend_table_formulas",
+        "add_data_validation",
+        "protect_formula_cells",
+        "group_summarize",
+        "create_pivot_summary"
+      ],
+      "judge_note": "Rounds 004-006 now hold the narrowed active-tracking boundary across direct cost trackers, WBS-driven budget-versus-actual sheets, change-order logs, and schedule-aware earned-value views. Concrete Sheet Ops candidates are extend_table_formulas, add_data_validation, protect_formula_cells, group_summarize, and create_pivot_summary; a plausible verifier is to append or revise cost rows, change orders, or period spend, and confirm variance, cumulative cost, and forecast-style rollups stay synchronized without reintroducing estimate-only or bid-comparison sheets."
+    },
+    {
+      "pattern_id": "shift_roster_planner",
+      "title": "Shift roster planner",
+      "domain": "operations",
+      "status": "roadmap_candidate",
+      "evidence_count": 8,
+      "evidence_record_ids": [
+        "vertex42_shift_schedule_seed",
+        "smartsheet_employee_calendar_021",
+        "smartsheet_work_schedule_022",
+        "smartsheet_weekly_shift_023",
+        "clockify_24_7_coverage_022",
+        "highfile_rotating_shift_023",
+        "excelbell_shift_schedule_024",
+        "documentero_shift_schedule_025"
+      ],
+      "hypothesis_ids": [
+        "shift_roster_planner"
+      ],
+      "triggers": [
+        "vis_calendar_grid",
+        "val_allowed_sequence",
+        "val_date_windows",
+        "vis_color_key"
+      ],
+      "capability_candidates": [
+        "add_data_validation",
+        "normalize_headers",
+        "generate_printable_form",
+        "group_summarize",
+        "copy_period_sheet"
+      ],
+      "judge_note": "Round-003 sharpens shift rosters into a coverage-and-assignment pattern with weekly, monthly, rotating, and availability-based variants across several publishers. Concrete Sheet Ops candidates are copy_period_sheet, add_data_validation, normalize_headers, group_summarize, and generate_printable_form; a plausible verifier is to roll the schedule forward, change assignments or availability, and confirm coverage summaries and conflict indicators stay coherent."
+    },
+    {
+      "pattern_id": "expense_policy_checker",
+      "title": "Expense policy checker",
+      "domain": "finance",
+      "status": "rejected",
+      "evidence_count": 6,
+      "evidence_record_ids": [
+        "mercury_expense_policy_021",
+        "round004_expense_policy_ramp_seed",
+        "round005_expense_policy_template_net_rules_005",
+        "round006_expense_smartsheet_tracking_002",
+        "round007_expense_policy_smartsheet_tracking_001",
+        "round007_expense_policy_template_net_limit_007"
+      ],
+      "hypothesis_ids": [
+        "expense_policy_checker"
+      ],
+      "triggers": [
+        "val_threshold_alerts",
+        "val_category_lists",
+        "val_cross_field_rule",
+        "data_formula_cascade"
+      ],
+      "capability_candidates": [
+        "add_data_validation",
+        "protect_formula_cells",
+        "extend_table_formulas",
+        "flag_outliers",
+        "group_summarize"
+      ],
+      "judge_note": "Rejected in round-009 and kept retired: across rounds 003-009 the evidence still does not show a workbook-native policy gate with explicit formulas, validations, or locked rule cells that block or flag non-compliant claims inside the sheet. Round-009 adds no direct reopening evidence, and the strongest prior material still stops at reimbursement routing or over-limit approval handling, so the safer judgment remains to keep this pattern off the active frontier unless a true in-sheet checker appears."
+    },
+    {
+      "pattern_id": "fleet_dispatch_board",
+      "title": "Fleet dispatch board",
+      "domain": "logistics",
+      "status": "rejected",
+      "evidence_count": 1,
+      "evidence_record_ids": [
+        "smartsheet_weekly_shift_023"
+      ],
+      "hypothesis_ids": [
+        "fleet_dispatch_board"
+      ],
+      "triggers": [
+        "vis_dashboard_tiles",
+        "data_status_pipeline",
+        "val_date_windows",
+        "wf_handoff_between_owners"
+      ],
+      "capability_candidates": [
+        "add_data_validation",
+        "copy_period_sheet",
+        "normalize_headers",
+        "group_summarize",
+        "create_pivot_summary"
+      ],
+      "judge_note": "Rejected as unsupported: a staffing shift schedule is not a fleet dispatch board with vehicles, routes, and delivery state."
+    },
+    {
+      "pattern_id": "compliance_action_register",
+      "title": "Compliance action register",
+      "domain": "compliance",
+      "status": "roadmap_candidate",
+      "evidence_count": 5,
+      "evidence_record_ids": [
+        "smartsheet_corrective_action_016",
+        "smartsheet_ccc_template_017",
+        "rcatoolkit_capa_009",
+        "rcatoolkit_scar_010",
+        "isocertification_corrective_actions_012"
+      ],
+      "hypothesis_ids": [
+        "compliance_action_register"
+      ],
+      "triggers": [
+        "wf_audit_trail",
+        "val_required_comment",
+        "val_date_windows",
+        "data_status_pipeline"
+      ],
+      "capability_candidates": [
+        "add_data_validation",
+        "protect_formula_cells",
+        "generate_printable_form",
+        "group_summarize",
+        "create_pivot_summary"
+      ],
+      "judge_note": "Round-003 turns corrective-action tracking into a stable cross-source register pattern with issue, owner, due date, status, and closure evidence. Concrete Sheet Ops candidates are add_data_validation, protect_formula_cells, group_summarize, create_pivot_summary, and generate_printable_form; a plausible verifier is to append actions, update ownership or closure state, and confirm due-date and closure summaries remain consistent."
+    },
+    {
+      "pattern_id": "lab_sample_tracker",
+      "title": "Lab sample tracker",
+      "domain": "science",
+      "status": "rejected",
+      "evidence_count": 0,
+      "evidence_record_ids": [],
+      "hypothesis_ids": [
+        "lab_sample_tracker"
+      ],
+      "triggers": [
+        "data_unique_id_tracking",
+        "val_date_windows",
+        "wf_audit_trail",
+        "data_summary_snapshot"
+      ],
+      "capability_candidates": [
+        "add_data_validation",
+        "protect_formula_cells",
+        "create_pivot_summary",
+        "append_structured_rows",
+        "normalize_headers"
+      ],
+      "judge_note": "Rejected as unsupported: no extracted or raw record shows sample identifiers, collection timing, and result tracking in a lab workbook."
+    },
+    {
+      "pattern_id": "membership_renewal_monitor",
+      "title": "Membership renewal monitor",
+      "domain": "operations",
+      "status": "rejected",
+      "evidence_count": 0,
+      "evidence_record_ids": [],
+      "hypothesis_ids": [
+        "membership_renewal_monitor"
+      ],
+      "triggers": [
+        "vis_color_key",
+        "data_period_rollforward",
+        "val_date_windows",
+        "data_summary_snapshot"
+      ],
+      "capability_candidates": [
+        "add_data_validation",
+        "protect_formula_cells",
+        "append_structured_rows",
+        "copy_period_sheet",
+        "group_summarize"
+      ],
+      "judge_note": "Rejected as unsupported: the corpus still lacks membership renewal sheets with expiration cycles and notice tracking."
+    },
+    {
+      "pattern_id": "donation_campaign_tracker",
+      "title": "Donation campaign tracker",
+      "domain": "nonprofit",
+      "status": "rejected",
+      "evidence_count": 0,
+      "evidence_record_ids": [],
+      "hypothesis_ids": [
+        "donation_campaign_tracker"
+      ],
+      "triggers": [
+        "vis_dashboard_tiles",
+        "data_table_rollup",
+        "wf_status_review",
+        "val_required_identity"
+      ],
+      "capability_candidates": [
+        "generate_printable_form",
+        "add_data_validation",
+        "normalize_headers",
+        "group_summarize",
+        "create_pivot_summary"
+      ],
+      "judge_note": "Rejected as unsupported: no direct donor or campaign workbook appears in the current evidence corpus."
+    },
+    {
+      "pattern_id": "subscription_renewal_ledger",
+      "title": "Subscription renewal ledger",
+      "domain": "operations",
+      "status": "rejected",
+      "evidence_count": 0,
+      "evidence_record_ids": [],
+      "hypothesis_ids": [
+        "subscription_renewal_ledger"
+      ],
+      "triggers": [
+        "data_period_rollforward",
+        "val_date_windows",
+        "data_status_pipeline",
+        "data_summary_snapshot"
+      ],
+      "capability_candidates": [
+        "add_data_validation",
+        "protect_formula_cells",
+        "append_structured_rows",
+        "copy_period_sheet",
+        "create_pivot_summary"
+      ],
+      "judge_note": "Rejected as unsupported: there is still no direct subscription billing or renewal ledger evidence in the extracted or raw rounds."
+    }
+  ]
+}

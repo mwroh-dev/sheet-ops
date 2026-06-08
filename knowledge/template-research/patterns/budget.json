@@ -1,0 +1,45 @@
+{
+  "pattern_id": "budget",
+  "title": "Budget plan versus actual tracking",
+  "domain": "finance",
+  "why": "Help a user plan money movement, record actuals, and identify categories or periods where the plan no longer matches reality.",
+  "visual_patterns": [
+    "monthly_matrix",
+    "category_summary",
+    "variance_highlight",
+    "dashboard"
+  ],
+  "data_patterns": [
+    "aggregate",
+    "period_rollup",
+    "category_mapping",
+    "formula_propagation"
+  ],
+  "validation_patterns": [
+    "required_period",
+    "numeric_amount",
+    "known_category",
+    "duplicate_detection"
+  ],
+  "workflow_patterns": [
+    "planned_actual",
+    "period_close",
+    "variance_review"
+  ],
+  "source_observations": [
+    "spreadsheet123_budget_seed"
+  ],
+  "existing_capabilities": [
+    "group_summarize",
+    "highlight_threshold"
+  ],
+  "missing_capability_candidates": [
+    "copy_period_sheet",
+    "roll_forward_period",
+    "create_pivot_summary",
+    "normalize_headers",
+    "extend_table_formulas"
+  ],
+  "recurrence_status": "single_source_seed",
+  "promotion_note": "Budget appears across many template catalogs, but this seed record intentionally cites one observation until more extraction shards are added."
+}

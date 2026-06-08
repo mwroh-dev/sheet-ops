@@ -1,0 +1,142 @@
+{
+  "version": 1,
+  "generated_from_round": "round-009",
+  "classification_type": "verifier_strategy_map",
+  "summary": "Verifier-centered grouping that maps roadmap candidates to the proof style needed before Sheet Ops implementation claims support.",
+  "groups": [
+    {
+      "group_id": "formula_preservation_verifier",
+      "title": "Formula preservation verifier",
+      "classification_axis": "verifier_strategy",
+      "patterns": [
+        "invoice_line_item_billing",
+        "monthly_budget_control",
+        "student_gradebook",
+        "timesheet_hours_log",
+        "loan_repayment_calculator"
+      ],
+      "common_mechanics": [
+        "formula ranges",
+        "protected cells",
+        "inserted rows or periods",
+        "dependent totals"
+      ],
+      "capabilities": [
+        "extend_table_formulas",
+        "protect_formula_cells",
+        "append_structured_rows",
+        "copy_period_sheet"
+      ],
+      "verifier_strategy": [
+        "compare formula cells before and after operation",
+        "evaluate dependent totals",
+        "assert new data is included in formulas",
+        "assert protected cells are untouched"
+      ],
+      "fixture_priority": "p0",
+      "notes": "This verifier family is foundational for almost every higher-level Sheet Ops operation."
+    },
+    {
+      "group_id": "period_and_grid_verifier",
+      "title": "Period and grid verifier",
+      "classification_axis": "verifier_strategy",
+      "patterns": [
+        "cash_flow_monitor",
+        "attendance_register",
+        "project_timeline_tracker",
+        "shift_roster_planner",
+        "construction_cost_tracker"
+      ],
+      "common_mechanics": [
+        "date grids",
+        "period labels",
+        "roll-forward regions",
+        "grid formulas",
+        "schedule summaries"
+      ],
+      "capabilities": [
+        "roll_forward_period",
+        "copy_period_sheet",
+        "extend_table_formulas",
+        "group_summarize"
+      ],
+      "verifier_strategy": [
+        "assert period labels and date ranges",
+        "assert roll-forward values",
+        "assert grid formulas survive growth",
+        "assert schedule or period summaries update"
+      ],
+      "fixture_priority": "p1",
+      "notes": "This verifier proves repeatability across time-oriented templates."
+    },
+    {
+      "group_id": "exception_and_reconciliation_verifier",
+      "title": "Exception and reconciliation verifier",
+      "classification_axis": "verifier_strategy",
+      "patterns": [
+        "inventory_movement_log",
+        "procurement_reconciliation",
+        "warehouse_reorder_tracker",
+        "safety_compliance_register",
+        "compliance_action_register"
+      ],
+      "common_mechanics": [
+        "keyed matches",
+        "exception states",
+        "thresholds",
+        "risk or action status",
+        "summary counts"
+      ],
+      "capabilities": [
+        "reconcile_tables",
+        "flag_outliers",
+        "join_lookup",
+        "group_summarize",
+        "create_pivot_summary"
+      ],
+      "verifier_strategy": [
+        "assert matched missing and mismatched rows",
+        "assert threshold flags",
+        "assert risk or action status counts",
+        "assert lookup identity is preserved"
+      ],
+      "fixture_priority": "p1",
+      "notes": "This verifier family validates that Sheet Ops can explain operational exceptions, not just transform tables."
+    },
+    {
+      "group_id": "status_and_review_verifier",
+      "title": "Status and review verifier",
+      "classification_axis": "verifier_strategy",
+      "patterns": [
+        "expense_reimbursement",
+        "purchase_order_control",
+        "maintenance_issue_log",
+        "service_ticket_queue",
+        "sales_pipeline_tracker",
+        "training_completion_matrix"
+      ],
+      "common_mechanics": [
+        "status fields",
+        "approval or review state",
+        "owner assignment",
+        "score or completion summary",
+        "printable review output"
+      ],
+      "capabilities": [
+        "add_data_validation",
+        "generate_printable_form",
+        "group_summarize",
+        "create_pivot_summary",
+        "protect_formula_cells"
+      ],
+      "verifier_strategy": [
+        "assert status values are constrained",
+        "assert review summaries update",
+        "assert printable outputs are populated",
+        "assert score or completion results match source cells"
+      ],
+      "fixture_priority": "p2",
+      "notes": "This verifier should reuse formula and summary checks from earlier fixtures while adding workflow-state assertions."
+    }
+  ]
+}

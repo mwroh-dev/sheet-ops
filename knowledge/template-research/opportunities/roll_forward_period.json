@@ -1,0 +1,24 @@
+{
+  "name": "roll_forward_period",
+  "status": "planned",
+  "evidence_count": 2,
+  "source_categories": [
+    "Budget Templates",
+    "Project Management"
+  ],
+  "representative_why": "Users need the same workbook pattern to continue into the next week, month, quarter, or project phase.",
+  "representative_how": [
+    "detect current period",
+    "create next period structure",
+    "carry forward relevant balances or open items"
+  ],
+  "concrete_workflows": [
+    "start next month budget",
+    "roll a project tracker into the next reporting week"
+  ],
+  "verification_strategy": "Verify the next period label, carried values, cleared inputs, and preserved formulas against a fixture workbook.",
+  "related_patterns": [
+    "budget",
+    "project_gantt"
+  ]
+}

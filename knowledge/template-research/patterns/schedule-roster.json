@@ -1,0 +1,45 @@
+{
+  "pattern_id": "schedule_roster",
+  "title": "Schedule and roster planning",
+  "domain": "hr",
+  "why": "Assign people, events, or work blocks across dates while keeping coverage and conflicts visible.",
+  "visual_patterns": [
+    "calendar_grid",
+    "roster_grid",
+    "status_color",
+    "printable_form"
+  ],
+  "data_patterns": [
+    "entity_table",
+    "date_range_expansion",
+    "aggregate",
+    "period_rollup"
+  ],
+  "validation_patterns": [
+    "required_fields",
+    "date_windows",
+    "duplicate_detection",
+    "referential_integrity"
+  ],
+  "workflow_patterns": [
+    "submitted_approved",
+    "schedule_update",
+    "coverage_review"
+  ],
+  "source_observations": [
+    "vertex42_calendar_seed",
+    "vertex42_shift_schedule_seed"
+  ],
+  "existing_capabilities": [
+    "group_summarize",
+    "highlight_threshold"
+  ],
+  "missing_capability_candidates": [
+    "add_data_validation",
+    "copy_period_sheet",
+    "roll_forward_period",
+    "generate_printable_form"
+  ],
+  "recurrence_status": "recurring",
+  "promotion_note": "Recurring across calendar and shift schedule observations; needs fixture design for conflict and coverage verification."
+}

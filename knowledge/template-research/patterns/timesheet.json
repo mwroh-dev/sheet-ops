@@ -1,0 +1,44 @@
+{
+  "pattern_id": "timesheet",
+  "title": "Timesheet and labor-hour tracking",
+  "domain": "hr",
+  "why": "Record labor time and convert it into weekly totals, overtime, payroll, billing, or reimbursement evidence.",
+  "visual_patterns": [
+    "input_area",
+    "weekly_matrix",
+    "total_box",
+    "protected_formula_area"
+  ],
+  "data_patterns": [
+    "entity_table",
+    "formula_propagation",
+    "aggregate",
+    "lookup"
+  ],
+  "validation_patterns": [
+    "required_fields",
+    "date_windows",
+    "numeric_bounds",
+    "valid_time_range"
+  ],
+  "workflow_patterns": [
+    "submitted_approved",
+    "period_close",
+    "planned_actual"
+  ],
+  "source_observations": [
+    "vertex42_timesheet_seed"
+  ],
+  "existing_capabilities": [
+    "group_summarize",
+    "join_lookup"
+  ],
+  "missing_capability_candidates": [
+    "extend_table_formulas",
+    "add_data_validation",
+    "protect_formula_cells",
+    "roll_forward_period"
+  ],
+  "recurrence_status": "single_source_seed",
+  "promotion_note": "Needs independent timesheet/payroll observations before recurring promotion."
+}

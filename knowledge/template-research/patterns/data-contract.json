@@ -1,0 +1,42 @@
+{
+  "pattern_id": "data_contract",
+  "title": "Spreadsheet-authored structured metadata contract",
+  "domain": "operations",
+  "why": "Let users author structured metadata in spreadsheet form while preserving enough validation to produce a formal contract artifact.",
+  "visual_patterns": [
+    "input_area",
+    "protected_formula_area",
+    "sectioned_form",
+    "status_color"
+  ],
+  "data_patterns": [
+    "entity_table",
+    "lookup",
+    "category_mapping",
+    "reconciliation"
+  ],
+  "validation_patterns": [
+    "required_fields",
+    "dropdown_values",
+    "referential_integrity",
+    "duplicate_detection"
+  ],
+  "workflow_patterns": [
+    "submitted_approved",
+    "review_publish"
+  ],
+  "source_observations": [
+    "github_odcs_excel_template_seed"
+  ],
+  "existing_capabilities": [
+    "join_lookup"
+  ],
+  "missing_capability_candidates": [
+    "add_data_validation",
+    "normalize_headers",
+    "reconcile_tables",
+    "protect_formula_cells"
+  ],
+  "recurrence_status": "single_source_seed",
+  "promotion_note": "Open-source template evidence is useful for license-safe inspection, but file inclusion still needs explicit license review."
+}

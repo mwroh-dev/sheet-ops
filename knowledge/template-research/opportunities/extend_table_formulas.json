@@ -1,0 +1,27 @@
+{
+  "name": "extend_table_formulas",
+  "status": "planned",
+  "evidence_count": 3,
+  "source_categories": [
+    "Invoice Templates",
+    "Budget Templates",
+    "Project Management"
+  ],
+  "representative_why": "Users repeatedly add rows or periods and expect existing calculated fields to continue working.",
+  "representative_how": [
+    "identify formula columns",
+    "copy formulas into new rows or periods",
+    "preserve relative references"
+  ],
+  "concrete_workflows": [
+    "add invoice items",
+    "extend budget months",
+    "add project tasks"
+  ],
+  "verification_strategy": "Compare formula presence and evaluated values before and after extension on fixture workbooks.",
+  "related_patterns": [
+    "invoice",
+    "budget",
+    "project_gantt"
+  ]
+}

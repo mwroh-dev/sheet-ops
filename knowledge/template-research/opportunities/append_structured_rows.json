@@ -1,0 +1,21 @@
+{
+  "name": "append_structured_rows",
+  "status": "planned",
+  "evidence_count": 1,
+  "source_categories": [
+    "Invoice Templates"
+  ],
+  "representative_why": "Users need to add repeated business records without breaking table formulas or downstream totals.",
+  "representative_how": [
+    "detect the table boundary",
+    "append validated rows",
+    "preserve table style and formulas"
+  ],
+  "concrete_workflows": [
+    "add invoice line items"
+  ],
+  "verification_strategy": "Verify row count increases, formulas remain present in calculated columns, and totals include the appended rows.",
+  "related_patterns": [
+    "invoice"
+  ]
+}

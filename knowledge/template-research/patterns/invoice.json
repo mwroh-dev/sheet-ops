@@ -1,0 +1,46 @@
+{
+  "pattern_id": "invoice",
+  "title": "Invoice line-item billing",
+  "domain": "sales_admin",
+  "why": "Turn a set of sale or service line items into a billing document that is accurate enough to send and easy to audit later.",
+  "visual_patterns": [
+    "printable_form",
+    "line_item_table",
+    "total_box",
+    "customer_header"
+  ],
+  "data_patterns": [
+    "entity_table",
+    "lookup",
+    "append_rows",
+    "formula_propagation",
+    "status_field"
+  ],
+  "validation_patterns": [
+    "required_customer",
+    "positive_quantity",
+    "positive_unit_price",
+    "valid_tax_rate"
+  ],
+  "workflow_patterns": [
+    "draft_sent_paid",
+    "quote_to_invoice",
+    "line_items_to_total"
+  ],
+  "source_observations": [
+    "vertex42_invoice_seed"
+  ],
+  "existing_capabilities": [
+    "join_lookup",
+    "group_summarize"
+  ],
+  "missing_capability_candidates": [
+    "append_structured_rows",
+    "extend_table_formulas",
+    "add_data_validation",
+    "protect_formula_cells",
+    "generate_printable_form"
+  ],
+  "recurrence_status": "single_source_seed",
+  "promotion_note": "Needs at least one independent open-source or additional free-template observation before recurring promotion."
+}

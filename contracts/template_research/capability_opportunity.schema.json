@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/template_research/capability_opportunity.schema.json",
+  "title": "CapabilityOpportunity",
+  "type": "object",
+  "$defs": {
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "required": [
+    "name",
+    "status",
+    "evidence_count",
+    "source_categories",
+    "representative_why",
+    "representative_how",
+    "concrete_workflows",
+    "verification_strategy",
+    "related_patterns"
+  ],
+  "properties": {
+    "name": {
+      "enum": [
+        "append_structured_rows",
+        "extend_table_formulas",
+        "copy_period_sheet",
+        "normalize_headers",
+        "create_pivot_summary",
+        "add_data_validation",
+        "protect_formula_cells",
+        "reconcile_tables",
+        "generate_printable_form",
+        "roll_forward_period"
+      ]
+    },
+    "status": {
+      "enum": [
+        "planned",
+        "research_only",
+        "rejected"
+      ]
+    },
+    "evidence_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "source_categories": {
+      "$ref": "#/$defs/non_empty_string_array"
+    },
+    "representative_why": {
+      "type": "string",
+      "minLength": 1
+    },
+    "representative_how": {
+      "$ref": "#/$defs/non_empty_string_array"
+    },
+    "concrete_workflows": {
+      "$ref": "#/$defs/non_empty_string_array"
+    },
+    "verification_strategy": {
+      "type": "string",
+      "minLength": 1
+    },
+    "related_patterns": {
+      "$ref": "#/$defs/non_empty_string_array"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

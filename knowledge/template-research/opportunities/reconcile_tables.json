@@ -1,0 +1,21 @@
+{
+  "name": "reconcile_tables",
+  "status": "research_only",
+  "evidence_count": 1,
+  "source_categories": [
+    "Budget Templates"
+  ],
+  "representative_why": "Users need to compare planned, actual, and imported data sets to find mismatches.",
+  "representative_how": [
+    "match rows by key fields",
+    "compare numeric values",
+    "report missing or mismatched rows"
+  ],
+  "concrete_workflows": [
+    "compare planned budget categories with actual expense exports"
+  ],
+  "verification_strategy": "Use paired fixture sheets with known missing, matched, and mismatched rows and verify the reconciliation output.",
+  "related_patterns": [
+    "budget"
+  ]
+}

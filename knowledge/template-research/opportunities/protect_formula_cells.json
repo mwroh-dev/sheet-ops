@@ -1,0 +1,21 @@
+{
+  "name": "protect_formula_cells",
+  "status": "planned",
+  "evidence_count": 1,
+  "source_categories": [
+    "Invoice Templates"
+  ],
+  "representative_why": "Users need to edit inputs while keeping calculated totals and derived fields intact.",
+  "representative_how": [
+    "classify input and formula cells",
+    "lock formula regions",
+    "leave data-entry regions editable"
+  ],
+  "concrete_workflows": [
+    "protect invoice totals while editing line item inputs"
+  ],
+  "verification_strategy": "Inspect sheet protection metadata and confirm formula cells are locked while input cells remain editable.",
+  "related_patterns": [
+    "invoice"
+  ]
+}

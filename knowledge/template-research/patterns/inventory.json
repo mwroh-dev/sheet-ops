@@ -1,0 +1,47 @@
+{
+  "pattern_id": "inventory",
+  "title": "Inventory stock and reorder tracking",
+  "domain": "operations",
+  "why": "Maintain item quantities, reconcile counts, and identify low-stock or reorder conditions.",
+  "visual_patterns": [
+    "input_area",
+    "status_color",
+    "dashboard",
+    "line_item_table"
+  ],
+  "data_patterns": [
+    "entity_table",
+    "lookup",
+    "append_rows",
+    "reconciliation",
+    "aggregate"
+  ],
+  "validation_patterns": [
+    "required_fields",
+    "numeric_bounds",
+    "referential_integrity",
+    "duplicate_detection"
+  ],
+  "workflow_patterns": [
+    "stock_in_out",
+    "variance_review",
+    "period_close"
+  ],
+  "source_observations": [
+    "vertex42_inventory_seed",
+    "spreadsheet123_stocktake_seed"
+  ],
+  "existing_capabilities": [
+    "highlight_threshold",
+    "join_lookup",
+    "group_summarize"
+  ],
+  "missing_capability_candidates": [
+    "append_structured_rows",
+    "reconcile_tables",
+    "add_data_validation",
+    "normalize_headers"
+  ],
+  "recurrence_status": "recurring",
+  "promotion_note": "Strong candidate for fixture-backed low-stock and stocktake reconciliation capabilities."
+}

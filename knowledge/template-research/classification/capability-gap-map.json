@@ -1,0 +1,139 @@
+{
+  "version": 1,
+  "generated_from_round": "round-009",
+  "classification_type": "capability_gap_map",
+  "summary": "Capability-centered grouping that shows which missing Sheet Ops operations unlock the roadmap candidates.",
+  "groups": [
+    {
+      "group_id": "row_and_formula_growth",
+      "title": "Row and formula growth",
+      "classification_axis": "capability_gap",
+      "patterns": [
+        "invoice_line_item_billing",
+        "expense_reimbursement",
+        "timesheet_hours_log",
+        "student_gradebook",
+        "training_completion_matrix",
+        "loan_repayment_calculator"
+      ],
+      "common_mechanics": [
+        "append rows",
+        "extend formulas",
+        "preserve protected summaries",
+        "validate required fields"
+      ],
+      "capabilities": [
+        "append_structured_rows",
+        "extend_table_formulas",
+        "protect_formula_cells",
+        "add_data_validation"
+      ],
+      "verifier_strategy": [
+        "assert inserted rows inherit formulas",
+        "assert summary formulas include new ranges",
+        "assert protected cells are unchanged"
+      ],
+      "fixture_priority": "p0",
+      "notes": "This is the most fundamental implementation gap because many template families reduce to safe growth plus formula preservation."
+    },
+    {
+      "group_id": "period_copy_and_roll_forward",
+      "title": "Period copy and roll-forward",
+      "classification_axis": "capability_gap",
+      "patterns": [
+        "monthly_budget_control",
+        "cash_flow_monitor",
+        "attendance_register",
+        "project_timeline_tracker",
+        "shift_roster_planner"
+      ],
+      "common_mechanics": [
+        "period clone",
+        "label update",
+        "input clearing",
+        "carry-forward values",
+        "date-grid preservation"
+      ],
+      "capabilities": [
+        "copy_period_sheet",
+        "roll_forward_period",
+        "extend_table_formulas",
+        "protect_formula_cells"
+      ],
+      "verifier_strategy": [
+        "assert cloned period structure",
+        "assert formulas and protected regions persist",
+        "assert date or balance carry-forward is correct"
+      ],
+      "fixture_priority": "p0",
+      "notes": "These operations turn one-time template editing into repeatable monthly, weekly, or schedule workflows."
+    },
+    {
+      "group_id": "lookup_reconciliation_and_thresholds",
+      "title": "Lookup, reconciliation, and thresholds",
+      "classification_axis": "capability_gap",
+      "patterns": [
+        "inventory_movement_log",
+        "procurement_reconciliation",
+        "warehouse_reorder_tracker",
+        "safety_compliance_register",
+        "construction_cost_tracker"
+      ],
+      "common_mechanics": [
+        "keyed matching",
+        "lookup enrichment",
+        "threshold flags",
+        "exception rollups"
+      ],
+      "capabilities": [
+        "reconcile_tables",
+        "join_lookup",
+        "flag_outliers",
+        "create_pivot_summary",
+        "group_summarize"
+      ],
+      "verifier_strategy": [
+        "assert joins by key",
+        "assert missing and mismatched outputs",
+        "assert threshold-driven exceptions",
+        "assert summary counts by status or risk"
+      ],
+      "fixture_priority": "p1",
+      "notes": "This capability bundle turns imported tables and operational trackers into auditable exception workflows."
+    },
+    {
+      "group_id": "status_summary_and_printable_review",
+      "title": "Status summary and printable review",
+      "classification_axis": "capability_gap",
+      "patterns": [
+        "purchase_order_control",
+        "service_ticket_queue",
+        "sales_pipeline_tracker",
+        "maintenance_issue_log",
+        "compliance_action_register"
+      ],
+      "common_mechanics": [
+        "status dropdowns",
+        "owner assignment",
+        "aging or priority",
+        "summary dashboard",
+        "reviewable output"
+      ],
+      "capabilities": [
+        "add_data_validation",
+        "group_summarize",
+        "create_pivot_summary",
+        "generate_printable_form",
+        "protect_formula_cells"
+      ],
+      "verifier_strategy": [
+        "assert constrained status values",
+        "assert owner status summaries",
+        "assert overdue or priority flags",
+        "assert review output is populated"
+      ],
+      "fixture_priority": "p2",
+      "notes": "This group should be implemented after the table and summary primitives are reliable."
+    }
+  ]
+}

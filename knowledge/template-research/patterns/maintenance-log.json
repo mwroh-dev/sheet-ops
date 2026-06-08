@@ -1,0 +1,43 @@
+{
+  "pattern_id": "maintenance_log",
+  "title": "Asset maintenance history and reminders",
+  "domain": "household",
+  "why": "Track repeated asset service events and identify future due dates, mileage thresholds, or cost trends.",
+  "visual_patterns": [
+    "line_item_table",
+    "status_color",
+    "dashboard",
+    "input_area"
+  ],
+  "data_patterns": [
+    "append_rows",
+    "period_rollup",
+    "formula_propagation",
+    "aggregate"
+  ],
+  "validation_patterns": [
+    "required_fields",
+    "numeric_bounds",
+    "date_windows",
+    "referential_integrity"
+  ],
+  "workflow_patterns": [
+    "period_close",
+    "overdue_review",
+    "variance_review"
+  ],
+  "source_observations": [
+    "vertex42_vehicle_maintenance_seed"
+  ],
+  "existing_capabilities": [
+    "highlight_threshold",
+    "group_summarize"
+  ],
+  "missing_capability_candidates": [
+    "append_structured_rows",
+    "roll_forward_period",
+    "extend_table_formulas"
+  ],
+  "recurrence_status": "single_source_seed",
+  "promotion_note": "Useful as a household operations seed; needs more independent examples."
+}
