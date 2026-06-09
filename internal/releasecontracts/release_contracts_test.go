@@ -101,6 +101,66 @@ func TestReleaseSchemasCompile(t *testing.T) {
 	}
 }
 
+func TestReleaseSchemaReferencesAreLocallyResolvable(t *testing.T) {
+	root := repoRoot(t)
+	schemaPaths := collectReleaseSchemaPaths(t, root)
+
+	for _, schemaPath := range schemaPaths {
+		rel := filepath.ToSlash(mustRel(t, root, schemaPath))
+		t.Run(rel, func(t *testing.T) {
+			assertSchemaReferencesResolvable(t, root, schemaPath)
+		})
+	}
+}
+
+func TestBundledSchemasStayInSyncWithSourceContracts(t *testing.T) {
+	root := repoRoot(t)
+	assertBundledSchemaMatches(t, root, "contracts/requests/organism_execution_request.schema.json")
+	assertBundledSchemaMatches(t, root, "contracts/requests/request_ref.schema.json")
+	assertBundledSchemaMatches(t, root, "contracts/requests/use_envelope.schema.json")
+	assertBundledSchemaMatches(t, root, "contracts/requests/use_envelope_v2.schema.json")
+}
+
+func TestSharedSchemaDefinitionsDoNotDrift(t *testing.T) {
+	root := repoRoot(t)
+	assertSharedDefinitionEqual(t, root, "cell_value",
+		"contracts/ir/workbook_operation_ir.schema.json",
+		"contracts/task/task_spec.schema.json",
+		"contracts/validation/validation_result.schema.json",
+		"agents/request-compiler/contract/normalized_intent.schema.json",
+		"contracts/requests/organism_execution_request.schema.json",
+	)
+	assertSharedDefinitionEqual(t, root, "compare_mapping",
+		"contracts/ir/workbook_operation_ir.schema.json",
+		"contracts/task/task_spec.schema.json",
+		"contracts/requests/use_request.schema.json",
+		"contracts/requests/validated_execution_request.schema.json",
+		"contracts/validation/validation_result.schema.json",
+		"agents/request-compiler/contract/normalized_intent.schema.json",
+		"contracts/requests/organism_execution_request.schema.json",
+	)
+	assertSharedDefinitionEqual(t, root, "form_field_binding",
+		"contracts/ir/workbook_operation_ir.schema.json",
+		"contracts/task/task_spec.schema.json",
+		"contracts/requests/use_request.schema.json",
+		"contracts/requests/validated_execution_request.schema.json",
+		"contracts/validation/validation_result.schema.json",
+		"agents/request-compiler/contract/normalized_intent.schema.json",
+		"contracts/plans/use/operation_plan.schema.json",
+		"contracts/requests/organism_execution_request.schema.json",
+	)
+	assertSharedDefinitionEqual(t, root, "form_table_binding",
+		"contracts/ir/workbook_operation_ir.schema.json",
+		"contracts/task/task_spec.schema.json",
+		"contracts/requests/use_request.schema.json",
+		"contracts/requests/validated_execution_request.schema.json",
+		"contracts/validation/validation_result.schema.json",
+		"agents/request-compiler/contract/normalized_intent.schema.json",
+		"contracts/plans/use/operation_plan.schema.json",
+		"contracts/requests/organism_execution_request.schema.json",
+	)
+}
+
 func collectDeclaredExampleSchemas(t *testing.T, root string) map[string]string {
 	t.Helper()
 	registry, err := capabilities.LoadRegistry(root)
@@ -122,6 +182,269 @@ func collectDeclaredExampleSchemas(t *testing.T, root string) map[string]string 
 	return cases
 }
 
+func collectReleaseSchemaPaths(t *testing.T, root string) []string {
+	t.Helper()
+	seen := map[string]bool{}
+	var schemaPaths []string
+	for _, relDir := range []string{
+		"contracts",
+		"agents",
+		filepath.Join("cmd", "sheet-ops-codex", "skill_assets", "agent-system", "contracts"),
+	} {
+		for _, schemaPath := range collectSchemaPaths(t, root, relDir) {
+			if seen[schemaPath] {
+				continue
+			}
+			seen[schemaPath] = true
+			schemaPaths = append(schemaPaths, schemaPath)
+		}
+	}
+	sort.Strings(schemaPaths)
+	return schemaPaths
+}
+
+func assertSchemaReferencesResolvable(t *testing.T, root string, schemaPath string) {
+	t.Helper()
+	document := readJSON(t, schemaPath)
+	for _, ref := range collectSchemaRefs(document) {
+		switch {
+		case strings.HasPrefix(ref, "#/"):
+			if !jsonPointerExists(document, strings.TrimPrefix(ref, "#")) {
+				t.Fatalf("%s references missing local pointer %s", schemaPath, ref)
+			}
+		case strings.HasPrefix(ref, "https://sheet-ops.local/"):
+			if !schemaIDExists(t, root, ref) {
+				t.Fatalf("%s references unknown schema id %s", schemaPath, ref)
+			}
+		case strings.Contains(ref, "://"):
+			continue
+		default:
+			refPath, fragment, _ := strings.Cut(ref, "#")
+			targetPath := filepath.Clean(filepath.Join(filepath.Dir(schemaPath), filepath.FromSlash(refPath)))
+			info, err := os.Stat(targetPath)
+			if err != nil || info.IsDir() {
+				t.Fatalf("%s references missing relative schema %s resolved to %s", schemaPath, ref, targetPath)
+			}
+			if strings.HasPrefix(fragment, "/") {
+				targetDocument := readJSON(t, targetPath)
+				if !jsonPointerExists(targetDocument, fragment) {
+					t.Fatalf("%s references missing relative pointer %s in %s", schemaPath, fragment, targetPath)
+				}
+			}
+		}
+	}
+}
+
+func collectSchemaRefs(value any) []string {
+	var refs []string
+	var walk func(any)
+	walk = func(current any) {
+		switch typed := current.(type) {
+		case map[string]any:
+			if ref, ok := typed["$ref"].(string); ok {
+				refs = append(refs, ref)
+			}
+			for _, child := range typed {
+				walk(child)
+			}
+		case []any:
+			for _, child := range typed {
+				walk(child)
+			}
+		}
+	}
+	walk(value)
+	return refs
+}
+
+func jsonPointerExists(document any, pointer string) bool {
+	if pointer == "" {
+		return true
+	}
+	current := document
+	for _, token := range strings.Split(strings.TrimPrefix(pointer, "/"), "/") {
+		token = strings.ReplaceAll(strings.ReplaceAll(token, "~1", "/"), "~0", "~")
+		object, ok := current.(map[string]any)
+		if !ok {
+			return false
+		}
+		next, ok := object[token]
+		if !ok {
+			return false
+		}
+		current = next
+	}
+	return true
+}
+
+func schemaIDExists(t *testing.T, root string, id string) bool {
+	t.Helper()
+	for _, schemaPath := range collectReleaseSchemaPaths(t, root) {
+		if schemaDocumentHasID(readJSON(t, schemaPath), id) {
+			return true
+		}
+	}
+	return false
+}
+
+func schemaDocumentHasID(value any, id string) bool {
+	switch typed := value.(type) {
+	case map[string]any:
+		if currentID, ok := typed["$id"].(string); ok && currentID == id {
+			return true
+		}
+		for _, child := range typed {
+			if schemaDocumentHasID(child, id) {
+				return true
+			}
+		}
+	case []any:
+		for _, child := range typed {
+			if schemaDocumentHasID(child, id) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func assertBundledSchemaMatches(t *testing.T, root string, sourceRel string) {
+	t.Helper()
+	sourcePath := filepath.Join(root, filepath.FromSlash(sourceRel))
+	bundledPath := filepath.Join(root, "cmd", "sheet-ops-codex", "skill_assets", "agent-system", filepath.FromSlash(sourceRel))
+	sourceCanonical := canonicalJSON(t, readJSON(t, sourcePath))
+	bundledCanonical := canonicalJSON(t, readJSON(t, bundledPath))
+	if !bytes.Equal(sourceCanonical, bundledCanonical) {
+		t.Fatalf("bundled schema %s drifted from %s", bundledPath, sourcePath)
+	}
+}
+
+func assertSharedDefinitionEqual(t *testing.T, root string, definitionName string, schemaRels ...string) {
+	t.Helper()
+	var baseline []byte
+	var baselineRel string
+	for _, schemaRel := range schemaRels {
+		document := readJSON(t, filepath.Join(root, filepath.FromSlash(schemaRel)))
+		definition, ok := schemaDefinition(document, definitionName)
+		if !ok {
+			t.Fatalf("%s is missing $defs.%s", schemaRel, definitionName)
+		}
+		current := canonicalJSON(t, normalizeSchemaDefinition(definition))
+		if baseline == nil {
+			baseline = current
+			baselineRel = schemaRel
+			continue
+		}
+		if !bytes.Equal(baseline, current) {
+			t.Fatalf("$defs.%s drifted between %s and %s", definitionName, baselineRel, schemaRel)
+		}
+	}
+}
+
+func schemaDefinition(document any, definitionName string) (any, bool) {
+	object, ok := document.(map[string]any)
+	if !ok {
+		return nil, false
+	}
+	defs, ok := object["$defs"].(map[string]any)
+	if !ok {
+		return nil, false
+	}
+	definition, ok := defs[definitionName]
+	return definition, ok
+}
+
+func normalizeSchemaDefinition(value any) any {
+	switch typed := value.(type) {
+	case map[string]any:
+		if normalized, ok := normalizePrimitiveAnyOf(typed); ok {
+			return normalized
+		}
+		result := make(map[string]any, len(typed))
+		for key, child := range typed {
+			if key == "type" {
+				if typeValues, ok := normalizeTypeArray(child); ok {
+					result[key] = typeValues
+					continue
+				}
+			}
+			result[key] = normalizeSchemaDefinition(child)
+		}
+		return result
+	case []any:
+		result := make([]any, len(typed))
+		for index, child := range typed {
+			result[index] = normalizeSchemaDefinition(child)
+		}
+		return result
+	default:
+		return value
+	}
+}
+
+func normalizePrimitiveAnyOf(value map[string]any) (map[string]any, bool) {
+	anyOf, ok := value["anyOf"].([]any)
+	if !ok || len(anyOf) == 0 {
+		return nil, false
+	}
+	var types []string
+	for _, branch := range anyOf {
+		branchObject, ok := branch.(map[string]any)
+		if !ok || len(branchObject) != 1 {
+			return nil, false
+		}
+		primitiveType, ok := branchObject["type"].(string)
+		if !ok {
+			return nil, false
+		}
+		types = append(types, primitiveType)
+	}
+	sort.Strings(types)
+	result := make(map[string]any, len(value))
+	for key, child := range value {
+		if key == "anyOf" {
+			continue
+		}
+		result[key] = normalizeSchemaDefinition(child)
+	}
+	typeValues := make([]any, len(types))
+	for index, primitiveType := range types {
+		typeValues[index] = primitiveType
+	}
+	result["type"] = typeValues
+	return result, true
+}
+
+func normalizeTypeArray(value any) ([]any, bool) {
+	items, ok := value.([]any)
+	if !ok {
+		return nil, false
+	}
+	types := make([]string, 0, len(items))
+	for _, item := range items {
+		primitiveType, ok := item.(string)
+		if !ok {
+			return nil, false
+		}
+		types = append(types, primitiveType)
+	}
+	sort.Strings(types)
+	result := make([]any, len(types))
+	for index, primitiveType := range types {
+		result[index] = primitiveType
+	}
+	return result, true
+}
+
+func canonicalJSON(t *testing.T, value any) []byte {
+	t.Helper()
+	raw, err := json.Marshal(value)
+	if err != nil {
+		t.Fatalf("canonicalize JSON: %v", err)
+	}
+	return raw
+}
+
 func inferExampleSchema(t *testing.T, examplePath string) string {
 	t.Helper()
 	document := readJSON(t, examplePath)
@@ -138,6 +461,9 @@ func inferExampleSchema(t *testing.T, examplePath string) string {
 	}
 	if _, ok := object["operation"]; ok {
 		return "contracts/requests/structured_use_request.schema.json"
+	}
+	if _, ok := object["steps"]; ok {
+		return "contracts/requests/organism_execution_request.schema.json"
 	}
 	t.Fatalf("%s does not match a known public example shape", examplePath)
 	return ""
