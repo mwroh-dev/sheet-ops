@@ -1,0 +1,14 @@
+{
+  "scenario_id": "add-data-validation-example",
+  "request_text": "LineItems 시트의 D2:D10에 상태 dropdown 검증을 추가한다.",
+  "input_file": "examples/fixtures/line_items.xlsx",
+  "sheet_name": "LineItems",
+  "output_file": "artifacts/line_items_validated.xlsx",
+  "operation": "add_data_validation",
+  "validation_rule": {
+    "ranges": ["D2:D10"],
+    "rule_type": "list",
+    "allowed_values": ["draft", "sent", "paid"],
+    "allow_blank": false
+  }
+}

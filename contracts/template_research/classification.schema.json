@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/template_research/classification.schema.json",
+  "title": "TemplateResearchClassification",
+  "type": "object",
+  "$defs": {
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "group": {
+      "type": "object",
+      "required": [
+        "group_id",
+        "title",
+        "classification_axis",
+        "patterns",
+        "common_mechanics",
+        "capabilities",
+        "verifier_strategy",
+        "fixture_priority",
+        "notes"
+      ],
+      "properties": {
+        "group_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "classification_axis": {
+          "enum": [
+            "workflow_family",
+            "fixture_priority",
+            "capability_gap",
+            "verifier_strategy"
+          ]
+        },
+        "patterns": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "common_mechanics": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "capabilities": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "verifier_strategy": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "fixture_priority": {
+          "enum": [
+            "p0",
+            "p1",
+            "p2",
+            "p3"
+          ]
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "version",
+    "generated_from_round",
+    "classification_type",
+    "summary",
+    "groups"
+  ],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "generated_from_round": {
+      "type": "string",
+      "pattern": "^round-[0-9]{3}$"
+    },
+    "classification_type": {
+      "enum": [
+        "roadmap_pattern_groups",
+        "fixture_priority_matrix",
+        "capability_gap_map",
+        "verifier_strategy_map"
+      ]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "groups": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/group"
+      }
+    }
+  },
+  "additionalProperties": false
+}

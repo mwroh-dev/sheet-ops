@@ -1,0 +1,23 @@
+{
+  "scenario_id": "normalize-headers-example",
+  "request_text": "Movements 시트의 1행 헤더를 표준 필드명으로 정규화한다.",
+  "input_file": "examples/normalize_headers/input.xlsx",
+  "sheet_name": "Movements",
+  "output_file": "examples/normalize_headers/output.xlsx",
+  "operation": "normalize_headers",
+  "header_row": 1,
+  "header_mappings": [
+    {
+      "from": "SKU ID",
+      "to": "sku"
+    },
+    {
+      "from": "Qty In",
+      "to": "quantity_in"
+    },
+    {
+      "from": "Qty Out",
+      "to": "quantity_out"
+    }
+  ]
+}

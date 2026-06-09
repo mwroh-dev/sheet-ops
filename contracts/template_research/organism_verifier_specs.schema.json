@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/template_research/organism_verifier_specs.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "authority", "summary", "specs"],
+  "properties": {
+    "version": { "type": "integer", "const": 1 },
+    "authority": { "type": "string", "const": "advisory_runtime_depth" },
+    "summary": { "type": "string", "minLength": 1 },
+    "specs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/spec" }
+    }
+  },
+  "$defs": {
+    "non_empty_strings": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "spec_id",
+        "organism_id",
+        "acceptance_checks",
+        "atom_verifier_dependencies",
+        "non_claims",
+        "promotion_gate"
+      ],
+      "properties": {
+        "spec_id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "organism_id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "acceptance_checks": {
+          "type": "array",
+          "minItems": 3,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "atom_verifier_dependencies": {
+          "$ref": "#/$defs/non_empty_strings"
+        },
+        "non_claims": {
+          "$ref": "#/$defs/non_empty_strings"
+        },
+        "promotion_gate": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

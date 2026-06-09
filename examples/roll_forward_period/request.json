@@ -1,0 +1,17 @@
+{
+  "scenario_id": "roll-forward-period-example",
+  "request_text": "Jan closing balance를 Feb opening balance로 이월한다.",
+  "input_file": "examples/roll_forward_period/input.xlsx",
+  "sheet_name": "Jan",
+  "target_sheet": "Feb",
+  "output_file": "examples/roll_forward_period/output.xlsx",
+  "operation": "roll_forward_period",
+  "carry_forward_mappings": [
+    {
+      "from_sheet": "Jan",
+      "from_cell": "D2",
+      "to_sheet": "Feb",
+      "to_cell": "A2"
+    }
+  ]
+}

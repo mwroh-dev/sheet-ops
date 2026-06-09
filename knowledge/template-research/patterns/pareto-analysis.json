@@ -1,0 +1,38 @@
+{
+  "pattern_id": "pareto_analysis",
+  "title": "Ranked category impact analysis",
+  "domain": "operations",
+  "why": "Identify the categories or causes that explain most of a problem, cost, defect, or outcome.",
+  "visual_patterns": [
+    "dashboard",
+    "chart_view",
+    "status_color",
+    "summary_table"
+  ],
+  "data_patterns": [
+    "aggregate",
+    "category_mapping",
+    "formula_propagation"
+  ],
+  "validation_patterns": [
+    "required_fields",
+    "numeric_bounds",
+    "known_category"
+  ],
+  "workflow_patterns": [
+    "variance_review",
+    "scenario_review"
+  ],
+  "source_observations": [
+    "vertex42_pareto_seed"
+  ],
+  "existing_capabilities": [
+    "group_summarize"
+  ],
+  "missing_capability_candidates": [
+    "create_pivot_summary",
+    "generate_printable_form"
+  ],
+  "recurrence_status": "single_source_seed",
+  "promotion_note": "Needs chart/render verification before visual analysis output is promoted."
+}

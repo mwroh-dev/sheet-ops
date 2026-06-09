@@ -1,0 +1,237 @@
+{
+  "authority": "runtime_draft_planner_coverage",
+  "generated_from_round": "round-009",
+  "coverage": [
+    {
+      "organism_id": "invoice_line_item_billing",
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsInvoiceLineItemStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerInvoiceDraft"
+      ],
+      "current_limit": "Fixture-shaped line-item invoice facts only; does not infer arbitrary invoice layout or pagination.",
+      "next_gate": "Add broader invoice fixtures with alternate headers, multiple line rows, and printable layout verification."
+    },
+    {
+      "organism_id": "expense_reimbursement",
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsExpenseReimbursementStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerExpenseDraft"
+      ],
+      "current_limit": "Itemized reimbursement row with receipt status and printable claim only; does not enforce company expense policy or approve payment.",
+      "next_gate": "Add reimbursement fixtures with approver status, receipt completeness exceptions, category limits, and printable review metadata."
+    },
+    {
+      "organism_id": "purchase_order_control",
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsPurchaseOrderStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerPurchaseOrderDraft"
+      ],
+      "current_limit": "Line-item purchase order workbook with PO status validation and printable output only; does not approve purchases or infer procurement policy.",
+      "next_gate": "Add PO fixtures with vendor metadata, approval transitions, tax/freight totals, and status history checks."
+    },
+    {
+      "organism_id": "monthly_budget_control",
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsMonthlyBudgetStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerBudgetDraft"
+      ],
+      "current_limit": "Simple monthly budget headers and closing formula only; does not infer budget policy or native pivot summaries.",
+      "next_gate": "Add alternate budget fixtures with planned/actual roll-forward variations and richer threshold verification."
+    },
+    {
+      "organism_id": "cash_flow_monitor",
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsCashFlowMonitorStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerCashFlowDraft"
+      ],
+      "current_limit": "Simple opening/inflow/outflow/closing workbook facts only; does not infer cash-flow policy or dashboard semantics.",
+      "next_gate": "Add cash-flow fixtures with alternate period layouts, multi-period continuity, and protected dashboard evidence."
+    },
+    {
+      "organism_id": "attendance_register",
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsAttendanceRegisterStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerAttendanceDraft"
+      ],
+      "current_limit": "Row/date/status attendance register with period copy, status validation, and protected total formulas only; does not auto-grow arbitrary attendance matrices.",
+      "next_gate": "Add attendance fixtures with learner/date matrix growth, calendar projection, status totals, and protected helper regions."
+    },
+    {
+      "organism_id": "timesheet_hours_log",
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsTimesheetHoursLogStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerTimesheetDraft"
+      ],
+      "current_limit": "Weekly row-based timesheet facts only; does not calculate payroll taxes or certify billable hours.",
+      "next_gate": "Add timesheet fixtures with breaks, overtime, alternate work-code columns, and protected weekly totals."
+    },
+    {
+      "organism_id": "project_timeline_tracker",
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsProjectTimelineStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerProjectTimelineDraft"
+      ],
+      "current_limit": "Task table timeline slice with period copy, progress formula extension, status validation, status summary, and formula protection only; does not render Gantt/timeline grids.",
+      "next_gate": "Add project timeline fixtures with real date-to-grid projection, dependency shifts, new task insertion, and timeline view verification."
+    },
+    {
+      "organism_id": "shift_roster_planner",
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsShiftRosterStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerShiftRosterDraft"
+      ],
+      "current_limit": "Row/date/shift roster with period copy, shift-code validation, and protected coverage formulas only; does not auto-grow arbitrary roster matrices or optimize staffing.",
+      "next_gate": "Add shift roster fixtures with person/date matrix growth, coverage summary verification, staffing constraints, and roster grid projection."
+    },
+    {
+      "organism_id": "construction_cost_tracker",
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsConstructionCostStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerConstructionCostDraft"
+      ],
+      "current_limit": "Cost-code row table with append, variance formula extension, numeric actual-overrun highlight, and protected formulas only; does not project construction timelines or certify forecasts.",
+      "next_gate": "Add construction fixtures with formula-evaluated variance thresholds, cost phase summaries, forecast carry-forward, and timeline view verification."
+    },
+    {
+      "organism_id": "inventory_movement_log",
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsInventoryMovementStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerInventoryDraft"
+      ],
+      "current_limit": "Known movement headers plus SKU and stock master sheets only; does not resolve duplicate keys or fuzzy reconciliation.",
+      "next_gate": "Add inventory fixtures with alternate movement headers, duplicate SKUs, and reconciliation edge cases."
+    },
+    {
+      "organism_id": "procurement_reconciliation",
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsProcurementReconciliationStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerProcurementDraft"
+      ],
+      "current_limit": "PO-to-invoice amount reconciliation with invoice status validation and protected review formulas only; does not perform three-way receipt matching or approve invoices.",
+      "next_gate": "Add procurement fixtures with PO/receipt/invoice three-way matching, duplicate keys, approval transitions, and reconciliation status summaries."
+    },
+    {
+      "organism_id": "warehouse_reorder_tracker",
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsWarehouseReorderStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerWarehouseDraft"
+      ],
+      "current_limit": "Snapshot reorder table with SKU lookup and constant low-stock threshold only; does not calculate reorder quantity policy.",
+      "next_gate": "Add warehouse fixtures with per-SKU reorder levels, duplicate SKU handling, reorder quantity policy, and exception summary checks."
+    },
+    {
+      "organism_id": "student_gradebook",
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsStudentGradebookStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerGradebookDraft"
+      ],
+      "current_limit": "Deterministic score/status/formula slice only; does not infer grading policy or arbitrary grade matrices.",
+      "next_gate": "Add gradebook fixtures with alternate grading layouts, weighted categories, and matrix growth checks."
+    },
+    {
+      "organism_id": "training_completion_matrix",
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsTrainingCompletionStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerTrainingCompletionDraft"
+      ],
+      "current_limit": "Training row table with numeric completion summary, status validation, protected completion formulas, and printable report only; does not auto-grow arbitrary training matrices.",
+      "next_gate": "Add training fixtures with person/course matrix growth, formula-evaluated completion summaries, due-date exceptions, and compliance review metadata."
+    },
+    {
+      "organism_id": "service_ticket_queue",
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsServiceTicketQueueStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerServiceTicketDraft"
+      ],
+      "current_limit": "Ticket row queue with append, SLA formula extension, status validation, numeric days-open threshold highlighting, status summary, and protected SLA formulas only; does not route tickets or infer SLA policy.",
+      "next_gate": "Add service-ticket fixtures with SLA calendars, assignment/routing, priority-specific thresholds, escalation status transitions, and dashboard summary checks."
+    },
+    {
+      "organism_id": "sales_pipeline_tracker",
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsSalesPipelineStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerSalesPipelineDraft"
+      ],
+      "current_limit": "Sales row pipeline with deal append, weighted-value formula extension, stage validation, numeric deal-value threshold highlighting, stage summary, and protected forecast formulas only; does not forecast revenue or infer sales process policy.",
+      "next_gate": "Add sales pipeline fixtures with stage probability policy, weighted forecast verification, aging/risk fields, close-date windows, and dashboard summary checks."
+    },
+    {
+      "organism_id": "maintenance_issue_log",
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsMaintenanceIssueStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerMaintenanceIssueDraft"
+      ],
+      "current_limit": "Maintenance issue row log with issue append, action-required formula extension, status validation, numeric risk threshold highlighting, status summary, and protected action formulas only; does not dispatch work or infer maintenance policy.",
+      "next_gate": "Add maintenance fixtures with owner/action fields, due-date windows, aging thresholds, technician assignment, escalation status transitions, and dashboard summary checks."
+    },
+    {
+      "organism_id": "compliance_action_register",
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsComplianceActionStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerComplianceActionDraft"
+      ],
+      "current_limit": "Compliance action row register with action append, review-required formula extension, status validation, overdue threshold highlighting, status summary, protected review formulas, and printable register only; does not interpret regulations or certify audit readiness.",
+      "next_gate": "Add compliance fixtures with policy references, owner/action due dates, approval state transitions, evidence attachment fields, audit sampling checks, and printable pagination review."
+    },
+    {
+      "organism_id": "safety_compliance_register",
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsSafetyComplianceStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerSafetyComplianceDraft"
+      ],
+      "current_limit": "Safety compliance row register with check append, action-required formula extension, safety status validation, numeric risk threshold highlighting, area completion summary, protected action formulas, and printable safety report only; does not certify safety compliance or replace inspections.",
+      "next_gate": "Add safety fixtures with inspection evidence fields, severity policy, corrective-action owners, due-date windows, completion-rate thresholds, and printable pagination review."
+    },
+    {
+      "organism_id": "loan_repayment_calculator",
+      "draft_status": "runtime_draft_planner",
+      "runtime_entrypoint": "requestcompiler.DraftOrganismExecutionRequest",
+      "evidence_tests": [
+        "TestDraftOrganismExecutionRequestBuildsLoanRepaymentStepsFromWorkbookFacts",
+        "TestOrchestrateOrganismExecutesRequestCompilerLoanDraft"
+      ],
+      "current_limit": "Formula schedule mechanics only; does not provide financial advice, payoff termination proof, or amortization correctness.",
+      "next_gate": "Add loan fixtures with repeated payment rows, payoff termination checks, and explicit financial non-claim verification."
+    }
+  ]
+}

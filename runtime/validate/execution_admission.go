@@ -32,6 +32,39 @@ func (validator Validator) AdmitExecution(bound boundIntent) (Result, error) {
 			request.IncludeSourceColumns = append([]string(nil), bound.includeSourceColumns...)
 		}
 		request.AppendLookupColumns = append([]string(nil), bound.appendLookupColumns...)
+	case "table_reconciliation":
+		request.TargetSheet = bound.targetSheet
+		request.LookupSheet = bound.lookupSheet
+		request.LeftKey = bound.leftKey
+		request.RightKey = bound.rightKey
+		request.CompareMappings = cloneCompareMappings(bound.compareMappings)
+	case "printable_form":
+		request.TargetSheet = bound.targetSheet
+		request.FormTitle = bound.formTitle
+		request.PrintArea = bound.printArea
+		request.FieldBindings = cloneFormFieldBindings(bound.fieldBindings)
+		request.TableBinding = cloneFormTableBinding(bound.tableBinding)
+	case "structured_row_append":
+		request.IncludeSourceColumns = append([]string(nil), bound.includeSourceColumns...)
+		request.Values = cloneCellValues(bound.values)
+	case "formula_extension":
+		request.FormulaSourceRow = bound.formulaSourceRow
+		request.TargetRows = cloneInts(bound.targetRows)
+		request.FormulaColumns = append([]string(nil), bound.formulaColumns...)
+	case "period_copy":
+		request.TargetSheet = bound.targetSheet
+	case "data_validation":
+		rule := cloneDataValidationRule(bound.validationRule)
+		request.ValidationRule = &rule
+	case "formula_protection":
+		rule := cloneFormulaProtectionRule(bound.protectionRule)
+		request.ProtectionRule = &rule
+	case "header_normalization":
+		request.HeaderRow = bound.headerRow
+		request.HeaderMappings = cloneHeaderMappings(bound.headerMappings)
+	case "period_roll_forward":
+		request.TargetSheet = bound.targetSheet
+		request.CarryForwardMappings = cloneCarryForwardMappings(bound.carryForwardMappings)
 	}
 
 	return finalizeResult(Result{

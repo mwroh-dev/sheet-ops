@@ -1,0 +1,52 @@
+{
+  "name": "reconcile_tables",
+  "task_operations": [
+    "reconcile_tables"
+  ],
+  "inputs": [
+    "input_workbook",
+    "source_sheet",
+    "lookup_sheet",
+    "target_sheet",
+    "left_key",
+    "right_key",
+    "compare_mappings"
+  ],
+  "outputs": [
+    "output_workbook",
+    "reconciliation_sheet",
+    "matched_rows",
+    "left_only_rows",
+    "right_only_rows",
+    "value_mismatch_rows"
+  ],
+  "required_facts": [
+    "source_sheet_exists",
+    "lookup_sheet_exists",
+    "source_key_column_present",
+    "lookup_key_column_present",
+    "compare_columns_present",
+    "unique_nonblank_keys"
+  ],
+  "verifies": [
+    "source_preserved",
+    "lookup_sheet_preserved",
+    "reconciliation_rows_match",
+    "matched_missing_mismatch_buckets_match"
+  ],
+  "contract_paths": [
+    "contracts/task/task_spec.schema.json",
+    "contracts/ir/workbook_operation_ir.schema.json",
+    "contracts/verification/verification_result.schema.json"
+  ],
+  "runtime_paths": [
+    "runtime/compiler/workbook_compiler.go",
+    "runtime/execute/reconcile_tables.go",
+    "runtime/verify/reconcile_tables.go"
+  ],
+  "examples": [
+    "examples/reconcile_tables/request.json"
+  ],
+  "status": "supported",
+  "exposure": "public_agent_capability"
+}

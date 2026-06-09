@@ -1,7 +1,47 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "WorkbookOperationIR",
-  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/workbook_operation_ir_group_summarize"
+    },
+    {
+      "$ref": "#/$defs/workbook_operation_ir_highlight_threshold"
+    },
+    {
+      "$ref": "#/$defs/workbook_operation_ir_join_lookup"
+    },
+    {
+      "$ref": "#/$defs/workbook_operation_ir_append_structured_rows"
+    },
+    {
+      "$ref": "#/$defs/workbook_operation_ir_extend_table_formulas"
+    },
+    {
+      "$ref": "#/$defs/workbook_operation_ir_add_data_validation"
+    },
+    {
+      "$ref": "#/$defs/workbook_operation_ir_write_values"
+    },
+    {
+      "$ref": "#/$defs/workbook_operation_ir_copy_period_sheet"
+    },
+    {
+      "$ref": "#/$defs/workbook_operation_ir_protect_formula_cells"
+    },
+    {
+      "$ref": "#/$defs/workbook_operation_ir_normalize_headers"
+    },
+    {
+      "$ref": "#/$defs/workbook_operation_ir_roll_forward_period"
+    },
+    {
+      "$ref": "#/$defs/workbook_operation_ir_reconcile_tables"
+    },
+    {
+      "$ref": "#/$defs/workbook_operation_ir_generate_printable_form"
+    }
+  ],
   "$defs": {
     "filter_spec": {
       "type": "object",
@@ -74,6 +114,92 @@
       },
       "additionalProperties": false
     },
+    "data_validation_rule": {
+      "type": "object",
+      "required": [
+        "ranges",
+        "rule_type",
+        "allowed_values",
+        "allow_blank"
+      ],
+      "properties": {
+        "ranges": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "rule_type": {
+          "const": "list"
+        },
+        "allowed_values": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "allow_blank": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "formula_protection_rule": {
+      "type": "object",
+      "required": [
+        "formula_ranges"
+      ],
+      "properties": {
+        "formula_ranges": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "input_ranges": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "password": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "header_mapping": {
+      "type": "object",
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "type": "string",
+          "minLength": 1
+        },
+        "to": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "carry_forward_mapping": {
+      "type": "object",
+      "required": [
+        "from_cell",
+        "to_cell"
+      ],
+      "properties": {
+        "from_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "from_cell": {
+          "type": "string",
+          "minLength": 1
+        },
+        "to_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "to_cell": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
     "non_empty_string_array": {
       "type": "array",
       "minItems": 1,
@@ -82,393 +208,744 @@
         "type": "string",
         "minLength": 1
       }
-    }
-  },
-  "required": [
-    "execution_kind",
-    "operation_family",
-    "preserve_original"
-  ],
-  "properties": {
-    "execution_kind": {
-      "enum": [
-        "composition",
-        "primitive"
-      ]
     },
-    "composition_kind": {
-      "enum": [
-        "group_summary",
-        "threshold_highlight",
-        "join_lookup"
-      ]
-    },
-    "operation_family": {
-      "enum": [
-        "group_summarize",
-        "highlight_threshold",
-        "join_lookup",
-        "write_values"
-      ]
-    },
-    "source_sheet": {
-      "type": "string",
-      "minLength": 1
-    },
-    "filters": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/filter_spec"
-      }
-    },
-    "group_by": {
-      "type": "array",
-      "minItems": 1,
-      "uniqueItems": true,
-      "items": {
-        "type": "string",
-        "minLength": 1
-      }
-    },
-    "metrics": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "$ref": "#/$defs/metric_spec"
-      }
-    },
-    "target_sheet": {
-      "type": "string",
-      "minLength": 1
-    },
-    "summary_mode": {
-      "enum": [
-        "values",
-        "formulas"
-      ]
-    },
-    "target_column": {
-      "type": "string",
-      "minLength": 1
-    },
-    "operator": {
-      "enum": [
-        ">",
-        ">=",
-        "<",
-        "<=",
-        "="
-      ]
-    },
-    "threshold": {
-      "type": "number"
-    },
-    "highlight_color": {
-      "type": "string",
-      "minLength": 1
-    },
-    "lookup_sheet": {
-      "type": "string",
-      "minLength": 1
-    },
-    "join_key": {
-      "type": "string",
-      "minLength": 1
-    },
-    "include_source_columns": {
-      "$ref": "#/$defs/non_empty_string_array"
-    },
-    "append_lookup_columns": {
-      "$ref": "#/$defs/non_empty_string_array"
-    },
-    "values": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "$ref": "#/$defs/cell_value"
-      }
-    },
-    "preserve_original": {
-      "type": "boolean"
-    }
-  },
-  "allOf": [
-    {
-      "if": {
-        "properties": {
-          "operation_family": {
-            "const": "group_summarize"
-          }
+    "compare_mapping": {
+      "type": "object",
+      "required": [
+        "left_column",
+        "right_column"
+      ],
+      "properties": {
+        "left_column": {
+          "type": "string",
+          "minLength": 1
+        },
+        "right_column": {
+          "type": "string",
+          "minLength": 1
+        },
+        "as": {
+          "type": "string",
+          "minLength": 1
         }
       },
-      "then": {
-        "properties": {
-          "execution_kind": {
-            "const": "composition"
-          },
-          "composition_kind": {
-            "const": "group_summary"
+      "additionalProperties": false
+    },
+    "form_field_binding": {
+      "type": "object",
+      "required": [
+        "label",
+        "source_cell",
+        "label_cell",
+        "value_cell"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_cell": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label_cell": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value_cell": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "form_table_binding": {
+      "type": "object",
+      "required": [
+        "source_sheet",
+        "source_columns",
+        "header_start",
+        "data_start"
+      ],
+      "properties": {
+        "source_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_columns": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
           }
         },
-        "required": [
-          "composition_kind",
+        "header_start": {
+          "type": "string",
+          "minLength": 1
+        },
+        "data_start": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "workbook_operation_ir_base": {
+      "type": "object",
+      "required": [
+        "execution_kind",
+        "operation_family",
+        "preserve_original"
+      ],
+      "properties": {
+        "execution_kind": {
+          "enum": [
+            "composition",
+            "primitive"
+          ]
+        },
+        "operation_family": {
+          "enum": [
+            "group_summarize",
+            "highlight_threshold",
+            "join_lookup",
+            "append_structured_rows",
+            "extend_table_formulas",
+            "copy_period_sheet",
+            "add_data_validation",
+            "protect_formula_cells",
+            "normalize_headers",
+            "roll_forward_period",
+            "write_values",
+            "reconcile_tables",
+            "generate_printable_form"
+          ]
+        },
+        "preserve_original": {
+          "type": "boolean"
+        }
+      }
+    },
+    "workbook_operation_ir_group_summarize_fields": {
+      "type": "object",
+      "required": [
+        "operation_family",
+        "composition_kind",
           "source_sheet",
           "group_by",
           "metrics",
           "target_sheet",
-          "summary_mode"
-        ],
-        "not": {
-          "anyOf": [
-            {
-              "required": [
-                "target_column"
-              ]
-            },
-            {
-              "required": [
-                "operator"
-              ]
-            },
-            {
-              "required": [
-                "threshold"
-              ]
-            },
-            {
-              "required": [
-                "highlight_color"
-              ]
-            }
+        "summary_mode"
+      ],
+      "properties": {
+        "operation_family": {
+          "const": "group_summarize"
+        },
+        "source_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "filters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/filter_spec"
+          }
+        },
+        "group_by": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "metrics": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/metric_spec"
+          }
+        },
+        "target_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary_mode": {
+          "enum": [
+            "values",
+            "formulas"
           ]
+        },
+        "composition_kind": {
+          "const": "group_summary"
         }
       }
     },
-    {
-      "if": {
-        "properties": {
-          "operation_family": {
-            "const": "highlight_threshold"
-          }
-        }
-      },
-      "then": {
-        "properties": {
-          "execution_kind": {
-            "const": "composition"
-          },
-          "composition_kind": {
-            "const": "threshold_highlight"
-          }
+    "workbook_operation_ir_group_summarize": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/workbook_operation_ir_base"
         },
-        "required": [
-          "composition_kind",
-          "source_sheet",
-          "target_column",
-          "operator",
-          "threshold",
-          "highlight_color"
-        ],
-        "not": {
-          "anyOf": [
-            {
-              "required": [
-                "filters"
-              ]
-            },
-            {
-              "required": [
-                "group_by"
-              ]
-            },
-            {
-              "required": [
-                "metrics"
-              ]
-            },
-            {
-              "required": [
-                "target_sheet"
-              ]
-            },
-            {
-              "required": [
-                "summary_mode"
-              ]
-            }
+        {
+          "$ref": "#/$defs/workbook_operation_ir_group_summarize_fields"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "workbook_operation_ir_highlight_threshold_fields": {
+      "type": "object",
+      "required": [
+        "operation_family",
+        "composition_kind",
+        "source_sheet",
+        "target_column",
+        "operator",
+        "threshold",
+        "highlight_color"
+      ],
+      "properties": {
+        "operation_family": {
+          "const": "highlight_threshold"
+        },
+        "source_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_column": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operator": {
+          "enum": [
+            ">",
+            ">=",
+            "<",
+            "<=",
+            "="
           ]
+        },
+        "threshold": {
+          "type": "number"
+        },
+        "highlight_color": {
+          "type": "string",
+          "minLength": 1
+        },
+        "composition_kind": {
+          "const": "threshold_highlight"
         }
       }
     },
-    {
-      "if": {
-        "properties": {
-          "operation_family": {
-            "const": "join_lookup"
-          }
-        }
-      },
-      "then": {
-        "properties": {
-          "execution_kind": {
-            "const": "composition"
-          },
-          "composition_kind": {
-            "const": "join_lookup"
-          }
+    "workbook_operation_ir_highlight_threshold": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/workbook_operation_ir_base"
         },
-        "required": [
-          "composition_kind",
-          "source_sheet",
-          "lookup_sheet",
-          "join_key",
-          "target_sheet",
-          "include_source_columns",
-          "append_lookup_columns"
-        ],
-        "not": {
-          "anyOf": [
-            {
-              "required": [
-                "filters"
-              ]
-            },
-            {
-              "required": [
-                "group_by"
-              ]
-            },
-            {
-              "required": [
-                "metrics"
-              ]
-            },
-            {
-              "required": [
-                "summary_mode"
-              ]
-            },
-            {
-              "required": [
-                "target_column"
-              ]
-            },
-            {
-              "required": [
-                "operator"
-              ]
-            },
-            {
-              "required": [
-                "threshold"
-              ]
-            },
-            {
-              "required": [
-                "highlight_color"
-              ]
-            }
-          ]
+        {
+          "$ref": "#/$defs/workbook_operation_ir_highlight_threshold_fields"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "workbook_operation_ir_join_lookup_fields": {
+      "type": "object",
+      "required": [
+        "operation_family",
+        "composition_kind",
+        "source_sheet",
+        "lookup_sheet",
+        "join_key",
+        "target_sheet",
+        "include_source_columns",
+        "append_lookup_columns"
+      ],
+      "properties": {
+        "operation_family": {
+          "const": "join_lookup"
+        },
+        "source_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lookup_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "join_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "include_source_columns": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "append_lookup_columns": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "composition_kind": {
+          "const": "join_lookup"
         }
       }
     },
-    {
-      "if": {
-        "properties": {
-          "operation_family": {
-            "const": "write_values"
-          }
+    "workbook_operation_ir_join_lookup": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/workbook_operation_ir_base"
+        },
+        {
+          "$ref": "#/$defs/workbook_operation_ir_join_lookup_fields"
         }
-      },
-      "then": {
-        "properties": {
-          "execution_kind": {
-            "const": "primitive"
-          },
-          "preserve_original": {
-            "const": true
+      ],
+      "unevaluatedProperties": false
+    },
+    "workbook_operation_ir_append_structured_rows_fields": {
+      "type": "object",
+      "required": [
+        "operation_family",
+        "composition_kind",
+        "source_sheet",
+        "include_source_columns",
+        "values"
+      ],
+      "properties": {
+        "operation_family": {
+          "const": "append_structured_rows"
+        },
+        "source_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "include_source_columns": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/cell_value"
           }
         },
-        "required": [
-          "target_sheet",
-          "values"
-        ],
-        "not": {
-          "anyOf": [
-            {
-              "required": [
-                "composition_kind"
-              ]
-            },
-            {
-              "required": [
-                "source_sheet"
-              ]
-            },
-            {
-              "required": [
-                "filters"
-              ]
-            },
-            {
-              "required": [
-                "group_by"
-              ]
-            },
-            {
-              "required": [
-                "metrics"
-              ]
-            },
-            {
-              "required": [
-                "summary_mode"
-              ]
-            },
-            {
-              "required": [
-                "target_column"
-              ]
-            },
-            {
-              "required": [
-                "operator"
-              ]
-            },
-            {
-              "required": [
-                "threshold"
-              ]
-            },
-            {
-              "required": [
-                "highlight_color"
-              ]
-            },
-            {
-              "required": [
-                "lookup_sheet"
-              ]
-            },
-            {
-              "required": [
-                "join_key"
-              ]
-            },
-            {
-              "required": [
-                "include_source_columns"
-              ]
-            },
-            {
-              "required": [
-                "append_lookup_columns"
-              ]
-            }
-          ]
+        "composition_kind": {
+          "const": "structured_row_append"
         }
       }
+    },
+    "workbook_operation_ir_append_structured_rows": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/workbook_operation_ir_base"
+        },
+        {
+          "$ref": "#/$defs/workbook_operation_ir_append_structured_rows_fields"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "workbook_operation_ir_extend_table_formulas_fields": {
+      "type": "object",
+      "required": [
+        "operation_family",
+        "composition_kind",
+        "source_sheet",
+        "formula_source_row",
+        "target_rows",
+        "formula_columns"
+      ],
+      "properties": {
+        "operation_family": {
+          "const": "extend_table_formulas"
+        },
+        "source_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "formula_source_row": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "target_rows": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "formula_columns": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "composition_kind": {
+          "const": "formula_extension"
+        }
+      }
+    },
+    "workbook_operation_ir_extend_table_formulas": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/workbook_operation_ir_base"
+        },
+        {
+          "$ref": "#/$defs/workbook_operation_ir_extend_table_formulas_fields"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "workbook_operation_ir_add_data_validation_fields": {
+      "type": "object",
+      "required": [
+        "operation_family",
+        "composition_kind",
+        "source_sheet",
+        "validation_rule"
+      ],
+      "properties": {
+        "operation_family": {
+          "const": "add_data_validation"
+        },
+        "source_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "validation_rule": {
+          "$ref": "#/$defs/data_validation_rule"
+        },
+        "composition_kind": {
+          "const": "data_validation"
+        }
+      }
+    },
+    "workbook_operation_ir_add_data_validation": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/workbook_operation_ir_base"
+        },
+        {
+          "$ref": "#/$defs/workbook_operation_ir_add_data_validation_fields"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "workbook_operation_ir_write_values_fields": {
+      "type": "object",
+      "required": [
+        "operation_family",
+        "target_sheet",
+        "values"
+      ],
+      "properties": {
+        "operation_family": {
+          "const": "write_values"
+        },
+        "target_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/cell_value"
+          }
+        }
+      }
+    },
+    "workbook_operation_ir_write_values": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/workbook_operation_ir_base"
+        },
+        {
+          "$ref": "#/$defs/workbook_operation_ir_write_values_fields"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "workbook_operation_ir_copy_period_sheet_fields": {
+      "type": "object",
+      "required": [
+        "operation_family",
+        "composition_kind",
+        "source_sheet",
+        "target_sheet"
+      ],
+      "properties": {
+        "operation_family": {
+          "const": "copy_period_sheet"
+        },
+        "source_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "composition_kind": {
+          "const": "period_copy"
+        }
+      }
+    },
+    "workbook_operation_ir_copy_period_sheet": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/workbook_operation_ir_base"
+        },
+        {
+          "$ref": "#/$defs/workbook_operation_ir_copy_period_sheet_fields"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "workbook_operation_ir_protect_formula_cells_fields": {
+      "type": "object",
+      "required": [
+        "operation_family",
+        "composition_kind",
+        "source_sheet",
+        "protection_rule"
+      ],
+      "properties": {
+        "operation_family": {
+          "const": "protect_formula_cells"
+        },
+        "source_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "protection_rule": {
+          "$ref": "#/$defs/formula_protection_rule"
+        },
+        "composition_kind": {
+          "const": "formula_protection"
+        }
+      }
+    },
+    "workbook_operation_ir_protect_formula_cells": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/workbook_operation_ir_base"
+        },
+        {
+          "$ref": "#/$defs/workbook_operation_ir_protect_formula_cells_fields"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "workbook_operation_ir_normalize_headers_fields": {
+      "type": "object",
+      "required": [
+        "operation_family",
+        "composition_kind",
+        "source_sheet",
+        "header_row",
+        "header_mappings"
+      ],
+      "properties": {
+        "operation_family": {
+          "const": "normalize_headers"
+        },
+        "source_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "header_row": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "header_mappings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/header_mapping"
+          }
+        },
+        "composition_kind": {
+          "const": "header_normalization"
+        }
+      }
+    },
+    "workbook_operation_ir_normalize_headers": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/workbook_operation_ir_base"
+        },
+        {
+          "$ref": "#/$defs/workbook_operation_ir_normalize_headers_fields"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "workbook_operation_ir_roll_forward_period_fields": {
+      "type": "object",
+      "required": [
+        "operation_family",
+        "composition_kind",
+        "source_sheet",
+        "target_sheet",
+        "carry_forward_mappings"
+      ],
+      "properties": {
+        "operation_family": {
+          "const": "roll_forward_period"
+        },
+        "source_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "carry_forward_mappings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/carry_forward_mapping"
+          }
+        },
+        "composition_kind": {
+          "const": "period_roll_forward"
+        }
+      }
+    },
+    "workbook_operation_ir_roll_forward_period": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/workbook_operation_ir_base"
+        },
+        {
+          "$ref": "#/$defs/workbook_operation_ir_roll_forward_period_fields"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "workbook_operation_ir_reconcile_tables_fields": {
+      "type": "object",
+      "required": [
+        "operation_family",
+        "composition_kind",
+        "source_sheet",
+        "lookup_sheet",
+        "target_sheet",
+        "left_key",
+        "right_key",
+        "compare_mappings"
+      ],
+      "properties": {
+        "operation_family": {
+          "const": "reconcile_tables"
+        },
+        "source_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lookup_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "left_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "right_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "compare_mappings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/compare_mapping"
+          }
+        },
+        "composition_kind": {
+          "const": "table_reconciliation"
+        }
+      }
+    },
+    "workbook_operation_ir_reconcile_tables": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/workbook_operation_ir_base"
+        },
+        {
+          "$ref": "#/$defs/workbook_operation_ir_reconcile_tables_fields"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "workbook_operation_ir_generate_printable_form_fields": {
+      "type": "object",
+      "required": [
+        "operation_family",
+        "composition_kind",
+        "source_sheet",
+        "target_sheet",
+        "form_title",
+        "print_area",
+        "field_bindings",
+        "table_binding"
+      ],
+      "properties": {
+        "operation_family": {
+          "const": "generate_printable_form"
+        },
+        "source_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "form_title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "print_area": {
+          "type": "string",
+          "minLength": 1
+        },
+        "field_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/form_field_binding"
+          }
+        },
+        "table_binding": {
+          "$ref": "#/$defs/form_table_binding"
+        },
+        "composition_kind": {
+          "const": "printable_form"
+        }
+      }
+    },
+    "workbook_operation_ir_generate_printable_form": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/workbook_operation_ir_base"
+        },
+        {
+          "$ref": "#/$defs/workbook_operation_ir_generate_printable_form_fields"
+        }
+      ],
+      "unevaluatedProperties": false
     }
-  ],
-  "additionalProperties": false
+  }
 }

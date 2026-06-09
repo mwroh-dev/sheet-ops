@@ -1,7 +1,44 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "TaskSpec",
-  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/create_summary_sheet_task"
+    },
+    {
+      "$ref": "#/$defs/highlight_threshold_rows_task"
+    },
+    {
+      "$ref": "#/$defs/create_join_lookup_result_sheet_task"
+    },
+    {
+      "$ref": "#/$defs/append_structured_rows_task"
+    },
+    {
+      "$ref": "#/$defs/extend_table_formulas_task"
+    },
+    {
+      "$ref": "#/$defs/add_data_validation_task"
+    },
+    {
+      "$ref": "#/$defs/copy_period_sheet_task"
+    },
+    {
+      "$ref": "#/$defs/protect_formula_cells_task"
+    },
+    {
+      "$ref": "#/$defs/normalize_headers_task"
+    },
+    {
+      "$ref": "#/$defs/roll_forward_period_task"
+    },
+    {
+      "$ref": "#/$defs/reconcile_tables_task"
+    },
+    {
+      "$ref": "#/$defs/generate_printable_form_task"
+    }
+  ],
   "$defs": {
     "source_spec": {
       "oneOf": [
@@ -116,6 +153,115 @@
       },
       "additionalProperties": false
     },
+    "cell_value": {
+      "type": "object",
+      "required": [
+        "cell",
+        "value"
+      ],
+      "properties": {
+        "cell": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value": {
+          "type": [
+            "string",
+            "number",
+            "integer",
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "data_validation_rule": {
+      "type": "object",
+      "required": [
+        "ranges",
+        "rule_type",
+        "allowed_values",
+        "allow_blank"
+      ],
+      "properties": {
+        "ranges": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "rule_type": {
+          "const": "list"
+        },
+        "allowed_values": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "allow_blank": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "formula_protection_rule": {
+      "type": "object",
+      "required": [
+        "formula_ranges"
+      ],
+      "properties": {
+        "formula_ranges": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "input_ranges": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "password": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "header_mapping": {
+      "type": "object",
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "type": "string",
+          "minLength": 1
+        },
+        "to": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "carry_forward_mapping": {
+      "type": "object",
+      "required": [
+        "from_cell",
+        "to_cell"
+      ],
+      "properties": {
+        "from_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "from_cell": {
+          "type": "string",
+          "minLength": 1
+        },
+        "to_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "to_cell": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
     "non_empty_string_array": {
       "type": "array",
       "minItems": 1,
@@ -124,293 +270,679 @@
         "type": "string",
         "minLength": 1
       }
-    }
-  },
-  "required": [
-    "request_kind",
-    "execution_kind",
-    "source",
-    "input_workbook",
-    "output_workbook",
-    "operation",
-    "source_sheet"
-  ],
-  "properties": {
-    "request_kind": {
-      "const": "workbook_case"
     },
-    "execution_kind": {
-      "const": "composition"
+    "compare_mapping": {
+      "type": "object",
+      "required": [
+        "left_column",
+        "right_column"
+      ],
+      "properties": {
+        "left_column": {
+          "type": "string",
+          "minLength": 1
+        },
+        "right_column": {
+          "type": "string",
+          "minLength": 1
+        },
+        "as": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
     },
-    "composition_kind": {
-      "enum": [
-        "group_summary",
-        "threshold_highlight",
-        "join_lookup"
-      ]
+    "form_field_binding": {
+      "type": "object",
+      "required": [
+        "label",
+        "source_cell",
+        "label_cell",
+        "value_cell"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_cell": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label_cell": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value_cell": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
     },
-    "source": {
-      "$ref": "#/$defs/source_spec"
+    "form_table_binding": {
+      "type": "object",
+      "required": [
+        "source_sheet",
+        "source_columns",
+        "header_start",
+        "data_start"
+      ],
+      "properties": {
+        "source_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_columns": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "header_start": {
+          "type": "string",
+          "minLength": 1
+        },
+        "data_start": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
     },
-    "request_text": {
-      "type": "string",
-      "minLength": 1
-    },
-    "input_workbook": {
-      "type": "string",
-      "minLength": 1
-    },
-    "output_workbook": {
-      "type": "string",
-      "minLength": 1
-    },
-    "operation": {
-      "enum": [
-        "create_summary_sheet",
-        "highlight_threshold_rows",
-        "create_join_lookup_result_sheet"
-      ]
-    },
-    "source_sheet": {
-      "type": "string",
-      "minLength": 1
-    },
-    "target_sheet": {
-      "type": "string",
-      "minLength": 1
-    },
-    "filters": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/filter_spec"
-      }
-    },
-    "group_by": {
-      "type": "array",
-      "minItems": 1,
-      "uniqueItems": true,
-      "items": {
-        "type": "string",
-        "minLength": 1
-      }
-    },
-    "metrics": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "$ref": "#/$defs/metric_spec"
-      }
-    },
-    "summary_mode": {
-      "enum": [
-        "values",
-        "formulas"
-      ]
-    },
-    "threshold_rule": {
-      "$ref": "#/$defs/threshold_rule"
-    },
-    "lookup_sheet": {
-      "type": "string",
-      "minLength": 1
-    },
-    "join_key": {
-      "type": "string",
-      "minLength": 1
-    },
-    "include_source_columns": {
-      "$ref": "#/$defs/non_empty_string_array"
-    },
-    "append_lookup_columns": {
-      "$ref": "#/$defs/non_empty_string_array"
-    }
-  },
-  "allOf": [
-    {
-      "if": {
-        "properties": {
-          "source": {
-            "type": "object",
-            "required": [
-              "kind"
-            ],
+    "task_base": {
+      "type": "object",
+      "required": [
+        "request_kind",
+        "execution_kind",
+        "source",
+        "input_workbook",
+        "output_workbook",
+        "source_sheet"
+      ],
+      "properties": {
+        "request_kind": {
+          "const": "workbook_case"
+        },
+        "execution_kind": {
+          "const": "composition"
+        },
+        "source": {
+          "$ref": "#/$defs/source_spec"
+        },
+        "request_text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "input_workbook": {
+          "type": "string",
+          "minLength": 1
+        },
+        "output_workbook": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_sheet": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "allOf": [
+        {
+          "if": {
             "properties": {
-              "kind": {
-                "const": "natural_language"
+              "source": {
+                "type": "object",
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "natural_language"
+                  }
+                }
               }
             }
-          }
-        }
-      },
-      "then": {
-        "required": [
-          "request_text"
-        ]
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "source": {
-            "type": "object",
+          },
+          "then": {
             "required": [
-              "kind"
-            ],
+              "request_text"
+            ]
+          }
+        },
+        {
+          "if": {
             "properties": {
-              "kind": {
-                "const": "case_markdown"
+              "source": {
+                "type": "object",
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "case_markdown"
+                  }
+                }
               }
             }
-          }
-        }
-      },
-      "then": {
-        "not": {
-          "required": [
-            "request_text"
-          ]
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "operation": {
-            "const": "create_summary_sheet"
-          }
-        }
-      },
-      "then": {
-        "properties": {
-          "execution_kind": {
-            "const": "composition"
           },
-          "composition_kind": {
-            "const": "group_summary"
-          }
-        },
-        "required": [
-          "composition_kind",
-          "target_sheet",
-          "group_by",
-          "metrics",
-          "summary_mode"
-        ],
-        "not": {
-          "required": [
-            "threshold_rule"
-          ]
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "operation": {
-            "const": "highlight_threshold_rows"
-          }
-        }
-      },
-      "then": {
-        "properties": {
-          "execution_kind": {
-            "const": "composition"
-          },
-          "composition_kind": {
-            "const": "threshold_highlight"
-          }
-        },
-        "required": [
-          "composition_kind",
-          "threshold_rule"
-        ],
-        "not": {
-          "anyOf": [
-            {
+          "then": {
+            "not": {
               "required": [
-                "target_sheet"
-              ]
-            },
-            {
-              "required": [
-                "filters"
-              ]
-            },
-            {
-              "required": [
-                "group_by"
-              ]
-            },
-            {
-              "required": [
-                "metrics"
-              ]
-            },
-            {
-              "required": [
-                "summary_mode"
+                "request_text"
               ]
             }
+          }
+        }
+      ]
+    },
+    "create_summary_sheet_fields": {
+      "type": "object",
+      "required": [
+        "operation",
+        "composition_kind",
+        "target_sheet",
+        "group_by",
+        "metrics",
+        "summary_mode"
+      ],
+      "properties": {
+        "operation": {
+          "const": "create_summary_sheet"
+        },
+        "composition_kind": {
+          "const": "group_summary"
+        },
+        "target_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "filters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/filter_spec"
+          }
+        },
+        "group_by": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "metrics": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/metric_spec"
+          }
+        },
+        "summary_mode": {
+          "enum": [
+            "values",
+            "formulas"
           ]
         }
       }
     },
-    {
-      "if": {
-        "properties": {
-          "operation": {
-            "const": "create_join_lookup_result_sheet"
-          }
-        }
-      },
-      "then": {
-        "properties": {
-          "execution_kind": {
-            "const": "composition"
-          },
-          "composition_kind": {
-            "const": "join_lookup"
-          }
+    "create_summary_sheet_task": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/task_base"
         },
-        "required": [
-          "composition_kind",
-          "lookup_sheet",
-          "join_key",
-          "target_sheet",
-          "include_source_columns",
-          "append_lookup_columns"
-        ],
-        "not": {
-          "anyOf": [
-            {
-              "required": [
-                "filters"
-              ]
-            },
-            {
-              "required": [
-                "group_by"
-              ]
-            },
-            {
-              "required": [
-                "metrics"
-              ]
-            },
-            {
-              "required": [
-                "summary_mode"
-              ]
-            },
-            {
-              "required": [
-                "threshold_rule"
-              ]
-            }
-          ]
+        {
+          "$ref": "#/$defs/create_summary_sheet_fields"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "highlight_threshold_rows_fields": {
+      "type": "object",
+      "required": [
+        "operation",
+        "composition_kind",
+        "threshold_rule"
+      ],
+      "properties": {
+        "operation": {
+          "const": "highlight_threshold_rows"
+        },
+        "composition_kind": {
+          "const": "threshold_highlight"
+        },
+        "threshold_rule": {
+          "$ref": "#/$defs/threshold_rule"
         }
       }
+    },
+    "highlight_threshold_rows_task": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/task_base"
+        },
+        {
+          "$ref": "#/$defs/highlight_threshold_rows_fields"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "create_join_lookup_result_sheet_fields": {
+      "type": "object",
+      "required": [
+        "operation",
+        "composition_kind",
+        "lookup_sheet",
+        "join_key",
+        "target_sheet",
+        "include_source_columns",
+        "append_lookup_columns"
+      ],
+      "properties": {
+        "operation": {
+          "const": "create_join_lookup_result_sheet"
+        },
+        "composition_kind": {
+          "const": "join_lookup"
+        },
+        "lookup_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "join_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "include_source_columns": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "append_lookup_columns": {
+          "$ref": "#/$defs/non_empty_string_array"
+        }
+      }
+    },
+    "create_join_lookup_result_sheet_task": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/task_base"
+        },
+        {
+          "$ref": "#/$defs/create_join_lookup_result_sheet_fields"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "append_structured_rows_fields": {
+      "type": "object",
+      "required": [
+        "operation",
+        "composition_kind",
+        "include_source_columns",
+        "values"
+      ],
+      "properties": {
+        "operation": {
+          "const": "append_structured_rows"
+        },
+        "composition_kind": {
+          "const": "structured_row_append"
+        },
+        "include_source_columns": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/cell_value"
+          }
+        }
+      }
+    },
+    "append_structured_rows_task": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/task_base"
+        },
+        {
+          "$ref": "#/$defs/append_structured_rows_fields"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "extend_table_formulas_fields": {
+      "type": "object",
+      "required": [
+        "operation",
+        "composition_kind",
+        "formula_source_row",
+        "target_rows",
+        "formula_columns"
+      ],
+      "properties": {
+        "operation": {
+          "const": "extend_table_formulas"
+        },
+        "composition_kind": {
+          "const": "formula_extension"
+        },
+        "formula_source_row": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "target_rows": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "formula_columns": {
+          "$ref": "#/$defs/non_empty_string_array"
+        }
+      }
+    },
+    "extend_table_formulas_task": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/task_base"
+        },
+        {
+          "$ref": "#/$defs/extend_table_formulas_fields"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "add_data_validation_fields": {
+      "type": "object",
+      "required": [
+        "operation",
+        "composition_kind",
+        "validation_rule"
+      ],
+      "properties": {
+        "operation": {
+          "const": "add_data_validation"
+        },
+        "composition_kind": {
+          "const": "data_validation"
+        },
+        "validation_rule": {
+          "$ref": "#/$defs/data_validation_rule"
+        }
+      }
+    },
+    "add_data_validation_task": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/task_base"
+        },
+        {
+          "$ref": "#/$defs/add_data_validation_fields"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "copy_period_sheet_fields": {
+      "type": "object",
+      "required": [
+        "operation",
+        "composition_kind",
+        "target_sheet"
+      ],
+      "properties": {
+        "operation": {
+          "const": "copy_period_sheet"
+        },
+        "composition_kind": {
+          "const": "period_copy"
+        },
+        "target_sheet": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "copy_period_sheet_task": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/task_base"
+        },
+        {
+          "$ref": "#/$defs/copy_period_sheet_fields"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "protect_formula_cells_fields": {
+      "type": "object",
+      "required": [
+        "operation",
+        "composition_kind",
+        "protection_rule"
+      ],
+      "properties": {
+        "operation": {
+          "const": "protect_formula_cells"
+        },
+        "composition_kind": {
+          "const": "formula_protection"
+        },
+        "protection_rule": {
+          "$ref": "#/$defs/formula_protection_rule"
+        }
+      }
+    },
+    "protect_formula_cells_task": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/task_base"
+        },
+        {
+          "$ref": "#/$defs/protect_formula_cells_fields"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "normalize_headers_fields": {
+      "type": "object",
+      "required": [
+        "operation",
+        "composition_kind",
+        "header_row",
+        "header_mappings"
+      ],
+      "properties": {
+        "operation": {
+          "const": "normalize_headers"
+        },
+        "composition_kind": {
+          "const": "header_normalization"
+        },
+        "header_row": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "header_mappings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/header_mapping"
+          }
+        }
+      }
+    },
+    "normalize_headers_task": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/task_base"
+        },
+        {
+          "$ref": "#/$defs/normalize_headers_fields"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "roll_forward_period_fields": {
+      "type": "object",
+      "required": [
+        "operation",
+        "composition_kind",
+        "target_sheet",
+        "carry_forward_mappings"
+      ],
+      "properties": {
+        "operation": {
+          "const": "roll_forward_period"
+        },
+        "composition_kind": {
+          "const": "period_roll_forward"
+        },
+        "target_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "carry_forward_mappings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/carry_forward_mapping"
+          }
+        }
+      }
+    },
+    "roll_forward_period_task": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/task_base"
+        },
+        {
+          "$ref": "#/$defs/roll_forward_period_fields"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "reconcile_tables_fields": {
+      "type": "object",
+      "required": [
+        "operation",
+        "composition_kind",
+        "lookup_sheet",
+        "target_sheet",
+        "left_key",
+        "right_key",
+        "compare_mappings"
+      ],
+      "properties": {
+        "operation": {
+          "const": "reconcile_tables"
+        },
+        "composition_kind": {
+          "const": "table_reconciliation"
+        },
+        "lookup_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "left_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "right_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "compare_mappings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/compare_mapping"
+          }
+        }
+      }
+    },
+    "reconcile_tables_task": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/task_base"
+        },
+        {
+          "$ref": "#/$defs/reconcile_tables_fields"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "generate_printable_form_fields": {
+      "type": "object",
+      "required": [
+        "operation",
+        "composition_kind",
+        "target_sheet",
+        "form_title",
+        "print_area",
+        "field_bindings",
+        "table_binding"
+      ],
+      "properties": {
+        "operation": {
+          "const": "generate_printable_form"
+        },
+        "composition_kind": {
+          "const": "printable_form"
+        },
+        "target_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "form_title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "print_area": {
+          "type": "string",
+          "minLength": 1
+        },
+        "field_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/form_field_binding"
+          }
+        },
+        "table_binding": {
+          "$ref": "#/$defs/form_table_binding"
+        }
+      }
+    },
+    "generate_printable_form_task": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/task_base"
+        },
+        {
+          "$ref": "#/$defs/generate_printable_form_fields"
+        }
+      ],
+      "unevaluatedProperties": false
     }
-  ],
-  "additionalProperties": false
+  }
 }

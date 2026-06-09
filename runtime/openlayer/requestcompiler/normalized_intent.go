@@ -76,6 +76,42 @@ func normalizeIntent(intent NormalizedIntent) NormalizedIntent {
 	if intent.JoinLookup.AppendLookupColumns == nil {
 		intent.JoinLookup.AppendLookupColumns = []string{}
 	}
+	if intent.AppendRows.IncludeSourceColumns == nil {
+		intent.AppendRows.IncludeSourceColumns = []string{}
+	}
+	if intent.AppendRows.Values == nil {
+		intent.AppendRows.Values = []CellValue{}
+	}
+	if intent.ExtendFormulas.TargetRows == nil {
+		intent.ExtendFormulas.TargetRows = []int{}
+	}
+	if intent.ExtendFormulas.FormulaColumns == nil {
+		intent.ExtendFormulas.FormulaColumns = []string{}
+	}
+	if intent.AddDataValidation.ValidationRule.Ranges == nil {
+		intent.AddDataValidation.ValidationRule.Ranges = []string{}
+	}
+	if intent.AddDataValidation.ValidationRule.AllowedValues == nil {
+		intent.AddDataValidation.ValidationRule.AllowedValues = []string{}
+	}
+	if intent.ProtectFormulaCells.ProtectionRule.FormulaRanges == nil {
+		intent.ProtectFormulaCells.ProtectionRule.FormulaRanges = []string{}
+	}
+	if intent.ProtectFormulaCells.ProtectionRule.InputRanges == nil {
+		intent.ProtectFormulaCells.ProtectionRule.InputRanges = []string{}
+	}
+	if intent.NormalizeHeaders.HeaderMappings == nil {
+		intent.NormalizeHeaders.HeaderMappings = []HeaderMapping{}
+	}
+	if intent.RollForwardPeriod.CarryForwardMappings == nil {
+		intent.RollForwardPeriod.CarryForwardMappings = []CarryForwardMapping{}
+	}
+	if intent.ReconcileTables.CompareMappings == nil {
+		intent.ReconcileTables.CompareMappings = []CompareMapping{}
+	}
+	if intent.GeneratePrintableForm.FieldBindings == nil {
+		intent.GeneratePrintableForm.FieldBindings = []FormFieldBinding{}
+	}
 	if intent.Ambiguities != nil {
 		intent.Ambiguity.Markers = append([]string(nil), intent.Ambiguities...)
 	} else if intent.Ambiguity.Markers != nil {

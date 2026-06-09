@@ -48,6 +48,7 @@ func ValidateIntent(input Input, intent NormalizedIntent) (Result, error) {
 		Decision:                  decisionFromValidation(intent, decision, validation),
 		Validation:                validation,
 		ValidatedExecutionRequest: validation.ValidatedExecutionRequest,
+		TemplateClassPlan:         TemplateClassPlanHintForRequest(requestText),
 	}, nil
 }
 
@@ -106,7 +107,7 @@ func validateIntentAndPersist(input Input, intent NormalizedIntent, workUnitID s
 	if err := writeJSON(filepath.Join(stagingDir, "normalized_intent.json"), intent); err != nil {
 		return PersistedResult{}, err
 	}
-	if err := writeJSON(filepath.Join(stagingDir, "compiler_decision.json"), compilerDecisionArtifact(result)); err != nil {
+	if err := writeCompilerDecisionJSON(filepath.Join(stagingDir, "compiler_decision.json"), result); err != nil {
 		return PersistedResult{}, err
 	}
 	if result.Validation.Status == runtimevalidate.StatusCompiled && result.ValidatedExecutionRequest != nil {
@@ -201,6 +202,123 @@ func compileDecision(intent NormalizedIntent) Decision {
 
 	if containsBlockedMarker(intent.Ambiguity.Markers) {
 		return blockedDecision(intent, blockedSignals(intent), "the normalized intent does not map to a supported runtime operation")
+	}
+
+	if slices.Contains(intent.CompositionCandidates, CompositionCandidateStructuredRowAppend) && appendRowsIntentReady(intent) {
+		return Decision{
+			Status:            StatusCompiled,
+			SelectedOperation: "append_structured_rows",
+			Confidence:        0.98,
+			Notes: []string{
+				"the normalized intent maps cleanly to the supported structured row append runtime operation",
+			},
+			SheetCandidates:   supportedSheetCandidates(intent),
+			StructuralSignals: []string{"append_structured_rows_request", "preserve_original"},
+		}
+	}
+
+	if slices.Contains(intent.CompositionCandidates, CompositionCandidateFormulaExtension) && extendFormulasIntentReady(intent) {
+		return Decision{
+			Status:            StatusCompiled,
+			SelectedOperation: "extend_table_formulas",
+			Confidence:        0.98,
+			Notes: []string{
+				"the normalized intent maps cleanly to the supported formula extension runtime operation",
+			},
+			SheetCandidates:   supportedSheetCandidates(intent),
+			StructuralSignals: []string{"formula_extension_request", "preserve_original"},
+		}
+	}
+
+	if slices.Contains(intent.CompositionCandidates, CompositionCandidateDataValidation) && dataValidationIntentReady(intent) {
+		return Decision{
+			Status:            StatusCompiled,
+			SelectedOperation: "add_data_validation",
+			Confidence:        0.98,
+			Notes: []string{
+				"the normalized intent maps cleanly to the supported data validation runtime operation",
+			},
+			SheetCandidates:   supportedSheetCandidates(intent),
+			StructuralSignals: []string{"data_validation_request", "preserve_original"},
+		}
+	}
+
+	if slices.Contains(intent.CompositionCandidates, CompositionCandidatePeriodCopy) && periodCopyIntentReady(intent) {
+		return Decision{
+			Status:            StatusCompiled,
+			SelectedOperation: "copy_period_sheet",
+			Confidence:        0.98,
+			Notes: []string{
+				"the normalized intent maps cleanly to the supported period copy runtime operation",
+			},
+			SheetCandidates:   supportedSheetCandidates(intent),
+			StructuralSignals: []string{"period_copy_request", "preserve_original"},
+		}
+	}
+
+	if slices.Contains(intent.CompositionCandidates, CompositionCandidateFormulaProtection) && formulaProtectionIntentReady(intent) {
+		return Decision{
+			Status:            StatusCompiled,
+			SelectedOperation: "protect_formula_cells",
+			Confidence:        0.98,
+			Notes: []string{
+				"the normalized intent maps cleanly to the supported formula protection runtime operation",
+			},
+			SheetCandidates:   supportedSheetCandidates(intent),
+			StructuralSignals: []string{"formula_protection_request", "preserve_original"},
+		}
+	}
+
+	if slices.Contains(intent.CompositionCandidates, CompositionCandidateHeaderNormalization) && normalizeHeadersIntentReady(intent) {
+		return Decision{
+			Status:            StatusCompiled,
+			SelectedOperation: "normalize_headers",
+			Confidence:        0.98,
+			Notes: []string{
+				"the normalized intent maps cleanly to the supported explicit header normalization runtime operation",
+			},
+			SheetCandidates:   supportedSheetCandidates(intent),
+			StructuralSignals: []string{"header_normalization_request", "preserve_original"},
+		}
+	}
+
+	if slices.Contains(intent.CompositionCandidates, CompositionCandidatePeriodRollForward) && rollForwardPeriodIntentReady(intent) {
+		return Decision{
+			Status:            StatusCompiled,
+			SelectedOperation: "roll_forward_period",
+			Confidence:        0.98,
+			Notes: []string{
+				"the normalized intent maps cleanly to the supported explicit period roll-forward runtime operation",
+			},
+			SheetCandidates:   supportedSheetCandidates(intent),
+			StructuralSignals: []string{"period_roll_forward_request", "preserve_original"},
+		}
+	}
+
+	if slices.Contains(intent.CompositionCandidates, CompositionCandidateTableReconciliation) && reconcileTablesIntentReady(intent) {
+		return Decision{
+			Status:            StatusCompiled,
+			SelectedOperation: "reconcile_tables",
+			Confidence:        0.98,
+			Notes: []string{
+				"the normalized intent maps cleanly to the supported explicit table reconciliation runtime operation",
+			},
+			SheetCandidates:   supportedSheetCandidates(intent),
+			StructuralSignals: []string{"table_reconciliation_request", "preserve_original"},
+		}
+	}
+
+	if slices.Contains(intent.CompositionCandidates, CompositionCandidatePrintableForm) && printableFormIntentReady(intent) {
+		return Decision{
+			Status:            StatusCompiled,
+			SelectedOperation: "generate_printable_form",
+			Confidence:        0.98,
+			Notes: []string{
+				"the normalized intent maps cleanly to the supported explicit printable form runtime operation",
+			},
+			SheetCandidates:   supportedSheetCandidates(intent),
+			StructuralSignals: []string{"printable_form_request", "preserve_original"},
+		}
 	}
 
 	if slices.Contains(intent.CompositionCandidates, CompositionCandidateJoinLookup) && joinLookupIntentReady(intent) {
@@ -352,6 +470,54 @@ func toRuntimeIntent(intent NormalizedIntent) runtimevalidate.NormalizedIntent {
 			IncludeSourceColumns: append([]string(nil), intent.JoinLookup.IncludeSourceColumns...),
 			AppendLookupColumns:  append([]string(nil), intent.JoinLookup.AppendLookupColumns...),
 		},
+		AppendRows: runtimevalidate.AppendRowsIntent{
+			IncludeSourceColumns: append([]string(nil), intent.AppendRows.IncludeSourceColumns...),
+			Values:               toRuntimeCellValues(intent.AppendRows.Values),
+		},
+		ExtendFormulas: runtimevalidate.ExtendFormulasIntent{
+			FormulaSourceRow: intent.ExtendFormulas.FormulaSourceRow,
+			TargetRows:       append([]int(nil), intent.ExtendFormulas.TargetRows...),
+			FormulaColumns:   append([]string(nil), intent.ExtendFormulas.FormulaColumns...),
+		},
+		PeriodCopy: runtimevalidate.PeriodCopyIntent{
+			TargetSheet: intent.PeriodCopy.TargetSheet,
+		},
+		AddDataValidation: runtimevalidate.AddDataValidationIntent{
+			ValidationRule: runtimevalidate.DataValidationRule{
+				Ranges:        append([]string(nil), intent.AddDataValidation.ValidationRule.Ranges...),
+				RuleType:      intent.AddDataValidation.ValidationRule.RuleType,
+				AllowedValues: append([]string(nil), intent.AddDataValidation.ValidationRule.AllowedValues...),
+				AllowBlank:    intent.AddDataValidation.ValidationRule.AllowBlank,
+			},
+		},
+		ProtectFormulaCells: runtimevalidate.ProtectFormulaCellsIntent{
+			ProtectionRule: runtimevalidate.FormulaProtectionRule{
+				FormulaRanges: append([]string(nil), intent.ProtectFormulaCells.ProtectionRule.FormulaRanges...),
+				InputRanges:   append([]string(nil), intent.ProtectFormulaCells.ProtectionRule.InputRanges...),
+				Password:      intent.ProtectFormulaCells.ProtectionRule.Password,
+			},
+		},
+		NormalizeHeaders: runtimevalidate.NormalizeHeadersIntent{
+			HeaderRow:      intent.NormalizeHeaders.HeaderRow,
+			HeaderMappings: toRuntimeHeaderMappings(intent.NormalizeHeaders.HeaderMappings),
+		},
+		RollForwardPeriod: runtimevalidate.RollForwardPeriodIntent{
+			TargetSheet:          intent.RollForwardPeriod.TargetSheet,
+			CarryForwardMappings: toRuntimeCarryForwardMappings(intent.RollForwardPeriod.CarryForwardMappings),
+		},
+		ReconcileTables: runtimevalidate.ReconcileTablesIntent{
+			TargetSheet:     intent.ReconcileTables.TargetSheet,
+			LeftKey:         intent.ReconcileTables.LeftKey,
+			RightKey:        intent.ReconcileTables.RightKey,
+			CompareMappings: toRuntimeCompareMappings(intent.ReconcileTables.CompareMappings),
+		},
+		GeneratePrintableForm: runtimevalidate.GeneratePrintableFormIntent{
+			TargetSheet:   intent.GeneratePrintableForm.TargetSheet,
+			FormTitle:     intent.GeneratePrintableForm.FormTitle,
+			PrintArea:     intent.GeneratePrintableForm.PrintArea,
+			FieldBindings: toRuntimeFormFieldBindings(intent.GeneratePrintableForm.FieldBindings),
+			TableBinding:  toRuntimeFormTableBinding(intent.GeneratePrintableForm.TableBinding),
+		},
 		Materialization: runtimevalidate.MaterializationIntent{
 			PreserveOriginal:      intent.Materialization.PreserveOriginal,
 			OutputDestinationMode: intent.Materialization.OutputDestinationMode,
@@ -450,6 +616,150 @@ func joinLookupIntentReady(intent NormalizedIntent) bool {
 		len(intent.LookupSheetCandidates) > 0 &&
 		strings.TrimSpace(intent.JoinLookup.JoinKey) != "" &&
 		len(intent.JoinLookup.AppendLookupColumns) > 0
+}
+
+func appendRowsIntentReady(intent NormalizedIntent) bool {
+	return len(intent.SourceSheetCandidates) > 0 &&
+		len(intent.AppendRows.IncludeSourceColumns) > 0 &&
+		len(intent.AppendRows.Values) > 0
+}
+
+func extendFormulasIntentReady(intent NormalizedIntent) bool {
+	return len(intent.SourceSheetCandidates) > 0 &&
+		intent.ExtendFormulas.FormulaSourceRow > 0 &&
+		len(intent.ExtendFormulas.TargetRows) > 0 &&
+		len(intent.ExtendFormulas.FormulaColumns) > 0
+}
+
+func dataValidationIntentReady(intent NormalizedIntent) bool {
+	rule := intent.AddDataValidation.ValidationRule
+	return len(intent.SourceSheetCandidates) > 0 &&
+		len(rule.Ranges) > 0 &&
+		rule.RuleType == "list" &&
+		len(rule.AllowedValues) > 0
+}
+
+func periodCopyIntentReady(intent NormalizedIntent) bool {
+	return len(intent.SourceSheetCandidates) > 0 &&
+		intent.PeriodCopy.TargetSheet != ""
+}
+
+func formulaProtectionIntentReady(intent NormalizedIntent) bool {
+	return len(intent.SourceSheetCandidates) > 0 &&
+		len(intent.ProtectFormulaCells.ProtectionRule.FormulaRanges) > 0
+}
+
+func normalizeHeadersIntentReady(intent NormalizedIntent) bool {
+	return len(intent.SourceSheetCandidates) > 0 &&
+		len(intent.NormalizeHeaders.HeaderMappings) > 0
+}
+
+func rollForwardPeriodIntentReady(intent NormalizedIntent) bool {
+	return len(intent.SourceSheetCandidates) > 0 &&
+		intent.RollForwardPeriod.TargetSheet != "" &&
+		len(intent.RollForwardPeriod.CarryForwardMappings) > 0
+}
+
+func reconcileTablesIntentReady(intent NormalizedIntent) bool {
+	return len(intent.SourceSheetCandidates) > 0 &&
+		len(intent.LookupSheetCandidates) > 0 &&
+		strings.TrimSpace(intent.ReconcileTables.LeftKey) != "" &&
+		strings.TrimSpace(intent.ReconcileTables.RightKey) != "" &&
+		len(intent.ReconcileTables.CompareMappings) > 0
+}
+
+func printableFormIntentReady(intent NormalizedIntent) bool {
+	return len(intent.SourceSheetCandidates) > 0 &&
+		strings.TrimSpace(intent.GeneratePrintableForm.TargetSheet) != "" &&
+		strings.TrimSpace(intent.GeneratePrintableForm.FormTitle) != "" &&
+		strings.TrimSpace(intent.GeneratePrintableForm.PrintArea) != "" &&
+		len(intent.GeneratePrintableForm.FieldBindings) > 0 &&
+		intent.GeneratePrintableForm.TableBinding != nil
+}
+
+func toRuntimeHeaderMappings(values []HeaderMapping) []runtimevalidate.HeaderMapping {
+	if len(values) == 0 {
+		return []runtimevalidate.HeaderMapping{}
+	}
+	converted := make([]runtimevalidate.HeaderMapping, 0, len(values))
+	for _, value := range values {
+		converted = append(converted, runtimevalidate.HeaderMapping{From: value.From, To: value.To})
+	}
+	return converted
+}
+
+func toRuntimeCarryForwardMappings(values []CarryForwardMapping) []runtimevalidate.CarryForwardMapping {
+	if len(values) == 0 {
+		return []runtimevalidate.CarryForwardMapping{}
+	}
+	converted := make([]runtimevalidate.CarryForwardMapping, 0, len(values))
+	for _, value := range values {
+		converted = append(converted, runtimevalidate.CarryForwardMapping{
+			FromSheet: value.FromSheet,
+			FromCell:  value.FromCell,
+			ToSheet:   value.ToSheet,
+			ToCell:    value.ToCell,
+		})
+	}
+	return converted
+}
+
+func toRuntimeCompareMappings(values []CompareMapping) []runtimevalidate.CompareMapping {
+	if len(values) == 0 {
+		return []runtimevalidate.CompareMapping{}
+	}
+	converted := make([]runtimevalidate.CompareMapping, 0, len(values))
+	for _, value := range values {
+		converted = append(converted, runtimevalidate.CompareMapping{
+			LeftColumn:  value.LeftColumn,
+			RightColumn: value.RightColumn,
+			As:          value.As,
+		})
+	}
+	return converted
+}
+
+func toRuntimeFormFieldBindings(values []FormFieldBinding) []runtimevalidate.FormFieldBinding {
+	if len(values) == 0 {
+		return []runtimevalidate.FormFieldBinding{}
+	}
+	converted := make([]runtimevalidate.FormFieldBinding, 0, len(values))
+	for _, value := range values {
+		converted = append(converted, runtimevalidate.FormFieldBinding{
+			Label:       value.Label,
+			SourceSheet: value.SourceSheet,
+			SourceCell:  value.SourceCell,
+			LabelCell:   value.LabelCell,
+			ValueCell:   value.ValueCell,
+		})
+	}
+	return converted
+}
+
+func toRuntimeFormTableBinding(value *FormTableBinding) *runtimevalidate.FormTableBinding {
+	if value == nil {
+		return nil
+	}
+	return &runtimevalidate.FormTableBinding{
+		SourceSheet:   value.SourceSheet,
+		SourceColumns: append([]string(nil), value.SourceColumns...),
+		HeaderStart:   value.HeaderStart,
+		DataStart:     value.DataStart,
+	}
+}
+
+func toRuntimeCellValues(values []CellValue) []runtimevalidate.CellValue {
+	if len(values) == 0 {
+		return []runtimevalidate.CellValue{}
+	}
+	converted := make([]runtimevalidate.CellValue, 0, len(values))
+	for _, value := range values {
+		converted = append(converted, runtimevalidate.CellValue{
+			Cell:  value.Cell,
+			Value: value.Value,
+		})
+	}
+	return converted
 }
 
 func summaryGroupBy(intent NormalizedIntent) []string {

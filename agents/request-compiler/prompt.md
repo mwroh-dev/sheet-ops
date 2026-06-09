@@ -21,9 +21,15 @@ Codex parent orchestrator dispatches it.
 4. Use workbook facts and explicit constraints before inference.
 5. If the request is unclear, contradictory, or partially unsupported, preserve
    that in `ambiguity` instead of fabricating details.
-6. Do not obtain workbook facts through ad hoc Python, `openpyxl`, ZIP/XML
+6. For template-like requests, preserve advisory template-class evidence and
+   narrow to supported atom execution only when the facts and schema contracts
+   justify it.
+7. Make the planning decision auditable in the emitted artifact surface where
+   supported: goal, known facts, selected path, verifier focus, and stop
+   condition.
+8. Do not obtain workbook facts through ad hoc Python, `openpyxl`, ZIP/XML
    scraping, or manual spreadsheet reads.
-7. Output JSON only.
+9. Output JSON only.
 
 ## Output
 

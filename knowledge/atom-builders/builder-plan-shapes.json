@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "authority": "advisory_plan_shape",
+  "summary": "Reusable plan shapes for atom builders. These are planning contracts, not executor implementations.",
+  "plan_shapes": [
+    {
+      "shape_id": "summary_aggregation_plan",
+      "applies_to_atoms": ["group_summarize", "create_pivot_summary"],
+      "reads": ["source table headers", "source table rows", "filters", "group keys", "metrics"],
+      "writes": ["summary output range"],
+      "formulas": ["optional aggregate formulas"],
+      "validations": [],
+      "protections": ["optional protected summary range"],
+      "verification_assertions": ["source_preserved", "summary_matches_source", "formulas_calculate"]
+    },
+    {
+      "shape_id": "threshold_exception_plan",
+      "applies_to_atoms": ["highlight_threshold"],
+      "reads": ["source table headers", "target column values", "threshold rule"],
+      "writes": ["style changes on matching rows or cells"],
+      "formulas": [],
+      "validations": [],
+      "protections": [],
+      "verification_assertions": ["source_preserved", "matching_rows_highlighted", "highlight_color_matches"]
+    },
+    {
+      "shape_id": "lookup_enrichment_plan",
+      "applies_to_atoms": ["join_lookup"],
+      "reads": ["source table", "lookup table", "join key", "selected source columns", "selected lookup columns"],
+      "writes": ["joined result sheet or range"],
+      "formulas": [],
+      "validations": ["optional missing key warning"],
+      "protections": [],
+      "verification_assertions": ["source_preserved", "lookup_rows_match", "appended_columns_match"]
+    },
+    {
+      "shape_id": "direct_cell_write_plan",
+      "applies_to_atoms": ["write_values"],
+      "reads": ["target sheet", "target range", "literal values"],
+      "writes": ["target cells"],
+      "formulas": [],
+      "validations": [],
+      "protections": [],
+      "verification_assertions": ["target_values_match", "unrelated_cells_preserved"]
+    },
+    {
+      "shape_id": "table_growth_plan",
+      "applies_to_atoms": ["append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells"],
+      "reads": ["table header", "table boundary", "existing formula pattern", "existing validation rules"],
+      "writes": ["new rows", "extended formulas", "validation rules", "protected ranges"],
+      "formulas": ["copied or extended table formulas"],
+      "validations": ["dropdown, required, numeric, date, or reference integrity rules"],
+      "protections": ["formula cell locks", "input cell exceptions"],
+      "verification_assertions": ["row_count_increased", "formulas_extended", "validation_rule_present", "formula_cells_protected"]
+    },
+    {
+      "shape_id": "period_rollover_plan",
+      "applies_to_atoms": ["copy_period_sheet", "roll_forward_period"],
+      "reads": ["source period block", "period labels", "input ranges", "formula ranges", "closing fields"],
+      "writes": ["new period block", "updated labels", "cleared input ranges", "opening fields"],
+      "formulas": ["preserved period formulas", "carry-forward formulas"],
+      "validations": ["copied validation rules"],
+      "protections": ["preserved protected formula ranges"],
+      "verification_assertions": ["period_created", "labels_updated", "inputs_cleared", "closing_equals_next_opening"]
+    },
+    {
+      "shape_id": "document_materialization_plan",
+      "applies_to_atoms": ["generate_printable_form"],
+      "reads": ["metadata fields", "line item table", "summary totals", "status fields"],
+      "writes": ["printable document region"],
+      "formulas": ["optional total formulas"],
+      "validations": [],
+      "protections": ["protected output formulas or totals"],
+      "verification_assertions": ["required_output_fields_populated", "output_totals_match_source", "output_reflects_latest_inputs"]
+    },
+    {
+      "shape_id": "reconciliation_plan",
+      "applies_to_atoms": ["reconcile_tables", "normalize_headers"],
+      "reads": ["left table", "right table", "header aliases", "key mapping", "match rules"],
+      "writes": ["matched bucket", "missing bucket", "mismatched bucket", "reconciliation summary"],
+      "formulas": ["optional exception summary formulas"],
+      "validations": ["duplicate or missing key warnings"],
+      "protections": ["optional protected reconciliation summary"],
+      "verification_assertions": ["headers_normalized", "matched_rows_correct", "missing_rows_correct", "mismatch_rows_correct"]
+    }
+  ]
+}

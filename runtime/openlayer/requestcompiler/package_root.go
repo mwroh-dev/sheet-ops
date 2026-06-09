@@ -17,7 +17,10 @@ func resolvePackageRoot(workingDir, callerFile string) string {
 	if callerFile == "" {
 		return "."
 	}
-	return filepath.Clean(filepath.Join(filepath.Dir(callerFile), "..", "..", ".."))
+	if workingDir != "" {
+		return filepath.Clean(workingDir)
+	}
+	return "."
 }
 
 func packageRootCandidates(workingDir, callerFile string) []string {

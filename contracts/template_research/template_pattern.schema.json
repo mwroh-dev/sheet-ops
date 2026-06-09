@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/template_research/template_pattern.schema.json",
+  "title": "TemplatePattern",
+  "type": "object",
+  "$defs": {
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "capability_ref_array": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "required": [
+    "pattern_id",
+    "title",
+    "domain",
+    "why",
+    "visual_patterns",
+    "data_patterns",
+    "validation_patterns",
+    "workflow_patterns",
+    "source_observations",
+    "existing_capabilities",
+    "missing_capability_candidates",
+    "recurrence_status"
+  ],
+  "properties": {
+    "pattern_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "domain": {
+      "enum": [
+        "finance",
+        "sales_admin",
+        "operations",
+        "hr",
+        "project",
+        "education",
+        "health",
+        "household"
+      ]
+    },
+    "why": {
+      "type": "string",
+      "minLength": 1
+    },
+    "visual_patterns": {
+      "$ref": "#/$defs/non_empty_string_array"
+    },
+    "data_patterns": {
+      "$ref": "#/$defs/non_empty_string_array"
+    },
+    "validation_patterns": {
+      "$ref": "#/$defs/non_empty_string_array"
+    },
+    "workflow_patterns": {
+      "$ref": "#/$defs/non_empty_string_array"
+    },
+    "source_observations": {
+      "$ref": "#/$defs/non_empty_string_array"
+    },
+    "existing_capabilities": {
+      "$ref": "#/$defs/capability_ref_array"
+    },
+    "missing_capability_candidates": {
+      "$ref": "#/$defs/non_empty_string_array"
+    },
+    "recurrence_status": {
+      "enum": [
+        "single_source_seed",
+        "recurring"
+      ]
+    },
+    "promotion_note": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

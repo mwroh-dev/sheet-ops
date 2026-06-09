@@ -1,0 +1,27 @@
+{
+  "name": "generate_printable_form",
+  "status": "supported",
+  "evidence_count": 3,
+  "source_categories": [
+    "Invoice Templates",
+    "Project Management",
+    "Document-style workbook outputs"
+  ],
+  "representative_why": "Users often need a workbook view that can be sent, printed, or reviewed by someone who is not editing the data table.",
+  "representative_how": [
+    "separate input data from presentation view",
+    "populate a fixed output region",
+    "set print-friendly layout metadata"
+  ],
+  "concrete_workflows": [
+    "generate invoice form",
+    "generate expense reimbursement review form",
+    "generate project schedule snapshot"
+  ],
+  "verification_strategy": "Supported scope verifies explicit field bindings, explicit table bindings, output sheet creation, print area defined name, source workbook preservation, and table values copied from declared source columns. Styling, PDF rendering, pagination quality, logos, merged-cell layout, and automatic layout inference remain outside supported scope.",
+  "related_patterns": [
+    "invoice",
+    "project_gantt"
+  ],
+  "notes": "Promoted into the supported public capability registry after Phase 11 runtime contract, executor, verifier, workbookcase, and open-layer structured request coverage."
+}

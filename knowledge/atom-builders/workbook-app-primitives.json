@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "authority": "advisory_schema",
+  "summary": "LLM-friendly workbook app primitives used to describe spreadsheets as app-like tables, forms, views, documents, grids, periods, and lookup masters.",
+  "primitives": [
+    {
+      "primitive_id": "entity_table",
+      "kind": "entity_table",
+      "llm_familiar_pattern": "CRUD table or database table",
+      "sheet_ops_mapping": "A rectangular sheet region with a header row, repeated entity rows, and optional formulas or validation.",
+      "planner_use": ["choose append and lookup atoms", "infer canonical headers", "separate entity rows from summaries"],
+      "verifier_use": ["row count changes", "headers remain stable", "summary reads include appended rows"]
+    },
+    {
+      "primitive_id": "input_form",
+      "kind": "input_form",
+      "llm_familiar_pattern": "Form schema with required fields and validation rules",
+      "sheet_ops_mapping": "A fixed metadata or parameter area used to drive document output, calculations, or filtering.",
+      "planner_use": ["identify required fields", "bind form values to outputs", "choose validation atoms"],
+      "verifier_use": ["required values exist", "invalid values are rejected or flagged", "outputs reflect form values"]
+    },
+    {
+      "primitive_id": "summary_view",
+      "kind": "summary_view",
+      "llm_familiar_pattern": "Dashboard card, report table, or aggregate query result",
+      "sheet_ops_mapping": "A derived area that summarizes source rows by key, metric, status, threshold, or period.",
+      "planner_use": ["choose group summarize or pivot atoms", "decide protected summary ranges", "record source dependencies"],
+      "verifier_use": ["summary matches source rows", "formulas calculate", "summary cells are protected when required"]
+    },
+    {
+      "primitive_id": "document_output",
+      "kind": "document_output",
+      "llm_familiar_pattern": "Printable document or reviewable generated output",
+      "sheet_ops_mapping": "A stable layout region populated from metadata, line items, totals, and status fields.",
+      "planner_use": ["choose printable form atoms", "map input fields to output fields", "record total dependencies"],
+      "verifier_use": ["required fields are populated", "output totals match source", "output refreshes after input changes"]
+    },
+    {
+      "primitive_id": "matrix_grid",
+      "kind": "matrix_grid",
+      "llm_familiar_pattern": "Two-dimensional grid such as schedule, gradebook, roster, or permissions matrix",
+      "sheet_ops_mapping": "A region where both rows and columns carry domain meaning and may grow over time.",
+      "planner_use": ["choose formula extension atoms", "track row and column growth", "bind grid totals"],
+      "verifier_use": ["new rows and columns are included", "formula cascade remains intact", "matrix summaries match cells"]
+    },
+    {
+      "primitive_id": "period_sheet",
+      "kind": "period_sheet",
+      "llm_familiar_pattern": "Recurring period workspace or rollover workflow",
+      "sheet_ops_mapping": "A sheet or block repeated by month, week, class period, payroll period, or fiscal period.",
+      "planner_use": ["choose period copy atoms", "update labels and dates", "separate cleared inputs from preserved formulas"],
+      "verifier_use": ["new period exists", "period labels are updated", "closing values roll forward when required"]
+    },
+    {
+      "primitive_id": "lookup_master",
+      "kind": "lookup_master",
+      "llm_familiar_pattern": "Reference table, foreign key table, or master data source",
+      "sheet_ops_mapping": "A table that enriches source rows by key with customer, SKU, employee, supplier, rate, or category data.",
+      "planner_use": ["choose lookup atoms", "normalize keys", "detect missing and duplicate keys"],
+      "verifier_use": ["lookup values match master rows", "missing keys are flagged", "downstream calculations use enriched values"]
+    }
+  ]
+}

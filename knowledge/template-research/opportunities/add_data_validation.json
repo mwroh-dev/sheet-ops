@@ -1,0 +1,25 @@
+{
+  "name": "add_data_validation",
+  "status": "supported",
+  "evidence_count": 2,
+  "source_categories": [
+    "Invoice Templates",
+    "Project Management"
+  ],
+  "representative_why": "Users need controlled inputs so repeated workbook updates do not introduce invalid statuses, categories, or rates.",
+  "representative_how": [
+    "define allowed values",
+    "attach dropdown or numeric constraints",
+    "reject invalid updates during planning",
+    "supported runtime scope is currently limited to explicit list/dropdown rules"
+  ],
+  "concrete_workflows": [
+    "restrict invoice tax rate choices",
+    "restrict project status values"
+  ],
+  "verification_strategy": "Inspect workbook data validation rules and confirm the allowed list values match the compiled rule while preserving the source workbook. Numeric bounds, date windows, formula-backed lists, and referential integrity remain future opportunity scope.",
+  "related_patterns": [
+    "invoice",
+    "project_gantt"
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "name": "normalize_headers",
+  "task_operations": [
+    "normalize_headers"
+  ],
+  "inputs": [
+    "input_workbook",
+    "source_sheet",
+    "header_row",
+    "header_mappings"
+  ],
+  "outputs": [
+    "output_workbook",
+    "source_sheet",
+    "normalized_header_cells"
+  ],
+  "required_facts": [
+    "source_sheet_exists",
+    "header_row_exists",
+    "mapping_source_headers_present"
+  ],
+  "verifies": [
+    "source_preserved",
+    "mapped_headers_match",
+    "non_header_rows_unchanged",
+    "non_header_formulas_unchanged"
+  ],
+  "contract_paths": [
+    "contracts/task/task_spec.schema.json",
+    "contracts/ir/workbook_operation_ir.schema.json",
+    "contracts/verification/verification_result.schema.json"
+  ],
+  "runtime_paths": [
+    "runtime/compiler/workbook_compiler.go",
+    "runtime/execute/normalize_headers.go",
+    "runtime/verify/normalize_headers.go"
+  ],
+  "examples": [
+    "examples/normalize_headers/request.json"
+  ],
+  "status": "supported",
+  "exposure": "public_agent_capability"
+}

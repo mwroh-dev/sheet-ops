@@ -3,44 +3,88 @@
   "$id": "https://sheet-ops.local/agents/request-compiler/contract/normalized_intent.schema.json",
   "title": "NormalizedIntent",
   "type": "object",
-  "required": ["materialization", "ambiguity"],
+  "required": [
+    "materialization",
+    "ambiguity"
+  ],
   "properties": {
     "source_sheet_candidates": {
       "type": "array",
-      "items": { "type": "string", "minLength": 1 }
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     },
     "lookup_sheet_candidates": {
       "type": "array",
-      "items": { "type": "string", "minLength": 1 }
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     },
     "group_keys": {
       "type": "array",
-      "items": { "type": "string", "minLength": 1 }
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     },
     "aggregates": {
       "type": "array",
-      "items": { "$ref": "#/$defs/aggregate" }
+      "items": {
+        "$ref": "#/$defs/aggregate"
+      }
     },
     "composition_candidates": {
       "type": "array",
-      "items": { "enum": ["group_summary", "threshold_highlight", "join_lookup"] }
+      "items": {
+        "enum": [
+          "group_summary",
+          "threshold_highlight",
+          "join_lookup",
+          "structured_row_append",
+          "formula_extension",
+          "period_copy",
+          "data_validation",
+          "formula_protection",
+          "header_normalization",
+          "period_roll_forward",
+          "table_reconciliation",
+          "printable_form"
+        ]
+      }
     },
     "summary": {
       "type": "object",
       "properties": {
-        "target_sheet": { "type": "string", "minLength": 1 },
-        "summary_mode": { "enum": ["values", "formulas"] },
+        "target_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary_mode": {
+          "enum": [
+            "values",
+            "formulas"
+          ]
+        },
         "filters": {
           "type": "array",
-          "items": { "$ref": "#/$defs/filter" }
+          "items": {
+            "$ref": "#/$defs/filter"
+          }
         },
         "group_by": {
           "type": "array",
-          "items": { "type": "string", "minLength": 1 }
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         },
         "metrics": {
           "type": "array",
-          "items": { "$ref": "#/$defs/aggregate" }
+          "items": {
+            "$ref": "#/$defs/aggregate"
+          }
         }
       },
       "additionalProperties": false
@@ -48,54 +92,310 @@
     "highlight": {
       "type": "object",
       "properties": {
-        "target_column": { "type": "string", "minLength": 1 },
-        "operator": { "enum": [">", ">=", "<", "<=", "=", "=="] },
-        "threshold": { "type": "number" },
-        "highlight_color": { "type": "string", "minLength": 1 }
+        "target_column": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operator": {
+          "enum": [
+            ">",
+            ">=",
+            "<",
+            "<=",
+            "=",
+            "=="
+          ]
+        },
+        "threshold": {
+          "type": "number"
+        },
+        "highlight_color": {
+          "type": "string",
+          "minLength": 1
+        }
       },
       "additionalProperties": false
     },
     "join_lookup": {
       "type": "object",
       "properties": {
-        "target_sheet": { "type": "string", "minLength": 1 },
-        "join_key": { "type": "string", "minLength": 1 },
+        "target_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "join_key": {
+          "type": "string",
+          "minLength": 1
+        },
         "include_source_columns": {
           "type": "array",
-          "items": { "type": "string", "minLength": 1 }
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         },
         "append_lookup_columns": {
           "type": "array",
-          "items": { "type": "string", "minLength": 1 }
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "append_rows": {
+      "type": "object",
+      "properties": {
+        "include_source_columns": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/cell_value"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "extend_formulas": {
+      "type": "object",
+      "properties": {
+        "formula_source_row": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "target_rows": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "formula_columns": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "period_copy": {
+      "type": "object",
+      "properties": {
+        "target_sheet": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "add_data_validation": {
+      "type": "object",
+      "properties": {
+        "validation_rule": {
+          "type": "object",
+          "properties": {
+            "ranges": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "rule_type": {
+              "const": "list"
+            },
+            "allowed_values": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "allow_blank": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "protect_formula_cells": {
+      "type": "object",
+      "properties": {
+        "protection_rule": {
+          "type": "object",
+          "properties": {
+            "formula_ranges": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "input_ranges": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "password": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "normalize_headers": {
+      "type": "object",
+      "properties": {
+        "header_row": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "header_mappings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/header_mapping"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "roll_forward_period": {
+      "type": "object",
+      "properties": {
+        "target_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "carry_forward_mappings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/carry_forward_mapping"
+          }
         }
       },
       "additionalProperties": false
     },
     "materialization": {
       "type": "object",
-      "required": ["preserve_original", "output_destination_mode", "write_shape"],
+      "required": [
+        "preserve_original",
+        "output_destination_mode",
+        "write_shape"
+      ],
       "properties": {
-        "preserve_original": { "type": "boolean" },
-        "output_destination_mode": { "enum": ["new_workbook", "same_workbook"] },
-        "write_shape": { "enum": ["new_sheet", "in_place_cells"] }
+        "preserve_original": {
+          "type": "boolean"
+        },
+        "output_destination_mode": {
+          "enum": [
+            "new_workbook",
+            "same_workbook"
+          ]
+        },
+        "write_shape": {
+          "enum": [
+            "new_sheet",
+            "in_place_cells"
+          ]
+        }
       },
       "additionalProperties": false
     },
     "ambiguity": {
       "type": "object",
-      "required": ["markers", "unresolved_fields", "checkpoint_hints"],
+      "required": [
+        "markers",
+        "unresolved_fields",
+        "checkpoint_hints"
+      ],
       "properties": {
         "markers": {
           "type": "array",
-          "items": { "type": "string", "minLength": 1 }
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         },
         "unresolved_fields": {
           "type": "array",
-          "items": { "type": "string", "minLength": 1 }
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         },
         "checkpoint_hints": {
           "type": "array",
-          "items": { "type": "string", "minLength": 1 }
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "reconcile_tables": {
+      "type": "object",
+      "properties": {
+        "target_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "left_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "right_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "compare_mappings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/compare_mapping"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "generate_printable_form": {
+      "type": "object",
+      "properties": {
+        "target_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "form_title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "print_area": {
+          "type": "string",
+          "minLength": 1
+        },
+        "field_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/form_field_binding"
+          }
+        },
+        "table_binding": {
+          "$ref": "#/$defs/form_table_binding"
         }
       },
       "additionalProperties": false
@@ -104,20 +404,208 @@
   "$defs": {
     "aggregate": {
       "type": "object",
-      "required": ["kind", "column"],
+      "required": [
+        "kind",
+        "column"
+      ],
       "properties": {
-        "kind": { "enum": ["sum", "count"] },
-        "column": { "type": "string", "minLength": 1 }
+        "kind": {
+          "enum": [
+            "sum",
+            "count"
+          ]
+        },
+        "column": {
+          "type": "string",
+          "minLength": 1
+        }
       },
       "additionalProperties": false
     },
     "filter": {
       "type": "object",
-      "required": ["column", "op", "value"],
+      "required": [
+        "column",
+        "op",
+        "value"
+      ],
       "properties": {
-        "column": { "type": "string", "minLength": 1 },
-        "op": { "type": "string", "minLength": 1 },
-        "value": { "type": "string", "minLength": 1 }
+        "column": {
+          "type": "string",
+          "minLength": 1
+        },
+        "op": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "cell_value": {
+      "type": "object",
+      "required": [
+        "cell",
+        "value"
+      ],
+      "properties": {
+        "cell": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "header_mapping": {
+      "type": "object",
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "type": "string",
+          "minLength": 1
+        },
+        "to": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "carry_forward_mapping": {
+      "type": "object",
+      "required": [
+        "from_cell",
+        "to_cell"
+      ],
+      "properties": {
+        "from_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "from_cell": {
+          "type": "string",
+          "minLength": 1
+        },
+        "to_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "to_cell": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "compare_mapping": {
+      "type": "object",
+      "required": [
+        "left_column",
+        "right_column"
+      ],
+      "properties": {
+        "left_column": {
+          "type": "string",
+          "minLength": 1
+        },
+        "right_column": {
+          "type": "string",
+          "minLength": 1
+        },
+        "as": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "form_field_binding": {
+      "type": "object",
+      "required": [
+        "label",
+        "source_cell",
+        "label_cell",
+        "value_cell"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_cell": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label_cell": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value_cell": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "form_table_binding": {
+      "type": "object",
+      "required": [
+        "source_sheet",
+        "source_columns",
+        "header_start",
+        "data_start"
+      ],
+      "properties": {
+        "source_sheet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_columns": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "header_start": {
+          "type": "string",
+          "minLength": 1
+        },
+        "data_start": {
+          "type": "string",
+          "minLength": 1
+        }
       },
       "additionalProperties": false
     }

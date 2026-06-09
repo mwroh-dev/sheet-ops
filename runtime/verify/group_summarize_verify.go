@@ -54,6 +54,60 @@ func VerifyWorkbookOperation(ir compiler.WorkbookOperationIR, inputWorkbook, out
 			return VerificationResult{}, err
 		}
 		return WithDefaultLayers(ir, result), nil
+	case "append_structured_rows":
+		result, err := VerifyAppendStructuredRows(ir, inputWorkbook, outputWorkbook, sourceSHA256Before, sourceSHA256After)
+		if err != nil {
+			return VerificationResult{}, err
+		}
+		return WithDefaultLayers(ir, result), nil
+	case "extend_table_formulas":
+		result, err := VerifyExtendTableFormulas(ir, inputWorkbook, outputWorkbook, sourceSHA256Before, sourceSHA256After)
+		if err != nil {
+			return VerificationResult{}, err
+		}
+		return WithDefaultLayers(ir, result), nil
+	case "add_data_validation":
+		result, err := VerifyAddDataValidation(ir, inputWorkbook, outputWorkbook, sourceSHA256Before, sourceSHA256After)
+		if err != nil {
+			return VerificationResult{}, err
+		}
+		return WithDefaultLayers(ir, result), nil
+	case "protect_formula_cells":
+		result, err := VerifyProtectFormulaCells(ir, inputWorkbook, outputWorkbook, sourceSHA256Before, sourceSHA256After)
+		if err != nil {
+			return VerificationResult{}, err
+		}
+		return WithDefaultLayers(ir, result), nil
+	case "copy_period_sheet":
+		result, err := VerifyCopyPeriodSheet(ir, inputWorkbook, outputWorkbook, sourceSHA256Before, sourceSHA256After)
+		if err != nil {
+			return VerificationResult{}, err
+		}
+		return WithDefaultLayers(ir, result), nil
+	case "normalize_headers":
+		result, err := VerifyNormalizeHeaders(ir, inputWorkbook, outputWorkbook, sourceSHA256Before, sourceSHA256After)
+		if err != nil {
+			return VerificationResult{}, err
+		}
+		return WithDefaultLayers(ir, result), nil
+	case "roll_forward_period":
+		result, err := VerifyRollForwardPeriod(ir, inputWorkbook, outputWorkbook, sourceSHA256Before, sourceSHA256After)
+		if err != nil {
+			return VerificationResult{}, err
+		}
+		return WithDefaultLayers(ir, result), nil
+	case "reconcile_tables":
+		result, err := VerifyReconcileTables(ir, inputWorkbook, outputWorkbook, sourceSHA256Before, sourceSHA256After)
+		if err != nil {
+			return VerificationResult{}, err
+		}
+		return WithDefaultLayers(ir, result), nil
+	case "generate_printable_form":
+		result, err := VerifyGeneratePrintableForm(ir, inputWorkbook, outputWorkbook, sourceSHA256Before, sourceSHA256After)
+		if err != nil {
+			return VerificationResult{}, err
+		}
+		return WithDefaultLayers(ir, result), nil
 	case "write_values":
 		result, err := VerifyWriteValues(ir, inputWorkbook, outputWorkbook, sourceSHA256Before, sourceSHA256After)
 		if err != nil {

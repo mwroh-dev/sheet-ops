@@ -29,6 +29,24 @@ func AdmitIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIn
 		return admitHighlightIntent(intent, decision)
 	case "create_join_lookup_result_sheet":
 		return admitJoinLookupIntent(intent, decision)
+	case "append_structured_rows":
+		return admitAppendRowsIntent(intent, decision)
+	case "extend_table_formulas":
+		return admitExtendFormulasIntent(intent, decision)
+	case "add_data_validation":
+		return admitAddDataValidationIntent(intent, decision)
+	case "protect_formula_cells":
+		return admitProtectFormulaCellsIntent(intent, decision)
+	case "normalize_headers":
+		return admitNormalizeHeadersIntent(intent, decision)
+	case "roll_forward_period":
+		return admitRollForwardPeriodIntent(intent, decision)
+	case "reconcile_tables":
+		return admitReconcileTablesIntent(intent, decision)
+	case "generate_printable_form":
+		return admitGeneratePrintableFormIntent(intent, decision)
+	case "copy_period_sheet":
+		return admitPeriodCopyIntent(intent, decision)
 	default:
 		result, err := finalizeResult(Result{
 			Status: StatusBlocked,
@@ -39,6 +57,126 @@ func AdmitIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIn
 		})
 		return admittedIntent{}, &result, err
 	}
+}
+
+func admitGeneratePrintableFormIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIntent, *Result, error) {
+	if !intent.Materialization.PreserveOriginal ||
+		intent.Materialization.OutputDestinationMode != "new_workbook" ||
+		intent.Materialization.WriteShape != "new_sheet" {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"invalid_materialization"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	if strings.TrimSpace(intent.GeneratePrintableForm.TargetSheet) == "" ||
+		strings.TrimSpace(intent.GeneratePrintableForm.FormTitle) == "" ||
+		strings.TrimSpace(intent.GeneratePrintableForm.PrintArea) == "" ||
+		len(intent.GeneratePrintableForm.FieldBindings) == 0 ||
+		intent.GeneratePrintableForm.TableBinding == nil {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"incomplete_printable_form_intent"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	return admittedIntent{
+		decision:        decision,
+		compositionKind: "printable_form",
+		sourceSheets:    preferredSourceSheets(intent, decision),
+		targetSheet:     intent.GeneratePrintableForm.TargetSheet,
+		formTitle:       intent.GeneratePrintableForm.FormTitle,
+		printArea:       intent.GeneratePrintableForm.PrintArea,
+		fieldBindings:   cloneFormFieldBindings(intent.GeneratePrintableForm.FieldBindings),
+		tableBinding:    cloneFormTableBinding(intent.GeneratePrintableForm.TableBinding),
+	}, nil, nil
+}
+
+func admitReconcileTablesIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIntent, *Result, error) {
+	if !intent.Materialization.PreserveOriginal ||
+		intent.Materialization.OutputDestinationMode != "new_workbook" ||
+		intent.Materialization.WriteShape != "new_sheet" {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"invalid_materialization"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	if strings.TrimSpace(intent.ReconcileTables.LeftKey) == "" ||
+		strings.TrimSpace(intent.ReconcileTables.RightKey) == "" ||
+		len(intent.ReconcileTables.CompareMappings) == 0 {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"incomplete_reconciliation_intent"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	return admittedIntent{
+		decision:        decision,
+		compositionKind: "table_reconciliation",
+		sourceSheets:    preferredSourceSheets(intent, decision),
+		lookupSheets:    append([]string(nil), intent.LookupSheetCandidates...),
+		targetSheet:     coalesceString(intent.ReconcileTables.TargetSheet, "Reconciliation"),
+		leftKey:         intent.ReconcileTables.LeftKey,
+		rightKey:        intent.ReconcileTables.RightKey,
+		compareMappings: cloneCompareMappings(intent.ReconcileTables.CompareMappings),
+	}, nil, nil
+}
+
+func admitRollForwardPeriodIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIntent, *Result, error) {
+	if !intent.Materialization.PreserveOriginal ||
+		intent.Materialization.OutputDestinationMode != "new_workbook" ||
+		intent.Materialization.WriteShape != "in_place_cells" {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"invalid_materialization"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	if intent.RollForwardPeriod.TargetSheet == "" || len(intent.RollForwardPeriod.CarryForwardMappings) == 0 {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"incomplete_roll_forward_period_intent"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	return admittedIntent{
+		decision:             decision,
+		compositionKind:      "period_roll_forward",
+		sourceSheets:         preferredSourceSheets(intent, decision),
+		targetSheet:          intent.RollForwardPeriod.TargetSheet,
+		carryForwardMappings: cloneCarryForwardMappings(intent.RollForwardPeriod.CarryForwardMappings),
+	}, nil, nil
+}
+
+func admitNormalizeHeadersIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIntent, *Result, error) {
+	if !intent.Materialization.PreserveOriginal ||
+		intent.Materialization.OutputDestinationMode != "new_workbook" ||
+		intent.Materialization.WriteShape != "in_place_cells" {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"invalid_materialization"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	headerRow := intent.NormalizeHeaders.HeaderRow
+	if headerRow == 0 {
+		headerRow = 1
+	}
+	if len(intent.NormalizeHeaders.HeaderMappings) == 0 {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"incomplete_header_normalization_intent"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	return admittedIntent{
+		decision:        decision,
+		compositionKind: "header_normalization",
+		sourceSheets:    preferredSourceSheets(intent, decision),
+		headerRow:       headerRow,
+		headerMappings:  cloneHeaderMappings(intent.NormalizeHeaders.HeaderMappings),
+	}, nil, nil
 }
 
 func admitSummaryIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIntent, *Result, error) {
@@ -164,6 +302,152 @@ func admitJoinLookupIntent(intent NormalizedIntent, decision CompilerDecision) (
 		joinKey:              intent.JoinLookup.JoinKey,
 		includeSourceColumns: append([]string(nil), intent.JoinLookup.IncludeSourceColumns...),
 		appendLookupColumns:  append([]string(nil), intent.JoinLookup.AppendLookupColumns...),
+	}, nil, nil
+}
+
+func admitAppendRowsIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIntent, *Result, error) {
+	if !intent.Materialization.PreserveOriginal ||
+		intent.Materialization.OutputDestinationMode != "new_workbook" ||
+		intent.Materialization.WriteShape != "in_place_cells" {
+		result, err := finalizeResult(Result{
+			Status: StatusBlocked,
+			Blocked: &Blocked{
+				FailedStage: StageIntentAdmission,
+				ReasonCodes: []string{"invalid_materialization"},
+			},
+		})
+		return admittedIntent{}, &result, err
+	}
+
+	if len(intent.AppendRows.IncludeSourceColumns) == 0 || len(intent.AppendRows.Values) == 0 {
+		result, err := finalizeResult(Result{
+			Status: StatusBlocked,
+			Blocked: &Blocked{
+				FailedStage: StageIntentAdmission,
+				ReasonCodes: []string{"incomplete_append_rows_intent"},
+			},
+		})
+		return admittedIntent{}, &result, err
+	}
+
+	return admittedIntent{
+		decision:             decision,
+		compositionKind:      "structured_row_append",
+		sourceSheets:         preferredSourceSheets(intent, decision),
+		includeSourceColumns: append([]string(nil), intent.AppendRows.IncludeSourceColumns...),
+		values:               cloneCellValues(intent.AppendRows.Values),
+	}, nil, nil
+}
+
+func admitPeriodCopyIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIntent, *Result, error) {
+	if !intent.Materialization.PreserveOriginal ||
+		intent.Materialization.OutputDestinationMode != "new_workbook" ||
+		intent.Materialization.WriteShape != "in_place_cells" {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"invalid_materialization"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	if intent.PeriodCopy.TargetSheet == "" {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"incomplete_period_copy_intent"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	return admittedIntent{
+		decision:        decision,
+		compositionKind: "period_copy",
+		sourceSheets:    preferredSourceSheets(intent, decision),
+		targetSheet:     intent.PeriodCopy.TargetSheet,
+	}, nil, nil
+}
+
+func admitProtectFormulaCellsIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIntent, *Result, error) {
+	if !intent.Materialization.PreserveOriginal ||
+		intent.Materialization.OutputDestinationMode != "new_workbook" ||
+		intent.Materialization.WriteShape != "in_place_cells" {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"invalid_materialization"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	if len(intent.ProtectFormulaCells.ProtectionRule.FormulaRanges) == 0 {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"incomplete_formula_protection_intent"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	return admittedIntent{
+		decision:        decision,
+		compositionKind: "formula_protection",
+		sourceSheets:    preferredSourceSheets(intent, decision),
+		protectionRule:  cloneFormulaProtectionRule(intent.ProtectFormulaCells.ProtectionRule),
+	}, nil, nil
+}
+
+func admitAddDataValidationIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIntent, *Result, error) {
+	if !intent.Materialization.PreserveOriginal ||
+		intent.Materialization.OutputDestinationMode != "new_workbook" ||
+		intent.Materialization.WriteShape != "in_place_cells" {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"invalid_materialization"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	if len(intent.AddDataValidation.ValidationRule.Ranges) == 0 ||
+		intent.AddDataValidation.ValidationRule.RuleType != "list" ||
+		len(intent.AddDataValidation.ValidationRule.AllowedValues) == 0 {
+		result, err := finalizeResult(Result{
+			Status:  StatusBlocked,
+			Blocked: &Blocked{FailedStage: StageIntentAdmission, ReasonCodes: []string{"incomplete_data_validation_intent"}},
+		})
+		return admittedIntent{}, &result, err
+	}
+	return admittedIntent{
+		decision:        decision,
+		compositionKind: "data_validation",
+		sourceSheets:    preferredSourceSheets(intent, decision),
+		validationRule:  cloneDataValidationRule(intent.AddDataValidation.ValidationRule),
+	}, nil, nil
+}
+
+func admitExtendFormulasIntent(intent NormalizedIntent, decision CompilerDecision) (admittedIntent, *Result, error) {
+	if !intent.Materialization.PreserveOriginal ||
+		intent.Materialization.OutputDestinationMode != "new_workbook" ||
+		intent.Materialization.WriteShape != "in_place_cells" {
+		result, err := finalizeResult(Result{
+			Status: StatusBlocked,
+			Blocked: &Blocked{
+				FailedStage: StageIntentAdmission,
+				ReasonCodes: []string{"invalid_materialization"},
+			},
+		})
+		return admittedIntent{}, &result, err
+	}
+
+	if intent.ExtendFormulas.FormulaSourceRow < 1 || len(intent.ExtendFormulas.TargetRows) == 0 || len(intent.ExtendFormulas.FormulaColumns) == 0 {
+		result, err := finalizeResult(Result{
+			Status: StatusBlocked,
+			Blocked: &Blocked{
+				FailedStage: StageIntentAdmission,
+				ReasonCodes: []string{"incomplete_formula_extension_intent"},
+			},
+		})
+		return admittedIntent{}, &result, err
+	}
+
+	return admittedIntent{
+		decision:         decision,
+		compositionKind:  "formula_extension",
+		sourceSheets:     preferredSourceSheets(intent, decision),
+		formulaSourceRow: intent.ExtendFormulas.FormulaSourceRow,
+		targetRows:       cloneInts(intent.ExtendFormulas.TargetRows),
+		formulaColumns:   append([]string(nil), intent.ExtendFormulas.FormulaColumns...),
 	}, nil, nil
 }
 

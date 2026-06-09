@@ -1,0 +1,43 @@
+{
+  "pattern_id": "checklist_task",
+  "title": "Checklist and task status tracking",
+  "domain": "project",
+  "why": "Capture simple work items, prioritize them, and keep completion or overdue state visible.",
+  "visual_patterns": [
+    "line_item_table",
+    "status_color",
+    "dashboard",
+    "input_area"
+  ],
+  "data_patterns": [
+    "entity_table",
+    "aggregate",
+    "category_mapping"
+  ],
+  "validation_patterns": [
+    "required_fields",
+    "dropdown_values",
+    "date_windows",
+    "known_status"
+  ],
+  "workflow_patterns": [
+    "todo_in_progress_done",
+    "overdue_review",
+    "schedule_update"
+  ],
+  "source_observations": [
+    "vertex42_checklist_seed",
+    "vertex42_project_gantt_seed"
+  ],
+  "existing_capabilities": [
+    "highlight_threshold",
+    "group_summarize"
+  ],
+  "missing_capability_candidates": [
+    "add_data_validation",
+    "append_structured_rows",
+    "roll_forward_period"
+  ],
+  "recurrence_status": "recurring",
+  "promotion_note": "Task tracking recurs across checklist and project templates."
+}

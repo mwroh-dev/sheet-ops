@@ -1,0 +1,44 @@
+{
+  "name": "roll_forward_period",
+  "task_operations": [
+    "roll_forward_period"
+  ],
+  "inputs": [
+    "input_workbook",
+    "source_sheet",
+    "target_sheet",
+    "carry_forward_mappings"
+  ],
+  "outputs": [
+    "output_workbook",
+    "target_sheet",
+    "opening_cells"
+  ],
+  "required_facts": [
+    "source_sheet_exists",
+    "target_sheet_exists",
+    "closing_cells_exist",
+    "opening_cells_exist"
+  ],
+  "verifies": [
+    "source_preserved",
+    "closing_values_carried_to_opening_cells",
+    "non_mapped_cells_unchanged",
+    "non_mapped_formulas_unchanged"
+  ],
+  "contract_paths": [
+    "contracts/task/task_spec.schema.json",
+    "contracts/ir/workbook_operation_ir.schema.json",
+    "contracts/verification/verification_result.schema.json"
+  ],
+  "runtime_paths": [
+    "runtime/compiler/workbook_compiler.go",
+    "runtime/execute/roll_forward_period.go",
+    "runtime/verify/roll_forward_period.go"
+  ],
+  "examples": [
+    "examples/roll_forward_period/request.json"
+  ],
+  "status": "supported",
+  "exposure": "public_agent_capability"
+}

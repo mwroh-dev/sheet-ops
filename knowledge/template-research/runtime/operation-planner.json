@@ -1,0 +1,154 @@
+{
+  "version": 1,
+  "authority": "advisory_planner_contract",
+  "summary": "Planner contracts for turning all round-009 runtime draft organism classes into supported atom sequences. These are planning hints, not autonomous runtime execution authority.",
+  "plans": [
+    {
+      "organism_id": "invoice_line_item_billing",
+      "classification_signals": ["invoice", "line item", "SKU", "quantity", "unit price", "printable document"],
+      "operation_sequence_atom_ids": ["append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells", "generate_printable_form"],
+      "required_verifier_spec_ids": ["invoice_line_item_billing_verifier"],
+      "fallback_policy": "If required invoice fields or formula ranges are ambiguous, stop at preview planning and request explicit bindings instead of inferring layout."
+    },
+    {
+      "organism_id": "expense_reimbursement",
+      "classification_signals": ["expense reimbursement", "expense claim", "receipt status", "reimbursable total", "printable claim"],
+      "operation_sequence_atom_ids": ["append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells", "generate_printable_form"],
+      "required_verifier_spec_ids": ["expense_reimbursement_verifier"],
+      "fallback_policy": "If expense policy, approval, or tax interpretation is requested, plan only deterministic row, formula, validation, protection, and printable claim mechanics with explicit non-claims."
+    },
+    {
+      "organism_id": "purchase_order_control",
+      "classification_signals": ["purchase order", "PO line", "PO status", "vendor order", "printable purchase order"],
+      "operation_sequence_atom_ids": ["append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells", "generate_printable_form"],
+      "required_verifier_spec_ids": ["purchase_order_control_verifier"],
+      "fallback_policy": "If approval policy, vendor terms, or contract language is ambiguous, plan only line append, formula extension, status validation, protection, and printable PO output."
+    },
+    {
+      "organism_id": "procurement_reconciliation",
+      "classification_signals": ["procurement reconciliation", "PO and invoice", "invoice amount", "status", "review formula"],
+      "operation_sequence_atom_ids": ["add_data_validation", "reconcile_tables", "protect_formula_cells"],
+      "required_verifier_spec_ids": ["procurement_reconciliation_verifier"],
+      "fallback_policy": "If reconciliation keys or compare mappings are ambiguous, require explicit key and mapping bindings before planning reconciliation."
+    },
+    {
+      "organism_id": "monthly_budget_control",
+      "classification_signals": ["monthly budget", "actual", "budget", "variance", "overrun", "period"],
+      "operation_sequence_atom_ids": ["group_summarize", "highlight_threshold", "copy_period_sheet", "roll_forward_period", "protect_formula_cells"],
+      "required_verifier_spec_ids": ["monthly_budget_control_verifier"],
+      "fallback_policy": "If period mapping or variance columns are ambiguous, run only deterministic summary and threshold atoms with narrow non-claims."
+    },
+    {
+      "organism_id": "cash_flow_monitor",
+      "classification_signals": ["cash flow", "opening balance", "closing balance", "cash category", "roll forward"],
+      "operation_sequence_atom_ids": ["group_summarize", "extend_table_formulas", "copy_period_sheet", "roll_forward_period", "protect_formula_cells"],
+      "required_verifier_spec_ids": ["cash_flow_monitor_verifier"],
+      "fallback_policy": "If balance mapping is ambiguous, require explicit opening and closing cells before planning roll-forward; do not infer financial policy."
+    },
+    {
+      "organism_id": "attendance_register",
+      "classification_signals": ["attendance register", "attendance status", "class period", "attendance total", "period copy"],
+      "operation_sequence_atom_ids": ["copy_period_sheet", "add_data_validation", "protect_formula_cells"],
+      "required_verifier_spec_ids": ["attendance_register_verifier"],
+      "fallback_policy": "If attendance matrices or calendar projection are requested, keep them outside supported scope and plan only period copy, status validation, and formula protection."
+    },
+    {
+      "organism_id": "timesheet_hours_log",
+      "classification_signals": ["timesheet", "employee hours", "work code", "billable hours", "weekly period"],
+      "operation_sequence_atom_ids": ["copy_period_sheet", "append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells"],
+      "required_verifier_spec_ids": ["timesheet_hours_log_verifier"],
+      "fallback_policy": "If payroll, overtime policy, or billable certification is requested, plan only sheet copy, hour row append, formula extension, validation, and protection with non-claims."
+    },
+    {
+      "organism_id": "project_timeline_tracker",
+      "classification_signals": ["project timeline", "task status", "progress formula", "timeline period", "gantt"],
+      "operation_sequence_atom_ids": ["copy_period_sheet", "extend_table_formulas", "add_data_validation", "group_summarize", "protect_formula_cells"],
+      "required_verifier_spec_ids": ["project_timeline_tracker_verifier"],
+      "fallback_policy": "If gantt rendering, arbitrary timeline projection, or dependency scheduling is requested, plan only table status/progress control and keep visual scheduling as a non-claim."
+    },
+    {
+      "organism_id": "shift_roster_planner",
+      "classification_signals": ["shift roster", "shift code", "weekly roster", "coverage formula", "staffing"],
+      "operation_sequence_atom_ids": ["copy_period_sheet", "add_data_validation", "protect_formula_cells"],
+      "required_verifier_spec_ids": ["shift_roster_planner_verifier"],
+      "fallback_policy": "If staffing optimization or arbitrary roster matrix growth is requested, stop at roster period copy, shift-code validation, and formula protection."
+    },
+    {
+      "organism_id": "construction_cost_tracker",
+      "classification_signals": ["construction cost", "cost code", "phase", "actual", "budget overrun", "variance"],
+      "operation_sequence_atom_ids": ["append_structured_rows", "extend_table_formulas", "highlight_threshold", "protect_formula_cells"],
+      "required_verifier_spec_ids": ["construction_cost_tracker_verifier"],
+      "fallback_policy": "If forecast accuracy or earned-value semantics are requested, plan only cost row append, variance formula extension, threshold highlight, and formula protection."
+    },
+    {
+      "organism_id": "inventory_movement_log",
+      "classification_signals": ["inventory movement", "SKU", "stock master", "balance", "reconciliation"],
+      "operation_sequence_atom_ids": ["normalize_headers", "append_structured_rows", "join_lookup", "protect_formula_cells", "reconcile_tables"],
+      "required_verifier_spec_ids": ["inventory_movement_log_verifier"],
+      "fallback_policy": "If reconciliation keys are ambiguous, require explicit key and compare mappings before planning reconciliation."
+    },
+    {
+      "organism_id": "warehouse_reorder_tracker",
+      "classification_signals": ["warehouse reorder", "low stock", "reorder point", "SKU location", "reorder candidate"],
+      "operation_sequence_atom_ids": ["join_lookup", "highlight_threshold", "append_structured_rows", "add_data_validation", "protect_formula_cells"],
+      "required_verifier_spec_ids": ["warehouse_reorder_tracker_verifier"],
+      "fallback_policy": "If reorder quantity policy or duplicate SKU resolution is requested, plan only lookup enrichment, threshold highlight, append, validation, and formula protection."
+    },
+    {
+      "organism_id": "student_gradebook",
+      "classification_signals": ["gradebook", "student", "assignment", "score", "status"],
+      "operation_sequence_atom_ids": ["group_summarize", "add_data_validation", "extend_table_formulas", "protect_formula_cells"],
+      "required_verifier_spec_ids": ["student_gradebook_verifier"],
+      "fallback_policy": "If matrix growth or grading policy is requested, keep it outside supported scope and plan deterministic summary plus validation only."
+    },
+    {
+      "organism_id": "training_completion_matrix",
+      "classification_signals": ["training completion", "training matrix", "employee", "course", "completion report"],
+      "operation_sequence_atom_ids": ["group_summarize", "add_data_validation", "protect_formula_cells", "generate_printable_form"],
+      "required_verifier_spec_ids": ["training_completion_matrix_verifier"],
+      "fallback_policy": "If arbitrary person/course matrix growth or compliance policy is requested, plan only deterministic summary, status validation, formula protection, and printable report output."
+    },
+    {
+      "organism_id": "service_ticket_queue",
+      "classification_signals": ["service ticket", "ticket status", "open tickets", "overdue tickets", "SLA formula"],
+      "operation_sequence_atom_ids": ["append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells"],
+      "required_verifier_spec_ids": ["service_ticket_queue_verifier"],
+      "fallback_policy": "If routing, assignment, SLA calendar policy, or escalation automation is requested, plan only queue row, formula, validation, threshold, summary, and protection mechanics."
+    },
+    {
+      "organism_id": "sales_pipeline_tracker",
+      "classification_signals": ["sales pipeline", "sales stage", "deal value", "weighted value", "large deal"],
+      "operation_sequence_atom_ids": ["append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells"],
+      "required_verifier_spec_ids": ["sales_pipeline_tracker_verifier"],
+      "fallback_policy": "If revenue forecasting, probability policy, close-date aging, or CRM automation is requested, plan only deterministic pipeline row, formula, validation, threshold, summary, and protection mechanics."
+    },
+    {
+      "organism_id": "maintenance_issue_log",
+      "classification_signals": ["maintenance issue", "issue status", "risk score", "action required", "maintenance summary"],
+      "operation_sequence_atom_ids": ["append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells"],
+      "required_verifier_spec_ids": ["maintenance_issue_log_verifier"],
+      "fallback_policy": "If dispatch, technician assignment, due-date calendars, or maintenance policy is requested, plan only issue row, formula, validation, threshold, summary, and protection mechanics."
+    },
+    {
+      "organism_id": "compliance_action_register",
+      "classification_signals": ["compliance action", "action status", "overdue actions", "review required", "printable action register"],
+      "operation_sequence_atom_ids": ["append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells", "generate_printable_form"],
+      "required_verifier_spec_ids": ["compliance_action_register_verifier"],
+      "fallback_policy": "If regulatory interpretation, approval policy, audit readiness, or evidence attachment handling is requested, plan only deterministic action register mechanics with non-claims."
+    },
+    {
+      "organism_id": "safety_compliance_register",
+      "classification_signals": ["safety compliance", "safety status", "risk score", "completed", "printable safety report"],
+      "operation_sequence_atom_ids": ["append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells", "generate_printable_form"],
+      "required_verifier_spec_ids": ["safety_compliance_register_verifier"],
+      "fallback_policy": "If safety certification, inspection replacement, or severity policy is requested, plan only safety register row, formula, validation, threshold, summary, protection, and printable report mechanics."
+    },
+    {
+      "organism_id": "loan_repayment_calculator",
+      "classification_signals": ["loan", "payment schedule", "interest", "principal", "balance"],
+      "operation_sequence_atom_ids": ["extend_table_formulas", "protect_formula_cells"],
+      "required_verifier_spec_ids": ["loan_repayment_calculator_verifier"],
+      "fallback_policy": "If amortization correctness or financial advice is requested, refuse that claim and plan only formula mechanics with explicit non-claims."
+    }
+  ]
+}

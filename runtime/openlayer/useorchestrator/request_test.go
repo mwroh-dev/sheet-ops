@@ -2,6 +2,68 @@ package useorchestrator
 
 import "testing"
 
+func TestLoadOrchestratorDecisionFromBytesPreservesTemplateClassPlan(t *testing.T) {
+	raw := []byte(`{
+  "scenario_id": "invoice-template-class",
+  "decision": "execute",
+  "request_compiler_loop_state": {
+    "role": "request-compiler",
+    "model": "codex-default",
+    "reasoning_effort": "high",
+    "agent_id": "agent-001",
+    "lifecycle": {
+      "spawned": true,
+      "completed": true,
+      "closed": true
+    },
+    "lifecycle_proof": {
+      "runtime_rerun": false,
+      "workbook_mutated": false,
+      "additional_workspace_files_read": false,
+      "evidence_source": "deterministic request compiler",
+      "insufficient_evidence": false
+    }
+  },
+  "validated_execution_request": {
+    "scenario_id": "invoice-template-class",
+    "execution_kind": "composition",
+    "composition_kind": "period_copy",
+    "request_kind": "prompt_text",
+    "request_text": "copy period sheet",
+    "input_file": "/tmp/in.xlsx",
+    "source_sheet": "Jan",
+    "target_sheet": "Feb",
+    "output_file": "/tmp/out.xlsx"
+  },
+  "template_class_plan": {
+    "organism_id": "invoice_line_item_billing",
+    "operation_sequence": [
+      "append_structured_rows",
+      "extend_table_formulas",
+      "add_data_validation",
+      "protect_formula_cells",
+      "generate_printable_form"
+    ],
+    "required_verifier_specs": ["invoice_line_item_billing_verifier"],
+    "non_claims": ["does not infer invoice layout"]
+  }
+}`)
+
+	decision, err := LoadOrchestratorDecisionFromBytes(raw)
+	if err != nil {
+		t.Fatalf("LoadOrchestratorDecisionFromBytes: %v", err)
+	}
+	if decision.TemplateClassPlan == nil {
+		t.Fatal("missing template class plan")
+	}
+	if decision.TemplateClassPlan.OrganismID != "invoice_line_item_billing" {
+		t.Fatalf("organism_id=%q want invoice_line_item_billing", decision.TemplateClassPlan.OrganismID)
+	}
+	if len(decision.TemplateClassPlan.OperationSequence) != 5 {
+		t.Fatalf("operation sequence=%v want 5 atoms", decision.TemplateClassPlan.OperationSequence)
+	}
+}
+
 func TestLoadResultVerifierOutcomeFromBytesSupportsVerificationReviewShape(t *testing.T) {
 	raw := []byte(`{
   "review": {

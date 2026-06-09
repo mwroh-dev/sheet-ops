@@ -5,6 +5,10 @@ This directory separates reusable learning material from raw telemetry and scena
 - `golden_cases/`: known-good scenarios and stable reference behavior.
 - `failure_cases/`: known failures and repair examples.
 - `recipes/`: reusable operation patterns.
+- `template-research/`: source observations, normalized template patterns, and
+  capability opportunities derived from spreadsheet template research.
+- `atom-builders/`: advisory workbook app primitives, atom-builder mirrors, and
+  plan-shape records that bridge template research toward runtime design.
 - `capability_registry/`: machine-readable or copied capability summaries for retrieval.
 - `verification/episodic/failures/`: append-only verification failure episodes.
 - `verification/semantic/`: promoted cross-run verification knowledge.

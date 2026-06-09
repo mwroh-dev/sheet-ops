@@ -1,150 +1,247 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "EpisodicRecord",
-  "type": "object",
-  "required": [
-    "agent_namespace",
-    "run_id",
-    "recorded_at",
-    "summary"
-  ],
-  "properties": {
-    "agent_namespace": {
-      "type": "string",
-      "minLength": 1
-    },
-    "run_id": {
-      "type": "string",
-      "minLength": 1
-    },
-    "recorded_at": {
-      "type": "string",
-      "minLength": 1
-    },
-    "summary": {
-      "type": "string",
-      "minLength": 1
-    },
-    "scenario_id": {
-      "type": "string",
-      "minLength": 1
-    },
-    "operation": {
-      "type": "string",
-      "minLength": 1
-    },
-    "outcome": {
-      "type": "string",
-      "minLength": 1
-    },
-    "phase": {
-      "type": "string",
-      "minLength": 1
-    },
-    "failure_class": {
-      "type": "string",
-      "minLength": 1
-    },
-    "domain_code": {
-      "type": "string",
-      "minLength": 1
-    },
-    "critical_step": {
-      "type": "string",
-      "minLength": 1
-    },
-    "repair_hint": {
-      "type": "string",
-      "minLength": 1
-    },
-    "source_paths": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "minLength": 1
-      }
-    }
-  },
-  "allOf": [
+  "oneOf": [
     {
-      "if": {
-        "properties": {
-          "agent_namespace": {
-            "const": "knowledge/orchestrator/episodic"
-          }
+      "$ref": "#/$defs/orchestrator_record"
+    },
+    {
+      "$ref": "#/$defs/verification_failure_record"
+    },
+    {
+      "$ref": "#/$defs/other_episodic_record"
+    }
+  ],
+  "$defs": {
+    "record_base": {
+      "type": "object",
+      "required": [
+        "agent_namespace",
+        "run_id",
+        "recorded_at",
+        "summary"
+      ],
+      "properties": {
+        "agent_namespace": {
+          "type": "string",
+          "minLength": 1
         },
-        "required": [
-          "agent_namespace"
-        ]
-      },
-      "then": {
-        "required": [
-          "scenario_id",
-          "operation",
-          "outcome"
-        ],
-        "not": {
-          "anyOf": [
-            {
-              "required": [
-                "phase"
-              ]
-            },
-            {
-              "required": [
-                "failure_class"
-              ]
-            },
-            {
-              "required": [
-                "domain_code"
-              ]
-            },
-            {
-              "required": [
-                "critical_step"
-              ]
-            },
-            {
-              "required": [
-                "repair_hint"
-              ]
-            }
-          ]
+        "run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recorded_at": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
         }
       }
     },
-    {
-      "if": {
-        "properties": {
-          "agent_namespace": {
-            "const": "knowledge/verification/episodic/failures"
-          }
+    "orchestrator_fields": {
+      "type": "object",
+      "required": [
+        "agent_namespace",
+        "scenario_id",
+        "operation",
+        "outcome"
+      ],
+      "properties": {
+        "agent_namespace": {
+          "const": "knowledge/orchestrator/episodic"
         },
-        "required": [
-          "agent_namespace"
-        ]
-      },
-      "then": {
-        "required": [
-          "scenario_id",
-          "operation",
-          "outcome",
-          "phase",
-          "failure_class",
-          "domain_code",
-          "critical_step"
-        ],
-        "properties": {
-          "outcome": {
-            "const": "fail"
-          },
-          "phase": {
-            "const": "verification"
+        "scenario_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "outcome": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_paths": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
           }
         }
       }
+    },
+    "orchestrator_record": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/record_base"
+        },
+        {
+          "$ref": "#/$defs/orchestrator_fields"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "verification_failure_fields": {
+      "type": "object",
+      "required": [
+        "agent_namespace",
+        "scenario_id",
+        "operation",
+        "outcome",
+        "phase",
+        "failure_class",
+        "domain_code",
+        "critical_step"
+      ],
+      "properties": {
+        "agent_namespace": {
+          "const": "knowledge/verification/episodic/failures"
+        },
+        "scenario_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "outcome": {
+          "const": "fail"
+        },
+        "phase": {
+          "const": "verification"
+        },
+        "failure_class": {
+          "type": "string",
+          "minLength": 1
+        },
+        "domain_code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "critical_step": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repair_hint": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_paths": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "verification_failure_record": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/record_base"
+        },
+        {
+          "$ref": "#/$defs/verification_failure_fields"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "other_episodic_record": {
+      "type": "object",
+      "required": [
+        "agent_namespace",
+        "run_id",
+        "recorded_at",
+        "summary"
+      ],
+      "properties": {
+        "agent_namespace": {
+          "type": "string",
+          "minLength": 1
+        },
+        "run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recorded_at": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scenario_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "outcome": {
+          "type": "string",
+          "minLength": 1
+        },
+        "phase": {
+          "type": "string",
+          "minLength": 1
+        },
+        "failure_class": {
+          "type": "string",
+          "minLength": 1
+        },
+        "domain_code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "critical_step": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repair_hint": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_paths": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "allOf": [
+        {
+          "not": {
+            "properties": {
+              "agent_namespace": {
+                "const": "knowledge/orchestrator/episodic"
+              }
+            },
+            "required": [
+              "agent_namespace"
+            ]
+          }
+        },
+        {
+          "not": {
+            "properties": {
+              "agent_namespace": {
+                "const": "knowledge/verification/episodic/failures"
+              }
+            },
+            "required": [
+              "agent_namespace"
+            ]
+          }
+        }
+      ],
+      "additionalProperties": false
     }
-  ],
-  "additionalProperties": false
+  }
 }

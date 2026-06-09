@@ -57,6 +57,111 @@ func BindFacts(admitted admittedIntent, facts runtimeinspect.WorkbookFacts) (bou
 			lookupSheet:          lookupSheet,
 			includeSourceColumns: includeSourceColumns,
 		}, nil, nil
+	case "table_reconciliation":
+		sourceSheet, ok := firstExistingSheet(facts, admitted.sourceSheets)
+		if !ok {
+			return blockedFactBinding("unsupported_source_sheet")
+		}
+		lookupSheet, ok := firstExistingLookupSheet(facts, admitted.lookupSheets, sourceSheet)
+		if !ok {
+			return blockedFactBinding("unsupported_lookup_sheet")
+		}
+		if missingColumns := missingWorkbookColumns(facts, sourceSheet, requiredReconciliationSourceColumns(admitted)); len(missingColumns) > 0 {
+			return blockedFactBinding("missing_required_columns")
+		}
+		if missingColumns := missingWorkbookColumns(facts, lookupSheet, requiredReconciliationLookupColumns(admitted)); len(missingColumns) > 0 {
+			return blockedFactBinding("missing_required_columns")
+		}
+		return boundIntent{
+			admittedIntent: admitted,
+			facts:          facts,
+			sourceSheet:    sourceSheet,
+			lookupSheet:    lookupSheet,
+		}, nil, nil
+	case "printable_form":
+		sourceSheet, ok := firstExistingSheet(facts, admitted.sourceSheets)
+		if !ok {
+			return blockedFactBinding("unsupported_source_sheet")
+		}
+		for _, binding := range admitted.fieldBindings {
+			fieldSheet := binding.SourceSheet
+			if fieldSheet == "" {
+				fieldSheet = sourceSheet
+			}
+			if _, ok := factsSheet(facts, fieldSheet); !ok {
+				return blockedFactBinding("unsupported_source_sheet")
+			}
+		}
+		if admitted.tableBinding == nil {
+			return blockedFactBinding("missing_required_columns")
+		}
+		if _, ok := factsSheet(facts, admitted.tableBinding.SourceSheet); !ok {
+			return blockedFactBinding("unsupported_source_sheet")
+		}
+		if missingColumns := missingWorkbookColumns(facts, admitted.tableBinding.SourceSheet, admitted.tableBinding.SourceColumns); len(missingColumns) > 0 {
+			return blockedFactBinding("missing_required_columns")
+		}
+		return boundIntent{admittedIntent: admitted, facts: facts, sourceSheet: sourceSheet}, nil, nil
+	case "structured_row_append":
+		sourceSheet, ok := firstExistingSheet(facts, admitted.sourceSheets)
+		if !ok {
+			return blockedFactBinding("unsupported_source_sheet")
+		}
+		if missingColumns := missingWorkbookColumns(facts, sourceSheet, admitted.includeSourceColumns); len(missingColumns) > 0 {
+			return blockedFactBinding("missing_required_columns")
+		}
+		return boundIntent{
+			admittedIntent:       admitted,
+			facts:                facts,
+			sourceSheet:          sourceSheet,
+			includeSourceColumns: append([]string(nil), admitted.includeSourceColumns...),
+		}, nil, nil
+	case "formula_extension":
+		sourceSheet, ok := firstExistingSheet(facts, admitted.sourceSheets)
+		if !ok {
+			return blockedFactBinding("unsupported_source_sheet")
+		}
+		return boundIntent{
+			admittedIntent: admitted,
+			facts:          facts,
+			sourceSheet:    sourceSheet,
+		}, nil, nil
+	case "period_copy":
+		sourceSheet, ok := firstExistingSheet(facts, admitted.sourceSheets)
+		if !ok {
+			return blockedFactBinding("unsupported_source_sheet")
+		}
+		return boundIntent{admittedIntent: admitted, facts: facts, sourceSheet: sourceSheet}, nil, nil
+	case "data_validation":
+		sourceSheet, ok := firstExistingSheet(facts, admitted.sourceSheets)
+		if !ok {
+			return blockedFactBinding("unsupported_source_sheet")
+		}
+		return boundIntent{admittedIntent: admitted, facts: facts, sourceSheet: sourceSheet}, nil, nil
+	case "formula_protection":
+		sourceSheet, ok := firstExistingSheet(facts, admitted.sourceSheets)
+		if !ok {
+			return blockedFactBinding("unsupported_source_sheet")
+		}
+		return boundIntent{admittedIntent: admitted, facts: facts, sourceSheet: sourceSheet}, nil, nil
+	case "header_normalization":
+		sourceSheet, ok := firstExistingSheet(facts, admitted.sourceSheets)
+		if !ok {
+			return blockedFactBinding("unsupported_source_sheet")
+		}
+		if missingColumns := missingWorkbookColumns(facts, sourceSheet, headerMappingSourceColumns(admitted)); len(missingColumns) > 0 {
+			return blockedFactBinding("missing_required_columns")
+		}
+		return boundIntent{admittedIntent: admitted, facts: facts, sourceSheet: sourceSheet}, nil, nil
+	case "period_roll_forward":
+		sourceSheet, ok := firstExistingSheet(facts, admitted.sourceSheets)
+		if !ok {
+			return blockedFactBinding("unsupported_source_sheet")
+		}
+		if _, ok := factsSheet(facts, admitted.targetSheet); !ok {
+			return blockedFactBinding("unsupported_target_sheet")
+		}
+		return boundIntent{admittedIntent: admitted, facts: facts, sourceSheet: sourceSheet}, nil, nil
 	default:
 		return blockedFactBinding("unsupported_request")
 	}
@@ -120,6 +225,30 @@ func requiredJoinSourceColumns(admitted admittedIntent) []string {
 func requiredJoinLookupColumns(admitted admittedIntent) []string {
 	columns := []string{admitted.joinKey}
 	columns = append(columns, admitted.appendLookupColumns...)
+	return columns
+}
+
+func requiredReconciliationSourceColumns(admitted admittedIntent) []string {
+	columns := []string{admitted.leftKey}
+	for _, mapping := range admitted.compareMappings {
+		columns = append(columns, mapping.LeftColumn)
+	}
+	return columns
+}
+
+func requiredReconciliationLookupColumns(admitted admittedIntent) []string {
+	columns := []string{admitted.rightKey}
+	for _, mapping := range admitted.compareMappings {
+		columns = append(columns, mapping.RightColumn)
+	}
+	return columns
+}
+
+func headerMappingSourceColumns(admitted admittedIntent) []string {
+	columns := make([]string, 0, len(admitted.headerMappings))
+	for _, mapping := range admitted.headerMappings {
+		columns = append(columns, mapping.From)
+	}
 	return columns
 }
 

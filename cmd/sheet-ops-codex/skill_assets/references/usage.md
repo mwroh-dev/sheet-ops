@@ -61,11 +61,12 @@ request into a typed `UseEnvelopeV2` before any execution boundary is entered.
 ```bash
 sheet-ops-codex prepare-use --scenario-id example-scenario --request-kind structured_use_request --request-ref /abs/path/request.json --input-file /abs/path/input.xlsx --output-file /abs/path/output.xlsx --envelope-file /abs/path/use-envelope.json
 sheet-ops-codex prepare-use --scenario-id prompt-scenario --request-kind prompt_text --request-ref /abs/path/prompt.md --input-file /abs/path/input.xlsx --output-file /abs/path/output.xlsx --envelope-file /abs/path/use-envelope.json
+sheet-ops-codex prepare-use --scenario-id organism-scenario --request-kind organism_execution_request --request-ref /abs/path/organism-request.json --input-file /abs/path/input.xlsx --output-file /abs/path/output.xlsx --envelope-file /abs/path/use-envelope.json
 ```
 
 The compatibility boundary remains `UseEnvelope -> internal dispatcher`.
-Runtime subroutes such as `use-open`, `use-structured`, and `run-validated`
-stay behind that skill-owned handoff.
+Runtime subroutes such as `use-open`, `use-structured`, explicit organism
+execution, and `run-validated` stay behind that skill-owned handoff.
 
 `prepare-use` writes the typed envelope that the compatibility boundary routes.
 It does not expose `write_values` as a public agent capability.

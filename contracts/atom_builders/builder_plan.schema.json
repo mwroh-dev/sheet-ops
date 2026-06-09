@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/atom_builders/builder_plan.schema.json",
+  "title": "AtomBuilderPlanShapes",
+  "type": "object",
+  "$defs": {
+    "string_array": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "plan_shape": {
+      "type": "object",
+      "required": [
+        "shape_id",
+        "applies_to_atoms",
+        "reads",
+        "writes",
+        "formulas",
+        "validations",
+        "protections",
+        "verification_assertions"
+      ],
+      "properties": {
+        "shape_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        },
+        "applies_to_atoms": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "reads": {
+          "$ref": "#/$defs/string_array"
+        },
+        "writes": {
+          "$ref": "#/$defs/string_array"
+        },
+        "formulas": {
+          "$ref": "#/$defs/string_array"
+        },
+        "validations": {
+          "$ref": "#/$defs/string_array"
+        },
+        "protections": {
+          "$ref": "#/$defs/string_array"
+        },
+        "verification_assertions": {
+          "$ref": "#/$defs/non_empty_string_array"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "version",
+    "authority",
+    "summary",
+    "plan_shapes"
+  ],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "authority": {
+      "const": "advisory_plan_shape"
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "plan_shapes": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "$ref": "#/$defs/plan_shape"
+      }
+    }
+  },
+  "additionalProperties": false
+}

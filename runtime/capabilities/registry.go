@@ -84,6 +84,7 @@ func LoadRegistry(repoRoot string) (Registry, error) {
 		if err := json.Unmarshal(raw, &capability); err != nil {
 			return Registry{}, fmt.Errorf("decode %s: %w", recordPath, err)
 		}
+		capability.OperationFamily = capability.Name
 		if _, ok := seen[capability.OperationFamily]; ok {
 			return Registry{}, fmt.Errorf("duplicate capability operation family %q", capability.OperationFamily)
 		}

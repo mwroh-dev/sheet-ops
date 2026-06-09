@@ -1,0 +1,41 @@
+{
+  "pattern_id": "health_log",
+  "title": "Measurement log and trend review",
+  "domain": "health",
+  "why": "Record repeated measurements and surface trends, outliers, or out-of-range values over time.",
+  "visual_patterns": [
+    "line_item_table",
+    "dashboard",
+    "status_color",
+    "chart_view"
+  ],
+  "data_patterns": [
+    "append_rows",
+    "aggregate",
+    "period_rollup",
+    "formula_propagation"
+  ],
+  "validation_patterns": [
+    "numeric_bounds",
+    "date_windows",
+    "required_fields"
+  ],
+  "workflow_patterns": [
+    "variance_review",
+    "period_close"
+  ],
+  "source_observations": [
+    "vertex42_health_log_seed"
+  ],
+  "existing_capabilities": [
+    "highlight_threshold",
+    "group_summarize"
+  ],
+  "missing_capability_candidates": [
+    "append_structured_rows",
+    "create_pivot_summary",
+    "add_data_validation"
+  ],
+  "recurrence_status": "single_source_seed",
+  "promotion_note": "Use as a pattern seed only; health data requires careful safety wording in user-facing flows."
+}

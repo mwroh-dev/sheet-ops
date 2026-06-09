@@ -67,6 +67,33 @@ func resolveRequestedOperation(req UseRequest) (string, string) {
 	if isSummaryRequest(req) {
 		return runtimeworkbookcase.SummaryOperationName, "summary_request_signals"
 	}
+	if isAppendRowsRequest(req) {
+		return runtimeworkbookcase.AppendRowsOperationName, "append_rows_request_signals"
+	}
+	if isFormulaExtensionRequest(req) {
+		return runtimeworkbookcase.ExtendFormulasOperationName, "formula_extension_request_signals"
+	}
+	if isPeriodCopyRequest(req) {
+		return runtimeworkbookcase.CopyPeriodSheetOperationName, "period_copy_request_signals"
+	}
+	if isPeriodRollForwardRequest(req) {
+		return runtimeworkbookcase.RollForwardPeriodOperationName, "period_roll_forward_request_signals"
+	}
+	if isReconcileTablesRequest(req) {
+		return runtimeworkbookcase.ReconcileTablesOperationName, "table_reconciliation_request_signals"
+	}
+	if isPrintableFormRequest(req) {
+		return runtimeworkbookcase.GeneratePrintableFormOperationName, "printable_form_request_signals"
+	}
+	if isDataValidationRequest(req) {
+		return runtimeworkbookcase.AddDataValidationOperationName, "data_validation_request_signals"
+	}
+	if isFormulaProtectionRequest(req) {
+		return runtimeworkbookcase.ProtectFormulaCellsOperationName, "formula_protection_request_signals"
+	}
+	if isHeaderNormalizationRequest(req) {
+		return runtimeworkbookcase.NormalizeHeadersOperationName, "header_normalization_request_signals"
+	}
 	if isJoinLookupRequest(req) {
 		return runtimeworkbookcase.JoinLookupOperationName, "join_lookup_request_signals"
 	}
@@ -74,6 +101,76 @@ func resolveRequestedOperation(req UseRequest) (string, string) {
 		return runtimeworkbookcase.HighlightOperationName, "highlight_request_signals"
 	}
 	return "", "unsupported_request_signals"
+}
+
+func isAppendRowsRequest(req UseRequest) bool {
+	return len(req.Values) > 0 ||
+		strings.Contains(req.RequestText, "행 추가") ||
+		strings.Contains(req.RequestText, "append")
+}
+
+func isFormulaExtensionRequest(req UseRequest) bool {
+	return req.FormulaSourceRow > 0 ||
+		len(req.TargetRows) > 0 ||
+		len(req.FormulaColumns) > 0 ||
+		strings.Contains(req.RequestText, "수식 확장") ||
+		strings.Contains(req.RequestText, "수식을 확장") ||
+		strings.Contains(req.RequestText, "formula extension") ||
+		strings.Contains(req.RequestText, "extend formulas")
+}
+
+func isPeriodCopyRequest(req UseRequest) bool {
+	return req.TargetSheet != "" && (strings.Contains(req.RequestText, "시트 복사") ||
+		strings.Contains(req.RequestText, "period copy") ||
+		strings.Contains(req.RequestText, "copy period") ||
+		strings.Contains(req.RequestText, "copy sheet"))
+}
+
+func isPeriodRollForwardRequest(req UseRequest) bool {
+	return len(req.CarryForwardMappings) > 0 ||
+		strings.Contains(req.RequestText, "이월") ||
+		strings.Contains(req.RequestText, "roll forward") ||
+		strings.Contains(req.RequestText, "carry forward")
+}
+
+func isDataValidationRequest(req UseRequest) bool {
+	return req.ValidationRule != nil ||
+		strings.Contains(req.RequestText, "데이터 검증") ||
+		strings.Contains(req.RequestText, "dropdown") ||
+		strings.Contains(req.RequestText, "data validation")
+}
+
+func isReconcileTablesRequest(req UseRequest) bool {
+	return len(req.CompareMappings) > 0 ||
+		req.LeftKey != "" ||
+		req.RightKey != "" ||
+		strings.Contains(req.RequestText, "대조") ||
+		strings.Contains(req.RequestText, "reconcile") ||
+		strings.Contains(req.RequestText, "reconciliation")
+}
+
+func isPrintableFormRequest(req UseRequest) bool {
+	return len(req.FieldBindings) > 0 ||
+		req.TableBinding != nil ||
+		req.FormTitle != "" ||
+		req.PrintArea != "" ||
+		strings.Contains(req.RequestText, "printable") ||
+		strings.Contains(req.RequestText, "출력 양식") ||
+		strings.Contains(req.RequestText, "인쇄")
+}
+
+func isFormulaProtectionRequest(req UseRequest) bool {
+	return req.ProtectionRule != nil ||
+		strings.Contains(req.RequestText, "수식 보호") ||
+		strings.Contains(req.RequestText, "formula protection") ||
+		strings.Contains(req.RequestText, "protect formula")
+}
+
+func isHeaderNormalizationRequest(req UseRequest) bool {
+	return len(req.HeaderMappings) > 0 ||
+		strings.Contains(req.RequestText, "헤더 정규화") ||
+		strings.Contains(req.RequestText, "header normalization") ||
+		strings.Contains(req.RequestText, "normalize headers")
 }
 
 func isSummaryRequest(req UseRequest) bool {
@@ -111,6 +208,24 @@ func buildRoutingNote(selectedOperation, routingAuthority string, knowledge runt
 			return fmt.Sprintf("%s Fallback routed by summary request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		case "join_lookup_request_signals":
 			return fmt.Sprintf("%s Fallback routed by join lookup request signals to %s.", knowledge.FallbackReason, selectedOperation)
+		case "append_rows_request_signals":
+			return fmt.Sprintf("%s Fallback routed by append row request signals to %s.", knowledge.FallbackReason, selectedOperation)
+		case "formula_extension_request_signals":
+			return fmt.Sprintf("%s Fallback routed by formula extension request signals to %s.", knowledge.FallbackReason, selectedOperation)
+		case "period_copy_request_signals":
+			return fmt.Sprintf("%s Fallback routed by period copy request signals to %s.", knowledge.FallbackReason, selectedOperation)
+		case "period_roll_forward_request_signals":
+			return fmt.Sprintf("%s Fallback routed by period roll-forward request signals to %s.", knowledge.FallbackReason, selectedOperation)
+		case "table_reconciliation_request_signals":
+			return fmt.Sprintf("%s Fallback routed by table reconciliation request signals to %s.", knowledge.FallbackReason, selectedOperation)
+		case "printable_form_request_signals":
+			return fmt.Sprintf("%s Fallback routed by printable form request signals to %s.", knowledge.FallbackReason, selectedOperation)
+		case "data_validation_request_signals":
+			return fmt.Sprintf("%s Fallback routed by data validation request signals to %s.", knowledge.FallbackReason, selectedOperation)
+		case "formula_protection_request_signals":
+			return fmt.Sprintf("%s Fallback routed by formula protection request signals to %s.", knowledge.FallbackReason, selectedOperation)
+		case "header_normalization_request_signals":
+			return fmt.Sprintf("%s Fallback routed by header normalization request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		case "highlight_request_signals":
 			return fmt.Sprintf("%s Fallback routed by highlight request signals to %s.", knowledge.FallbackReason, selectedOperation)
 		default:
@@ -134,6 +249,48 @@ func buildRoutingNote(selectedOperation, routingAuthority string, knowledge runt
 	case "join_lookup_request_signals":
 		return fmt.Sprintf(
 			"Loaded %d orchestrator knowledge records; join lookup request signals still selected %s. Knowledge remains advisory only.",
+			knowledge.RecordCount,
+			selectedOperation,
+		)
+	case "append_rows_request_signals":
+		return fmt.Sprintf(
+			"Loaded %d orchestrator knowledge records; append row request signals still selected %s. Knowledge remains advisory only.",
+			knowledge.RecordCount,
+			selectedOperation,
+		)
+	case "period_copy_request_signals":
+		return fmt.Sprintf(
+			"Loaded %d orchestrator knowledge records; period copy request signals still selected %s. Knowledge remains advisory only.",
+			knowledge.RecordCount,
+			selectedOperation,
+		)
+	case "formula_protection_request_signals":
+		return fmt.Sprintf(
+			"Loaded %d orchestrator knowledge records; formula protection request signals still selected %s. Knowledge remains advisory only.",
+			knowledge.RecordCount,
+			selectedOperation,
+		)
+	case "period_roll_forward_request_signals":
+		return fmt.Sprintf(
+			"Loaded %d orchestrator knowledge records; period roll-forward request signals still selected %s. Knowledge remains advisory only.",
+			knowledge.RecordCount,
+			selectedOperation,
+		)
+	case "table_reconciliation_request_signals":
+		return fmt.Sprintf(
+			"Loaded %d orchestrator knowledge records; table reconciliation request signals still selected %s. Knowledge remains advisory only.",
+			knowledge.RecordCount,
+			selectedOperation,
+		)
+	case "printable_form_request_signals":
+		return fmt.Sprintf(
+			"Loaded %d orchestrator knowledge records; printable form request signals still selected %s. Knowledge remains advisory only.",
+			knowledge.RecordCount,
+			selectedOperation,
+		)
+	case "header_normalization_request_signals":
+		return fmt.Sprintf(
+			"Loaded %d orchestrator knowledge records; header normalization request signals still selected %s. Knowledge remains advisory only.",
 			knowledge.RecordCount,
 			selectedOperation,
 		)

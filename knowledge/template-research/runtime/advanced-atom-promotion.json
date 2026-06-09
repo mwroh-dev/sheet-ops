@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "authority": "advisory_promotion_review",
+  "summary": "Promotion decisions for advanced atom candidates after the template class productization audit. None are promoted now because each needs dedicated runtime, verifier, and fixture evidence.",
+  "decisions": [
+    {
+      "atom_id": "create_pivot_summary",
+      "status": "keep_opportunity",
+      "reason": "Deterministic group summaries cover the first useful P2 depth layer, but native Excel pivot artifacts still lack runtime and verifier support.",
+      "required_evidence": ["native pivot artifact creation test", "verifier that confirms source range, dimensions, measures, refreshability, and source preservation"]
+    },
+    {
+      "atom_id": "matrix_growth",
+      "status": "split_before_promotion",
+      "reason": "Attendance, gradebook, and training matrices need different growth semantics, so one broad atom would overclaim.",
+      "required_evidence": ["narrow matrix fixture per domain", "verifier for added rows/columns, formula propagation, validation, and protected summary cells"]
+    },
+    {
+      "atom_id": "timeline_grid_projection",
+      "status": "split_before_promotion",
+      "reason": "Project timelines and shift rosters share grid projection language but require different conflict and coverage rules.",
+      "required_evidence": ["project timeline projection verifier", "shift roster coverage/conflict verifier"]
+    },
+    {
+      "atom_id": "calculation_schedule_verifier",
+      "status": "keep_opportunity",
+      "reason": "Loan schedule mechanics are previewed, but domain correctness needs recurrence, termination, and protected-input semantics in one verifier.",
+      "required_evidence": ["loan schedule recurrence fixture", "verifier for cumulative balance, payoff termination policy, formula drift, and editable input ranges"]
+    },
+    {
+      "atom_id": "printable_render_qa",
+      "status": "research_only",
+      "reason": "Printable form materialization is supported, but layout quality, pagination, and rendered visual QA need a separate render pipeline.",
+      "required_evidence": ["rendered workbook or PDF visual artifact", "verifier for print area, page breaks, non-empty render preview, and layout bounds"]
+    }
+  ]
+}

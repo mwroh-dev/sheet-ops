@@ -43,6 +43,24 @@ func RunWorkbookOperation(ir compiler.WorkbookOperationIR, inputWorkbook, output
 		return RunHighlightThreshold(ir, inputWorkbook, outputWorkbook)
 	case "join_lookup":
 		return RunJoinLookup(ir, inputWorkbook, outputWorkbook)
+	case "append_structured_rows":
+		return RunAppendStructuredRows(ir, inputWorkbook, outputWorkbook)
+	case "extend_table_formulas":
+		return RunExtendTableFormulas(ir, inputWorkbook, outputWorkbook)
+	case "add_data_validation":
+		return RunAddDataValidation(ir, inputWorkbook, outputWorkbook)
+	case "protect_formula_cells":
+		return RunProtectFormulaCells(ir, inputWorkbook, outputWorkbook)
+	case "copy_period_sheet":
+		return RunCopyPeriodSheet(ir, inputWorkbook, outputWorkbook)
+	case "normalize_headers":
+		return RunNormalizeHeaders(ir, inputWorkbook, outputWorkbook)
+	case "roll_forward_period":
+		return RunRollForwardPeriod(ir, inputWorkbook, outputWorkbook)
+	case "reconcile_tables":
+		return RunReconcileTables(ir, inputWorkbook, outputWorkbook)
+	case "generate_printable_form":
+		return RunGeneratePrintableForm(ir, inputWorkbook, outputWorkbook)
 	case "write_values":
 		return RunWriteValues(ir, inputWorkbook, outputWorkbook)
 	default:

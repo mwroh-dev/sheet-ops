@@ -1,0 +1,9 @@
+{
+  "scenario_id": "copy-period-sheet-example",
+  "request_text": "Copy the Jan period sheet to a new Feb sheet.",
+  "input_file": "budget.xlsx",
+  "sheet_name": "Jan",
+  "target_sheet": "Feb",
+  "output_file": "budget-with-feb.xlsx",
+  "operation": "copy_period_sheet"
+}

@@ -8,10 +8,19 @@ import (
 )
 
 const (
-	SummaryOperationName     = "create_summary_sheet"
-	HighlightOperationName   = "highlight_threshold_rows"
-	JoinLookupOperationName  = "create_join_lookup_result_sheet"
-	WriteValuesOperationName = "write_values"
+	SummaryOperationName               = "create_summary_sheet"
+	HighlightOperationName             = "highlight_threshold_rows"
+	JoinLookupOperationName            = "create_join_lookup_result_sheet"
+	AppendRowsOperationName            = "append_structured_rows"
+	ExtendFormulasOperationName        = "extend_table_formulas"
+	CopyPeriodSheetOperationName       = "copy_period_sheet"
+	AddDataValidationOperationName     = "add_data_validation"
+	ProtectFormulaCellsOperationName   = "protect_formula_cells"
+	NormalizeHeadersOperationName      = "normalize_headers"
+	RollForwardPeriodOperationName     = "roll_forward_period"
+	ReconcileTablesOperationName       = "reconcile_tables"
+	GeneratePrintableFormOperationName = "generate_printable_form"
+	WriteValuesOperationName           = "write_values"
 )
 
 type FilterSpec = runtimetaskspec.FilterSpec
@@ -109,6 +118,91 @@ type JoinLookupPlan struct {
 	AppendLookupColumns  []string `json:"append_lookup_columns"`
 	PreserveOriginal     bool     `json:"preserve_original"`
 	OutputFile           string   `json:"output_file"`
+}
+
+type AppendStructuredRowsPlan struct {
+	Operation            string                      `json:"operation"`
+	SheetName            string                      `json:"sheet_name"`
+	IncludeSourceColumns []string                    `json:"include_source_columns"`
+	Values               []runtimetaskspec.CellValue `json:"values"`
+	PreserveOriginal     bool                        `json:"preserve_original"`
+	OutputFile           string                      `json:"output_file"`
+}
+
+type ExtendTableFormulasPlan struct {
+	Operation        string   `json:"operation"`
+	SheetName        string   `json:"sheet_name"`
+	FormulaSourceRow int      `json:"formula_source_row"`
+	TargetRows       []int    `json:"target_rows"`
+	FormulaColumns   []string `json:"formula_columns"`
+	PreserveOriginal bool     `json:"preserve_original"`
+	OutputFile       string   `json:"output_file"`
+}
+
+type CopyPeriodSheetPlan struct {
+	Operation        string `json:"operation"`
+	SheetName        string `json:"sheet_name"`
+	TargetSheet      string `json:"target_sheet"`
+	PreserveOriginal bool   `json:"preserve_original"`
+	OutputFile       string `json:"output_file"`
+}
+
+type AddDataValidationPlan struct {
+	Operation        string                             `json:"operation"`
+	SheetName        string                             `json:"sheet_name"`
+	ValidationRule   runtimetaskspec.DataValidationRule `json:"validation_rule"`
+	PreserveOriginal bool                               `json:"preserve_original"`
+	OutputFile       string                             `json:"output_file"`
+}
+
+type ProtectFormulaCellsPlan struct {
+	Operation        string                                `json:"operation"`
+	SheetName        string                                `json:"sheet_name"`
+	ProtectionRule   runtimetaskspec.FormulaProtectionRule `json:"protection_rule"`
+	PreserveOriginal bool                                  `json:"preserve_original"`
+	OutputFile       string                                `json:"output_file"`
+}
+
+type NormalizeHeadersPlan struct {
+	Operation        string                          `json:"operation"`
+	SheetName        string                          `json:"sheet_name"`
+	HeaderRow        int                             `json:"header_row"`
+	HeaderMappings   []runtimetaskspec.HeaderMapping `json:"header_mappings"`
+	PreserveOriginal bool                            `json:"preserve_original"`
+	OutputFile       string                          `json:"output_file"`
+}
+
+type RollForwardPeriodPlan struct {
+	Operation            string                                `json:"operation"`
+	SheetName            string                                `json:"sheet_name"`
+	TargetSheet          string                                `json:"target_sheet"`
+	CarryForwardMappings []runtimetaskspec.CarryForwardMapping `json:"carry_forward_mappings"`
+	PreserveOriginal     bool                                  `json:"preserve_original"`
+	OutputFile           string                                `json:"output_file"`
+}
+
+type ReconcileTablesPlan struct {
+	Operation        string                           `json:"operation"`
+	SheetName        string                           `json:"sheet_name"`
+	LookupSheet      string                           `json:"lookup_sheet"`
+	TargetSheet      string                           `json:"target_sheet"`
+	LeftKey          string                           `json:"left_key"`
+	RightKey         string                           `json:"right_key"`
+	CompareMappings  []runtimetaskspec.CompareMapping `json:"compare_mappings"`
+	PreserveOriginal bool                             `json:"preserve_original"`
+	OutputFile       string                           `json:"output_file"`
+}
+
+type GeneratePrintableFormPlan struct {
+	Operation        string                             `json:"operation"`
+	SheetName        string                             `json:"sheet_name"`
+	TargetSheet      string                             `json:"target_sheet"`
+	FormTitle        string                             `json:"form_title"`
+	PrintArea        string                             `json:"print_area"`
+	FieldBindings    []runtimetaskspec.FormFieldBinding `json:"field_bindings"`
+	TableBinding     *runtimetaskspec.FormTableBinding  `json:"table_binding"`
+	PreserveOriginal bool                               `json:"preserve_original"`
+	OutputFile       string                             `json:"output_file"`
 }
 
 type WritePolicyDecision struct {

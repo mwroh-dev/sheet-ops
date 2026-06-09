@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "generated_from_round": "round-009",
+  "summary": "Sweep of ambiguous roadmap classifications before adding mid-level subtypes. The goal is to preserve current primary groups only where verifier mechanics justify them and to record reclassification triggers for future evidence or fixture design.",
+  "items": [
+    {
+      "pattern_id": "attendance_register",
+      "current_group": "period_roll_forward",
+      "alternative_groups": [
+        "matrix_scored_summary",
+        "schedule_grid_propagation"
+      ],
+      "ambiguity": "Attendance is a roster matrix with date columns, which overlaps matrix scoring and calendar-grid schedule mechanics.",
+      "decision": "keep_current",
+      "rationale": "Round-009 judgment emphasizes roll-forward, locked roster bands, protected totals, and period growth as the verifier boundary. The matrix shape is important, but the primary Sheet Ops operation is period-safe copy-forward rather than score calculation.",
+      "boundary_rule": "Include roster-by-date attendance matrices with protected totals and roll-forward behavior; exclude append-only check-in logs, dashboard-only summaries, and generic event attendance forms.",
+      "reclassification_trigger": "If fixture design centers on row-and-column matrix scoring rather than period roll-forward, create a subtype under matrix_scored_summary or split attendance_checkin_log separately."
+    },
+    {
+      "pattern_id": "purchase_order_control",
+      "current_group": "form_document_output",
+      "alternative_groups": [
+        "transaction_reconciliation",
+        "status_review_workflow"
+      ],
+      "ambiguity": "Purchase orders can be printable documents, approval workflows, or procurement matching inputs.",
+      "decision": "keep_current",
+      "rationale": "The round-009 roadmap boundary stops at PO-first control, printable issuance, approval state, and receipt or invoice handoff. Full matching belongs to procurement_reconciliation.",
+      "boundary_rule": "Include PO creation, approval, line items, totals, and handoff checkpoints; exclude three-way matching, receipt-invoice reconciliation, and vendor scorecards.",
+      "reclassification_trigger": "Move or split only if future fixtures require PO rows to perform matching as the primary operation rather than document/control output."
+    },
+    {
+      "pattern_id": "maintenance_issue_log",
+      "current_group": "status_review_workflow",
+      "alternative_groups": [
+        "period_roll_forward",
+        "transaction_reconciliation"
+      ],
+      "ambiguity": "Maintenance logs use append rows and due-state review, and some sources include scheduled recurrence or cost history.",
+      "decision": "keep_current",
+      "rationale": "The stable verifier is ownership, due state, service status, and overdue or cost review. That is closer to status review than transaction reconciliation or period close.",
+      "boundary_rule": "Include service rows with due state, owner or technician, cost, and follow-up status; exclude pure asset ledgers and inventory-style part movements.",
+      "reclassification_trigger": "Split into maintenance_schedule_rollforward if fixture work requires recurring service intervals and period copy as the primary verifier."
+    },
+    {
+      "pattern_id": "construction_cost_tracker",
+      "current_group": "schedule_grid_propagation",
+      "alternative_groups": [
+        "period_roll_forward",
+        "transaction_reconciliation",
+        "status_review_workflow"
+      ],
+      "ambiguity": "Construction cost tracking combines active cost rows, change orders, phase schedules, and forecast-style rollups.",
+      "decision": "keep_current",
+      "rationale": "The round-009 boundary is active cost control with phase or schedule rollups, not estimate-only, bid-comparison, or generic project budget. Schedule/phase propagation is the differentiating verifier.",
+      "boundary_rule": "Include active cost control with committed spend, change orders, forecast-to-complete, phase or schedule rollups; exclude estimates, bids, and generic project budgets.",
+      "reclassification_trigger": "If implementation fixtures focus on matched invoices and commitments instead of phase/schedule rollups, split a construction_reconciliation subtype."
+    },
+    {
+      "pattern_id": "warehouse_reorder_tracker",
+      "current_group": "transaction_reconciliation",
+      "alternative_groups": [
+        "status_review_workflow",
+        "matrix_scored_summary"
+      ],
+      "ambiguity": "Warehouse reorder evidence is snapshot and threshold-heavy rather than a true movement ledger.",
+      "decision": "keep_current",
+      "rationale": "It remains in transaction_reconciliation because the verifier depends on item identity, stock thresholds, reorder exceptions, and lookup-enriched inventory state.",
+      "boundary_rule": "Include stock snapshots with SKU identity, reorder thresholds, low-stock flags, and summary exceptions; exclude transaction-led movement records, which belong to inventory_movement_log.",
+      "reclassification_trigger": "Move to status_review_workflow only if fixtures primarily test queue-like reorder status instead of threshold and lookup mechanics."
+    },
+    {
+      "pattern_id": "training_completion_matrix",
+      "current_group": "matrix_scored_summary",
+      "alternative_groups": [
+        "status_review_workflow",
+        "period_roll_forward"
+      ],
+      "ambiguity": "Training matrices contain status values and sometimes due-date review, but they are person-by-requirement grids.",
+      "decision": "keep_current",
+      "rationale": "The core verifier is row and column growth with completion or proficiency summaries. Status review is secondary.",
+      "boundary_rule": "Include person-by-requirement matrices with completion/proficiency states and gap summaries; exclude task queues or learning-plan schedules without dense matrix structure.",
+      "reclassification_trigger": "Split into training_status_queue only if future evidence drops matrix mechanics and centers on owner/status workflow."
+    },
+    {
+      "pattern_id": "safety_compliance_register",
+      "current_group": "status_review_workflow",
+      "alternative_groups": [
+        "transaction_reconciliation",
+        "matrix_scored_summary"
+      ],
+      "ambiguity": "Safety registers use risk ratings and thresholds, which overlaps exception and scored-summary verification.",
+      "decision": "keep_current",
+      "rationale": "The pattern is a register with owner, mitigation, status, and risk review. The score is used to drive status review rather than to create a dense scoring matrix.",
+      "boundary_rule": "Include risk/control registers with owner, mitigation, severity, and open-risk review; exclude corrective action closure, which belongs to compliance_action_register.",
+      "reclassification_trigger": "Split into risk_scorecard only if fixtures require weighted multi-factor scoring as the primary proof."
+    },
+    {
+      "pattern_id": "loan_repayment_calculator",
+      "current_group": "calculation_schedule",
+      "alternative_groups": [
+        "period_roll_forward",
+        "matrix_scored_summary"
+      ],
+      "ambiguity": "Loan schedules are period tables with formula cascades, but they are generated calculation schedules rather than operational roll-forward workflows.",
+      "decision": "keep_current",
+      "rationale": "The primary verifier is assumption-driven recalculation and formula protection, not copying a workbook into a new operating period.",
+      "boundary_rule": "Include amortization-style schedule generation with protected formulas and scenario inputs; exclude cash-flow operating sheets and period-close workbooks.",
+      "reclassification_trigger": "Move to period_roll_forward only if fixture work requires operational period copy rather than formula schedule recalculation."
+    }
+  ]
+}

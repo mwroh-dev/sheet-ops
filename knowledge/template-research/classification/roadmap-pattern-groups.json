@@ -1,0 +1,231 @@
+{
+  "version": 1,
+  "generated_from_round": "round-009",
+  "classification_type": "roadmap_pattern_groups",
+  "summary": "Primary implementation-family classification for all round-009 roadmap candidates. Each roadmap pattern appears in exactly one primary group.",
+  "groups": [
+    {
+      "group_id": "form_document_output",
+      "title": "Form and document output",
+      "classification_axis": "workflow_family",
+      "patterns": [
+        "invoice_line_item_billing",
+        "expense_reimbursement",
+        "purchase_order_control"
+      ],
+      "common_mechanics": [
+        "metadata header",
+        "line-item table",
+        "totals block",
+        "approval or payment status",
+        "printable output region"
+      ],
+      "capabilities": [
+        "append_structured_rows",
+        "extend_table_formulas",
+        "protect_formula_cells",
+        "generate_printable_form",
+        "add_data_validation"
+      ],
+      "verifier_strategy": [
+        "new rows are included in totals",
+        "formula cells remain unchanged",
+        "required metadata is populated",
+        "printable region contains expected summary values"
+      ],
+      "fixture_priority": "p0",
+      "notes": "This group is the cleanest first fixture family because document-style outputs expose row growth, formula preservation, and printable verification in one bounded workbook surface."
+    },
+    {
+      "group_id": "period_roll_forward",
+      "title": "Period roll-forward and locked summaries",
+      "classification_axis": "workflow_family",
+      "patterns": [
+        "monthly_budget_control",
+        "cash_flow_monitor",
+        "attendance_register",
+        "timesheet_hours_log"
+      ],
+      "common_mechanics": [
+        "period sections",
+        "copy-forward structure",
+        "locked or protected summary cells",
+        "formula cascades",
+        "planned versus actual or period totals"
+      ],
+      "capabilities": [
+        "copy_period_sheet",
+        "roll_forward_period",
+        "extend_table_formulas",
+        "protect_formula_cells",
+        "group_summarize"
+      ],
+      "verifier_strategy": [
+        "next period exists with expected labels",
+        "input cells clear while formulas remain",
+        "previous balances or roster bands carry forward when expected",
+        "summary totals include the new period"
+      ],
+      "fixture_priority": "p0",
+      "notes": "These patterns stress the same period-copy and formula-preservation behavior across finance, education, and HR."
+    },
+    {
+      "group_id": "transaction_reconciliation",
+      "title": "Transaction and reconciliation control",
+      "classification_axis": "workflow_family",
+      "patterns": [
+        "inventory_movement_log",
+        "procurement_reconciliation",
+        "warehouse_reorder_tracker"
+      ],
+      "common_mechanics": [
+        "transaction rows",
+        "lookup-backed item or vendor identity",
+        "matched missing or mismatched state",
+        "threshold flags",
+        "reorder or exception summary"
+      ],
+      "capabilities": [
+        "append_structured_rows",
+        "reconcile_tables",
+        "join_lookup",
+        "flag_outliers",
+        "create_pivot_summary"
+      ],
+      "verifier_strategy": [
+        "matched rows reconcile by key",
+        "missing or mismatched rows are reported separately",
+        "stock or reorder flags reflect threshold rules",
+        "lookup-enriched fields preserve source identity"
+      ],
+      "fixture_priority": "p1",
+      "notes": "This group is high-value but needs fixtures with explicit positive and negative reconciliation cases."
+    },
+    {
+      "group_id": "schedule_grid_propagation",
+      "title": "Schedule and grid propagation",
+      "classification_axis": "workflow_family",
+      "patterns": [
+        "project_timeline_tracker",
+        "shift_roster_planner",
+        "construction_cost_tracker"
+      ],
+      "common_mechanics": [
+        "dated row sequencing",
+        "grid or timeline expansion",
+        "owner or role assignment",
+        "status or phase rollup",
+        "schedule-sensitive summary"
+      ],
+      "capabilities": [
+        "copy_period_sheet",
+        "extend_table_formulas",
+        "add_data_validation",
+        "group_summarize",
+        "generate_printable_form"
+      ],
+      "verifier_strategy": [
+        "date spans map to the expected grid or phase region",
+        "new tasks or shifts inherit formulas and validations",
+        "status summaries update after row changes",
+        "timeline or phase output remains bounded to the chosen workbook shape"
+      ],
+      "fixture_priority": "p1",
+      "notes": "Use this group after period-roll-forward fixtures because timeline and grid outputs need stronger visual or structural checks."
+    },
+    {
+      "group_id": "matrix_scored_summary",
+      "title": "Dense matrix and scored summary control",
+      "classification_axis": "workflow_family",
+      "patterns": [
+        "student_gradebook",
+        "training_completion_matrix"
+      ],
+      "common_mechanics": [
+        "person or vendor rows",
+        "requirement or assignment columns",
+        "weighted scoring",
+        "protected formula summary",
+        "completion or score rollup"
+      ],
+      "capabilities": [
+        "extend_table_formulas",
+        "add_data_validation",
+        "protect_formula_cells",
+        "create_pivot_summary",
+        "group_summarize"
+      ],
+      "verifier_strategy": [
+        "new columns or rows preserve scoring formulas",
+        "weighted summary values match source scores",
+        "protected totals remain unchanged",
+        "completion or score status updates after entry changes"
+      ],
+      "fixture_priority": "p2",
+      "notes": "This group is verifier-heavy because row and column growth both matter."
+    },
+    {
+      "group_id": "status_review_workflow",
+      "title": "Status pipeline and review workflow",
+      "classification_axis": "workflow_family",
+      "patterns": [
+        "service_ticket_queue",
+        "sales_pipeline_tracker",
+        "maintenance_issue_log",
+        "compliance_action_register",
+        "safety_compliance_register"
+      ],
+      "common_mechanics": [
+        "status column",
+        "owner assignment",
+        "priority or risk field",
+        "due date or aging",
+        "status summary dashboard"
+      ],
+      "capabilities": [
+        "add_data_validation",
+        "append_structured_rows",
+        "group_summarize",
+        "create_pivot_summary",
+        "flag_outliers"
+      ],
+      "verifier_strategy": [
+        "status values are constrained",
+        "open overdue or high-risk rows are flagged",
+        "owner and status summaries update from row changes",
+        "queue-first patterns do not drift into intake-form-only behavior"
+      ],
+      "fixture_priority": "p2",
+      "notes": "This group turns workflow-heavy evidence into row-state and summary verification rather than generic project management."
+    },
+    {
+      "group_id": "calculation_schedule",
+      "title": "Calculation schedule with protected formulas",
+      "classification_axis": "workflow_family",
+      "patterns": [
+        "loan_repayment_calculator"
+      ],
+      "common_mechanics": [
+        "input assumption area",
+        "generated schedule rows",
+        "protected formulas",
+        "period totals",
+        "scenario-sensitive outputs"
+      ],
+      "capabilities": [
+        "extend_table_formulas",
+        "protect_formula_cells",
+        "add_data_validation",
+        "join_lookup"
+      ],
+      "verifier_strategy": [
+        "schedule rows preserve formula structure",
+        "protected formula cells are not overwritten",
+        "changed assumptions update dependent totals",
+        "invalid numeric assumptions are rejected"
+      ],
+      "fixture_priority": "p3",
+      "notes": "This is a useful formula-tracing fixture, but it is narrower than the cross-domain groups above."
+    }
+  ]
+}

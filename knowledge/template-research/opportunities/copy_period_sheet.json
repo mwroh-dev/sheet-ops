@@ -1,0 +1,22 @@
+{
+  "name": "copy_period_sheet",
+  "status": "supported",
+  "evidence_count": 1,
+  "source_categories": [
+    "Budget Templates"
+  ],
+  "representative_why": "Users need to reuse a monthly or weekly workbook structure for the next reporting period.",
+  "representative_how": [
+    "copy a sheet or period block",
+    "update period labels",
+    "clear input cells while preserving formulas",
+    "supported runtime scope currently copies an explicit source sheet to a target sheet while preserving values formulas and styles"
+  ],
+  "concrete_workflows": [
+    "create next month budget sheet"
+  ],
+  "verification_strategy": "Verify the target sheet exists and source values, formulas, and styles are preserved while the source workbook is unchanged. Label updates, input clearing, and carry-forward continuity remain roll_forward_period opportunity scope.",
+  "related_patterns": [
+    "budget"
+  ]
+}

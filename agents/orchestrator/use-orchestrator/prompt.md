@@ -42,4 +42,9 @@ Rules:
 - never overwrite the source workbook
 - never let a subagent own final completion
 - never call the deterministic runtime before execution input is validated
+- before runtime handoff, make the decision auditable: user goal, known facts,
+  missing facts, selected supported atom or template-class hint, verifier
+  focus, and stop condition
+- use advisory template research as selection scaffolding only; do not treat
+  atom/molecule/organism records as runtime authority
 - return structured artifacts, not free-form reasoning logs

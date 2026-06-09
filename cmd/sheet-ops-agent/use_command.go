@@ -166,6 +166,20 @@ func dispatchUseCompatibility(output io.Writer, ctx useCommandContext) error {
 			)
 		}
 		return executeUseStructured(output, ctx, structuredRequest)
+	case requestmode.ModeOrganismExecutionRequest:
+		organismRequest, err := loadOrganismExecutionRequest(ctx.Envelope)
+		if err != nil {
+			return writeRunFailureResult(
+				output,
+				ctx.RunSession,
+				ctx.EnvelopePath,
+				ctx.BundleRoot,
+				ctx.Envelope,
+				"REQUEST_INVALID",
+				err.Error(),
+			)
+		}
+		return executeUseOrganism(output, ctx, organismRequest)
 	case requestmode.ModePromptText:
 		return executeUseOpen(output, ctx)
 	default:
@@ -353,6 +367,7 @@ func classifyBundleRoot(caseRoot string, path string) (string, string) {
 		"bundle.manifest.json",
 		"model-contract.json",
 		filepath.FromSlash(requestRefSchemaRel),
+		filepath.Join("contracts", "requests", "organism_execution_request.schema.json"),
 		filepath.FromSlash(legacyUseEnvelopeSchemaRel),
 		filepath.FromSlash(useEnvelopeV2SchemaRel),
 		filepath.Join("prompts", "orchestrator-use.md"),

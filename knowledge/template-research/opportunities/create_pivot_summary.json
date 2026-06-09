@@ -1,0 +1,21 @@
+{
+  "name": "create_pivot_summary",
+  "status": "research_only",
+  "evidence_count": 1,
+  "source_categories": [
+    "Budget Templates"
+  ],
+  "representative_why": "Users need compact category or period summaries that can be refreshed as source rows change.",
+  "representative_how": [
+    "group rows by category or period",
+    "calculate metrics",
+    "place a summary view in a separate area or sheet"
+  ],
+  "concrete_workflows": [
+    "summarize actual spend by category and month"
+  ],
+  "verification_strategy": "Start with deterministic summary-sheet verification before supporting native Excel pivot artifacts.",
+  "related_patterns": [
+    "budget"
+  ]
+}

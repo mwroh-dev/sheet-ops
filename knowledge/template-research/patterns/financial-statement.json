@@ -1,0 +1,46 @@
+{
+  "pattern_id": "financial_statement",
+  "title": "Financial statement rollup",
+  "domain": "finance",
+  "why": "Turn account-level financial activity into structured statement sections and period-level management results.",
+  "visual_patterns": [
+    "printable_form",
+    "dashboard",
+    "total_box",
+    "protected_formula_area"
+  ],
+  "data_patterns": [
+    "aggregate",
+    "category_mapping",
+    "period_rollup",
+    "formula_propagation"
+  ],
+  "validation_patterns": [
+    "required_fields",
+    "numeric_bounds",
+    "known_category",
+    "referential_integrity"
+  ],
+  "workflow_patterns": [
+    "period_close",
+    "variance_review",
+    "planned_actual"
+  ],
+  "source_observations": [
+    "vertex42_financial_statement_seed",
+    "spreadsheet123_restaurant_pl_seed",
+    "microsoft_accounting_templates_seed"
+  ],
+  "existing_capabilities": [
+    "group_summarize",
+    "highlight_threshold"
+  ],
+  "missing_capability_candidates": [
+    "normalize_headers",
+    "create_pivot_summary",
+    "protect_formula_cells",
+    "generate_printable_form"
+  ],
+  "recurrence_status": "recurring",
+  "promotion_note": "Recurring across generic and domain-specific accounting observations."
+}

@@ -1,0 +1,160 @@
+{
+  "version": 1,
+  "generated_from_round": "round-009",
+  "authority": "advisory_verified_class",
+  "summary": "Depth contracts for roadmap organisms whose representative previews are strong enough to guide organism-level verification work without promoting organism IDs or native pivot/calculator features to supported public capabilities.",
+  "classes": [
+    {
+      "organism_id": "student_gradebook",
+      "fixture_priority": "p2",
+      "depth_focus": "deterministic_summary_depth",
+      "runtime_atom_ids": ["group_summarize", "add_data_validation"],
+      "opportunity_atom_ids": ["create_pivot_summary"],
+      "preview_evidence": ["TestStudentGradebookPreviewComposesScoreSummaryAndValidation"],
+      "acceptance_criteria": [
+        "score rows can be summarized by student with deterministic totals",
+        "completion/status inputs are constrained by list validation",
+        "native pivot-style score distribution is explicitly excluded from supported claims"
+      ],
+      "explicit_non_claims": [
+        "does not create native Excel pivot tables",
+        "does not infer or grow arbitrary gradebook matrices",
+        "does not calculate grading policy semantics beyond provided numeric rows"
+      ],
+      "promotion_gate": "Promote only after an organism verifier checks score summary, allowed status values, protected formulas, and matrix growth semantics in one fixture."
+    },
+    {
+      "organism_id": "training_completion_matrix",
+      "fixture_priority": "p2",
+      "depth_focus": "matrix_status_depth",
+      "runtime_atom_ids": ["group_summarize", "generate_printable_form"],
+      "opportunity_atom_ids": ["create_pivot_summary"],
+      "preview_evidence": ["TestTrainingCompletionMatrixPreviewComposesCompletionSummaryAndPrintableForm"],
+      "acceptance_criteria": [
+        "completion rows can be summarized by person or requirement with deterministic totals",
+        "summary output can be materialized into a printable report region",
+        "matrix analytics remain separate from supported native pivot behavior"
+      ],
+      "explicit_non_claims": [
+        "does not auto-expand person-by-requirement matrices",
+        "does not prove cross-training coverage optimization",
+        "does not create native pivot tables"
+      ],
+      "promotion_gate": "Promote only after a matrix fixture verifies added people or requirements, completion summaries, and printable reporting together."
+    },
+    {
+      "organism_id": "service_ticket_queue",
+      "fixture_priority": "p2",
+      "depth_focus": "matrix_status_depth",
+      "runtime_atom_ids": ["append_structured_rows", "highlight_threshold"],
+      "opportunity_atom_ids": ["create_pivot_summary"],
+      "preview_evidence": ["TestServiceTicketQueuePreviewComposesAppendAndSLAThreshold"],
+      "acceptance_criteria": [
+        "new ticket rows can be appended to the queue table",
+        "SLA or age threshold exceptions are highlighted deterministically",
+        "dashboard/pivot summaries are excluded until separately verified"
+      ],
+      "explicit_non_claims": [
+        "does not implement workflow automation or assignment routing",
+        "does not create queue dashboards",
+        "does not enforce SLA policy beyond explicit threshold highlighting"
+      ],
+      "promotion_gate": "Promote only after a queue fixture verifies append, status validation, SLA highlighting, open-ticket summary, and protected summary cells."
+    },
+    {
+      "organism_id": "sales_pipeline_tracker",
+      "fixture_priority": "p2",
+      "depth_focus": "deterministic_summary_depth",
+      "runtime_atom_ids": ["group_summarize", "highlight_threshold"],
+      "opportunity_atom_ids": ["create_pivot_summary"],
+      "preview_evidence": ["TestSalesPipelineTrackerPreviewComposesStageSummaryAndThreshold"],
+      "acceptance_criteria": [
+        "deal rows can be summarized by stage with deterministic totals",
+        "risk or probability threshold exceptions can be highlighted",
+        "forecast dashboards remain outside supported native pivot claims"
+      ],
+      "explicit_non_claims": [
+        "does not forecast revenue beyond provided rows",
+        "does not create native pivot dashboards",
+        "does not infer CRM stage semantics"
+      ],
+      "promotion_gate": "Promote only after a pipeline fixture verifies stage validation, forecast summary, risk highlighting, and protected forecast formulas together."
+    },
+    {
+      "organism_id": "maintenance_issue_log",
+      "fixture_priority": "p2",
+      "depth_focus": "matrix_status_depth",
+      "runtime_atom_ids": ["append_structured_rows", "highlight_threshold"],
+      "opportunity_atom_ids": [],
+      "preview_evidence": ["TestMaintenanceIssueLogPreviewComposesAppendAndOverdueThreshold"],
+      "acceptance_criteria": [
+        "new maintenance issue rows can be appended",
+        "overdue or risk threshold exceptions are highlighted",
+        "risk/action register semantics remain bounded by explicit columns"
+      ],
+      "explicit_non_claims": [
+        "does not schedule maintenance work",
+        "does not infer root-cause or risk policy semantics",
+        "does not automate action closure"
+      ],
+      "promotion_gate": "Promote only after a maintenance fixture verifies append, status validation, overdue/risk summary, and protected action totals."
+    },
+    {
+      "organism_id": "compliance_action_register",
+      "fixture_priority": "p2",
+      "depth_focus": "deterministic_summary_depth",
+      "runtime_atom_ids": ["group_summarize", "generate_printable_form"],
+      "opportunity_atom_ids": ["create_pivot_summary"],
+      "preview_evidence": ["TestComplianceActionRegisterPreviewComposesStatusSummaryAndPrintableForm"],
+      "acceptance_criteria": [
+        "action rows can be summarized by status with deterministic totals",
+        "summary output can be materialized into a printable review report",
+        "closure-evidence semantics remain outside supported atom claims"
+      ],
+      "explicit_non_claims": [
+        "does not provide legal or compliance advice",
+        "does not verify closure evidence quality",
+        "does not create native pivot dashboards"
+      ],
+      "promotion_gate": "Promote only after a compliance fixture verifies action status validation, due-date threshold flags, closure summaries, and printable report output."
+    },
+    {
+      "organism_id": "safety_compliance_register",
+      "fixture_priority": "p2",
+      "depth_focus": "deterministic_summary_depth",
+      "runtime_atom_ids": ["highlight_threshold", "generate_printable_form"],
+      "opportunity_atom_ids": ["create_pivot_summary"],
+      "preview_evidence": ["TestSafetyComplianceRegisterPreviewComposesScoreThresholdAndPrintableForm"],
+      "acceptance_criteria": [
+        "risk or score threshold exceptions are highlighted deterministically",
+        "register rows can be materialized into a printable safety report",
+        "score dashboards remain separate from supported native pivot behavior"
+      ],
+      "explicit_non_claims": [
+        "does not provide safety or compliance advice",
+        "does not infer risk scoring policy",
+        "does not create native pivot dashboards"
+      ],
+      "promotion_gate": "Promote only after a safety fixture verifies status validation, score thresholds, completion summaries, protected formulas, and printable reporting."
+    },
+    {
+      "organism_id": "loan_repayment_calculator",
+      "fixture_priority": "p3",
+      "depth_focus": "calculation_schedule_depth",
+      "runtime_atom_ids": ["extend_table_formulas", "protect_formula_cells"],
+      "opportunity_atom_ids": [],
+      "preview_evidence": ["TestLoanRepaymentCalculatorPreviewComposesFormulaExtensionAndProtection"],
+      "acceptance_criteria": [
+        "repeated payment-row formulas can be extended without formula drift",
+        "calculated interest, principal, and balance cells are protected",
+        "financial advice and amortization correctness claims are explicitly excluded"
+      ],
+      "explicit_non_claims": [
+        "does not provide financial advice",
+        "does not prove amortization correctness",
+        "does not verify payoff termination or cumulative balance policy"
+      ],
+      "promotion_gate": "Promote only after a calculation schedule verifier checks balance recurrence, payoff termination policy, protected formulas, and input/editable ranges in one fixture."
+    }
+  ]
+}

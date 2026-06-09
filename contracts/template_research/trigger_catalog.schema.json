@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/template_research/trigger_catalog.schema.json",
+  "title": "TemplateResearchTriggerCatalog",
+  "type": "object",
+  "$defs": {
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "trigger": {
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "layer",
+        "why",
+        "example_domains",
+        "likely_sheet_ops_capabilities"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "layer": {
+          "enum": [
+            "visual",
+            "data",
+            "validation",
+            "workflow",
+            "domain"
+          ]
+        },
+        "why": {
+          "type": "string",
+          "minLength": 1
+        },
+        "example_domains": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "likely_sheet_ops_capabilities": {
+          "$ref": "#/$defs/non_empty_string_array"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schema_version",
+    "purpose",
+    "groups"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1
+    },
+    "groups": {
+      "type": "object",
+      "required": [
+        "visual",
+        "data",
+        "validation",
+        "workflow",
+        "domain"
+      ],
+      "properties": {
+        "visual": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/trigger"
+          }
+        },
+        "data": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/trigger"
+          }
+        },
+        "validation": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/trigger"
+          }
+        },
+        "workflow": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/trigger"
+          }
+        },
+        "domain": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/trigger"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

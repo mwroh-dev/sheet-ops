@@ -1,0 +1,23 @@
+{
+  "name": "conditional_formatting",
+  "status": "research_only",
+  "evidence_count": 1,
+  "source_categories": [
+    "Template Research Hypotheses"
+  ],
+  "representative_why": "Users need visual emphasis for states, exceptions, and review priority without changing the underlying data.",
+  "representative_how": [
+    "apply visual formatting based on status or threshold conditions",
+    "keep the rule tied to source cells instead of one-off manual color edits"
+  ],
+  "concrete_workflows": [
+    "mark overdue or high-risk rows for review"
+  ],
+  "verification_strategy": "Promote only after the verifier can inspect rule definitions or deterministic rendered cell formatting instead of assuming visual intent.",
+  "related_patterns": [
+    "maintenance_log",
+    "project_gantt",
+    "inventory"
+  ],
+  "notes": "Tracked separately from highlight_threshold because the research signal includes broader rule-based formatting, not only threshold highlights."
+}

@@ -1,0 +1,596 @@
+{
+  "version": 1,
+  "generated_from_round": "round-009",
+  "summary": "Molecule catalog for Sheet Ops roadmap organisms. Molecules are reusable workbook blocks between atomic operations and full organism templates.",
+  "molecules": [
+    {
+      "molecule_id": "repeating_row_input_block",
+      "korean_name": "반복 행 입력 블록",
+      "definition": "같은 구조의 업무 행을 계속 추가하는 표 블록.",
+      "why_this_molecule": "대부분의 roadmap organism은 행을 추가해도 수식, 요약, 상태 계산이 깨지지 않아야 한다.",
+      "include_criteria": [
+        "동일한 열 구조를 가진 행이 반복 추가된다",
+        "추가된 행이 합계, 상태, 조회, 대조 결과에 반영된다",
+        "입력 행과 계산 또는 요약 영역이 연결된다"
+      ],
+      "exclude_criteria": [
+        "단일 셀 입력만 존재한다",
+        "고정된 폼이며 행 추가가 없다",
+        "행 추가가 계산이나 검증에 영향을 주지 않는다"
+      ],
+      "used_by_organisms": [
+        "invoice_line_item_billing",
+        "expense_reimbursement",
+        "purchase_order_control",
+        "timesheet_hours_log",
+        "inventory_movement_log",
+        "warehouse_reorder_tracker",
+        "service_ticket_queue",
+        "maintenance_issue_log"
+      ],
+      "required_atoms": [
+        "append_structured_rows",
+        "add_data_validation",
+        "extend_table_formulas"
+      ],
+      "verification_methods": [
+        "새 행 추가 후 row count가 증가한다",
+        "새 행이 관련 합계 또는 상태 요약에 포함된다",
+        "새 행의 검증 규칙과 수식 패턴이 기존 행과 일치한다"
+      ],
+      "rationale": "반복 행 추가는 템플릿 종류와 무관하게 가장 많이 반복되는 workbook mechanic이다."
+    },
+    {
+      "molecule_id": "formula_extension_block",
+      "korean_name": "수식 확장 블록",
+      "definition": "기존 수식 패턴을 새 행, 열, 기간으로 안전하게 확장하는 블록.",
+      "why_this_molecule": "엑셀 자동화에서 가장 흔한 파손은 새 데이터가 추가될 때 수식 범위가 끊기는 것이다.",
+      "include_criteria": [
+        "새 row, column, period가 기존 formula pattern을 이어받아야 한다",
+        "상대 참조나 범위 참조가 새 위치에 맞게 유지되어야 한다",
+        "수식 결과가 summary나 output에 영향을 준다"
+      ],
+      "exclude_criteria": [
+        "계산식 없이 값만 입력한다",
+        "수식이 고정 단일 셀에만 존재한다",
+        "새 구조가 수식 범위에 포함될 필요가 없다"
+      ],
+      "used_by_organisms": [
+        "monthly_budget_control",
+        "cash_flow_monitor",
+        "timesheet_hours_log",
+        "project_timeline_tracker",
+        "student_gradebook",
+        "loan_repayment_calculator"
+      ],
+      "required_atoms": [
+        "extend_table_formulas",
+        "protect_formula_cells"
+      ],
+      "verification_methods": [
+        "추가된 행이나 기간에 수식이 존재한다",
+        "수식 참조가 기존 패턴과 호환된다",
+        "계산 결과가 예상 값과 일치한다"
+      ],
+      "rationale": "수식 확장은 atom 하나처럼 보이지만 실제로는 보호, 범위 검증, 결과 검증이 함께 필요한 재사용 블록이다."
+    },
+    {
+      "molecule_id": "protected_summary_region",
+      "korean_name": "보호된 요약 영역",
+      "definition": "입력 영역과 분리된 계산, 총계, 상태 요약 영역.",
+      "why_this_molecule": "사용자는 입력을 바꾸지만 summary, total, score, balance 영역은 깨지면 안 된다.",
+      "include_criteria": [
+        "요약 셀 또는 영역이 입력 데이터에 의존한다",
+        "요약 영역은 사용자가 직접 덮어쓰면 안 된다",
+        "요약 값은 verifier가 독립적으로 확인할 수 있다"
+      ],
+      "exclude_criteria": [
+        "전체 시트가 자유 입력 영역이다",
+        "요약이 수동 텍스트 설명뿐이다",
+        "요약 값이 원본 행과 연결되어 있지 않다"
+      ],
+      "used_by_organisms": [
+        "invoice_line_item_billing",
+        "expense_reimbursement",
+        "monthly_budget_control",
+        "cash_flow_monitor",
+        "attendance_register",
+        "timesheet_hours_log",
+        "shift_roster_planner",
+        "inventory_movement_log",
+        "procurement_reconciliation",
+        "warehouse_reorder_tracker",
+        "student_gradebook",
+        "training_completion_matrix",
+        "service_ticket_queue",
+        "sales_pipeline_tracker",
+        "compliance_action_register",
+        "safety_compliance_register",
+        "loan_repayment_calculator"
+      ],
+      "required_atoms": [
+        "protect_formula_cells",
+        "group_summarize",
+        "create_pivot_summary"
+      ],
+      "verification_methods": [
+        "요약 영역의 수식 또는 보호 상태가 유지된다",
+        "입력 변경 후 요약 값이 원본 데이터와 일치한다",
+        "사용자 입력 작업이 요약 영역을 덮어쓰지 않는다"
+      ],
+      "rationale": "보호된 요약 영역은 fixture가 성공 여부를 판단하는 핵심 관찰 지점이다."
+    },
+    {
+      "molecule_id": "metadata_header",
+      "korean_name": "메타데이터 헤더",
+      "definition": "문서나 업무 단위를 식별하는 상단 또는 별도 입력 영역.",
+      "why_this_molecule": "문서형 workbook은 고객, 공급자, 직원, 기간, 문서 번호 같은 식별자가 있어야 검토 가능하다.",
+      "include_criteria": [
+        "업무 문서 또는 거래를 식별하는 필드가 있다",
+        "필수 metadata가 output이나 summary에 연결된다",
+        "metadata 누락이 업무적으로 의미 있는 오류가 된다"
+      ],
+      "exclude_criteria": [
+        "순수 데이터 테이블이다",
+        "제목 텍스트만 있고 구조화된 식별 필드가 없다",
+        "metadata가 계산이나 출력에 연결되지 않는다"
+      ],
+      "used_by_organisms": [
+        "invoice_line_item_billing",
+        "expense_reimbursement",
+        "purchase_order_control"
+      ],
+      "required_atoms": [
+        "add_data_validation",
+        "join_lookup",
+        "normalize_headers"
+      ],
+      "verification_methods": [
+        "필수 metadata 필드가 존재한다",
+        "metadata 값이 출력 영역에 반영된다",
+        "누락되거나 잘못된 식별값이 검증에서 잡힌다"
+      ],
+      "rationale": "메타데이터 헤더는 문서형 organism을 단순 행 테이블과 구분한다."
+    },
+    {
+      "molecule_id": "line_item_total_block",
+      "korean_name": "항목별 합계 블록",
+      "definition": "반복 항목 행을 subtotal, tax, payable amount, reimbursement total 같은 합계로 모으는 블록.",
+      "why_this_molecule": "문서형 및 비용형 템플릿은 line item과 total의 연결이 핵심 검증 대상이다.",
+      "include_criteria": [
+        "수량, 단가, 금액, 세금, 비용 같은 숫자 행이 있다",
+        "반복 행에서 계산된 합계가 있다",
+        "새 행이 합계에 자동 포함되어야 한다"
+      ],
+      "exclude_criteria": [
+        "상태별 count만 계산한다",
+        "금액이나 수량 계산이 없다",
+        "합계가 수동 입력이다"
+      ],
+      "used_by_organisms": [
+        "invoice_line_item_billing",
+        "expense_reimbursement",
+        "purchase_order_control",
+        "construction_cost_tracker"
+      ],
+      "required_atoms": [
+        "append_structured_rows",
+        "extend_table_formulas",
+        "group_summarize",
+        "protect_formula_cells"
+      ],
+      "verification_methods": [
+        "새 line item 추가 후 subtotal과 total이 갱신된다",
+        "세금 또는 비용 공식이 유지된다",
+        "합계 영역이 원본 행 합계와 일치한다"
+      ],
+      "rationale": "항목별 합계는 invoice만의 특성이 아니라 비용, 구매, 공사비 추적에도 반복되는 계산 블록이다."
+    },
+    {
+      "molecule_id": "printable_document_region",
+      "korean_name": "출력용 문서 영역",
+      "definition": "검토, 공유, 출력에 쓰이는 고정된 문서 형태의 영역.",
+      "why_this_molecule": "일부 workbook은 내부 계산보다 외부 검토 가능한 산출물이 중요하다.",
+      "include_criteria": [
+        "printable 또는 reviewable 영역이 존재한다",
+        "입력 데이터나 합계가 출력 영역에 반영된다",
+        "문서 영역의 구조가 업무 승인이나 발송에 쓰인다"
+      ],
+      "exclude_criteria": [
+        "내부 분석 dashboard만 있다",
+        "원본 테이블을 그대로 보는 것뿐이다",
+        "출력 영역이 입력 데이터와 연결되지 않는다"
+      ],
+      "used_by_organisms": [
+        "invoice_line_item_billing",
+        "expense_reimbursement",
+        "purchase_order_control",
+        "training_completion_matrix",
+        "compliance_action_register",
+        "safety_compliance_register"
+      ],
+      "required_atoms": [
+        "generate_printable_form",
+        "protect_formula_cells",
+        "group_summarize"
+      ],
+      "verification_methods": [
+        "출력 영역의 필수 필드가 채워진다",
+        "출력 영역의 합계가 원본 데이터와 일치한다",
+        "출력 영역이 입력 변경 후 최신 값을 반영한다"
+      ],
+      "rationale": "출력용 문서 영역은 Sheet Ops 결과가 단순 data transform을 넘어 업무 문서가 되는 지점이다."
+    },
+    {
+      "molecule_id": "period_copy_block",
+      "korean_name": "기간 복사 블록",
+      "definition": "월, 주, 회계기간, 수업기간 같은 반복 기간 구조를 복사하는 블록.",
+      "why_this_molecule": "반복 업무 workbook은 다음 기간을 만들 때 구조는 유지하고 일부 입력은 초기화해야 한다.",
+      "include_criteria": [
+        "기간 단위 sheet 또는 block이 반복된다",
+        "새 기간 label이나 날짜가 필요하다",
+        "입력 영역 초기화와 수식 보존이 함께 필요하다"
+      ],
+      "exclude_criteria": [
+        "기간 개념 없이 행만 누적한다",
+        "기간별 구조가 완전히 다르다",
+        "복사 없이 필터만 바꾸면 된다"
+      ],
+      "used_by_organisms": [
+        "monthly_budget_control",
+        "cash_flow_monitor",
+        "attendance_register",
+        "timesheet_hours_log",
+        "project_timeline_tracker",
+        "shift_roster_planner"
+      ],
+      "required_atoms": [
+        "copy_period_sheet",
+        "roll_forward_period",
+        "protect_formula_cells"
+      ],
+      "verification_methods": [
+        "새 기간 block 또는 sheet가 생성된다",
+        "기간 label과 날짜가 예상대로 변경된다",
+        "입력 영역은 초기화되고 수식 영역은 보존된다"
+      ],
+      "rationale": "기간 복사는 roll-forward organism을 만드는 핵심 molecule이다."
+    },
+    {
+      "molecule_id": "carry_forward_summary_block",
+      "korean_name": "이월/마감 요약 블록",
+      "definition": "이전 기간의 결과가 다음 기간의 시작값이나 마감 판단에 영향을 주는 블록.",
+      "why_this_molecule": "cash flow와 budget은 단순 period copy가 아니라 closing, opening, variance가 이어진다.",
+      "include_criteria": [
+        "이전 기간 closing 값이 다음 기간 opening에 연결된다",
+        "마감, variance, carry-forward 값이 존재한다",
+        "기간 간 값의 연속성을 검증해야 한다"
+      ],
+      "exclude_criteria": [
+        "기간들이 서로 독립적이다",
+        "캘린더 표시만 있고 이월 값이 없다",
+        "마감 상태가 수동 메모뿐이다"
+      ],
+      "used_by_organisms": [
+        "monthly_budget_control",
+        "cash_flow_monitor",
+        "construction_cost_tracker"
+      ],
+      "required_atoms": [
+        "roll_forward_period",
+        "group_summarize",
+        "protect_formula_cells",
+        "extend_table_formulas"
+      ],
+      "verification_methods": [
+        "closing 값이 다음 기간 opening에 반영된다",
+        "variance 또는 forecast 값이 입력 데이터와 일치한다",
+        "마감 요약 수식이 보호되고 유지된다"
+      ],
+      "rationale": "이월/마감 요약은 단순 기간 복사와 회계적 연속성을 구분한다."
+    },
+    {
+      "molecule_id": "matrix_growth_block",
+      "korean_name": "매트릭스 성장 블록",
+      "definition": "사람, 날짜, 요구사항, 과제처럼 행과 열 양쪽으로 성장하는 grid 블록.",
+      "why_this_molecule": "attendance, gradebook, training은 한 방향 append보다 row/column growth가 더 위험하다.",
+      "include_criteria": [
+        "행과 열이 모두 업무 의미를 가진다",
+        "새 사람, 날짜, 과제, 요구사항 추가가 가능해야 한다",
+        "growth 후 수식과 요약이 유지되어야 한다"
+      ],
+      "exclude_criteria": [
+        "단순 행 테이블이다",
+        "열 추가가 업무적으로 필요하지 않다",
+        "matrix가 표시용이고 계산에 연결되지 않는다"
+      ],
+      "used_by_organisms": [
+        "attendance_register",
+        "shift_roster_planner",
+        "student_gradebook",
+        "training_completion_matrix"
+      ],
+      "required_atoms": [
+        "extend_table_formulas",
+        "protect_formula_cells",
+        "normalize_headers",
+        "add_data_validation"
+      ],
+      "verification_methods": [
+        "새 행과 열 추가 후 formula cascade가 유지된다",
+        "row/column summary가 새 항목을 포함한다",
+        "protected roster 또는 total 영역이 보존된다"
+      ],
+      "rationale": "매트릭스 성장은 일반 row append와 다른 verifier를 요구하므로 별도 molecule이다."
+    },
+    {
+      "molecule_id": "score_completion_summary_block",
+      "korean_name": "점수/완료율 요약 블록",
+      "definition": "원본 입력을 점수, 등급, 완료율, proficiency, rating으로 요약하는 블록.",
+      "why_this_molecule": "gradebook과 training matrix는 단순 입력보다 평가/완료 상태 계산이 중요하다.",
+      "include_criteria": [
+        "원본 값이 score, grade, completion rate, rating으로 변환된다",
+        "가중치 또는 상태별 계산이 있다",
+        "요약 결과가 검토나 의사결정에 쓰인다"
+      ],
+      "exclude_criteria": [
+        "단순 count만 계산한다",
+        "상태 텍스트만 있고 점수화가 없다",
+        "요약 값이 수동 입력이다"
+      ],
+      "used_by_organisms": [
+        "student_gradebook",
+        "training_completion_matrix",
+        "safety_compliance_register"
+      ],
+      "required_atoms": [
+        "group_summarize",
+        "create_pivot_summary",
+        "extend_table_formulas",
+        "add_data_validation"
+      ],
+      "verification_methods": [
+        "가중 점수 또는 완료율이 원본 값과 일치한다",
+        "상태 변경 후 summary가 갱신된다",
+        "허용되지 않은 score/status 값이 거부된다"
+      ],
+      "rationale": "점수/완료율 요약은 matrix 입력을 업무 판단 가능한 결과로 바꾸는 molecule이다."
+    },
+    {
+      "molecule_id": "lookup_master_link_block",
+      "korean_name": "조회/마스터 연결 블록",
+      "definition": "key를 기준으로 고객, SKU, 직원, 공급자, rate 같은 master 정보를 연결하는 블록.",
+      "why_this_molecule": "많은 organism은 입력 행만으로 충분하지 않고 master table에서 의미를 보강해야 한다.",
+      "include_criteria": [
+        "원본 행에 lookup key가 있다",
+        "별도 master 또는 reference table에서 값을 가져온다",
+        "lookup 결과가 계산, 상태, 출력에 영향을 준다"
+      ],
+      "exclude_criteria": [
+        "같은 행 안의 단순 참조다",
+        "lookup 실패가 업무적으로 의미가 없다",
+        "마스터 데이터가 수동으로 이미 복사되어 있다"
+      ],
+      "used_by_organisms": [
+        "inventory_movement_log",
+        "procurement_reconciliation",
+        "warehouse_reorder_tracker",
+        "loan_repayment_calculator"
+      ],
+      "required_atoms": [
+        "join_lookup",
+        "normalize_headers",
+        "add_data_validation"
+      ],
+      "verification_methods": [
+        "key가 master table의 올바른 행과 연결된다",
+        "lookup 실패나 중복 key가 검출된다",
+        "lookup 결과가 downstream 계산에 반영된다"
+      ],
+      "rationale": "lookup은 단일 atom이지만 업무적으로는 key validation, enrichment, downstream propagation이 함께 필요하다."
+    },
+    {
+      "molecule_id": "reconciliation_result_block",
+      "korean_name": "대조/불일치 판정 블록",
+      "definition": "두 개 이상의 table을 비교해 matched, missing, mismatched 같은 판정 결과를 만드는 블록.",
+      "why_this_molecule": "procurement와 inventory는 데이터를 합치는 것보다 불일치와 예외를 설명하는 것이 핵심이다.",
+      "include_criteria": [
+        "둘 이상의 source table이 있다",
+        "key 또는 조건으로 matching을 수행한다",
+        "matched, missing, mismatch, exception 결과가 분리된다"
+      ],
+      "exclude_criteria": [
+        "단순 lookup enrichment만 한다",
+        "한 테이블 안에서 threshold만 본다",
+        "불일치 상태가 결과로 남지 않는다"
+      ],
+      "used_by_organisms": [
+        "inventory_movement_log",
+        "procurement_reconciliation"
+      ],
+      "required_atoms": [
+        "reconcile_tables",
+        "join_lookup",
+        "normalize_headers",
+        "group_summarize"
+      ],
+      "verification_methods": [
+        "matched, missing, mismatched case가 각각 예상 bucket에 들어간다",
+        "key normalization 후 matching이 안정적으로 수행된다",
+        "대조 결과 요약이 상세 결과와 일치한다"
+      ],
+      "rationale": "대조/불일치 판정은 Sheet Ops가 단순 join을 넘어 감사 가능한 결과를 만드는 블록이다."
+    },
+    {
+      "molecule_id": "threshold_exception_block",
+      "korean_name": "임계값 예외 표시 블록",
+      "definition": "숫자, 날짜, 위험도, 재고량, 예산 초과 등 기준을 넘는 항목을 표시하는 블록.",
+      "why_this_molecule": "많은 workbook은 전체 데이터를 보는 것보다 주의가 필요한 행을 빠르게 찾는 것이 목적이다.",
+      "include_criteria": [
+        "명시적 threshold, due date, risk level, target value가 있다",
+        "기준을 넘는 항목이 flag, highlight, exception으로 나타난다",
+        "예외 결과가 summary나 review workflow에 연결된다"
+      ],
+      "exclude_criteria": [
+        "색상이 수동 장식이다",
+        "기준값 없이 상태만 표시한다",
+        "예외가 downstream 검토에 쓰이지 않는다"
+      ],
+      "used_by_organisms": [
+        "monthly_budget_control",
+        "construction_cost_tracker",
+        "warehouse_reorder_tracker",
+        "service_ticket_queue",
+        "sales_pipeline_tracker",
+        "maintenance_issue_log",
+        "safety_compliance_register"
+      ],
+      "required_atoms": [
+        "highlight_threshold",
+        "add_data_validation",
+        "group_summarize"
+      ],
+      "verification_methods": [
+        "threshold를 넘는 행만 flag된다",
+        "기준값 변경 후 flag 결과가 갱신된다",
+        "예외 summary가 flag 상세와 일치한다"
+      ],
+      "rationale": "임계값 예외 표시는 highlight_threshold의 일반화된 workbook block이다."
+    },
+    {
+      "molecule_id": "status_pipeline_block",
+      "korean_name": "상태 파이프라인 블록",
+      "definition": "상태, 담당자, 우선순위, due date가 있는 업무 진행 관리 블록.",
+      "why_this_molecule": "tickets, pipeline, compliance actions는 행 자체보다 상태 전이와 summary가 핵심이다.",
+      "include_criteria": [
+        "status column이 업무 흐름을 표현한다",
+        "owner, priority, due date 중 하나 이상이 있다",
+        "상태별 summary나 overdue review가 필요하다"
+      ],
+      "exclude_criteria": [
+        "완료 체크박스 하나뿐이다",
+        "상태값이 검증되거나 요약되지 않는다",
+        "행이 workflow가 아니라 단순 로그다"
+      ],
+      "used_by_organisms": [
+        "purchase_order_control",
+        "project_timeline_tracker",
+        "procurement_reconciliation",
+        "service_ticket_queue",
+        "sales_pipeline_tracker",
+        "maintenance_issue_log",
+        "compliance_action_register"
+      ],
+      "required_atoms": [
+        "add_data_validation",
+        "group_summarize",
+        "create_pivot_summary",
+        "append_structured_rows"
+      ],
+      "verification_methods": [
+        "허용된 status 값만 입력된다",
+        "status 변경 후 summary가 갱신된다",
+        "overdue, owner, priority별 집계가 상세 행과 일치한다"
+      ],
+      "rationale": "상태 파이프라인은 workflow organism을 단순 table append와 구분하는 핵심 molecule이다."
+    },
+    {
+      "molecule_id": "timeline_grid_projection_block",
+      "korean_name": "일정/타임라인 투영 블록",
+      "definition": "행 데이터의 날짜, 기간, shift, phase를 grid나 timeline 형태로 투영하는 블록.",
+      "why_this_molecule": "project, roster, construction은 날짜 row를 보는 것만으로 부족하고 grid/timeline 반영이 필요하다.",
+      "include_criteria": [
+        "start/end/date/shift/phase 값이 있다",
+        "행 데이터가 grid, timeline, roster, phase view에 반영된다",
+        "날짜 또는 기간 변경이 표시 영역을 바꾼다"
+      ],
+      "exclude_criteria": [
+        "날짜 컬럼만 있는 일반 table이다",
+        "timeline이 수동 그림이다",
+        "grid가 입력 데이터와 연결되지 않는다"
+      ],
+      "used_by_organisms": [
+        "attendance_register",
+        "project_timeline_tracker",
+        "shift_roster_planner",
+        "construction_cost_tracker"
+      ],
+      "required_atoms": [
+        "copy_period_sheet",
+        "extend_table_formulas",
+        "group_summarize",
+        "add_data_validation"
+      ],
+      "verification_methods": [
+        "날짜 변경 후 grid/timeline 위치가 예상대로 바뀐다",
+        "새 task, shift, phase가 표시 영역에 반영된다",
+        "기간 summary가 행 데이터와 일치한다"
+      ],
+      "rationale": "일정/타임라인 투영은 날짜 데이터를 시각/구조 영역으로 변환하는 재사용 가능한 block이다."
+    },
+    {
+      "molecule_id": "risk_action_register_block",
+      "korean_name": "위험/조치 등록 블록",
+      "definition": "위험, 조치, 담당자, 마감일, 심각도, 종료 상태를 함께 관리하는 register 블록.",
+      "why_this_molecule": "compliance와 safety는 일반 status queue보다 감사성과 closure evidence가 더 중요하다.",
+      "include_criteria": [
+        "risk 또는 action item이 행으로 관리된다",
+        "owner, due date, severity 또는 closure status가 있다",
+        "open risk/action summary가 필요하다"
+      ],
+      "exclude_criteria": [
+        "일반 support ticket queue다",
+        "위험도나 closure evidence가 없다",
+        "단순 체크리스트다"
+      ],
+      "used_by_organisms": [
+        "maintenance_issue_log",
+        "compliance_action_register",
+        "safety_compliance_register"
+      ],
+      "required_atoms": [
+        "add_data_validation",
+        "protect_formula_cells",
+        "group_summarize",
+        "highlight_threshold",
+        "generate_printable_form"
+      ],
+      "verification_methods": [
+        "severity나 due date 변경 후 risk/action summary가 갱신된다",
+        "closure status가 open/closed summary에 반영된다",
+        "고위험 또는 overdue 항목이 예외로 표시된다"
+      ],
+      "rationale": "위험/조치 등록 블록은 상태 파이프라인보다 더 강한 audit/review semantics를 가진다."
+    },
+    {
+      "molecule_id": "calculation_schedule_block",
+      "korean_name": "계산 스케줄 블록",
+      "definition": "입력 파라미터에서 반복 계산 행, 누적 잔액, 종료 조건, 보호된 요약을 생성하는 블록.",
+      "why_this_molecule": "대출 상환표처럼 운영 기간을 복사하는 것이 아니라 계산 가정에서 전체 schedule을 산출하는 workbook은 별도 검증 문제가 있다.",
+      "include_criteria": [
+        "이자율, 기간, 원금 같은 입력 파라미터가 있다",
+        "반복 계산 행이 파라미터에서 생성된다",
+        "누적 잔액 또는 종료 조건이 계산 결과의 핵심이다"
+      ],
+      "exclude_criteria": [
+        "기간 sheet를 복사해 운영 데이터를 누적한다",
+        "단일 셀 계산기이며 반복 schedule이 없다",
+        "누적 잔액이나 종료 조건이 검증 대상이 아니다"
+      ],
+      "used_by_organisms": [
+        "loan_repayment_calculator"
+      ],
+      "required_atoms": [
+        "extend_table_formulas",
+        "protect_formula_cells",
+        "group_summarize"
+      ],
+      "verification_methods": [
+        "입력 파라미터 변경 후 schedule 행의 계산 결과가 갱신된다",
+        "누적 잔액이 기간별 상환 계산과 일치한다",
+        "종료 기간 또는 최종 잔액 조건이 verifier에서 확인된다"
+      ],
+      "rationale": "계산 스케줄은 period roll-forward와 닮았지만, 실제 핵심은 운영 복사가 아니라 formula-generated schedule 검증이다."
+    }
+  ]
+}

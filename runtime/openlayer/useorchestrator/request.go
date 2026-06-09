@@ -15,28 +15,52 @@ import (
 )
 
 type UseRequest struct {
-	ScenarioID           string       `json:"scenario_id"`
-	RequestText          string       `json:"request_text"`
-	InputFile            string       `json:"input_file"`
-	SheetName            string       `json:"sheet_name"`
-	OutputFile           string       `json:"output_file"`
-	Operation            string       `json:"operation,omitempty"`
-	TargetSheet          string       `json:"target_sheet,omitempty"`
-	SummaryMode          string       `json:"summary_mode,omitempty"`
-	Filters              []FilterSpec `json:"filters,omitempty"`
-	GroupBy              []string     `json:"group_by,omitempty"`
-	Metrics              []MetricSpec `json:"metrics,omitempty"`
-	TargetColumn         string       `json:"target_column,omitempty"`
-	Operator             string       `json:"operator,omitempty"`
-	Threshold            *float64     `json:"threshold,omitempty"`
-	HighlightColor       string       `json:"highlight_color,omitempty"`
-	LookupSheet          string       `json:"lookup_sheet,omitempty"`
-	JoinKey              string       `json:"join_key,omitempty"`
-	IncludeSourceColumns []string     `json:"include_source_columns,omitempty"`
-	AppendLookupColumns  []string     `json:"append_lookup_columns,omitempty"`
+	ScenarioID           string                 `json:"scenario_id"`
+	RequestText          string                 `json:"request_text"`
+	InputFile            string                 `json:"input_file"`
+	SheetName            string                 `json:"sheet_name"`
+	OutputFile           string                 `json:"output_file"`
+	Operation            string                 `json:"operation,omitempty"`
+	TargetSheet          string                 `json:"target_sheet,omitempty"`
+	SummaryMode          string                 `json:"summary_mode,omitempty"`
+	Filters              []FilterSpec           `json:"filters,omitempty"`
+	GroupBy              []string               `json:"group_by,omitempty"`
+	Metrics              []MetricSpec           `json:"metrics,omitempty"`
+	TargetColumn         string                 `json:"target_column,omitempty"`
+	Operator             string                 `json:"operator,omitempty"`
+	Threshold            *float64               `json:"threshold,omitempty"`
+	HighlightColor       string                 `json:"highlight_color,omitempty"`
+	LookupSheet          string                 `json:"lookup_sheet,omitempty"`
+	JoinKey              string                 `json:"join_key,omitempty"`
+	IncludeSourceColumns []string               `json:"include_source_columns,omitempty"`
+	AppendLookupColumns  []string               `json:"append_lookup_columns,omitempty"`
+	Values               []CellValue            `json:"values,omitempty"`
+	FormulaSourceRow     int                    `json:"formula_source_row,omitempty"`
+	TargetRows           []int                  `json:"target_rows,omitempty"`
+	FormulaColumns       []string               `json:"formula_columns,omitempty"`
+	ValidationRule       *DataValidationRule    `json:"validation_rule,omitempty"`
+	ProtectionRule       *FormulaProtectionRule `json:"protection_rule,omitempty"`
+	HeaderRow            int                    `json:"header_row,omitempty"`
+	HeaderMappings       []HeaderMapping        `json:"header_mappings,omitempty"`
+	CarryForwardMappings []CarryForwardMapping  `json:"carry_forward_mappings,omitempty"`
+	LeftKey              string                 `json:"left_key,omitempty"`
+	RightKey             string                 `json:"right_key,omitempty"`
+	CompareMappings      []CompareMapping       `json:"compare_mappings,omitempty"`
+	FormTitle            string                 `json:"form_title,omitempty"`
+	PrintArea            string                 `json:"print_area,omitempty"`
+	FieldBindings        []FormFieldBinding     `json:"field_bindings,omitempty"`
+	TableBinding         *FormTableBinding      `json:"table_binding,omitempty"`
 }
 
 type ValidatedExecutionRequest = runtimevalidate.ValidatedExecutionRequest
+type CellValue = runtimevalidate.CellValue
+type DataValidationRule = runtimevalidate.DataValidationRule
+type FormulaProtectionRule = runtimevalidate.FormulaProtectionRule
+type HeaderMapping = runtimevalidate.HeaderMapping
+type CarryForwardMapping = runtimevalidate.CarryForwardMapping
+type CompareMapping = runtimevalidate.CompareMapping
+type FormFieldBinding = runtimevalidate.FormFieldBinding
+type FormTableBinding = runtimevalidate.FormTableBinding
 
 func LoadRequest(path string) (UseRequest, error) {
 	var req UseRequest
@@ -266,7 +290,7 @@ func requestSchemaPath() string {
 	if !ok {
 		return filepath.Join("contracts", "requests", "use_request.schema.json")
 	}
-	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", "..", "contracts", "requests", "use_request.schema.json"))
+	return runtimeschema.ResolveRepoPath(file, 3, "contracts", "requests", "use_request.schema.json")
 }
 
 func validatedExecutionRequestSchemaPath() string {
@@ -274,7 +298,7 @@ func validatedExecutionRequestSchemaPath() string {
 	if !ok {
 		return filepath.Join("contracts", "requests", "validated_execution_request.schema.json")
 	}
-	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", "..", "contracts", "requests", "validated_execution_request.schema.json"))
+	return runtimeschema.ResolveRepoPath(file, 3, "contracts", "requests", "validated_execution_request.schema.json")
 }
 
 func verificationReviewSchemaPath() string {
@@ -282,7 +306,7 @@ func verificationReviewSchemaPath() string {
 	if !ok {
 		return filepath.Join("contracts", "results", "verification_review.schema.json")
 	}
-	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", "..", "contracts", "results", "verification_review.schema.json"))
+	return runtimeschema.ResolveRepoPath(file, 3, "contracts", "results", "verification_review.schema.json")
 }
 
 func subagentLoopStateSchemaPath() string {
@@ -290,7 +314,7 @@ func subagentLoopStateSchemaPath() string {
 	if !ok {
 		return filepath.Join("contracts", "results", "subagent_loop_state.schema.json")
 	}
-	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", "..", "contracts", "results", "subagent_loop_state.schema.json"))
+	return runtimeschema.ResolveRepoPath(file, 3, "contracts", "results", "subagent_loop_state.schema.json")
 }
 
 func repairAdviceSchemaPath() string {
@@ -298,7 +322,7 @@ func repairAdviceSchemaPath() string {
 	if !ok {
 		return filepath.Join("contracts", "results", "repair_advice.schema.json")
 	}
-	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", "..", "contracts", "results", "repair_advice.schema.json"))
+	return runtimeschema.ResolveRepoPath(file, 3, "contracts", "results", "repair_advice.schema.json")
 }
 
 func normalizeLoopStateValue(value any, scenarioID string, decision string) (any, error) {

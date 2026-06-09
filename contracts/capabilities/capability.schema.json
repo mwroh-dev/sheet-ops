@@ -28,7 +28,6 @@
   },
   "required": [
     "name",
-    "operation_family",
     "task_operations",
     "inputs",
     "outputs",
@@ -46,15 +45,16 @@
         "group_summarize",
         "highlight_threshold",
         "join_lookup",
-        "write_values"
-      ]
-    },
-    "operation_family": {
-      "enum": [
-        "group_summarize",
-        "highlight_threshold",
-        "join_lookup",
-        "write_values"
+        "append_structured_rows",
+        "extend_table_formulas",
+        "copy_period_sheet",
+        "add_data_validation",
+        "protect_formula_cells",
+        "normalize_headers",
+        "roll_forward_period",
+        "write_values",
+        "reconcile_tables",
+        "generate_printable_form"
       ]
     },
     "task_operations": {
@@ -95,71 +95,5 @@
       ]
     }
   },
-  "allOf": [
-    {
-      "if": {
-        "properties": {
-          "name": {
-            "const": "group_summarize"
-          }
-        }
-      },
-      "then": {
-        "properties": {
-          "operation_family": {
-            "const": "group_summarize"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "name": {
-            "const": "highlight_threshold"
-          }
-        }
-      },
-      "then": {
-        "properties": {
-          "operation_family": {
-            "const": "highlight_threshold"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "name": {
-            "const": "join_lookup"
-          }
-        }
-      },
-      "then": {
-        "properties": {
-          "operation_family": {
-            "const": "join_lookup"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "name": {
-            "const": "write_values"
-          }
-        }
-      },
-      "then": {
-        "properties": {
-          "operation_family": {
-            "const": "write_values"
-          }
-        }
-      }
-    }
-  ],
   "additionalProperties": false
 }

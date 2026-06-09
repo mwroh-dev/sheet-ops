@@ -69,6 +69,16 @@ func TestResolvePackageRootPrefersCallerDerivedSourceRootOverWorkspaceInstalledF
 	}
 }
 
+func TestResolvePackageRootDoesNotReturnMissingCallerDerivedSourceRoot(t *testing.T) {
+	workspaceDir := t.TempDir()
+	callerFile := filepath.Join(t.TempDir(), "runtime", "openlayer", "requestcompiler", "interpreter.go")
+
+	got := resolvePackageRoot(workspaceDir, callerFile)
+	if got != workspaceDir {
+		t.Fatalf("resolvePackageRoot()=%q want working dir fallback %q", got, workspaceDir)
+	}
+}
+
 func mustWriteRequestCompilerFixture(t *testing.T, root string) {
 	t.Helper()
 

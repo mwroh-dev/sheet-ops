@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "round_id": "round-009",
+  "generated_by": "judge_synthesizer",
+  "score": {
+    "current_level": "L4",
+    "numeric_score": 98,
+    "rationale": "Round-009 keeps the research set at L4 while resolving the last medium research backlog by judgment rather than promotion: `health_metrics_tracker` gains broader cross-source health evidence, but the synthesized boundary now lands cleanly as recurring and non-roadmap because too much of the remaining family still leans on printable charts, reference-band comparisons, or light logs instead of workbook-native protected summaries or in-sheet control gates. The registry is therefore stable enough to stop collection and move to implementation fixture work on the 21 roadmap candidates, but it still stops short of L5 because the final unresolved family is excluded rather than capability-ready."
+  },
+  "counts": {
+    "observations_total": 251,
+    "raw_shards": 9,
+    "hypotheses": 36,
+    "judgments": 36,
+    "roadmap_candidates": 21,
+    "recurring": 1,
+    "observed": 0,
+    "rejected": 14
+  },
+  "findings": [
+    {
+      "id": "health_metrics_variant_gap",
+      "severity": "medium",
+      "status": "resolved",
+      "summary": "Round-009 adds non-overlapping glucose, blood-count, weight-loss, growth, goal-sheet, and medical-progress variants, which is enough to close the research question even though it is not enough to promote the pattern.",
+      "evidence": [
+        "round008_health_templatenet_bplog_029",
+        "round008_health_smartsheet_progress_031",
+        "round009_vertex42_blood_count_tracker_001",
+        "round009_vertex42_weight_loss_chart_004",
+        "round009_vertex42_infant_growth_chart_005",
+        "round009_template_blood_sugar_log_006",
+        "round009_template_blood_glucose_monitoring_log_007",
+        "round009_template_blood_sugar_after_exercise_chart_013",
+        "round009_template_weight_loss_goal_sheet_017",
+        "round009_smartsheet_medical_progress_template_018"
+      ],
+      "required_action": "Decide in round-009 whether the narrowed health family is roadmap-ready or whether research should stop with the pattern kept outside the fixture set.",
+      "resolution": "Kept `health_metrics_tracker` at `recurring`, expanded the registry evidence through round-009, documented that the remaining family still over-indexes on printable charts, reference comparisons, and light logs instead of workbook-native protected-summary or in-sheet control mechanics, and ended further collection in favor of implementation fixture work on the 21 roadmap candidates."
+    },
+    {
+      "id": "attendance_boundary_stability",
+      "severity": "low",
+      "status": "resolved",
+      "summary": "No round-009 evidence weakens the promoted matrix-first attendance boundary.",
+      "evidence": [
+        "round007_attendance_smartsheet_excel_tracking_010",
+        "round008_attendance_microsoftqa_record_009",
+        "round008_attendance_smartsheet_lock_018",
+        "round008_attendance_smartsheet_helper_019"
+      ],
+      "required_action": "Confirm that `attendance_register` remains matrix-first and roadmap-ready while the health decision is being finalized.",
+      "resolution": "Left `attendance_register` at `roadmap_candidate`, updated the registry note to span round-009, and kept append-only sign-in logs outside the judgment boundary."
+    },
+    {
+      "id": "expense_policy_retirement_guard",
+      "severity": "low",
+      "status": "resolved",
+      "summary": "Round-009 still provides no workbook-native expense-policy gate evidence and does not justify reopening the retired pattern.",
+      "evidence": [
+        "mercury_expense_policy_021",
+        "round005_expense_policy_template_net_rules_005",
+        "round006_expense_smartsheet_tracking_002",
+        "round007_expense_policy_smartsheet_tracking_001",
+        "round007_expense_policy_template_net_limit_007"
+      ],
+      "required_action": "Keep `expense_policy_checker` retired unless a sheet itself exposes formulas, validations, or locked rule cells that block or flag non-compliant claims.",
+      "resolution": "Left `expense_policy_checker` in `rejected` status, extended the registry note through round-009, and kept future expense-policy work reopen-only."
+    }
+  ],
+  "next_round_medium_backlog": []
+}

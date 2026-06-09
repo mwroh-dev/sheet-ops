@@ -426,6 +426,12 @@ func writeOrchestratorDecisionOutputSchema(path string) error {
 					map[string]any{"type": "null"},
 				},
 			},
+			"template_class_plan": map[string]any{
+				"anyOf": []any{
+					templateClassPlanSchema(),
+					map[string]any{"type": "null"},
+				},
+			},
 			"repair_advice": map[string]any{
 				"anyOf": []any{
 					repairAdviceSchema(),
@@ -435,6 +441,31 @@ func writeOrchestratorDecisionOutputSchema(path string) error {
 		},
 		"additionalProperties": false,
 	})
+}
+
+func templateClassPlanSchema() map[string]any {
+	return map[string]any{
+		"type":     "object",
+		"required": []string{"organism_id", "operation_sequence", "required_verifier_specs"},
+		"properties": map[string]any{
+			"organism_id": map[string]any{"type": "string", "minLength": 1},
+			"operation_sequence": map[string]any{
+				"type":     "array",
+				"minItems": 1,
+				"items":    map[string]any{"type": "string", "minLength": 1},
+			},
+			"required_verifier_specs": map[string]any{
+				"type":     "array",
+				"minItems": 1,
+				"items":    map[string]any{"type": "string", "minLength": 1},
+			},
+			"non_claims": map[string]any{
+				"type":  "array",
+				"items": map[string]any{"type": "string"},
+			},
+		},
+		"additionalProperties": false,
+	}
 }
 
 func writeResultVerifierOutcomeSchema(path string) error {
@@ -560,6 +591,10 @@ func recoverOrchestratorDecision(
 	})
 	if err != nil {
 		return useorchestrator.OrchestratorDecision{}, err
+	}
+	if compiled.TemplateClassPlan != nil {
+		plan := useorchestrator.TemplateClassPlanHint(*compiled.TemplateClassPlan)
+		decision.TemplateClassPlan = &plan
 	}
 	if compiled.ValidatedExecutionRequest == nil {
 		return useorchestrator.OrchestratorDecision{}, fmt.Errorf("deterministic recovery did not emit validated execution request")

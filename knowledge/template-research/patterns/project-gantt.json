@@ -1,0 +1,43 @@
+{
+  "pattern_id": "project_gantt",
+  "title": "Project task timeline",
+  "domain": "project",
+  "why": "Make task ownership, timing, and progress visible without requiring a dedicated project-management application.",
+  "visual_patterns": [
+    "timeline_grid",
+    "status_color",
+    "input_area",
+    "summary_table"
+  ],
+  "data_patterns": [
+    "entity_table",
+    "date_range_expansion",
+    "formula_propagation",
+    "category_mapping"
+  ],
+  "validation_patterns": [
+    "required_fields",
+    "valid_date_range",
+    "known_status"
+  ],
+  "workflow_patterns": [
+    "todo_in_progress_done",
+    "overdue_review",
+    "schedule_update"
+  ],
+  "source_observations": [
+    "vertex42_project_gantt_seed"
+  ],
+  "existing_capabilities": [
+    "highlight_threshold",
+    "group_summarize"
+  ],
+  "missing_capability_candidates": [
+    "extend_table_formulas",
+    "add_data_validation",
+    "generate_printable_form",
+    "roll_forward_period"
+  ],
+  "recurrence_status": "single_source_seed",
+  "promotion_note": "Timeline rendering needs a later visual verification strategy before it can become a supported Sheet Ops capability."
+}

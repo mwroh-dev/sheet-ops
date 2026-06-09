@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	ModeStructuredUseRequest = "structured_use_request"
-	ModePromptText           = "prompt_text"
+	ModeStructuredUseRequest     = "structured_use_request"
+	ModePromptText               = "prompt_text"
+	ModeOrganismExecutionRequest = "organism_execution_request"
 )
 
 type Judgment struct {
@@ -51,14 +52,26 @@ func JudgeRequestRef(ref RequestRef) (Judgment, error) {
 		return Judgment{}, err
 	}
 
-	if err := runtimeschema.ValidateStruct(structuredUseRequestSchemaPath(), document); err != nil {
-		return Judgment{}, err
+	switch ref.Kind {
+	case ModeStructuredUseRequest:
+		if err := runtimeschema.ValidateStruct(structuredUseRequestSchemaPath(), document); err != nil {
+			return Judgment{}, err
+		}
+		return Validate(Judgment{
+			RequestMode: ModeStructuredUseRequest,
+			Reason:      "request_ref kind is structured_use_request and the file satisfies the structured_use_request contract",
+		})
+	case ModeOrganismExecutionRequest:
+		if err := runtimeschema.ValidateStruct(organismExecutionRequestSchemaPath(), document); err != nil {
+			return Judgment{}, err
+		}
+		return Validate(Judgment{
+			RequestMode: ModeOrganismExecutionRequest,
+			Reason:      "request_ref kind is organism_execution_request and the file satisfies the organism_execution_request contract",
+		})
+	default:
+		return Judgment{}, fmt.Errorf("unsupported request_ref kind %q", ref.Kind)
 	}
-
-	return Validate(Judgment{
-		RequestMode: ModeStructuredUseRequest,
-		Reason:      "request_ref kind is structured_use_request and the file satisfies the structured_use_request contract",
-	})
 }
 
 func readRequestFile(path string) ([]byte, error) {
@@ -87,7 +100,7 @@ func requestModeJudgmentSchemaPath() string {
 	if !ok {
 		return filepath.Join("contracts", "requests", "request_mode_judgment.schema.json")
 	}
-	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", "..", "contracts", "requests", "request_mode_judgment.schema.json"))
+	return runtimeschema.ResolveRepoPath(file, 3, "contracts", "requests", "request_mode_judgment.schema.json")
 }
 
 func requestRefSchemaPath() string {
@@ -95,7 +108,7 @@ func requestRefSchemaPath() string {
 	if !ok {
 		return filepath.Join("contracts", "requests", "request_ref.schema.json")
 	}
-	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", "..", "contracts", "requests", "request_ref.schema.json"))
+	return runtimeschema.ResolveRepoPath(file, 3, "contracts", "requests", "request_ref.schema.json")
 }
 
 func structuredUseRequestSchemaPath() string {
@@ -103,5 +116,13 @@ func structuredUseRequestSchemaPath() string {
 	if !ok {
 		return filepath.Join("contracts", "requests", "structured_use_request.schema.json")
 	}
-	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", "..", "contracts", "requests", "structured_use_request.schema.json"))
+	return runtimeschema.ResolveRepoPath(file, 3, "contracts", "requests", "structured_use_request.schema.json")
+}
+
+func organismExecutionRequestSchemaPath() string {
+	_, file, _, ok := goruntime.Caller(0)
+	if !ok {
+		return filepath.Join("contracts", "requests", "organism_execution_request.schema.json")
+	}
+	return runtimeschema.ResolveRepoPath(file, 3, "contracts", "requests", "organism_execution_request.schema.json")
 }

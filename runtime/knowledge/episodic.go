@@ -169,7 +169,5 @@ func repoJoin(parts ...string) string {
 	if !ok {
 		return filepath.Join(parts...)
 	}
-	root := filepath.Clean(filepath.Join(filepath.Dir(file), "..", ".."))
-	all := append([]string{root}, parts...)
-	return filepath.Join(all...)
+	return runtimeschema.ResolveRepoPath(file, 2, parts...)
 }

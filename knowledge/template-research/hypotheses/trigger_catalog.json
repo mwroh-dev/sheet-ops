@@ -1,0 +1,496 @@
+{
+  "schema_version": "1.0",
+  "purpose": "Hypothesis-only catalog of spreadsheet-work triggers for template research.",
+  "groups": {
+    "visual": [
+      {
+        "id": "vis_print_ready_summary",
+        "title": "Print-ready summary block",
+        "layer": "visual",
+        "why": "People want the workbook to read cleanly on paper or PDF without reformatting.",
+        "example_domains": ["invoice", "budget", "attendance"],
+        "likely_sheet_ops_capabilities": ["generate_printable_form", "protect_formula_cells", "format_summary_section"]
+      },
+      {
+        "id": "vis_header_hero",
+        "title": "Large report header with branding",
+        "layer": "visual",
+        "why": "The sheet doubles as a document and needs an obvious top-of-page identity area.",
+        "example_domains": ["invoice", "financial_statement", "project_gantt"],
+        "likely_sheet_ops_capabilities": ["generate_printable_form", "normalize_headers"]
+      },
+      {
+        "id": "vis_sidebar_totals",
+        "title": "Fixed totals or KPI sidebar",
+        "layer": "visual",
+        "why": "Users need key totals visible while scanning or editing the main table.",
+        "example_domains": ["budget", "inventory", "timesheet"],
+        "likely_sheet_ops_capabilities": ["create_pivot_summary", "group_summarize", "format_summary_section"]
+      },
+      {
+        "id": "vis_table_with_emphasis",
+        "title": "Table with highlighted exceptions",
+        "layer": "visual",
+        "why": "Color and emphasis communicate what needs attention faster than raw values.",
+        "example_domains": ["maintenance_log", "health_log", "inventory"],
+        "likely_sheet_ops_capabilities": ["conditional_formatting", "flag_outliers", "protect_formula_cells"]
+      },
+      {
+        "id": "vis_calendar_grid",
+        "title": "Calendar-style grid",
+        "layer": "visual",
+        "why": "Time-oriented work is easier to manage when days or weeks appear as a visual matrix.",
+        "example_domains": ["schedule_roster", "attendance", "project_gantt"],
+        "likely_sheet_ops_capabilities": ["copy_period_sheet", "roll_forward_period", "generate_printable_form"]
+      },
+      {
+        "id": "vis_month_sectioning",
+        "title": "Repeated monthly sections",
+        "layer": "visual",
+        "why": "Recurring reporting cycles often need each period rendered as a similar block.",
+        "example_domains": ["budget", "timesheet", "financial_statement"],
+        "likely_sheet_ops_capabilities": ["copy_period_sheet", "roll_forward_period", "extend_table_formulas"]
+      },
+      {
+        "id": "vis_progress_bar",
+        "title": "Progress indicator or completion bar",
+        "layer": "visual",
+        "why": "Stakeholders want status at a glance rather than reading every row.",
+        "example_domains": ["project_gantt", "checklist_task", "procurement"],
+        "likely_sheet_ops_capabilities": ["group_summarize", "conditional_formatting"]
+      },
+      {
+        "id": "vis_gantt_timeline",
+        "title": "Timeline or gantt band",
+        "layer": "visual",
+        "why": "Duration planning is easier when tasks sit against a horizontal time axis.",
+        "example_domains": ["project_gantt", "construction", "event_planning"],
+        "likely_sheet_ops_capabilities": ["copy_period_sheet", "generate_printable_form", "group_summarize"]
+      },
+      {
+        "id": "vis_color_key",
+        "title": "Legend or color key",
+        "layer": "visual",
+        "why": "Users need a decode step when status colors carry meaning.",
+        "example_domains": ["attendance", "health_log", "safety_log"],
+        "likely_sheet_ops_capabilities": ["conditional_formatting", "normalize_headers"]
+      },
+      {
+        "id": "vis_dashboard_tiles",
+        "title": "Summary tiles on a dashboard",
+        "layer": "visual",
+        "why": "Decision-makers often start with a compact dashboard before diving into detail.",
+        "example_domains": ["budget", "inventory", "sales_pipeline"],
+        "likely_sheet_ops_capabilities": ["create_pivot_summary", "group_summarize"]
+      },
+      {
+        "id": "vis_frozen_reference_band",
+        "title": "Frozen reference rows or columns",
+        "layer": "visual",
+        "why": "The workbook is meant for long scrolling while preserving labels and context.",
+        "example_domains": ["attendance", "timesheet", "inventory"],
+        "likely_sheet_ops_capabilities": ["normalize_headers", "protect_formula_cells"]
+      },
+      {
+        "id": "vis_multi_block_form",
+        "title": "Multi-block form layout",
+        "layer": "visual",
+        "why": "Some templates separate identity, line items, notes, and totals into distinct visual zones.",
+        "example_domains": ["invoice", "purchase_order", "expense_report"],
+        "likely_sheet_ops_capabilities": ["generate_printable_form", "protect_formula_cells"]
+      }
+    ],
+    "data": [
+      {
+        "id": "data_append_rows",
+        "title": "Append rows into a structured table",
+        "layer": "data",
+        "why": "Templates often accumulate repeated entries instead of overwriting prior records.",
+        "example_domains": ["timesheet", "inventory", "maintenance_log"],
+        "likely_sheet_ops_capabilities": ["append_structured_rows", "extend_table_formulas"]
+      },
+      {
+        "id": "data_lookup_master",
+        "title": "Lookup against a master list",
+        "layer": "data",
+        "why": "Users reference canonical entities rather than typing names or codes repeatedly.",
+        "example_domains": ["invoice", "procurement", "attendance"],
+        "likely_sheet_ops_capabilities": ["join_lookup", "normalize_headers"]
+      },
+      {
+        "id": "data_table_rollup",
+        "title": "Roll up detail rows into a summary",
+        "layer": "data",
+        "why": "The sheet has detailed entries but the real value is the aggregated outcome.",
+        "example_domains": ["budget", "financial_statement", "sales_pipeline"],
+        "likely_sheet_ops_capabilities": ["group_summarize", "create_pivot_summary"]
+      },
+      {
+        "id": "data_period_rollforward",
+        "title": "Roll forward the prior period",
+        "layer": "data",
+        "why": "Recurring templates inherit structure and formulas from the last cycle.",
+        "example_domains": ["budget", "project_gantt", "timesheet"],
+        "likely_sheet_ops_capabilities": ["roll_forward_period", "copy_period_sheet", "extend_table_formulas"]
+      },
+      {
+        "id": "data_formula_cascade",
+        "title": "Formula cascade across rows or columns",
+        "layer": "data",
+        "why": "One computed cell usually needs to propagate to all new records.",
+        "example_domains": ["invoice", "inventory", "loan_calculator"],
+        "likely_sheet_ops_capabilities": ["extend_table_formulas", "protect_formula_cells"]
+      },
+      {
+        "id": "data_multi_sheet_linking",
+        "title": "Linked calculations across sheets",
+        "layer": "data",
+        "why": "Different tabs often separate raw inputs, working calculations, and outputs.",
+        "example_domains": ["financial_statement", "budget", "loan_calculator"],
+        "likely_sheet_ops_capabilities": ["join_lookup", "protect_formula_cells"]
+      },
+      {
+        "id": "data_reconcile_sources",
+        "title": "Reconcile two source tables",
+        "layer": "data",
+        "why": "Users compare imported records with a second list to find gaps or mismatches.",
+        "example_domains": ["procurement", "inventory", "finance_close"],
+        "likely_sheet_ops_capabilities": ["reconcile_tables", "create_pivot_summary"]
+      },
+      {
+        "id": "data_unique_id_tracking",
+        "title": "Track unique IDs or codes",
+        "layer": "data",
+        "why": "Templates often need a stable identifier for audit, lookup, or duplication control.",
+        "example_domains": ["invoice", "asset_register", "patient_log"],
+        "likely_sheet_ops_capabilities": ["normalize_headers", "append_structured_rows"]
+      },
+      {
+        "id": "data_status_pipeline",
+        "title": "Status pipeline across stages",
+        "layer": "data",
+        "why": "Work items move through a finite lifecycle that needs to be counted or filtered.",
+        "example_domains": ["sales_pipeline", "procurement", "project_gantt"],
+        "likely_sheet_ops_capabilities": ["create_pivot_summary", "group_summarize"]
+      },
+      {
+        "id": "data_table_import",
+        "title": "Import into a clean table layout",
+        "layer": "data",
+        "why": "External exports need normalization before they can be reused reliably.",
+        "example_domains": ["attendance", "inventory", "finance_close"],
+        "likely_sheet_ops_capabilities": ["normalize_headers", "reconcile_tables"]
+      },
+      {
+        "id": "data_lookup_rates",
+        "title": "Lookup rates, prices, or coefficients",
+        "layer": "data",
+        "why": "A central reference table reduces hard-coded values across many rows.",
+        "example_domains": ["invoice", "loan_calculator", "budget"],
+        "likely_sheet_ops_capabilities": ["join_lookup", "protect_formula_cells"]
+      },
+      {
+        "id": "data_summary_snapshot",
+        "title": "Snapshot summary for a reporting date",
+        "layer": "data",
+        "why": "A workbook often preserves a point-in-time close rather than only live totals.",
+        "example_domains": ["financial_statement", "health_log", "maintenance_log"],
+        "likely_sheet_ops_capabilities": ["create_pivot_summary", "roll_forward_period"]
+      }
+    ],
+    "validation": [
+      {
+        "id": "val_required_identity",
+        "title": "Required identity fields",
+        "layer": "validation",
+        "why": "Key records should not be saved without the person, item, project, or account they belong to.",
+        "example_domains": ["invoice", "attendance", "inventory"],
+        "likely_sheet_ops_capabilities": ["add_data_validation", "normalize_headers"]
+      },
+      {
+        "id": "val_numeric_ranges",
+        "title": "Numeric range constraints",
+        "layer": "validation",
+        "why": "Amounts, hours, percentages, and counts need guardrails to avoid invalid entry.",
+        "example_domains": ["budget", "loan_calculator", "timesheet"],
+        "likely_sheet_ops_capabilities": ["add_data_validation", "extend_table_formulas"]
+      },
+      {
+        "id": "val_date_windows",
+        "title": "Allowed date window",
+        "layer": "validation",
+        "why": "Entries should fall inside a reporting period, service window, or active engagement.",
+        "example_domains": ["project_gantt", "attendance", "schedule_roster"],
+        "likely_sheet_ops_capabilities": ["add_data_validation", "copy_period_sheet"]
+      },
+      {
+        "id": "val_status_lists",
+        "title": "Fixed status list",
+        "layer": "validation",
+        "why": "A closed set of labels keeps workflow counts and filters reliable.",
+        "example_domains": ["sales_pipeline", "procurement", "maintenance_log"],
+        "likely_sheet_ops_capabilities": ["add_data_validation", "create_pivot_summary"]
+      },
+      {
+        "id": "val_category_lists",
+        "title": "Fixed category or class list",
+        "layer": "validation",
+        "why": "Categorical inputs need consistency so summaries do not fragment.",
+        "example_domains": ["budget", "inventory", "expense_report"],
+        "likely_sheet_ops_capabilities": ["add_data_validation", "normalize_headers"]
+      },
+      {
+        "id": "val_cross_field_rule",
+        "title": "Cross-field consistency check",
+        "layer": "validation",
+        "why": "One field should agree with another, such as dates, totals, or units.",
+        "example_domains": ["invoice", "purchase_order", "health_log"],
+        "likely_sheet_ops_capabilities": ["protect_formula_cells", "reconcile_tables"]
+      },
+      {
+        "id": "val_duplicate_prevention",
+        "title": "Duplicate prevention",
+        "layer": "validation",
+        "why": "Repeated records can break totals, approvals, or audit trails.",
+        "example_domains": ["asset_register", "patient_log", "vendor_master"],
+        "likely_sheet_ops_capabilities": ["append_structured_rows", "normalize_headers"]
+      },
+      {
+        "id": "val_formula_lock",
+        "title": "Formula cells should not be edited",
+        "layer": "validation",
+        "why": "Calculated fields are easier to trust when users cannot overwrite them directly.",
+        "example_domains": ["invoice", "budget", "financial_statement"],
+        "likely_sheet_ops_capabilities": ["protect_formula_cells", "extend_table_formulas"]
+      },
+      {
+        "id": "val_unit_normalization",
+        "title": "Unit normalization",
+        "layer": "validation",
+        "why": "Different units need to map to one shared interpretation before calculations.",
+        "example_domains": ["inventory", "maintenance_log", "health_log"],
+        "likely_sheet_ops_capabilities": ["normalize_headers", "join_lookup"]
+      },
+      {
+        "id": "val_threshold_alerts",
+        "title": "Threshold-based alerts",
+        "layer": "validation",
+        "why": "Exceptional values should surface immediately rather than waiting for review.",
+        "example_domains": ["budget", "health_log", "quality_check"],
+        "likely_sheet_ops_capabilities": ["conditional_formatting", "flag_outliers"]
+      },
+      {
+        "id": "val_required_comment",
+        "title": "Required note on exception",
+        "layer": "validation",
+        "why": "Exceptions often need a human explanation to stay audit-ready.",
+        "example_domains": ["expense_report", "maintenance_log", "procurement"],
+        "likely_sheet_ops_capabilities": ["add_data_validation", "protect_formula_cells"]
+      },
+      {
+        "id": "val_allowed_sequence",
+        "title": "Allowed sequence or dependency order",
+        "layer": "validation",
+        "why": "Some fields only make sense if prior steps were completed first.",
+        "example_domains": ["checklist_task", "project_gantt", "procurement"],
+        "likely_sheet_ops_capabilities": ["add_data_validation", "group_summarize"]
+      }
+    ],
+    "workflow": [
+      {
+        "id": "wf_draft_to_submit",
+        "title": "Draft to submit workflow",
+        "layer": "workflow",
+        "why": "A workbook often starts as a working draft and then becomes a reviewed submission.",
+        "example_domains": ["expense_report", "invoice", "purchase_order"],
+        "likely_sheet_ops_capabilities": ["protect_formula_cells", "generate_printable_form"]
+      },
+      {
+        "id": "wf_review_approval",
+        "title": "Review and approval step",
+        "layer": "workflow",
+        "why": "Many templates separate entry from sign-off so ownership is explicit.",
+        "example_domains": ["procurement", "expense_report", "change_request"],
+        "likely_sheet_ops_capabilities": ["protect_formula_cells", "add_data_validation"]
+      },
+      {
+        "id": "wf_backlog_to_done",
+        "title": "Backlog to done tracking",
+        "layer": "workflow",
+        "why": "Work items move through a queue and the template tracks completion state.",
+        "example_domains": ["checklist_task", "project_gantt", "maintenance_log"],
+        "likely_sheet_ops_capabilities": ["group_summarize", "create_pivot_summary"]
+      },
+      {
+        "id": "wf_handoff_between_owners",
+        "title": "Handoff between owners",
+        "layer": "workflow",
+        "why": "Responsibility changes across teams or roles and must stay visible.",
+        "example_domains": ["procurement", "project_gantt", "service_ticket"],
+        "likely_sheet_ops_capabilities": ["normalize_headers", "group_summarize"]
+      },
+      {
+        "id": "wf_period_close",
+        "title": "Periodic close or lock",
+        "layer": "workflow",
+        "why": "A completed cycle becomes read-only so the next cycle can start cleanly.",
+        "example_domains": ["budget", "financial_statement", "attendance"],
+        "likely_sheet_ops_capabilities": ["roll_forward_period", "protect_formula_cells"]
+      },
+      {
+        "id": "wf_repeating_check_in",
+        "title": "Recurring check-in or log entry",
+        "layer": "workflow",
+        "why": "The same workbook is updated every day, week, or month.",
+        "example_domains": ["health_log", "timesheet", "maintenance_log"],
+        "likely_sheet_ops_capabilities": ["copy_period_sheet", "append_structured_rows"]
+      },
+      {
+        "id": "wf_exception_escalation",
+        "title": "Exception escalation path",
+        "layer": "workflow",
+        "why": "Anomalies need a next step rather than just being flagged.",
+        "example_domains": ["quality_check", "health_log", "finance_close"],
+        "likely_sheet_ops_capabilities": ["flag_outliers", "group_summarize"]
+      },
+      {
+        "id": "wf_request_fulfillment",
+        "title": "Request to fulfillment flow",
+        "layer": "workflow",
+        "why": "One sheet tracks what was asked for, another what was delivered.",
+        "example_domains": ["procurement", "inventory", "service_ticket"],
+        "likely_sheet_ops_capabilities": ["join_lookup", "reconcile_tables"]
+      },
+      {
+        "id": "wf_quote_to_invoice",
+        "title": "Quote to invoice progression",
+        "layer": "workflow",
+        "why": "Commercial templates often transform a pre-sales artifact into billing output.",
+        "example_domains": ["invoice", "sales_pipeline", "service_estimate"],
+        "likely_sheet_ops_capabilities": ["generate_printable_form", "extend_table_formulas"]
+      },
+      {
+        "id": "wf_reconciliation_cycle",
+        "title": "Reconciliation cycle",
+        "layer": "workflow",
+        "why": "Users compare sources, resolve differences, and document the final state.",
+        "example_domains": ["finance_close", "inventory", "procurement"],
+        "likely_sheet_ops_capabilities": ["reconcile_tables", "create_pivot_summary"]
+      },
+      {
+        "id": "wf_status_review",
+        "title": "Status review meeting pack",
+        "layer": "workflow",
+        "why": "A workbook feeds a recurring review where only the latest status matters.",
+        "example_domains": ["project_gantt", "sales_pipeline", "operations_review"],
+        "likely_sheet_ops_capabilities": ["create_pivot_summary", "generate_printable_form"]
+      },
+      {
+        "id": "wf_audit_trail",
+        "title": "Audit trail and sign-off",
+        "layer": "workflow",
+        "why": "People need to know who changed what and when before the workbook is trusted.",
+        "example_domains": ["financial_statement", "expense_report", "health_log"],
+        "likely_sheet_ops_capabilities": ["protect_formula_cells", "append_structured_rows"]
+      }
+    ],
+    "domain": [
+      {
+        "id": "dom_finance_close",
+        "title": "Finance close package",
+        "layer": "domain",
+        "why": "Closing workbooks combine reconciliations, summaries, and controlled outputs.",
+        "example_domains": ["financial_statement", "budget", "cash_flow"],
+        "likely_sheet_ops_capabilities": ["reconcile_tables", "create_pivot_summary", "protect_formula_cells"]
+      },
+      {
+        "id": "dom_sales_billing",
+        "title": "Sales and billing workspace",
+        "layer": "domain",
+        "why": "Commercial teams need line items, terms, taxes, and printable customer-facing forms.",
+        "example_domains": ["invoice", "quote", "sales_pipeline"],
+        "likely_sheet_ops_capabilities": ["generate_printable_form", "extend_table_formulas", "add_data_validation"]
+      },
+      {
+        "id": "dom_inventory_control",
+        "title": "Inventory control workbook",
+        "layer": "domain",
+        "why": "Stock templates track quantities, movements, thresholds, and reorder decisions.",
+        "example_domains": ["inventory", "warehouse", "procurement"],
+        "likely_sheet_ops_capabilities": ["append_structured_rows", "reconcile_tables", "flag_outliers"]
+      },
+      {
+        "id": "dom_people_ops",
+        "title": "People operations tracker",
+        "layer": "domain",
+        "why": "HR-adjacent sheets manage attendance, onboarding, and recurring status updates.",
+        "example_domains": ["attendance", "hr_onboarding", "schedule_roster"],
+        "likely_sheet_ops_capabilities": ["add_data_validation", "copy_period_sheet", "group_summarize"]
+      },
+      {
+        "id": "dom_project_delivery",
+        "title": "Project delivery tracker",
+        "layer": "domain",
+        "why": "Delivery sheets merge milestones, owners, dependencies, and timeline views.",
+        "example_domains": ["project_gantt", "change_request", "operations_review"],
+        "likely_sheet_ops_capabilities": ["copy_period_sheet", "group_summarize", "generate_printable_form"]
+      },
+      {
+        "id": "dom_maintenance_service",
+        "title": "Maintenance and service log",
+        "layer": "domain",
+        "why": "Operational logs capture inspections, incidents, fixes, and closure notes.",
+        "example_domains": ["maintenance_log", "service_ticket", "quality_check"],
+        "likely_sheet_ops_capabilities": ["append_structured_rows", "add_data_validation", "flag_outliers"]
+      },
+      {
+        "id": "dom_health_tracking",
+        "title": "Health or wellness tracker",
+        "layer": "domain",
+        "why": "Personal tracking sheets combine measurements, thresholds, and trends over time.",
+        "example_domains": ["health_log", "fitness_log", "care_plan"],
+        "likely_sheet_ops_capabilities": ["copy_period_sheet", "flag_outliers", "create_pivot_summary"]
+      },
+      {
+        "id": "dom_education_roster",
+        "title": "Education roster and grade tracker",
+        "layer": "domain",
+        "why": "Classroom templates blend rosters, attendance, and assessment summaries.",
+        "example_domains": ["gradebook", "attendance", "schedule_roster"],
+        "likely_sheet_ops_capabilities": ["add_data_validation", "group_summarize", "normalize_headers"]
+      },
+      {
+        "id": "dom_procurement_cycle",
+        "title": "Procurement cycle tracker",
+        "layer": "domain",
+        "why": "Procurement workbooks move from request through approval to receipt and payment.",
+        "example_domains": ["purchase_order", "procurement", "inventory"],
+        "likely_sheet_ops_capabilities": ["reconcile_tables", "protect_formula_cells", "add_data_validation"]
+      },
+      {
+        "id": "dom_logistics_schedule",
+        "title": "Logistics planning sheet",
+        "layer": "domain",
+        "why": "Dispatch and delivery planning need routes, dates, loads, and timing windows.",
+        "example_domains": ["logistics", "fleet_schedule", "warehouse"],
+        "likely_sheet_ops_capabilities": ["copy_period_sheet", "group_summarize", "add_data_validation"]
+      },
+      {
+        "id": "dom_risk_compliance",
+        "title": "Risk or compliance register",
+        "layer": "domain",
+        "why": "Control-oriented sheets track issues, controls, owners, due dates, and exceptions.",
+        "example_domains": ["compliance", "audit", "safety_log"],
+        "likely_sheet_ops_capabilities": ["add_data_validation", "flag_outliers", "protect_formula_cells"]
+      },
+      {
+        "id": "dom_asset_register",
+        "title": "Asset register",
+        "layer": "domain",
+        "why": "Asset records need unique identifiers, lifecycle state, and periodic review.",
+        "example_domains": ["asset_register", "inventory", "maintenance_log"],
+        "likely_sheet_ops_capabilities": ["normalize_headers", "append_structured_rows", "reconcile_tables"]
+      }
+    ]
+  }
+}

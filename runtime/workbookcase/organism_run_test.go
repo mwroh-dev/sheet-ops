@@ -1,0 +1,1700 @@
+package workbookcase
+
+import (
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"testing"
+
+	runtimetaskspec "github.com/mwroh/sheet-ops/runtime/taskspec"
+	"github.com/mwroh/sheet-ops/runtime/templateclass"
+	"github.com/xuri/excelize/v2"
+)
+
+func TestRunOrganismPlanExecutesInvoiceSequenceAndEvaluatesTemplateClassEvidence(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "invoice.xlsx")
+	outputFile := filepath.Join(tempDir, "invoice-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "LineItems"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	header := []any{"sku", "quantity", "unit_price", "line_total", "tax"}
+	if err := file.SetSheetRow("LineItems", "A1", &header); err != nil {
+		t.Fatalf("SetSheetRow(header): %v", err)
+	}
+	row := []any{"A001", 2, 10}
+	if err := file.SetSheetRow("LineItems", "A2", &row); err != nil {
+		t.Fatalf("SetSheetRow(row): %v", err)
+	}
+	if err := file.SetCellFormula("LineItems", "D2", "=B2*C2"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if err := file.SetCellFormula("LineItems", "E2", "=D2*0.1"); err != nil {
+		t.Fatalf("SetCellFormula(E2): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	result, err := RunOrganismPlan(OrganismRunRequest{
+		ScenarioID:  "invoice-organism-run",
+		RequestText: "Add invoice line items, extend totals, protect formulas, and create a printable invoice",
+		InputFile:   inputFile,
+		OutputFile:  outputFile,
+		Steps: []OrganismStep{
+			{
+				AtomID: "append_structured_rows",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildAppendStructuredRowsTask(runtimetaskspec.AppendStructuredRowsRequest{
+						RequestText:          "청구서에 새 line item 행을 추가한다.",
+						InputFile:            input,
+						SourceSheet:          "LineItems",
+						OutputFile:           output,
+						IncludeSourceColumns: []string{"sku", "quantity", "unit_price"},
+						Values: []runtimetaskspec.CellValue{
+							{Cell: "sku", Value: "B002"},
+							{Cell: "quantity", Value: 3},
+							{Cell: "unit_price", Value: 15},
+						},
+					}).TaskSpec
+				},
+			},
+			{
+				AtomID: "extend_table_formulas",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildExtendTableFormulasTask(runtimetaskspec.ExtendTableFormulasRequest{
+						RequestText:      "새 line item 행에 계산 수식을 확장한다.",
+						InputFile:        input,
+						SourceSheet:      "LineItems",
+						OutputFile:       output,
+						FormulaSourceRow: 2,
+						TargetRows:       []int{3},
+						FormulaColumns:   []string{"D", "E"},
+					}).TaskSpec
+				},
+			},
+			{
+				AtomID: "add_data_validation",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildAddDataValidationTask(runtimetaskspec.AddDataValidationRequest{
+						RequestText: "청구서 line item SKU 입력 범위를 허용된 SKU dropdown으로 제한한다.",
+						InputFile:   input,
+						SourceSheet: "LineItems",
+						OutputFile:  output,
+						ValidationRule: runtimetaskspec.DataValidationRule{
+							Ranges:        []string{"A2:A10"},
+							RuleType:      "list",
+							AllowedValues: []string{"A001", "B002"},
+							AllowBlank:    false,
+						},
+					}).TaskSpec
+				},
+			},
+			{
+				AtomID: "protect_formula_cells",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildProtectFormulaCellsTask(runtimetaskspec.ProtectFormulaCellsRequest{
+						RequestText: "청구서 계산 수식은 보호하고 line item 입력 범위는 편집 가능하게 둔다.",
+						InputFile:   input,
+						SourceSheet: "LineItems",
+						OutputFile:  output,
+						ProtectionRule: runtimetaskspec.FormulaProtectionRule{
+							FormulaRanges: []string{"D2:E3"},
+							InputRanges:   []string{"A2:C10"},
+						},
+					}).TaskSpec
+				},
+			},
+			{
+				AtomID: "generate_printable_form",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildGeneratePrintableFormTask(runtimetaskspec.GeneratePrintableFormRequest{
+						RequestText: "청구서 line item 데이터를 printable invoice form으로 생성한다.",
+						InputFile:   input,
+						SourceSheet: "LineItems",
+						TargetSheet: "InvoicePrint",
+						OutputFile:  output,
+						FormTitle:   "Invoice",
+						PrintArea:   "A1:E8",
+						FieldBindings: []runtimetaskspec.FormFieldBinding{
+							{Label: "First SKU", SourceSheet: "LineItems", SourceCell: "A2", LabelCell: "A2", ValueCell: "B2"},
+						},
+						TableBinding: &runtimetaskspec.FormTableBinding{
+							SourceSheet:   "LineItems",
+							SourceColumns: []string{"sku", "quantity", "unit_price", "line_total", "tax"},
+							HeaderStart:   "A4",
+							DataStart:     "A5",
+						},
+					}).TaskSpec
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("RunOrganismPlan: %v", err)
+	}
+	if !result.TemplateClassEvaluation.Pass {
+		t.Fatalf("template class evaluation failed: %+v", result.TemplateClassEvaluation)
+	}
+	if result.TemplateClassEvaluation.RuntimeClaim != "template_class_plan_verified" {
+		t.Fatalf("runtime claim=%q want template_class_plan_verified", result.TemplateClassEvaluation.RuntimeClaim)
+	}
+	if len(result.StepResults) != 5 {
+		t.Fatalf("step results=%d want 5", len(result.StepResults))
+	}
+	if !result.OrganismVerification.Pass {
+		t.Fatalf("organism verification failed: %+v", result.OrganismVerification)
+	}
+	if result.OrganismVerification.VerifierSpecID != "invoice_line_item_billing_verifier" {
+		t.Fatalf("organism verifier spec=%q want invoice_line_item_billing_verifier", result.OrganismVerification.VerifierSpecID)
+	}
+	if len(result.OrganismVerification.ExecutedAtomIDs) != 5 {
+		t.Fatalf("organism executed atoms=%v want 5 atoms", result.OrganismVerification.ExecutedAtomIDs)
+	}
+	if _, err := os.Stat(result.OrganismVerificationPath); err != nil {
+		t.Fatalf("organism verification artifact missing: %v", err)
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	if got, err := outputHandle.GetCellValue("LineItems", "A3"); err != nil || got != "B002" {
+		t.Fatalf("LineItems!A3=%q err=%v want B002", got, err)
+	}
+	if got, err := outputHandle.GetCellFormula("LineItems", "D3"); err != nil || got != "=B3*C3" {
+		t.Fatalf("LineItems!D3 formula=%q err=%v want =B3*C3", got, err)
+	}
+	if got, err := outputHandle.GetCellValue("InvoicePrint", "A1"); err != nil || got != "Invoice" {
+		t.Fatalf("InvoicePrint!A1=%q err=%v want Invoice", got, err)
+	}
+}
+
+func TestRunOrganismPlanRejectsStepsThatDoNotMatchTemplateClassPlan(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "invoice.xlsx")
+	outputFile := filepath.Join(tempDir, "invoice-organism.xlsx")
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	_, err := RunOrganismPlan(OrganismRunRequest{
+		ScenarioID:  "invoice-organism-run-mismatch",
+		RequestText: "Add invoice line items, extend totals, protect formulas, and create a printable invoice",
+		InputFile:   inputFile,
+		OutputFile:  outputFile,
+		Steps: []OrganismStep{
+			{
+				AtomID: "generate_printable_form",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.TaskSpec{InputWorkbook: input, OutputWorkbook: output}
+				},
+			},
+		},
+	})
+	if err == nil {
+		t.Fatal("RunOrganismPlan err=nil want step mismatch error")
+	}
+	if !strings.Contains(err.Error(), "does not match template class plan") {
+		t.Fatalf("err=%q want template class plan mismatch", err)
+	}
+}
+
+func TestVerifyOrganismPlanExecutionFailsWhenAtomEvidenceIsMissing(t *testing.T) {
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "invoice_line_item_billing",
+		OperationSequence:     []string{"append_structured_rows", "extend_table_formulas"},
+		RequiredVerifierSpecs: []string{"invoice_line_item_billing_verifier"},
+	}, []string{"append_structured_rows"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+	}, "invoice.xlsx")
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "missing executed atom") {
+		t.Fatalf("organism verification reasons=%v want missing executed atom", verification.Reasons)
+	}
+}
+
+func TestVerifyOrganismPlanExecutionChecksInvoiceWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "invoice.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "LineItems"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("LineItems", "A1", &[]any{"sku", "quantity", "unit_price", "line_total", "tax"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("LineItems", "A2", &[]any{"A001", 2, 10}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetSheetRow("LineItems", "A3", &[]any{"B002", 3, 15}); err != nil {
+		t.Fatalf("SetSheetRow row3: %v", err)
+	}
+	if err := file.SetCellFormula("LineItems", "D3", "=B3*C3"); err != nil {
+		t.Fatalf("SetCellFormula(D3): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "invoice_line_item_billing",
+		OperationSequence:     []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells", "generate_printable_form"},
+		RequiredVerifierSpecs: []string{"invoice_line_item_billing_verifier"},
+	}, []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells", "generate_printable_form"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "InvoicePrint") {
+		t.Fatalf("organism verification reasons=%v want missing printable invoice evidence", verification.Reasons)
+	}
+}
+
+func TestVerifyOrganismPlanExecutionChecksExpenseWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "expense.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "ExpenseItems"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("ExpenseItems", "A1", &[]any{"item", "amount", "reimbursable_rate", "receipt_status", "reimbursable_total"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("ExpenseItems", "A2", &[]any{"Hotel", 200, 1, "attached"}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetSheetRow("ExpenseItems", "A3", &[]any{"Taxi", 40, 1, "attached"}); err != nil {
+		t.Fatalf("SetSheetRow row3: %v", err)
+	}
+	if err := file.SetCellFormula("ExpenseItems", "E3", "=B3*C3"); err != nil {
+		t.Fatalf("SetCellFormula(E3): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "expense_reimbursement",
+		OperationSequence:     []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells", "generate_printable_form"},
+		RequiredVerifierSpecs: []string{"expense_reimbursement_verifier"},
+	}, []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells", "generate_printable_form"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "ExpenseClaim") {
+		t.Fatalf("organism verification reasons=%v want missing printable expense evidence", verification.Reasons)
+	}
+}
+
+func TestVerifyOrganismPlanExecutionChecksPurchaseOrderWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "purchase-order.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "PurchaseOrder"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("PurchaseOrder", "A1", &[]any{"item", "quantity", "unit_price", "po_status", "line_total"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("PurchaseOrder", "A2", &[]any{"Keyboard", 2, 50, "draft"}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetSheetRow("PurchaseOrder", "A3", &[]any{"Monitor", 1, 200, "draft"}); err != nil {
+		t.Fatalf("SetSheetRow row3: %v", err)
+	}
+	if err := file.SetCellFormula("PurchaseOrder", "E3", "=B3*C3"); err != nil {
+		t.Fatalf("SetCellFormula(E3): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "purchase_order_control",
+		OperationSequence:     []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells", "generate_printable_form"},
+		RequiredVerifierSpecs: []string{"purchase_order_control_verifier"},
+	}, []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells", "generate_printable_form"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "PurchaseOrderPrint") {
+		t.Fatalf("organism verification reasons=%v want missing printable purchase order evidence", verification.Reasons)
+	}
+}
+
+func TestVerifyOrganismPlanExecutionChecksMonthlyBudgetWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "budget.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Budget"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Budget", "A1", &[]any{"category", "actual", "budget", "variance", "review_total", "closing"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Budget", "A2", &[]any{"Travel", 120, 100, 20}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetCellFormula("Budget", "E2", "=B2+C2"); err != nil {
+		t.Fatalf("SetCellFormula(E2): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "monthly_budget_control",
+		OperationSequence:     []string{"group_summarize", "highlight_threshold", "copy_period_sheet", "roll_forward_period", "protect_formula_cells"},
+		RequiredVerifierSpecs: []string{"monthly_budget_control_verifier"},
+	}, []string{"group_summarize", "highlight_threshold", "copy_period_sheet", "roll_forward_period", "protect_formula_cells"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "BudgetSummary") {
+		t.Fatalf("organism verification reasons=%v want missing budget summary evidence", verification.Reasons)
+	}
+}
+
+func TestVerifyOrganismPlanExecutionChecksCashFlowWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "cash-flow.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Jan"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Jan", "A1", &[]any{"period", "opening", "inflow", "outflow", "closing"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Jan", "A2", &[]any{"Jan", 100, 75, 25}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetCellFormula("Jan", "E2", "=B2+C2-D2"); err != nil {
+		t.Fatalf("SetCellFormula(E2): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "cash_flow_monitor",
+		OperationSequence:     []string{"group_summarize", "extend_table_formulas", "copy_period_sheet", "roll_forward_period", "protect_formula_cells"},
+		RequiredVerifierSpecs: []string{"cash_flow_monitor_verifier"},
+	}, []string{"group_summarize", "extend_table_formulas", "copy_period_sheet", "roll_forward_period", "protect_formula_cells"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "CashFlowSummary") {
+		t.Fatalf("organism verification reasons=%v want missing cash-flow summary evidence", verification.Reasons)
+	}
+}
+
+func TestVerifyOrganismPlanExecutionChecksAttendanceWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "attendance.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Attendance"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Attendance", "A1", &[]any{"student", "date", "status", "attendance_total"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Attendance", "A2", &[]any{"Alice", "2026-06-08", "present"}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetCellFormula("Attendance", "D2", "=IF(C2=\"present\",1,0)"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "attendance_register",
+		OperationSequence:     []string{"copy_period_sheet", "add_data_validation", "protect_formula_cells"},
+		RequiredVerifierSpecs: []string{"attendance_register_verifier"},
+	}, []string{"copy_period_sheet", "add_data_validation", "protect_formula_cells"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "NextAttendance") {
+		t.Fatalf("organism verification reasons=%v want missing next attendance evidence", verification.Reasons)
+	}
+}
+
+func TestVerifyOrganismPlanExecutionChecksTimesheetWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "timesheet.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Week1"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Week1", "A1", &[]any{"date", "employee", "work_code", "hours", "rate", "pay"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Week1", "A2", &[]any{"2026-06-01", "Ada", "DEV", 8, 25}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetCellFormula("Week1", "F2", "=D2*E2"); err != nil {
+		t.Fatalf("SetCellFormula(F2): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "timesheet_hours_log",
+		OperationSequence:     []string{"copy_period_sheet", "append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells"},
+		RequiredVerifierSpecs: []string{"timesheet_hours_log_verifier"},
+	}, []string{"copy_period_sheet", "append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "Week2") {
+		t.Fatalf("organism verification reasons=%v want missing next week timesheet evidence", verification.Reasons)
+	}
+}
+
+func TestVerifyOrganismPlanExecutionChecksProjectTimelineWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "timeline.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Sprint1"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Sprint1", "A1", &[]any{"task", "start", "end", "status", "task_count", "progress_pct"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Sprint1", "A2", &[]any{"Design", "2026-06-01", "2026-06-05", "todo", 1}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetCellFormula("Sprint1", "F2", "=IF(D2=\"done\",1,0)"); err != nil {
+		t.Fatalf("SetCellFormula(F2): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "project_timeline_tracker",
+		OperationSequence:     []string{"copy_period_sheet", "extend_table_formulas", "add_data_validation", "group_summarize", "protect_formula_cells"},
+		RequiredVerifierSpecs: []string{"project_timeline_tracker_verifier"},
+	}, []string{"copy_period_sheet", "extend_table_formulas", "add_data_validation", "group_summarize", "protect_formula_cells"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "Sprint2") {
+		t.Fatalf("organism verification reasons=%v want missing next sprint timeline evidence", verification.Reasons)
+	}
+}
+
+func TestVerifyOrganismPlanExecutionChecksShiftRosterWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "roster.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Week1"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Week1", "A1", &[]any{"employee", "date", "shift", "coverage_total"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Week1", "A2", &[]any{"Alex", "2026-06-01", "AM"}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetCellFormula("Week1", "D2", "=IF(C2=\"OFF\",0,1)"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "shift_roster_planner",
+		OperationSequence:     []string{"copy_period_sheet", "add_data_validation", "protect_formula_cells"},
+		RequiredVerifierSpecs: []string{"shift_roster_planner_verifier"},
+	}, []string{"copy_period_sheet", "add_data_validation", "protect_formula_cells"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "Week2") {
+		t.Fatalf("organism verification reasons=%v want missing next week roster evidence", verification.Reasons)
+	}
+}
+
+func TestVerifyOrganismPlanExecutionChecksConstructionCostWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "construction-cost.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Costs"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Costs", "A1", &[]any{"cost_code", "phase", "actual", "budget", "variance"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Costs", "A2", &[]any{"LABOR", "framing", 90, 100}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetCellFormula("Costs", "E2", "=C2-D2"); err != nil {
+		t.Fatalf("SetCellFormula(E2): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "construction_cost_tracker",
+		OperationSequence:     []string{"append_structured_rows", "extend_table_formulas", "highlight_threshold", "protect_formula_cells"},
+		RequiredVerifierSpecs: []string{"construction_cost_tracker_verifier"},
+	}, []string{"append_structured_rows", "extend_table_formulas", "highlight_threshold", "protect_formula_cells"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "Costs") {
+		t.Fatalf("organism verification reasons=%v want missing construction cost evidence", verification.Reasons)
+	}
+}
+
+func TestVerifyOrganismPlanExecutionChecksInventoryWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "inventory.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Movements"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Movements", "A1", &[]any{"SKU ID", "Qty In", "Qty Out", "Balance"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Movements", "A2", &[]any{"A001", 10, 0}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetCellFormula("Movements", "D2", "=B2-C2"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "inventory_movement_log",
+		OperationSequence:     []string{"normalize_headers", "append_structured_rows", "join_lookup", "protect_formula_cells", "reconcile_tables"},
+		RequiredVerifierSpecs: []string{"inventory_movement_log_verifier"},
+	}, []string{"normalize_headers", "append_structured_rows", "join_lookup", "protect_formula_cells", "reconcile_tables"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "Movements") {
+		t.Fatalf("organism verification reasons=%v want missing inventory movement evidence", verification.Reasons)
+	}
+}
+
+func TestVerifyOrganismPlanExecutionChecksProcurementWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "procurement.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "PO"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("PO", "A1", &[]any{"po_id", "amount"}); err != nil {
+		t.Fatalf("SetSheetRow PO header: %v", err)
+	}
+	if err := file.SetSheetRow("PO", "A2", &[]any{"PO-1", 100}); err != nil {
+		t.Fatalf("SetSheetRow PO row: %v", err)
+	}
+	if _, err := file.NewSheet("Invoice"); err != nil {
+		t.Fatalf("NewSheet Invoice: %v", err)
+	}
+	if err := file.SetSheetRow("Invoice", "A1", &[]any{"po_id", "invoice_amount", "status", "review_flag"}); err != nil {
+		t.Fatalf("SetSheetRow invoice header: %v", err)
+	}
+	if err := file.SetSheetRow("Invoice", "A2", &[]any{"PO-1", 125, "received"}); err != nil {
+		t.Fatalf("SetSheetRow invoice row: %v", err)
+	}
+	if err := file.SetCellFormula("Invoice", "D2", "=IF(B2>0,\"review\",\"missing\")"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "procurement_reconciliation",
+		OperationSequence:     []string{"add_data_validation", "reconcile_tables", "protect_formula_cells"},
+		RequiredVerifierSpecs: []string{"procurement_reconciliation_verifier"},
+	}, []string{"add_data_validation", "reconcile_tables", "protect_formula_cells"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "ProcurementReconciliation") {
+		t.Fatalf("organism verification reasons=%v want missing procurement reconciliation evidence", verification.Reasons)
+	}
+}
+
+func TestVerifyOrganismPlanExecutionChecksWarehouseWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "warehouse.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Stock"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Stock", "A1", &[]any{"sku", "quantity", "reorder_level", "reorder_gap"}); err != nil {
+		t.Fatalf("SetSheetRow stock header: %v", err)
+	}
+	if err := file.SetSheetRow("Stock", "A2", &[]any{"A001", 3, 5}); err != nil {
+		t.Fatalf("SetSheetRow stock row: %v", err)
+	}
+	if err := file.SetCellFormula("Stock", "D2", "=B2-C2"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "warehouse_reorder_tracker",
+		OperationSequence:     []string{"join_lookup", "highlight_threshold", "append_structured_rows", "add_data_validation", "protect_formula_cells"},
+		RequiredVerifierSpecs: []string{"warehouse_reorder_tracker_verifier"},
+	}, []string{"join_lookup", "highlight_threshold", "append_structured_rows", "add_data_validation", "protect_formula_cells"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "StockEnriched") {
+		t.Fatalf("organism verification reasons=%v want missing warehouse reorder evidence", verification.Reasons)
+	}
+}
+
+func TestVerifyOrganismPlanExecutionChecksGradebookWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "gradebook.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Grades"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Grades", "A1", &[]any{"student", "assignment", "score", "status", "weighted_score"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Grades", "A2", &[]any{"Ada", "Quiz 1", 90, "complete"}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetCellFormula("Grades", "E2", "=C2"); err != nil {
+		t.Fatalf("SetCellFormula(E2): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "student_gradebook",
+		OperationSequence:     []string{"group_summarize", "add_data_validation", "extend_table_formulas", "protect_formula_cells"},
+		RequiredVerifierSpecs: []string{"student_gradebook_verifier"},
+	}, []string{"group_summarize", "add_data_validation", "extend_table_formulas", "protect_formula_cells"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "GradeSummary") {
+		t.Fatalf("organism verification reasons=%v want missing gradebook summary evidence", verification.Reasons)
+	}
+}
+
+func TestVerifyOrganismPlanExecutionChecksTrainingWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "training.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Training"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Training", "A1", &[]any{"employee", "course", "status", "completed", "completion_flag"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Training", "A2", &[]any{"Alex", "Safety", "complete", 1}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetCellFormula("Training", "E2", "=IF(C2=\"complete\",1,0)"); err != nil {
+		t.Fatalf("SetCellFormula(E2): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "training_completion_matrix",
+		OperationSequence:     []string{"group_summarize", "add_data_validation", "protect_formula_cells", "generate_printable_form"},
+		RequiredVerifierSpecs: []string{"training_completion_matrix_verifier"},
+	}, []string{"group_summarize", "add_data_validation", "protect_formula_cells", "generate_printable_form"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "TrainingSummary") {
+		t.Fatalf("organism verification reasons=%v want missing training summary evidence", verification.Reasons)
+	}
+}
+
+func TestVerifyOrganismPlanExecutionChecksServiceTicketWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "tickets.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Tickets"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Tickets", "A1", &[]any{"ticket_id", "status", "days_open", "sla_breach", "ticket_count"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Tickets", "A2", &[]any{"T-1", "open", 2, nil, 1}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetCellFormula("Tickets", "D2", "=IF(C2>5,1,0)"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "service_ticket_queue",
+		OperationSequence:     []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells"},
+		RequiredVerifierSpecs: []string{"service_ticket_queue_verifier"},
+	}, []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "TicketSummary") {
+		t.Fatalf("organism verification reasons=%v want missing ticket summary evidence", verification.Reasons)
+	}
+}
+
+func TestVerifyOrganismPlanExecutionChecksSalesPipelineWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "sales.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Pipeline"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Pipeline", "A1", &[]any{"deal_id", "stage", "deal_value", "probability", "weighted_value", "deal_count"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Pipeline", "A2", &[]any{"D-1", "proposal", 5000, 0.5, nil, 1}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetCellFormula("Pipeline", "E2", "=C2*D2"); err != nil {
+		t.Fatalf("SetCellFormula(E2): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "sales_pipeline_tracker",
+		OperationSequence:     []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells"},
+		RequiredVerifierSpecs: []string{"sales_pipeline_tracker_verifier"},
+	}, []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "PipelineSummary") {
+		t.Fatalf("organism verification reasons=%v want missing sales pipeline summary evidence", verification.Reasons)
+	}
+}
+
+func TestVerifyOrganismPlanExecutionChecksMaintenanceWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "maintenance.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Maintenance"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Maintenance", "A1", &[]any{"issue_id", "status", "days_open", "risk_score", "action_required", "action_count"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Maintenance", "A2", &[]any{"M-1", "open", 2, 2, nil, 1}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetCellFormula("Maintenance", "E2", "=IF(D2>=4,1,0)"); err != nil {
+		t.Fatalf("SetCellFormula(E2): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "maintenance_issue_log",
+		OperationSequence:     []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells"},
+		RequiredVerifierSpecs: []string{"maintenance_issue_log_verifier"},
+	}, []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "MaintenanceSummary") {
+		t.Fatalf("organism verification reasons=%v want missing maintenance summary evidence", verification.Reasons)
+	}
+}
+
+func TestVerifyOrganismPlanExecutionChecksComplianceWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "compliance.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Compliance"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Compliance", "A1", &[]any{"action_id", "owner", "status", "days_until_due", "review_required", "action_count"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Compliance", "A2", &[]any{"C-1", "Ops", "open", 5, nil, 1}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetCellFormula("Compliance", "E2", "=IF(D2<0,1,0)"); err != nil {
+		t.Fatalf("SetCellFormula(E2): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "compliance_action_register",
+		OperationSequence:     []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells", "generate_printable_form"},
+		RequiredVerifierSpecs: []string{"compliance_action_register_verifier"},
+	}, []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells", "generate_printable_form"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "ComplianceSummary") {
+		t.Fatalf("organism verification reasons=%v want missing compliance summary evidence", verification.Reasons)
+	}
+}
+
+func TestVerifyOrganismPlanExecutionChecksSafetyWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "safety.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Safety"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Safety", "A1", &[]any{"check_id", "area", "status", "risk_score", "completed", "action_required"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Safety", "A2", &[]any{"S-1", "Warehouse", "complete", 2, 1}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetCellFormula("Safety", "F2", "=IF(D2>=4,1,0)"); err != nil {
+		t.Fatalf("SetCellFormula(F2): %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "safety_compliance_register",
+		OperationSequence:     []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells", "generate_printable_form"},
+		RequiredVerifierSpecs: []string{"safety_compliance_register_verifier"},
+	}, []string{"append_structured_rows", "extend_table_formulas", "add_data_validation", "highlight_threshold", "group_summarize", "protect_formula_cells", "generate_printable_form"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "SafetySummary") {
+		t.Fatalf("organism verification reasons=%v want missing safety summary evidence", verification.Reasons)
+	}
+}
+
+func TestVerifyOrganismPlanExecutionChecksLoanWorkbookSemantics(t *testing.T) {
+	tempDir := t.TempDir()
+	outputFile := filepath.Join(tempDir, "loan.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Schedule"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Schedule", "A1", &[]any{"period", "payment", "interest", "principal", "balance"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Schedule", "A2", &[]any{1, 100, nil, nil, 1000}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetCellFormula("Schedule", "C2", "=E2*0.01"); err != nil {
+		t.Fatalf("SetCellFormula(C2): %v", err)
+	}
+	if err := file.SetCellFormula("Schedule", "D2", "=B2-C2"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if err := file.SetCellFormula("Schedule", "E2", "=1000-D2"); err != nil {
+		t.Fatalf("SetCellFormula(E2): %v", err)
+	}
+	if err := file.SetSheetRow("Schedule", "A3", &[]any{2, 100}); err != nil {
+		t.Fatalf("SetSheetRow row3: %v", err)
+	}
+	if err := file.SaveAs(outputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	verification := verifyOrganismPlanExecution(templateclass.Plan{
+		OrganismID:            "loan_repayment_calculator",
+		OperationSequence:     []string{"extend_table_formulas", "protect_formula_cells"},
+		RequiredVerifierSpecs: []string{"loan_repayment_calculator_verifier"},
+	}, []string{"extend_table_formulas", "protect_formula_cells"}, []RunResult{
+		{Verification: VerificationResult{Pass: true}},
+		{Verification: VerificationResult{Pass: true}},
+	}, outputFile)
+
+	if verification.Pass {
+		t.Fatalf("organism verification pass=true want false")
+	}
+	if !strings.Contains(strings.Join(verification.Reasons, " "), "Schedule!C3") {
+		t.Fatalf("organism verification reasons=%v want missing loan formula evidence", verification.Reasons)
+	}
+}
+
+func TestRunOrganismPlanExecutesLoanSequenceWithNonClaims(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "loan.xlsx")
+	outputFile := filepath.Join(tempDir, "loan-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Schedule"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Schedule", "A1", &[]any{"period", "payment", "interest", "principal", "balance"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	if err := file.SetSheetRow("Schedule", "A2", &[]any{1, 100, nil, nil, 1000}); err != nil {
+		t.Fatalf("SetSheetRow row2: %v", err)
+	}
+	if err := file.SetCellFormula("Schedule", "C2", "=E2*0.01"); err != nil {
+		t.Fatalf("SetCellFormula(C2): %v", err)
+	}
+	if err := file.SetCellFormula("Schedule", "D2", "=B2-C2"); err != nil {
+		t.Fatalf("SetCellFormula(D2): %v", err)
+	}
+	if err := file.SetCellFormula("Schedule", "E2", "=1000-D2"); err != nil {
+		t.Fatalf("SetCellFormula(E2): %v", err)
+	}
+	if err := file.SetSheetRow("Schedule", "A3", &[]any{2, 100}); err != nil {
+		t.Fatalf("SetSheetRow row3: %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	result, err := RunOrganismPlan(OrganismRunRequest{
+		ScenarioID:  "loan-organism-run",
+		RequestText: "Extend loan repayment schedule formulas and protect calculated balance cells",
+		InputFile:   inputFile,
+		OutputFile:  outputFile,
+		Steps: []OrganismStep{
+			{
+				AtomID: "extend_table_formulas",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildExtendTableFormulasTask(runtimetaskspec.ExtendTableFormulasRequest{
+						RequestText:      "loan repayment schedule 계산 공식을 다음 payment row로 확장한다.",
+						InputFile:        input,
+						SourceSheet:      "Schedule",
+						OutputFile:       output,
+						FormulaSourceRow: 2,
+						TargetRows:       []int{3},
+						FormulaColumns:   []string{"C", "D", "E"},
+					}).TaskSpec
+				},
+			},
+			{
+				AtomID: "protect_formula_cells",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildProtectFormulaCellsTask(runtimetaskspec.ProtectFormulaCellsRequest{
+						RequestText: "loan repayment schedule 계산 cells를 보호하고 payment 입력은 열어둔다.",
+						InputFile:   input,
+						SourceSheet: "Schedule",
+						OutputFile:  output,
+						ProtectionRule: runtimetaskspec.FormulaProtectionRule{
+							FormulaRanges: []string{"C2:E3"},
+							InputRanges:   []string{"B2:B20"},
+						},
+					}).TaskSpec
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("RunOrganismPlan: %v", err)
+	}
+	if !result.TemplateClassEvaluation.Pass {
+		t.Fatalf("template class evaluation failed: %+v", result.TemplateClassEvaluation)
+	}
+	if result.TemplateClassEvaluation.RuntimeClaim != "template_class_plan_verified_with_non_claims" {
+		t.Fatalf("runtime claim=%q want template_class_plan_verified_with_non_claims", result.TemplateClassEvaluation.RuntimeClaim)
+	}
+	if len(result.TemplateClassEvaluation.NonClaims) == 0 {
+		t.Fatalf("expected loan non-claims")
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	if got, err := outputHandle.GetCellFormula("Schedule", "C3"); err != nil || got != "=E3*0.01" {
+		t.Fatalf("Schedule!C3 formula=%q err=%v want =E3*0.01", got, err)
+	}
+	if got, err := outputHandle.GetCellFormula("Schedule", "D3"); err != nil || got != "=B3-C3" {
+		t.Fatalf("Schedule!D3 formula=%q err=%v want =B3-C3", got, err)
+	}
+}
+
+func TestRunOrganismPlanExecutesGradebookSequenceWithVerifiedClassNonClaims(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "gradebook.xlsx")
+	outputFile := filepath.Join(tempDir, "gradebook-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Grades"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Grades", "A1", &[]any{"student", "assignment", "score", "status", "weighted_score"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	for idx, row := range [][]any{{"Ada", "Quiz 1", 90, "complete"}, {"Ben", "Quiz 1", 70, "missing"}, {"Ada", "Quiz 2", 80, "complete"}} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("Grades", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow grade %d: %v", idx, err)
+		}
+	}
+	if err := file.SetCellFormula("Grades", "E2", "=C2"); err != nil {
+		t.Fatalf("SetCellFormula(E2): %v", err)
+	}
+	if err := file.SetCellFormula("Grades", "E3", "=C3"); err != nil {
+		t.Fatalf("SetCellFormula(E3): %v", err)
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	result, err := RunOrganismPlan(OrganismRunRequest{
+		ScenarioID:  "gradebook-organism-run",
+		RequestText: "Summarize student scores in a gradebook, validate completion status, extend formulas, and protect calculated cells",
+		InputFile:   inputFile,
+		OutputFile:  outputFile,
+		Steps: []OrganismStep{
+			{
+				AtomID: "group_summarize",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildGroupSummarizeTask(runtimetaskspec.UseRequest{
+						RequestText: "student gradebook 점수를 학생별로 요약한다.",
+						InputFile:   input,
+						SourceSheet: "Grades",
+						OutputFile:  output,
+						TargetSheet: "GradeSummary",
+						SummaryMode: "values",
+						GroupBy:     []string{"student"},
+						Metrics:     []runtimetaskspec.MetricSpec{{Column: "score", Op: "sum", As: "score_total"}},
+					}).TaskSpec
+				},
+			},
+			{
+				AtomID: "add_data_validation",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildAddDataValidationTask(runtimetaskspec.AddDataValidationRequest{
+						RequestText: "grade status를 허용된 상태로 제한한다.",
+						InputFile:   input,
+						SourceSheet: "Grades",
+						OutputFile:  output,
+						ValidationRule: runtimetaskspec.DataValidationRule{
+							Ranges:        []string{"D2:D20"},
+							RuleType:      "list",
+							AllowedValues: []string{"complete", "missing", "excused"},
+							AllowBlank:    false,
+						},
+					}).TaskSpec
+				},
+			},
+			{
+				AtomID: "extend_table_formulas",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildExtendTableFormulasTask(runtimetaskspec.ExtendTableFormulasRequest{
+						RequestText:      "새 grade row에 weighted score 수식을 확장한다.",
+						InputFile:        input,
+						SourceSheet:      "Grades",
+						OutputFile:       output,
+						FormulaSourceRow: 2,
+						TargetRows:       []int{4},
+						FormulaColumns:   []string{"E"},
+					}).TaskSpec
+				},
+			},
+			{
+				AtomID: "protect_formula_cells",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildProtectFormulaCellsTask(runtimetaskspec.ProtectFormulaCellsRequest{
+						RequestText: "gradebook 계산 cells를 보호하고 score/status 입력은 열어둔다.",
+						InputFile:   input,
+						SourceSheet: "Grades",
+						OutputFile:  output,
+						ProtectionRule: runtimetaskspec.FormulaProtectionRule{
+							FormulaRanges: []string{"E2:E4"},
+							InputRanges:   []string{"C2:D20"},
+						},
+					}).TaskSpec
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("RunOrganismPlan: %v", err)
+	}
+	if !result.TemplateClassEvaluation.Pass {
+		t.Fatalf("template class evaluation failed: %+v", result.TemplateClassEvaluation)
+	}
+	if result.TemplateClassEvaluation.RuntimeClaim != "template_class_plan_verified_with_non_claims" {
+		t.Fatalf("runtime claim=%q want template_class_plan_verified_with_non_claims", result.TemplateClassEvaluation.RuntimeClaim)
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	if got, err := outputHandle.GetCellValue("GradeSummary", "B2"); err != nil || got != "170" {
+		t.Fatalf("GradeSummary!B2=%q err=%v want 170", got, err)
+	}
+	if got, err := outputHandle.GetCellFormula("Grades", "E4"); err != nil || got != "=C4" {
+		t.Fatalf("Grades!E4 formula=%q err=%v want =C4", got, err)
+	}
+}
+
+func TestRunOrganismPlanExecutesBudgetSequence(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "budget.xlsx")
+	outputFile := filepath.Join(tempDir, "budget-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Budget"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Budget", "A1", &[]any{"category", "actual", "budget", "variance", "review_total", "closing"}); err != nil {
+		t.Fatalf("SetSheetRow header: %v", err)
+	}
+	for idx, row := range [][]any{{"Travel", 120, 100, 20}, {"Meals", 80, 90, -10}} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("Budget", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow budget %d: %v", idx, err)
+		}
+		rowNum := idx + 2
+		if err := file.SetCellFormula("Budget", "E"+cellRow(rowNum), "=B"+cellRow(rowNum)+"+C"+cellRow(rowNum)); err != nil {
+			t.Fatalf("SetCellFormula review_total row %d: %v", rowNum, err)
+		}
+		if err := file.SetCellFormula("Budget", "F"+cellRow(rowNum), "=B"+cellRow(rowNum)+"-C"+cellRow(rowNum)); err != nil {
+			t.Fatalf("SetCellFormula closing row %d: %v", rowNum, err)
+		}
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	result, err := RunOrganismPlan(OrganismRunRequest{
+		ScenarioID:  "budget-organism-run",
+		RequestText: "Summarize monthly budget actuals, flag variance, copy period, roll forward closing, and protect formulas",
+		InputFile:   inputFile,
+		OutputFile:  outputFile,
+		Steps: []OrganismStep{
+			{
+				AtomID: "group_summarize",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildGroupSummarizeTask(runtimetaskspec.UseRequest{
+						RequestText: "월 예산 실제 지출을 카테고리별로 요약한다.",
+						InputFile:   input,
+						SourceSheet: "Budget",
+						OutputFile:  output,
+						TargetSheet: "BudgetSummary",
+						SummaryMode: "values",
+						GroupBy:     []string{"category"},
+						Metrics:     []runtimetaskspec.MetricSpec{{Column: "actual", Op: "sum", As: "actual_total"}},
+					}).TaskSpec
+				},
+			},
+			{
+				AtomID: "highlight_threshold",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					threshold := 0.0
+					return runtimetaskspec.BuildHighlightThresholdTask(runtimetaskspec.HighlightThresholdRequest{
+						RequestText:    "예산 초과 variance 행을 표시한다.",
+						InputFile:      input,
+						SourceSheet:    "Budget",
+						OutputFile:     output,
+						Column:         "variance",
+						Operator:       ">",
+						Threshold:      &threshold,
+						HighlightColor: "#FFF59D",
+					}).TaskSpec
+				},
+			},
+			{
+				AtomID: "copy_period_sheet",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildCopyPeriodSheetTask(runtimetaskspec.CopyPeriodSheetRequest{
+						RequestText: "Budget 시트를 NextBudget 기간으로 복사한다.",
+						InputFile:   input,
+						SourceSheet: "Budget",
+						TargetSheet: "NextBudget",
+						OutputFile:  output,
+					}).TaskSpec
+				},
+			},
+			{
+				AtomID: "roll_forward_period",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildRollForwardPeriodTask(runtimetaskspec.RollForwardPeriodRequest{
+						RequestText: "Budget closing 값을 NextBudget opening input으로 이월한다.",
+						InputFile:   input,
+						SourceSheet: "Budget",
+						TargetSheet: "NextBudget",
+						OutputFile:  output,
+						CarryForwardMappings: []runtimetaskspec.CarryForwardMapping{
+							{FromSheet: "Budget", FromCell: "F2", ToSheet: "NextBudget", ToCell: "B3"},
+						},
+					}).TaskSpec
+				},
+			},
+			{
+				AtomID: "protect_formula_cells",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildProtectFormulaCellsTask(runtimetaskspec.ProtectFormulaCellsRequest{
+						RequestText: "NextBudget 계산 cells를 보호하고 budget 입력은 열어둔다.",
+						InputFile:   input,
+						SourceSheet: "NextBudget",
+						OutputFile:  output,
+						ProtectionRule: runtimetaskspec.FormulaProtectionRule{
+							FormulaRanges: []string{"E2:F3"},
+							InputRanges:   []string{"B2:D10"},
+						},
+					}).TaskSpec
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("RunOrganismPlan: %v", err)
+	}
+	if !result.TemplateClassEvaluation.Pass {
+		t.Fatalf("template class evaluation failed: %+v", result.TemplateClassEvaluation)
+	}
+	if result.TemplateClassEvaluation.RuntimeClaim != "template_class_plan_verified_with_non_claims" {
+		t.Fatalf("runtime claim=%q want template_class_plan_verified_with_non_claims", result.TemplateClassEvaluation.RuntimeClaim)
+	}
+	if len(result.StepResults) != 5 {
+		t.Fatalf("step results=%d want 5", len(result.StepResults))
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	if got, err := outputHandle.GetCellValue("BudgetSummary", "B2"); err != nil || got != "120" {
+		t.Fatalf("BudgetSummary!B2=%q err=%v want 120", got, err)
+	}
+	if got, err := outputHandle.GetCellValue("NextBudget", "B3"); err != nil || got != "20" {
+		t.Fatalf("NextBudget!B3=%q err=%v want 20", got, err)
+	}
+	if got, err := outputHandle.GetCellFormula("NextBudget", "E2"); err != nil || got != "=B2+C2" {
+		t.Fatalf("NextBudget!E2 formula=%q err=%v want =B2+C2", got, err)
+	}
+}
+
+func TestRunOrganismPlanExecutesInventorySequence(t *testing.T) {
+	setRuntimeRoots(t)
+
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "inventory.xlsx")
+	outputFile := filepath.Join(tempDir, "inventory-organism.xlsx")
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "Movements"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	if err := file.SetSheetRow("Movements", "A1", &[]any{"SKU ID", "Qty In", "Qty Out", "Balance"}); err != nil {
+		t.Fatalf("SetSheetRow movements header: %v", err)
+	}
+	for idx, row := range [][]any{{"A001", 10, 0}, {"B002", 3, 1}} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("Movements", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow movement %d: %v", idx, err)
+		}
+		rowNum := idx + 2
+		if err := file.SetCellFormula("Movements", "D"+cellRow(rowNum), "=B"+cellRow(rowNum)+"-C"+cellRow(rowNum)); err != nil {
+			t.Fatalf("SetCellFormula balance row %d: %v", rowNum, err)
+		}
+	}
+	if _, err := file.NewSheet("SKU"); err != nil {
+		t.Fatalf("NewSheet SKU: %v", err)
+	}
+	if err := file.SetSheetRow("SKU", "A1", &[]any{"sku", "location"}); err != nil {
+		t.Fatalf("SetSheetRow SKU header: %v", err)
+	}
+	for idx, row := range [][]any{{"A001", "Aisle 1"}, {"B002", "Aisle 2"}, {"C003", "Aisle 3"}} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("SKU", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow SKU %d: %v", idx, err)
+		}
+	}
+	if _, err := file.NewSheet("StockMaster"); err != nil {
+		t.Fatalf("NewSheet StockMaster: %v", err)
+	}
+	if err := file.SetSheetRow("StockMaster", "A1", &[]any{"sku", "on_hand"}); err != nil {
+		t.Fatalf("SetSheetRow stock header: %v", err)
+	}
+	for idx, row := range [][]any{{"A001", 10}, {"B002", 2}, {"C003", 2}} {
+		cell, _ := excelize.CoordinatesToCellName(1, idx+2)
+		if err := file.SetSheetRow("StockMaster", cell, &row); err != nil {
+			t.Fatalf("SetSheetRow stock %d: %v", idx, err)
+		}
+	}
+	if err := file.SaveAs(inputFile); err != nil {
+		t.Fatalf("SaveAs: %v", err)
+	}
+
+	result, err := RunOrganismPlan(OrganismRunRequest{
+		ScenarioID:  "inventory-organism-run",
+		RequestText: "Normalize inventory movement headers, append SKU movement, lookup SKU metadata, protect balance formulas, and reconcile stock master",
+		InputFile:   inputFile,
+		OutputFile:  outputFile,
+		Steps: []OrganismStep{
+			{
+				AtomID: "normalize_headers",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildNormalizeHeadersTask(runtimetaskspec.NormalizeHeadersRequest{
+						RequestText: "inventory movement log 헤더를 표준 필드명으로 정규화한다.",
+						InputFile:   input,
+						SourceSheet: "Movements",
+						OutputFile:  output,
+						HeaderRow:   1,
+						HeaderMappings: []runtimetaskspec.HeaderMapping{
+							{From: "SKU ID", To: "sku"},
+							{From: "Qty In", To: "quantity_in"},
+							{From: "Qty Out", To: "quantity_out"},
+							{From: "Balance", To: "balance"},
+						},
+					}).TaskSpec
+				},
+			},
+			{
+				AtomID: "append_structured_rows",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildAppendStructuredRowsTask(runtimetaskspec.AppendStructuredRowsRequest{
+						RequestText:          "inventory movement log에 새 SKU movement를 추가한다.",
+						InputFile:            input,
+						SourceSheet:          "Movements",
+						OutputFile:           output,
+						IncludeSourceColumns: []string{"sku", "quantity_in", "quantity_out", "balance"},
+						Values: []runtimetaskspec.CellValue{
+							{Cell: "sku", Value: "C003"},
+							{Cell: "quantity_in", Value: 2},
+							{Cell: "quantity_out", Value: 0},
+							{Cell: "balance", Value: 2},
+						},
+					}).TaskSpec
+				},
+			},
+			{
+				AtomID: "join_lookup",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildJoinLookupTask(runtimetaskspec.JoinLookupRequest{
+						RequestText:          "inventory movement log에 SKU location을 보강한다.",
+						InputFile:            input,
+						SourceSheet:          "Movements",
+						LookupSheet:          "SKU",
+						TargetSheet:          "MovementsEnriched",
+						OutputFile:           output,
+						JoinKey:              "sku",
+						IncludeSourceColumns: []string{"sku", "quantity_in", "quantity_out", "balance"},
+						AppendLookupColumns:  []string{"location"},
+					}).TaskSpec
+				},
+			},
+			{
+				AtomID: "protect_formula_cells",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildProtectFormulaCellsTask(runtimetaskspec.ProtectFormulaCellsRequest{
+						RequestText: "inventory movement balance formula cells를 보호한다.",
+						InputFile:   input,
+						SourceSheet: "Movements",
+						OutputFile:  output,
+						ProtectionRule: runtimetaskspec.FormulaProtectionRule{
+							FormulaRanges: []string{"D2:D3"},
+							InputRanges:   []string{"A2:C20"},
+						},
+					}).TaskSpec
+				},
+			},
+			{
+				AtomID: "reconcile_tables",
+				Build: func(input, output string) runtimetaskspec.TaskSpec {
+					return runtimetaskspec.BuildReconcileTablesTask(runtimetaskspec.ReconcileTablesRequest{
+						RequestText: "inventory movement balance를 stock master on_hand와 대조한다.",
+						InputFile:   input,
+						SourceSheet: "MovementsEnriched",
+						LookupSheet: "StockMaster",
+						TargetSheet: "InventoryReconciliation",
+						OutputFile:  output,
+						LeftKey:     "sku",
+						RightKey:    "sku",
+						CompareMappings: []runtimetaskspec.CompareMapping{
+							{LeftColumn: "balance", RightColumn: "on_hand", As: "balance"},
+						},
+					}).TaskSpec
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("RunOrganismPlan: %v", err)
+	}
+	if !result.TemplateClassEvaluation.Pass {
+		t.Fatalf("template class evaluation failed: %+v", result.TemplateClassEvaluation)
+	}
+	if result.TemplateClassEvaluation.RuntimeClaim != "template_class_plan_verified_with_non_claims" {
+		t.Fatalf("runtime claim=%q want template_class_plan_verified_with_non_claims", result.TemplateClassEvaluation.RuntimeClaim)
+	}
+	if len(result.StepResults) != 5 {
+		t.Fatalf("step results=%d want 5", len(result.StepResults))
+	}
+
+	outputHandle, err := excelize.OpenFile(outputFile)
+	if err != nil {
+		t.Fatalf("Open output: %v", err)
+	}
+	defer func() { _ = outputHandle.Close() }()
+	if got, err := outputHandle.GetCellValue("Movements", "A1"); err != nil || got != "sku" {
+		t.Fatalf("Movements!A1=%q err=%v want sku", got, err)
+	}
+	if got, err := outputHandle.GetCellValue("MovementsEnriched", "E4"); err != nil || got != "Aisle 3" {
+		t.Fatalf("MovementsEnriched!E4=%q err=%v want Aisle 3", got, err)
+	}
+	if got, err := outputHandle.GetCellValue("InventoryReconciliation", "B4"); err != nil || got != "C003" {
+		t.Fatalf("InventoryReconciliation!B4=%q err=%v want C003", got, err)
+	}
+}
+
+func cellRow(row int) string {
+	return strconv.Itoa(row)
+}

@@ -1,0 +1,142 @@
+{
+  "version": 1,
+  "generated_from_round": "round-009",
+  "classification_type": "fixture_priority_matrix",
+  "summary": "Fixture build order for roadmap candidates, grouped by implementation risk and verifier value.",
+  "groups": [
+    {
+      "group_id": "p0_foundational_fixtures",
+      "title": "P0 foundational fixtures",
+      "classification_axis": "fixture_priority",
+      "patterns": [
+        "invoice_line_item_billing",
+        "expense_reimbursement",
+        "purchase_order_control",
+        "monthly_budget_control",
+        "cash_flow_monitor",
+        "attendance_register",
+        "timesheet_hours_log"
+      ],
+      "common_mechanics": [
+        "row growth",
+        "period copy",
+        "formula preservation",
+        "summary validation",
+        "printable or reviewable output"
+      ],
+      "capabilities": [
+        "append_structured_rows",
+        "extend_table_formulas",
+        "protect_formula_cells",
+        "copy_period_sheet",
+        "roll_forward_period"
+      ],
+      "verifier_strategy": [
+        "assert workbook preservation",
+        "assert row or period growth",
+        "assert formula cells are unchanged",
+        "assert summaries include new data"
+      ],
+      "fixture_priority": "p0",
+      "notes": "Build these first because they cover the highest-repeat mechanics and exercise verifier surfaces that later groups reuse."
+    },
+    {
+      "group_id": "p1_reconciliation_and_schedule",
+      "title": "P1 reconciliation and schedule fixtures",
+      "classification_axis": "fixture_priority",
+      "patterns": [
+        "inventory_movement_log",
+        "procurement_reconciliation",
+        "warehouse_reorder_tracker",
+        "project_timeline_tracker",
+        "shift_roster_planner",
+        "construction_cost_tracker"
+      ],
+      "common_mechanics": [
+        "key matching",
+        "exception classification",
+        "threshold flagging",
+        "timeline or phase expansion",
+        "owner and status summary"
+      ],
+      "capabilities": [
+        "reconcile_tables",
+        "join_lookup",
+        "flag_outliers",
+        "copy_period_sheet",
+        "group_summarize"
+      ],
+      "verifier_strategy": [
+        "assert matched missing and mismatched buckets",
+        "assert threshold flags",
+        "assert date or phase summaries",
+        "assert lookup-enriched rows keep source identity"
+      ],
+      "fixture_priority": "p1",
+      "notes": "Build after P0 because these fixtures need richer negative cases and more domain-specific setup."
+    },
+    {
+      "group_id": "p2_matrix_and_workflow",
+      "title": "P2 matrix and workflow fixtures",
+      "classification_axis": "fixture_priority",
+      "patterns": [
+        "student_gradebook",
+        "training_completion_matrix",
+        "service_ticket_queue",
+        "sales_pipeline_tracker",
+        "maintenance_issue_log",
+        "compliance_action_register",
+        "safety_compliance_register"
+      ],
+      "common_mechanics": [
+        "matrix row and column growth",
+        "weighted scoring",
+        "status pipeline",
+        "owner assignment",
+        "risk or priority review"
+      ],
+      "capabilities": [
+        "add_data_validation",
+        "extend_table_formulas",
+        "create_pivot_summary",
+        "group_summarize",
+        "flag_outliers"
+      ],
+      "verifier_strategy": [
+        "assert valid status or score values",
+        "assert weighted summaries",
+        "assert owner and status rollups",
+        "assert matrix formulas survive growth"
+      ],
+      "fixture_priority": "p2",
+      "notes": "These are valuable but should wait until the core formula and summary verifiers are stable."
+    },
+    {
+      "group_id": "p3_specialized_formula_fixture",
+      "title": "P3 specialized formula fixture",
+      "classification_axis": "fixture_priority",
+      "patterns": [
+        "loan_repayment_calculator"
+      ],
+      "common_mechanics": [
+        "scenario inputs",
+        "formula-generated schedule",
+        "protected calculations",
+        "period totals"
+      ],
+      "capabilities": [
+        "extend_table_formulas",
+        "protect_formula_cells",
+        "add_data_validation",
+        "join_lookup"
+      ],
+      "verifier_strategy": [
+        "assert formula structure",
+        "assert dependent totals change with assumptions",
+        "assert invalid assumptions are rejected"
+      ],
+      "fixture_priority": "p3",
+      "notes": "Keep this as a focused formula-tracing fixture after broader families are covered."
+    }
+  ]
+}

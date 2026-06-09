@@ -21,7 +21,7 @@ func TestLoadRegistryReadsCurrentSupportedCapabilities(t *testing.T) {
 		t.Fatalf("capability count=%d want %d", len(registry.Capabilities), len(recordPaths))
 	}
 
-	for _, family := range []string{"group_summarize", "highlight_threshold", "join_lookup", "write_values"} {
+	for _, family := range []string{"group_summarize", "highlight_threshold", "join_lookup", "append_structured_rows", "extend_table_formulas", "copy_period_sheet", "add_data_validation", "protect_formula_cells", "write_values"} {
 		capability, ok := registry.ByOperationFamily(family)
 		if !ok {
 			t.Fatalf("ByOperationFamily(%q) missing", family)
@@ -63,9 +63,8 @@ func TestLoadRegistryRejectsMissingReferencedPaths(t *testing.T) {
 	if err := os.MkdirAll(recordsDir, 0o755); err != nil {
 		t.Fatalf("MkdirAll: %v", err)
 	}
-	record := `{
+record := `{
   "name": "group_summarize",
-  "operation_family": "group_summarize",
   "task_operations": ["create_summary_sheet"],
   "inputs": ["input_workbook"],
   "outputs": ["output_workbook"],
