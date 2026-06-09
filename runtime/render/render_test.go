@@ -155,7 +155,7 @@ func TestRenderWorkbookPreviewFailsDeterministicallyWhenPDFExportTimesOut(t *tes
 	if err := os.MkdirAll(toolDir, 0o755); err != nil {
 		t.Fatalf("MkdirAll(toolDir): %v", err)
 	}
-	writeExecutable(t, filepath.Join(toolDir, "soffice"), "#!/bin/sh\nsleep 1\n")
+	writeExecutable(t, filepath.Join(toolDir, "soffice"), "#!/bin/sh\nwhile :; do :; done\n")
 	writeExecutable(t, filepath.Join(toolDir, "pdftoppm"), "#!/bin/sh\nexit 0\n")
 	t.Setenv("PATH", toolDir)
 
