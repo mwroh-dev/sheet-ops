@@ -100,7 +100,7 @@ func requestModeJudgmentSchemaPath() string {
 	if !ok {
 		return filepath.Join("contracts", "requests", "request_mode_judgment.schema.json")
 	}
-	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", "..", "contracts", "requests", "request_mode_judgment.schema.json"))
+	return runtimeschema.ResolveRepoPath(file, 3, "contracts", "requests", "request_mode_judgment.schema.json")
 }
 
 func requestRefSchemaPath() string {
@@ -108,7 +108,7 @@ func requestRefSchemaPath() string {
 	if !ok {
 		return filepath.Join("contracts", "requests", "request_ref.schema.json")
 	}
-	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", "..", "contracts", "requests", "request_ref.schema.json"))
+	return runtimeschema.ResolveRepoPath(file, 3, "contracts", "requests", "request_ref.schema.json")
 }
 
 func structuredUseRequestSchemaPath() string {
@@ -116,7 +116,7 @@ func structuredUseRequestSchemaPath() string {
 	if !ok {
 		return filepath.Join("contracts", "requests", "structured_use_request.schema.json")
 	}
-	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", "..", "contracts", "requests", "structured_use_request.schema.json"))
+	return runtimeschema.ResolveRepoPath(file, 3, "contracts", "requests", "structured_use_request.schema.json")
 }
 
 func organismExecutionRequestSchemaPath() string {
@@ -124,5 +124,5 @@ func organismExecutionRequestSchemaPath() string {
 	if !ok {
 		return filepath.Join("contracts", "requests", "organism_execution_request.schema.json")
 	}
-	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", "..", "contracts", "requests", "organism_execution_request.schema.json"))
+	return runtimeschema.ResolveRepoPath(file, 3, "contracts", "requests", "organism_execution_request.schema.json")
 }

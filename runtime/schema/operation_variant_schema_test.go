@@ -136,6 +136,64 @@ func TestOperationSchemasRejectNestedForeignFields(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:   "operation plan printable field binding rejects parent printable fields",
+			schema: filepath.Join("contracts", "plans", "use", "operation_plan.schema.json"),
+			value: map[string]any{
+				"operation":         "generate_printable_form",
+				"sheet_name":        "InvoiceData",
+				"target_sheet":      "Invoice",
+				"form_title":        "Invoice",
+				"print_area":        "A1:D8",
+				"preserve_original": true,
+				"output_file":       "invoice-output.xlsx",
+				"field_bindings": []any{
+					map[string]any{
+						"label":         "Invoice No",
+						"source_cell":   "A2",
+						"label_cell":    "A1",
+						"value_cell":    "B1",
+						"source_sheet":  "InvoiceData",
+						"table_binding": map[string]any{},
+					},
+				},
+				"table_binding": map[string]any{
+					"source_sheet":   "InvoiceData",
+					"source_columns": []any{"Item", "Qty", "Price"},
+					"header_start":   "A4",
+					"data_start":     "A5",
+				},
+			},
+		},
+		{
+			name:   "operation plan printable table binding rejects parent printable fields",
+			schema: filepath.Join("contracts", "plans", "use", "operation_plan.schema.json"),
+			value: map[string]any{
+				"operation":         "generate_printable_form",
+				"sheet_name":        "InvoiceData",
+				"target_sheet":      "Invoice",
+				"form_title":        "Invoice",
+				"print_area":        "A1:D8",
+				"preserve_original": true,
+				"output_file":       "invoice-output.xlsx",
+				"field_bindings": []any{
+					map[string]any{
+						"label":        "Invoice No",
+						"source_cell":  "A2",
+						"label_cell":   "A1",
+						"value_cell":   "B1",
+						"source_sheet": "InvoiceData",
+					},
+				},
+				"table_binding": map[string]any{
+					"source_sheet":   "InvoiceData",
+					"source_columns": []any{"Item", "Qty", "Price"},
+					"header_start":   "A4",
+					"data_start":     "A5",
+					"form_title":     "Invoice",
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {

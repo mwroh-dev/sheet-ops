@@ -237,7 +237,15 @@
       "required": ["cell", "value"],
       "properties": {
         "cell": {"type": "string", "minLength": 1},
-        "value": {}
+        "value": {
+          "type": [
+            "string",
+            "number",
+            "integer",
+            "boolean",
+            "null"
+          ]
+        }
       },
       "additionalProperties": false
     },

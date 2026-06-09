@@ -462,5 +462,5 @@ func workbookFactsSchemaPath() string {
 	if !ok {
 		return filepath.Join("contracts", "inspection", "workbook_facts.schema.json")
 	}
-	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", "contracts", "inspection", "workbook_facts.schema.json"))
+	return runtimeschema.ResolveRepoPath(file, 2, "contracts", "inspection", "workbook_facts.schema.json")
 }

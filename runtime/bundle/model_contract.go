@@ -82,5 +82,5 @@ func modelContractSchemaPath() string {
 	if !ok {
 		return filepath.Join("contracts", "bundle", "model_contract.schema.json")
 	}
-	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", "contracts", "bundle", "model_contract.schema.json"))
+	return runtimeschema.ResolveRepoPath(file, 2, "contracts", "bundle", "model_contract.schema.json")
 }

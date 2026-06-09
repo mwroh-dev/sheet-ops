@@ -77,7 +77,7 @@ func organismExecutionRequestSchemaPath() string {
 	if !ok {
 		return filepath.Join("contracts", "requests", "organism_execution_request.schema.json")
 	}
-	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", "contracts", "requests", "organism_execution_request.schema.json"))
+	return runtimeschema.ResolveRepoPath(file, 2, "contracts", "requests", "organism_execution_request.schema.json")
 }
 
 func buildOrganismRunSuccessResult(

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -14,20 +15,25 @@ func TestLoadOrganismExecutionRequestValidatesEnvelopeBindings(t *testing.T) {
 	inputFile := filepath.Join(tempDir, "in.xlsx")
 	outputFile := filepath.Join(tempDir, "out.xlsx")
 
-	if err := writeTestFile(requestPath, `{
-  "scenario_id": "invoice-organism",
-  "request_text": "Build an invoice line billing template",
-  "input_file": "`+inputFile+`",
-  "output_file": "`+outputFile+`",
-  "steps": [
-    {
-      "atom_id": "copy_period_sheet",
-      "composition_kind": "period_copy",
-      "source_sheet": "Jan",
-      "target_sheet": "Feb"
-    }
-  ]
-}`); err != nil {
+	request := map[string]any{
+		"scenario_id":  "invoice-organism",
+		"request_text": "Build an invoice line billing template",
+		"input_file":   inputFile,
+		"output_file":  outputFile,
+		"steps": []any{
+			map[string]any{
+				"atom_id":          "copy_period_sheet",
+				"composition_kind": "period_copy",
+				"source_sheet":     "Jan",
+				"target_sheet":     "Feb",
+			},
+		},
+	}
+	raw, err := json.MarshalIndent(request, "", "  ")
+	if err != nil {
+		t.Fatalf("marshal request: %v", err)
+	}
+	if err := writeTestFile(requestPath, string(raw)); err != nil {
 		t.Fatalf("write request: %v", err)
 	}
 

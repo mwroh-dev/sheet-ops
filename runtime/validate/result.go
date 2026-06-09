@@ -416,7 +416,7 @@ func validationResultSchemaPath() string {
 	if !ok {
 		return filepath.Join("contracts", "validation", "validation_result.schema.json")
 	}
-	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", "contracts", "validation", "validation_result.schema.json"))
+	return runtimeschema.ResolveRepoPath(file, 2, "contracts", "validation", "validation_result.schema.json")
 }
 
 func validatedExecutionRequestSchemaPath() string {
@@ -424,5 +424,5 @@ func validatedExecutionRequestSchemaPath() string {
 	if !ok {
 		return filepath.Join("contracts", "requests", "validated_execution_request.schema.json")
 	}
-	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", "contracts", "requests", "validated_execution_request.schema.json"))
+	return runtimeschema.ResolveRepoPath(file, 2, "contracts", "requests", "validated_execution_request.schema.json")
 }

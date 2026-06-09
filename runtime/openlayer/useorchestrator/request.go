@@ -290,7 +290,7 @@ func requestSchemaPath() string {
 	if !ok {
 		return filepath.Join("contracts", "requests", "use_request.schema.json")
 	}
-	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", "..", "contracts", "requests", "use_request.schema.json"))
+	return runtimeschema.ResolveRepoPath(file, 3, "contracts", "requests", "use_request.schema.json")
 }
 
 func validatedExecutionRequestSchemaPath() string {
@@ -298,7 +298,7 @@ func validatedExecutionRequestSchemaPath() string {
 	if !ok {
 		return filepath.Join("contracts", "requests", "validated_execution_request.schema.json")
 	}
-	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", "..", "contracts", "requests", "validated_execution_request.schema.json"))
+	return runtimeschema.ResolveRepoPath(file, 3, "contracts", "requests", "validated_execution_request.schema.json")
 }
 
 func verificationReviewSchemaPath() string {
@@ -306,7 +306,7 @@ func verificationReviewSchemaPath() string {
 	if !ok {
 		return filepath.Join("contracts", "results", "verification_review.schema.json")
 	}
-	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", "..", "contracts", "results", "verification_review.schema.json"))
+	return runtimeschema.ResolveRepoPath(file, 3, "contracts", "results", "verification_review.schema.json")
 }
 
 func subagentLoopStateSchemaPath() string {
@@ -314,7 +314,7 @@ func subagentLoopStateSchemaPath() string {
 	if !ok {
 		return filepath.Join("contracts", "results", "subagent_loop_state.schema.json")
 	}
-	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", "..", "contracts", "results", "subagent_loop_state.schema.json"))
+	return runtimeschema.ResolveRepoPath(file, 3, "contracts", "results", "subagent_loop_state.schema.json")
 }
 
 func repairAdviceSchemaPath() string {
@@ -322,7 +322,7 @@ func repairAdviceSchemaPath() string {
 	if !ok {
 		return filepath.Join("contracts", "results", "repair_advice.schema.json")
 	}
-	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", "..", "contracts", "results", "repair_advice.schema.json"))
+	return runtimeschema.ResolveRepoPath(file, 3, "contracts", "results", "repair_advice.schema.json")
 }
 
 func normalizeLoopStateValue(value any, scenarioID string, decision string) (any, error) {

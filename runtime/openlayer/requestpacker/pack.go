@@ -69,5 +69,5 @@ func useEnvelopeV2SchemaPath() string {
 	if !ok {
 		return filepath.Join("contracts", "requests", "use_envelope_v2.schema.json")
 	}
-	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", "..", "contracts", "requests", "use_envelope_v2.schema.json"))
+	return runtimeschema.ResolveRepoPath(file, 3, "contracts", "requests", "use_envelope_v2.schema.json")
 }
