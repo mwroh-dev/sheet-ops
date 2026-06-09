@@ -426,7 +426,12 @@ func writeOrchestratorDecisionOutputSchema(path string) error {
 					map[string]any{"type": "null"},
 				},
 			},
-			"template_class_plan": templateClassPlanSchema(),
+			"template_class_plan": map[string]any{
+				"anyOf": []any{
+					templateClassPlanSchema(),
+					map[string]any{"type": "null"},
+				},
+			},
 			"repair_advice": map[string]any{
 				"anyOf": []any{
 					repairAdviceSchema(),

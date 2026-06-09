@@ -71,25 +71,7 @@ func TestReleaseSchemasCompile(t *testing.T) {
 		t.Fatal("no release schemas found")
 	}
 
-	compiler := jsonschema.NewCompiler()
-	for _, schemaPath := range schemaPaths {
-		raw, err := os.ReadFile(schemaPath)
-		if err != nil {
-			t.Fatalf("read schema %s: %v", schemaPath, err)
-		}
-		var header struct {
-			ID string `json:"$id"`
-		}
-		if err := json.Unmarshal(raw, &header); err != nil {
-			t.Fatalf("parse schema header %s: %v", schemaPath, err)
-		}
-		if header.ID == "" {
-			continue
-		}
-		if err := compiler.AddResource(header.ID, bytes.NewReader(raw)); err != nil {
-			t.Fatalf("register schema %s as %s: %v", schemaPath, header.ID, err)
-		}
-	}
+	compiler := newSchemaCompilerWithResources(t, schemaPaths)
 
 	for _, schemaPath := range schemaPaths {
 		rel := filepath.ToSlash(mustRel(t, root, schemaPath))
@@ -156,6 +138,74 @@ func TestBundledSchemasStayInSyncWithSourceContracts(t *testing.T) {
 	assertBundledSchemaMatches(t, root, "contracts/requests/request_ref.schema.json")
 	assertBundledSchemaMatches(t, root, "contracts/requests/use_envelope.schema.json")
 	assertBundledSchemaMatches(t, root, "contracts/requests/use_envelope_v2.schema.json")
+}
+
+func TestOrchestratorDecisionSchemaAllowsNullTemplateClassPlan(t *testing.T) {
+	root := repoRoot(t)
+	decision := map[string]any{
+		"scenario_id": "blocked-template-plan",
+		"decision":    "blocked",
+		"request_compiler_loop_state": map[string]any{
+			"scenario_id":  "blocked-template-plan",
+			"outcome":      "blocked",
+			"parent_state": "BLOCKED",
+			"specialists": []any{
+				map[string]any{
+					"role":                  "request-compiler",
+					"carrier":               "default",
+					"model":                 "codex-default",
+					"reasoning_effort":      "high",
+					"state":                 "BLOCKED",
+					"session_id":            "request-compiler-001",
+					"spawn_completed_count": 1,
+					"wait_completed_count":  1,
+					"close_completed_count": 1,
+					"last_message":          "blocked",
+				},
+			},
+		},
+		"validated_execution_request": nil,
+		"template_class_plan":         nil,
+		"repair_advice": map[string]any{
+			"summary":           "not enough evidence to choose a supported operation",
+			"suggested_actions": []any{"provide a more specific workbook request"},
+			"assumptions":       []any{},
+		},
+	}
+
+	schemaPath := filepath.Join(root, "contracts", "results", "orchestrator_decision.schema.json")
+	compiler := newSchemaCompilerWithResources(t, collectReleaseSchemaPaths(t, root))
+	schema, err := compiler.Compile(schemaPath)
+	if err != nil {
+		t.Fatalf("compile orchestrator decision schema: %v", err)
+	}
+	if err := schema.Validate(decision); err != nil {
+		t.Fatalf("validate null template_class_plan: %v", err)
+	}
+}
+
+func newSchemaCompilerWithResources(t *testing.T, schemaPaths []string) *jsonschema.Compiler {
+	t.Helper()
+	compiler := jsonschema.NewCompiler()
+	for _, schemaPath := range schemaPaths {
+		raw, err := os.ReadFile(schemaPath)
+		if err != nil {
+			t.Fatalf("read schema %s: %v", schemaPath, err)
+		}
+		var header struct {
+			ID string `json:"$id"`
+		}
+		if err := json.Unmarshal(raw, &header); err != nil {
+			t.Fatalf("parse schema header %s: %v", schemaPath, err)
+		}
+		if header.ID == "" {
+			continue
+		}
+		if err := compiler.AddResource(header.ID, bytes.NewReader(raw)); err != nil {
+			t.Fatalf("register schema %s as %s: %v", schemaPath, header.ID, err)
+		}
+	}
+	return compiler
 }
 
 func TestSharedSchemaDefinitionsDoNotDrift(t *testing.T) {
