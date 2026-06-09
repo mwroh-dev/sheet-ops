@@ -11,21 +11,26 @@
   "supported_today": [
     "single human-facing sheet-ops skill entry",
     "case-local internal dispatcher execution boundary",
-    "public agent capabilities: group_summarize, highlight_threshold, join_lookup, append_structured_rows, extend_table_formulas, copy_period_sheet, add_data_validation, protect_formula_cells, normalize_headers, roll_forward_period",
+    "public agent capabilities: group_summarize, highlight_threshold, join_lookup, append_structured_rows, extend_table_formulas, copy_period_sheet, add_data_validation, protect_formula_cells, normalize_headers, roll_forward_period, reconcile_tables, generate_printable_form",
     "TaskSpec -> OperationIR -> Execute -> Verify -> Evidence",
+    "advisory template research corpus with atom/molecule/organism composition records and 21 roadmap organism coverage artifacts",
+    "explicit organism execution request path with draft planner coverage and final-workbook semantic verifier slices for 21 roadmap organisms",
     "deterministic_fixture_backed_harness_smoke",
     "scenario-level evidence and terminal result artifacts",
     "render_artifact_emission when renderer tools exist, or explicit unavailable evidence when they do not"
   ],
   "preview_limitations": [
-    "live_codex_delegation_smoke is a non-blocking opt-in diagnostic, not a required release gate",
+    "live_codex_delegation_smoke is a non-blocking opt-in diagnostic, not a required public harness gate",
     "render_artifact_emission records file-open and preview artifact properties; it is not visual quality verification",
+    "template research artifacts are advisory; they are not execution authority and do not imply full template generation",
+    "organism-level verifier slices prove bounded workbook evidence, not domain-specific correctness, financial advice, safety certification, or rich visual/print QA",
     "hosted_multi_tenant_ready is false; local state retention has not been hardened for hosted privacy isolation",
     "write_values_public_capability is false; write_values remains an internal runtime primitive until orchestration and e2e coverage exist"
   ],
   "follow_up": [
     "add a separately labeled live Codex delegation smoke with stronger timeout/process supervision",
     "add visual quality assertions only after renderer availability and nonblank image checks are reliable across supported platforms",
+    "add richer template generation, native pivot/matrix expansion, and domain-specific correctness layers after the current advisory/runtime bridge",
     "perform state/privacy hardening before making hosted or multi-tenant claims",
     "promote future atoms only after public orchestration and e2e tests exist",
     "extend add_data_validation beyond explicit list/dropdown rules only after operation-specific verifiers exist",
@@ -38,6 +43,8 @@
     "hosted or multi-tenant ready",
     "render proves visual quality",
     "deterministic smoke is a live LLM delegation smoke",
-    "write_values is a public agent capability"
+    "write_values is a public agent capability",
+    "template research artifacts are full template generation",
+    "organism verifier coverage proves domain-specific correctness or rich visual/print QA"
   ]
 }

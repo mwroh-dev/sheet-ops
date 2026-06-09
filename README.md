@@ -175,7 +175,7 @@ Supported today:
 Preview limitations:
 
 - live Codex delegation smoke is a non-blocking opt-in diagnostic, not a
-  required release gate
+  required public harness gate
 - render artifact emission records file-open and preview artifact properties;
   it is not visual quality verification
 - template research artifacts are advisory; they are not execution authority
@@ -203,16 +203,12 @@ Follow-up:
   repository model, and package ownership
 - [Install](docs/public/install.md): Go requirements, installer usage, and local
   state
-- [Release](docs/public/release.md): release bundle generation, mirror rules,
-  privacy scan, and release verification
 - [Preview Status](docs/public/preview.md): supported capabilities, limitations,
   and follow-up work
 
 ## Canonical Package Contract
 
-The source repository root is the canonical package.
-
-The release repository root is a sanitized mirror of the canonical package.
+This repository root is the canonical public package and install source.
 
 The installed workspace tree is a materialized copy of that package under `.codex/skills/sheet-ops`.
 
@@ -229,13 +225,3 @@ Boundary invariants:
 - single-consumer procedures stay under their owning agent subtree
 - the public entry captures the workbook request
 - private capability ownership belongs under `agents/`
-
-## Latest Release
-
-<!-- sheet-ops-latest:start -->
-- Source branch: `main`
-- Source SHA: `f98d0b562f8c`
-- Updated: 2026-06-04T18:14:43.089Z
-- Bundle payload file count: 227
-- Work item: none
-<!-- sheet-ops-latest:end -->

@@ -1,6 +1,7 @@
 package render
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,6 +10,17 @@ import (
 
 	"github.com/xuri/excelize/v2"
 )
+
+const renderHelperModeEnv = "SHEET_OPS_RENDER_HELPER_MODE"
+
+func TestMain(m *testing.M) {
+	if os.Getenv(renderHelperModeEnv) == "block" {
+		for {
+			time.Sleep(time.Hour)
+		}
+	}
+	os.Exit(m.Run())
+}
 
 func TestRenderWorkbookPreviewReportsUnavailableWhenToolsAreMissing(t *testing.T) {
 	t.Setenv("PATH", "")
@@ -155,8 +167,9 @@ func TestRenderWorkbookPreviewFailsDeterministicallyWhenPDFExportTimesOut(t *tes
 	if err := os.MkdirAll(toolDir, 0o755); err != nil {
 		t.Fatalf("MkdirAll(toolDir): %v", err)
 	}
-	writeExecutable(t, filepath.Join(toolDir, "soffice"), "#!/bin/sh\nsleep 1\n")
+	writeCurrentTestExecutable(t, filepath.Join(toolDir, "soffice"))
 	writeExecutable(t, filepath.Join(toolDir, "pdftoppm"), "#!/bin/sh\nexit 0\n")
+	t.Setenv(renderHelperModeEnv, "block")
 	t.Setenv("PATH", toolDir)
 
 	artifact, err := RenderWorkbookPreview(writeRenderWorkbook(t), filepath.Join(tempDir, "render"))
@@ -238,5 +251,30 @@ func writeExecutable(t *testing.T, path string, body string) {
 	t.Helper()
 	if err := os.WriteFile(path, []byte(body), 0o755); err != nil {
 		t.Fatalf("WriteFile(%s): %v", path, err)
+	}
+}
+
+func writeCurrentTestExecutable(t *testing.T, path string) {
+	t.Helper()
+	sourcePath, err := os.Executable()
+	if err != nil {
+		t.Fatalf("Executable: %v", err)
+	}
+	if err := os.Symlink(sourcePath, path); err == nil {
+		return
+	}
+	source, err := os.Open(sourcePath)
+	if err != nil {
+		t.Fatalf("Open(%s): %v", sourcePath, err)
+	}
+	defer func() { _ = source.Close() }()
+
+	target, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o755)
+	if err != nil {
+		t.Fatalf("OpenFile(%s): %v", path, err)
+	}
+	defer func() { _ = target.Close() }()
+	if _, err := io.Copy(target, source); err != nil {
+		t.Fatalf("copy %s to %s: %v", sourcePath, path, err)
 	}
 }

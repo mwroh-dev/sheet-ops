@@ -54,17 +54,23 @@ conversation.
 
 Sheet Ops started as an Excel command execution skill and evolved into a
 workbook agent harness. The current public docs keep the operational boundary
-model here; deeper design-history notes live in the source repository's
-architecture docs.
+model here; deeper design-history notes are intentionally kept out of this
+public package.
 
 The repository currently exposes a local source-install public path for
 Codex/Claude workbook agents. In that path:
 
 - the single human-facing public entry is the `sheet-ops` skill
-- the currently implemented public path compositions are `group_summarize`,
-  `highlight_threshold`, and `join_lookup`
+- the currently implemented public path compositions are
+  `append_structured_rows`, `extend_table_formulas`, `copy_period_sheet`,
+  `add_data_validation`, `protect_formula_cells`, `normalize_headers`,
+  `roll_forward_period`, `reconcile_tables`, `generate_printable_form`,
+  `group_summarize`, `highlight_threshold`, and `join_lookup`
 - the runtime path is schema-authorized and evidence-producing
-- deterministic fixture-backed smoke is the release gate for the harness shape
+- the template research layer provides advisory atom/molecule/organism
+  composition records plus bounded draft-planner and final-workbook semantic
+  verifier coverage for 21 roadmap organisms
+- deterministic fixture-backed smoke is the public harness gate
 
 Some live subagent-gated and bootstrap/compatibility paths coexist today
 because the harness is still being extended. That coexistence is a transitional
@@ -95,9 +101,7 @@ Boundary invariants:
 
 ## Canonical Package Contract
 
-The source repository root is the canonical package.
-
-The release repository root is a sanitized mirror of the canonical package.
+This repository root is the canonical public package and install source.
 
 The installed workspace tree is a materialized copy of that package under
 `.codex/skills/sheet-ops`.

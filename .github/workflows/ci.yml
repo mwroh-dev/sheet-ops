@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Release contract checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Check module files
+        run: |
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+
+      - name: Check shell entrypoints
+        run: |
+          bash -n install-skill.sh
+          bash -n scripts/sheet-ops-runtime.sh
+          bash -n cmd/sheet-ops-codex/skill_assets/scripts/run-sheet-ops.sh
+
+      - name: Build release CLIs
+        run: go build ./cmd/sheet-ops-agent ./cmd/sheet-ops-codex
+
+      - name: Vet packages
+        run: go vet ./...
+
+      - name: Test packages
+        run: go test ./...

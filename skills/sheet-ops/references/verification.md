@@ -24,9 +24,9 @@ are unavailable, the render status is evidence recorded as unavailable; the LLM
 must not infer visual success from workbook structure alone. Level 6 is render
 artifact emission, not visual quality verification.
 
-Public release evidence contract:
+Public evidence contract:
 
 - `contracts/public_preview/claims.json` records the supported public claims
   and preview limitations.
 - Raw or generated demo evidence under `artifacts/` is source-side verification
-  material and is not shipped in the public release mirror.
+  material and is not part of the public package surface.

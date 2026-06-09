@@ -9,11 +9,11 @@ This directory separates reusable learning material from raw telemetry and scena
   capability opportunities derived from spreadsheet template research.
 - `atom-builders/`: advisory workbook app primitives, atom-builder mirrors, and
   plan-shape records that bridge template research toward runtime design.
-- `capability_registry/`: machine-readable or mirrored capability summaries for retrieval.
+- `capability_registry/`: machine-readable or copied capability summaries for retrieval.
 - `verification/episodic/failures/`: append-only verification failure episodes.
 - `verification/semantic/`: promoted cross-run verification knowledge.
 
-## Public Release Promotion Rule
+## Public Knowledge Promotion Rule
 
 - raw episodic records are not public docs
 - reusable lessons must be rewritten as semantic knowledge with no local paths,

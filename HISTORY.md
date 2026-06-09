@@ -1,4 +1,4 @@
-# Sheet Ops Release History
+# Sheet Ops History
 
 <!-- sheet-ops-history:start -->
 ## 2026-06-09 - Template research runtime bridge

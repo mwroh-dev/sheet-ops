@@ -51,7 +51,7 @@ Before selecting a capability, read the matching machine-readable record in
 | User asks to reconcile two tables by explicit keys and compare fields | Supported public capability | Select `reconcile_tables` after reading the registry record. |
 | User asks to create a printable/reviewable form from explicit field and table bindings | Supported public capability | Select `generate_printable_form` after reading the registry record. |
 | Runtime needs to write literal cells inside a verified lower-level path | Internal primitive | Use `write_values` only through runtime-owned flows, not as a public request capability. |
-| Release smoke uses fixture-backed specialist decisions | Deterministic smoke | Treat as the required public harness gate, not live LLM delegation. |
+| Deterministic smoke uses fixture-backed specialist decisions | Deterministic smoke | Treat as the required public harness gate, not live LLM delegation. |
 | Live Codex is available and the caller opts in | Live smoke | Run only as a non-blocking diagnostic. |
 | Fuzzy header inference, duplicate header resolution, fuzzy reconciliation, numeric tolerance policies, inferred printable layouts, visual quality assertions, PDF pagination, full period generation, label rewriting, input clearing, hosted deployment, or public `write_values` is requested | Preview limitation | Do not claim support; report the limitation or require additional hardening/tests. |
 

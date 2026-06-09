@@ -13,7 +13,10 @@ chat answer. Accept the user's natural-language workbook request, separate the
 task facts needed for execution, write or select a structured request reference,
 and hand a typed `UseEnvelopeV2` to the internal proof-gated execution boundary.
 
-This file is a mirrored install/distribution surface. The canonical package contract remains the authority in repository architecture, and this copy is a self-contained mirrored documentation surface for installed/bundled consumers.
+This file is the installed skill documentation surface generated from the
+canonical public package. The canonical package contract remains the authority
+in repository architecture, and this copy is self-contained for
+installed/bundled consumers.
 
 The internal proof-gated execution boundary is a skill-owned runtime handoff,
 not a runner-pane command.
@@ -48,8 +51,11 @@ workbook work; schema contracts decide what is valid, and evidence records what 
 Supported today:
 
 - local source-install Sheet Ops skill entry for workbook requests
-- public agent capabilities: `group_summarize`, `highlight_threshold`, and
-  `join_lookup`
+- public agent capabilities: `group_summarize`, `highlight_threshold`,
+  `join_lookup`, `append_structured_rows`, `extend_table_formulas`,
+  `copy_period_sheet`, `add_data_validation`, `protect_formula_cells`,
+  `normalize_headers`, `roll_forward_period`, `reconcile_tables`, and
+  `generate_printable_form`
 - deterministic fixture-backed harness smoke with the public preview claim
   contract
 - schema-authorized `TaskSpec -> OperationIR -> Execute -> Verify -> Evidence`
@@ -59,7 +65,7 @@ Supported today:
 Preview limitations:
 
 - live Codex delegation smoke is a non-blocking opt-in diagnostic, not a
-  required release gate
+  required public harness gate
 - render artifact emission is not visual quality verification
 - Sheet Ops is not hosted or multi-tenant ready
 - `write_values` is not a public agent capability

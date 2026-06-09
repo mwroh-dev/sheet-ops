@@ -82,7 +82,7 @@ compatibility surfaces such as `.codex/skills/example-*` or
 the single human-facing public entry, and they may exercise legacy adapters or
 non-authoritative execution paths.
 
-## Release-Safe Evidence
+## Public-Safe Evidence
 
 User-facing skill output should use curated scenario evidence, not raw telemetry,
 local session state, or machine paths. Entry docs point to contracts and runtime
@@ -112,17 +112,18 @@ Supported today:
 - select public agent capabilities from `group_summarize`,
   `highlight_threshold`, `join_lookup`, `append_structured_rows`,
   `extend_table_formulas`, `copy_period_sheet`, `add_data_validation`,
-  `protect_formula_cells`, `normalize_headers`, and `roll_forward_period`
+  `protect_formula_cells`, `normalize_headers`, `roll_forward_period`,
+  `reconcile_tables`, and `generate_printable_form`
 - use runtime handoff for schema-authorized deterministic execution,
   verification, and evidence
 - trust the deterministic fixture-backed harness smoke and public preview
-  claim contract as the public release gate
+  claim contract as the public harness gate
 - treat render artifact emission as evidence about preview artifact creation
 
 Preview limitations:
 
 - live Codex delegation smoke is a non-blocking opt-in diagnostic, not a
-  required release gate
+  required public harness gate
 - render artifact emission is not visual quality verification
 - Sheet Ops is not hosted or multi-tenant ready
 - `write_values` is not a public agent capability
