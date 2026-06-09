@@ -1,14 +1,11 @@
-# Sheet Ops Release Entry
+# Sheet Ops Public Package
 
-This checkout is a sanitized mirror of the canonical `sheet-ops` package. It
-remains the public install source for the same package topology used in source
-and in the installed workspace tree.
+This repository is the canonical public `sheet-ops` package and install source
+for the same package topology used in the installed workspace tree.
 
 ## Canonical Package Contract
 
-The source repository root is the canonical package.
-
-The release repository root is a sanitized mirror of the canonical package.
+This repository root is the canonical public package.
 
 The installed workspace tree is a materialized copy of that package under
 `.codex/skills/sheet-ops`.
@@ -22,7 +19,7 @@ Load these first:
 5. `agents/`
 6. `skills/`
 
-Canonical package surfaces present in this release:
+Canonical package surfaces present here:
 
 - `skills/`
 - `agents/`
@@ -31,7 +28,7 @@ Canonical package surfaces present in this release:
 - `examples/`
 - `internal/testfixtures/`
 - `policies/`
-- `knowledge/` skeleton and sanitized seeds
+- `knowledge/` skeleton and curated public seeds
 - `install-skill.sh`
 - `scripts/sheet-ops-runtime.sh`
 
@@ -44,9 +41,9 @@ Use `install-skill.sh` as the only install entry:
 Do not manually copy files into `.codex/`. The installer writes
 `.codex/skills/sheet-ops` into the target workspace, materializes the canonical
 package there, and builds bundled `sheet-ops-agent` and `sheet-ops-codex`
-runtime binaries from this checkout.
+runtime binaries from this repository.
 
 Mutable local state and development-only reporting trees such as `.codex/`,
-`.sheet-ops-state/`, `artifacts/`, `docs/`, `release/`, and `tests/` are not
-release package surfaces. Raw knowledge episode logs such as
-`knowledge/**/records.jsonl` are excluded from the release mirror.
+`.sheet-ops-state/`, `artifacts/`, `docs/`, and `tests/` are not public
+package surfaces. Raw knowledge episode logs such as
+`knowledge/**/records.jsonl` are excluded from this package.

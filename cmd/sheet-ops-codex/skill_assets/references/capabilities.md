@@ -33,7 +33,7 @@ Before selecting a capability, read the matching machine-readable record in
 | User asks to highlight values over/under/equal to a threshold | Supported public capability | Select `highlight_threshold` after reading the registry record. |
 | User asks to merge lookup data by key | Supported public capability | Select `join_lookup` after reading the registry record. |
 | Runtime needs to write literal cells inside a verified lower-level path | Internal primitive | Use `write_values` only through runtime-owned flows, not as a public request capability. |
-| Release smoke uses fixture-backed specialist decisions | Deterministic smoke | Treat as the required public harness gate, not live LLM delegation. |
+| Deterministic smoke uses fixture-backed specialist decisions | Deterministic smoke | Treat as the required public harness gate, not live LLM delegation. |
 | Live Codex is available and the caller opts in | Live smoke | Run only as a non-blocking diagnostic. |
 | Hosted deployment, visual quality assertions, or public `write_values` is requested | Preview limitation | Do not claim support; report the limitation or require additional hardening/tests. |
 

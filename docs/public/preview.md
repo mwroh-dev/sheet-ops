@@ -18,7 +18,7 @@ The claim source of truth is `contracts/public_preview/claims.json`.
 ## Preview limitations
 
 - live Codex delegation smoke is a non-blocking opt-in diagnostic, not a
-  required release gate
+  required public harness gate
 - render artifact emission records file-open and preview artifact properties;
   it is not visual quality verification
 - Sheet Ops is not hosted or multi-tenant ready

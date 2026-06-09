@@ -6,7 +6,9 @@ language from the user, creates or selects a `UseEnvelope`, then uses the
 internal proof-gated execution boundary as a skill-owned runtime handoff. Do
 not type or reconstruct internal launcher commands in the runner pane.
 
-This file is a mirrored install/distribution surface. The canonical package contract remains the authority in repository architecture, and this copy is a self-contained mirrored documentation surface for installed/bundled consumers.
+This file is installed skill documentation generated from the canonical public
+package. The canonical package contract remains the authority in repository
+architecture, and this copy is self-contained for installed/bundled consumers.
 
 Do not present the internal dispatcher as a second public entry for humans. It is
 the internal launcher used after the skill has captured the request boundary.

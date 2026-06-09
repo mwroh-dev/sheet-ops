@@ -14,8 +14,8 @@ This repository treats orchestration logging as a mandatory operating rule, not 
 - Telemetry, evidence, and reports must remain separate artifact layers.
 - Evidence must link back to raw telemetry.
 - Reports must link back to evidence.
-- For public release, raw telemetry stays internal retention only; curated
-  evidence and reports are the release-facing records.
+- For the public package, raw telemetry stays internal retention only; curated
+  evidence and reports are the public-facing records.
 
 ## Required Telemetry Classes
 
