@@ -15,7 +15,9 @@ const renderHelperModeEnv = "SHEET_OPS_RENDER_HELPER_MODE"
 
 func TestMain(m *testing.M) {
 	if os.Getenv(renderHelperModeEnv) == "block" {
-		select {}
+		for {
+			time.Sleep(time.Hour)
+		}
 	}
 	os.Exit(m.Run())
 }
