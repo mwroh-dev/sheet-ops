@@ -26,21 +26,18 @@ func TestPublicExamplesValidateAgainstDeclaredContracts(t *testing.T) {
 		"examples/write_values/workbook_operation_ir.json":      "contracts/ir/workbook_operation_ir.schema.json",
 	}
 
-	examplePaths, err := filepath.Glob(filepath.Join(root, "examples", "*", "*.json"))
-	if err != nil {
-		t.Fatalf("glob examples: %v", err)
-	}
+	examplePaths := collectExamplePaths(t, root)
 	if len(examplePaths) != len(cases) {
 		t.Fatalf("validated example count=%d want %d", len(cases), len(examplePaths))
 	}
 
 	for _, examplePath := range examplePaths {
 		rel := filepath.ToSlash(mustRel(t, root, examplePath))
-		schemaRel, ok := cases[rel]
-		if !ok {
-			t.Fatalf("%s is not mapped to a contract schema", rel)
-		}
 		t.Run(rel, func(t *testing.T) {
+			schemaRel, ok := cases[rel]
+			if !ok {
+				t.Fatalf("%s is not mapped to a contract schema", rel)
+			}
 			document := readJSON(t, examplePath)
 			schemaPath := filepath.Join(root, filepath.FromSlash(schemaRel))
 			if err := runtimeschema.ValidateStruct(schemaPath, document); err != nil {
@@ -58,10 +55,7 @@ func TestCapabilityRecordsOnlyReferenceValidatedPublicExamples(t *testing.T) {
 	}
 
 	validatedExamples := map[string]struct{}{}
-	examplePaths, err := filepath.Glob(filepath.Join(root, "examples", "*", "*.json"))
-	if err != nil {
-		t.Fatalf("glob examples: %v", err)
-	}
+	examplePaths := collectExamplePaths(t, root)
 	for _, examplePath := range examplePaths {
 		validatedExamples[filepath.ToSlash(mustRel(t, root, examplePath))] = struct{}{}
 	}
@@ -87,15 +81,57 @@ func TestReleaseSchemasCompile(t *testing.T) {
 	if len(schemaPaths) == 0 {
 		t.Fatal("no release schemas found")
 	}
+
+	compiler := jsonschema.NewCompiler()
+	for _, schemaPath := range schemaPaths {
+		raw, err := os.ReadFile(schemaPath)
+		if err != nil {
+			t.Fatalf("read schema %s: %v", schemaPath, err)
+		}
+		var header struct {
+			ID string `json:"$id"`
+		}
+		if err := json.Unmarshal(raw, &header); err != nil {
+			t.Fatalf("parse schema header %s: %v", schemaPath, err)
+		}
+		if header.ID == "" {
+			continue
+		}
+		if err := compiler.AddResource(header.ID, bytes.NewReader(raw)); err != nil {
+			t.Fatalf("register schema %s as %s: %v", schemaPath, header.ID, err)
+		}
+	}
+
 	for _, schemaPath := range schemaPaths {
 		rel := filepath.ToSlash(mustRel(t, root, schemaPath))
 		t.Run(rel, func(t *testing.T) {
-			compiler := compilerWithLocalSchemaIDs(t, schemaPaths)
 			if _, err := compiler.Compile(schemaPath); err != nil {
 				t.Fatalf("compile schema: %v", err)
 			}
 		})
 	}
+}
+
+func collectExamplePaths(t *testing.T, root string) []string {
+	t.Helper()
+	var examplePaths []string
+	base := filepath.Join(root, "examples")
+	if err := filepath.WalkDir(base, func(path string, entry os.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if entry.IsDir() {
+			return nil
+		}
+		if strings.HasSuffix(path, ".json") {
+			examplePaths = append(examplePaths, path)
+		}
+		return nil
+	}); err != nil {
+		t.Fatalf("walk examples: %v", err)
+	}
+	sort.Strings(examplePaths)
+	return examplePaths
 }
 
 func collectSchemaPaths(t *testing.T, root, relDir string) []string {
@@ -133,30 +169,6 @@ func readJSON(t *testing.T, path string) any {
 		t.Fatalf("parse %s: %v", path, err)
 	}
 	return document
-}
-
-func compilerWithLocalSchemaIDs(t *testing.T, schemaPaths []string) *jsonschema.Compiler {
-	t.Helper()
-	compiler := jsonschema.NewCompiler()
-	for _, schemaPath := range schemaPaths {
-		raw, err := os.ReadFile(schemaPath)
-		if err != nil {
-			t.Fatalf("read schema %s: %v", schemaPath, err)
-		}
-		var header struct {
-			ID string `json:"$id"`
-		}
-		if err := json.Unmarshal(raw, &header); err != nil {
-			t.Fatalf("parse schema header %s: %v", schemaPath, err)
-		}
-		if header.ID == "" {
-			continue
-		}
-		if err := compiler.AddResource(header.ID, bytes.NewReader(raw)); err != nil {
-			t.Fatalf("register schema %s as %s: %v", schemaPath, header.ID, err)
-		}
-	}
-	return compiler
 }
 
 func repoRoot(t *testing.T) string {
