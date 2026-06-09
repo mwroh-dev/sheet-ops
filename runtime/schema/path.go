@@ -35,7 +35,7 @@ func repoPathCandidates(callerFile string, sourceRootDepth int, relPath string) 
 	if executablePath, err := os.Executable(); err == nil && executablePath != "" {
 		candidates = append(candidates, filepath.Join(filepath.Dir(executablePath), "..", relPath))
 	}
-	if callerFile != "" {
+	if filepath.IsAbs(callerFile) {
 		root := filepath.Dir(callerFile)
 		for i := 0; i < sourceRootDepth; i++ {
 			root = filepath.Dir(root)

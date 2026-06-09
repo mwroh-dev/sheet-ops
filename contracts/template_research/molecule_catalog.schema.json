@@ -30,7 +30,7 @@
       "properties": {
         "molecule_id": {
           "type": "string",
-          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+          "pattern": "^[a-z][a-z0-9_]*$"
         },
         "korean_name": {
           "type": "string",
@@ -82,7 +82,8 @@
       "minimum": 1
     },
     "generated_from_round": {
-      "const": "round-009"
+      "type": "string",
+      "pattern": "^round-[0-9]{3}$"
     },
     "summary": {
       "type": "string",

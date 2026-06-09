@@ -36,7 +36,7 @@
       "properties": {
         "pattern_id": {
           "type": "string",
-          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+          "pattern": "^[a-z][a-z0-9_]*$"
         },
         "title": {
           "type": "string",

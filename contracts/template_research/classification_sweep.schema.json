@@ -28,11 +28,11 @@
       "properties": {
         "pattern_id": {
           "type": "string",
-          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+          "pattern": "^[a-z][a-z0-9_]*$"
         },
         "current_group": {
           "type": "string",
-          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+          "pattern": "^[a-z][a-z0-9_]*$"
         },
         "alternative_groups": {
           "$ref": "#/$defs/non_empty_string_array"
@@ -77,7 +77,8 @@
       "minimum": 1
     },
     "generated_from_round": {
-      "const": "round-009"
+      "type": "string",
+      "pattern": "^round-[0-9]{3}$"
     },
     "summary": {
       "type": "string",

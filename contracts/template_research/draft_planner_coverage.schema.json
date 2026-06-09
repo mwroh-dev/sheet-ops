@@ -3,13 +3,18 @@
   "$id": "https://sheet-ops.local/contracts/template_research/draft_planner_coverage.schema.json",
   "title": "TemplateResearchDraftPlannerCoverage",
   "type": "object",
-  "required": ["authority", "generated_from_round", "coverage"],
+  "required": [
+    "authority",
+    "generated_from_round",
+    "coverage"
+  ],
   "properties": {
     "authority": {
       "const": "runtime_draft_planner_coverage"
     },
     "generated_from_round": {
-      "const": "round-009"
+      "type": "string",
+      "pattern": "^round-[0-9]{3}$"
     },
     "coverage": {
       "type": "array",
@@ -37,7 +42,10 @@
           "minLength": 1
         },
         "draft_status": {
-          "enum": ["runtime_draft_planner", "explicit_request_only"]
+          "enum": [
+            "runtime_draft_planner",
+            "explicit_request_only"
+          ]
         },
         "runtime_entrypoint": {
           "type": "string"

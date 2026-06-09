@@ -35,3 +35,35 @@ func TestResolveRepoPathDoesNotReturnMissingCallerDerivedSourcePath(t *testing.T
 		t.Fatalf("ResolveRepoPath()=%q want repository-relative fallback", got)
 	}
 }
+
+func TestResolveRepoPathIgnoresTrimpathRelativeCallerFile(t *testing.T) {
+	workingDir := t.TempDir()
+	rel := filepath.Join("contracts", "requests", "request_ref.schema.json")
+	callerDerivedPath := filepath.Join(workingDir, "trimpath", rel)
+	if err := os.MkdirAll(filepath.Dir(callerDerivedPath), 0o755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+	if err := os.WriteFile(callerDerivedPath, []byte("{}\n"), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	oldWorkingDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Getwd: %v", err)
+	}
+	if err := os.Chdir(workingDir); err != nil {
+		t.Fatalf("Chdir: %v", err)
+	}
+	defer func() {
+		if err := os.Chdir(oldWorkingDir); err != nil {
+			t.Fatalf("restore working dir: %v", err)
+		}
+	}()
+
+	got := ResolveRepoPath(filepath.Join("trimpath", "runtime", "schema", "validate.go"), 2, "contracts", "requests", "request_ref.schema.json")
+	if got == callerDerivedPath || got == filepath.Join("trimpath", rel) {
+		t.Fatalf("ResolveRepoPath()=%q used relative caller-derived source root", got)
+	}
+	if got != rel {
+		t.Fatalf("ResolveRepoPath()=%q want repository-relative fallback", got)
+	}
+}

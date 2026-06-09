@@ -101,6 +101,28 @@ func TestReleaseSchemasCompile(t *testing.T) {
 	}
 }
 
+func TestTemplateResearchSchemasKeepAdvisoryConventions(t *testing.T) {
+	root := repoRoot(t)
+	schemaPaths := collectSchemaPaths(t, root, filepath.Join("contracts", "template_research"))
+
+	for _, schemaPath := range schemaPaths {
+		rel := filepath.ToSlash(mustRel(t, root, schemaPath))
+		t.Run(rel, func(t *testing.T) {
+			raw, err := os.ReadFile(schemaPath)
+			if err != nil {
+				t.Fatalf("read schema: %v", err)
+			}
+			text := string(raw)
+			if strings.Contains(text, `"const": "round-009"`) {
+				t.Fatalf("schema hard-codes a research round; use a round id pattern instead")
+			}
+			if strings.Contains(text, `^[a-z0-9][a-z0-9_-]*$`) {
+				t.Fatalf("schema uses a loose research id pattern; use lowercase snake_case ids")
+			}
+		})
+	}
+}
+
 func TestReleaseSchemaReferencesAreLocallyResolvable(t *testing.T) {
 	root := repoRoot(t)
 	schemaPaths := collectReleaseSchemaPaths(t, root)
