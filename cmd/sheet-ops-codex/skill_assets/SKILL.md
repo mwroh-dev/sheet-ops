@@ -60,6 +60,8 @@ Supported today:
   contract
 - schema-authorized `TaskSpec -> OperationIR -> Execute -> Verify -> Evidence`
   runtime path
+- advisory `template_class_plan` evidence for template-like workbook requests
+  before narrowing to supported atom execution
 - render artifact emission as preview artifact evidence
 
 Preview limitations:

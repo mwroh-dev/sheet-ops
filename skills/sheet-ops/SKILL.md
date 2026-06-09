@@ -116,6 +116,9 @@ Supported today:
   `reconcile_tables`, and `generate_printable_form`
 - use runtime handoff for schema-authorized deterministic execution,
   verification, and evidence
+- for template-like workbook requests, preserve the advisory
+  `template_class_plan` evidence in compiler artifacts before narrowing to
+  supported atom execution
 - trust the deterministic fixture-backed harness smoke and public preview
   claim contract as the public harness gate
 - treat render artifact emission as evidence about preview artifact creation

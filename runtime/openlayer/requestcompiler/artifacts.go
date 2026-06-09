@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	goruntime "runtime"
 	"strings"
 	"time"
+
+	runtimeschema "github.com/mwroh/sheet-ops/runtime/schema"
 )
 
 type PersistedResult struct {
@@ -119,7 +122,7 @@ func compileAndPersist(input Input, workUnitID string) (PersistedResult, error) 
 	if err := writeJSON(filepath.Join(stagingDir, "normalized_intent.json"), intent); err != nil {
 		return PersistedResult{}, err
 	}
-	if err := writeJSON(filepath.Join(stagingDir, "compiler_decision.json"), compilerDecisionArtifact(result)); err != nil {
+	if err := writeCompilerDecisionJSON(filepath.Join(stagingDir, "compiler_decision.json"), result); err != nil {
 		return PersistedResult{}, err
 	}
 	if result.Validation.Status == "compiled" && result.ValidatedExecutionRequest != nil {
@@ -237,6 +240,23 @@ func compilerDecisionArtifact(result Result) map[string]any {
 	}
 
 	return artifact
+}
+
+func writeCompilerDecisionJSON(path string, result Result) error {
+	artifact := compilerDecisionArtifact(result)
+	if err := runtimeschema.ValidateStruct(compilerDecisionSchemaPath(), artifact); err != nil {
+		return fmt.Errorf("compiler decision artifact contract: %w", err)
+	}
+	return writeJSON(path, artifact)
+}
+
+func compilerDecisionSchemaPath() string {
+	workingDir, _ := os.Getwd()
+	_, file, _, ok := goruntime.Caller(0)
+	if !ok {
+		return filepath.Join(resolvePackageRoot(workingDir, ""), "agents", "request-compiler", "contract", "compiler_decision.schema.json")
+	}
+	return filepath.Join(resolvePackageRoot(workingDir, file), "agents", "request-compiler", "contract", "compiler_decision.schema.json")
 }
 
 func buildCompileReport(result Result) string {

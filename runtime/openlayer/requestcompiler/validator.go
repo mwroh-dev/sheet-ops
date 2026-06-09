@@ -107,7 +107,7 @@ func validateIntentAndPersist(input Input, intent NormalizedIntent, workUnitID s
 	if err := writeJSON(filepath.Join(stagingDir, "normalized_intent.json"), intent); err != nil {
 		return PersistedResult{}, err
 	}
-	if err := writeJSON(filepath.Join(stagingDir, "compiler_decision.json"), compilerDecisionArtifact(result)); err != nil {
+	if err := writeCompilerDecisionJSON(filepath.Join(stagingDir, "compiler_decision.json"), result); err != nil {
 		return PersistedResult{}, err
 	}
 	if result.Validation.Status == runtimevalidate.StatusCompiled && result.ValidatedExecutionRequest != nil {

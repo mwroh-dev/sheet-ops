@@ -15,6 +15,8 @@ The claim source of truth is `contracts/public_preview/claims.json`.
   runtime path
 - advisory template research corpus with atom/molecule/organism composition
   records and 21 roadmap organism coverage artifacts
+- compiler decision `template_class_plan` evidence for template-like workbook
+  requests before narrowing to supported atom execution
 - explicit organism execution request path with draft planner coverage and
   final-workbook semantic verifier slices for 21 roadmap organisms
 - deterministic fixture-backed harness smoke with checked-in frozen demo

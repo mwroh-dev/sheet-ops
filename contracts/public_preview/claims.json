@@ -14,6 +14,7 @@
     "public agent capabilities: group_summarize, highlight_threshold, join_lookup, append_structured_rows, extend_table_formulas, copy_period_sheet, add_data_validation, protect_formula_cells, normalize_headers, roll_forward_period, reconcile_tables, generate_printable_form",
     "TaskSpec -> OperationIR -> Execute -> Verify -> Evidence",
     "advisory template research corpus with atom/molecule/organism composition records and 21 roadmap organism coverage artifacts",
+    "compiler_decision template_class_plan evidence for template-like workbook requests before narrowing to supported atom execution",
     "explicit organism execution request path with draft planner coverage and final-workbook semantic verifier slices for 21 roadmap organisms",
     "deterministic_fixture_backed_harness_smoke",
     "scenario-level evidence and terminal result artifacts",

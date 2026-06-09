@@ -118,6 +118,8 @@ spreadsheet work before it becomes runtime execution:
 This layer is advisory. It helps shape request compilation and runtime
 coverage, but it does not make organism IDs public capabilities and it does not
 claim full template generation.
+For template-like requests, compiler artifacts retain `template_class_plan`
+evidence before the request is narrowed to supported atom execution.
 
 ## Human-Facing Skill Entry
 
