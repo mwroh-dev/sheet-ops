@@ -22,10 +22,9 @@ bundle, or reuse third-party template files.
   assistance, non-runtime organism preview harness notes, and the executable
   organism coverage ladder that separates fixture-backed previews from
   supported-atom plans and planned-atom blockers. The draft planner coverage
-  artifact records which roadmap organisms have workbook-facts-to-request draft
-  synthesis and which still require explicit requests. The completion audit
-  records the current evidence and remaining limits for the
-  advisory-to-preview layer.
+  artifact records workbook-facts-to-request draft synthesis for all 21
+  roadmap organisms. The completion audit records the current evidence and
+  remaining limits for the advisory-to-productization layer.
   Verified organism class records define advisory acceptance contracts for
   deeper p2/p3 coverage without promoting native pivot tables, financial
   calculators, or organism IDs to public runtime capabilities.
@@ -107,10 +106,10 @@ Promotion status is owned by Agent C:
 - `organism_verified_class` is still advisory. It means representative preview
   evidence plus explicit acceptance criteria and non-claims exist for a
   template class; it does not imply full template generation.
-- Runtime productization artifacts are contracts for the next implementation
-  layer. They must not be read as an autonomous planner, classifier, or
-  organism-level verifier implementation until runtime code and verifier
-  fixtures are added.
+- Runtime productization artifacts are contracts for the implementation layer.
+  They must not be read as an autonomous planner or full template generator;
+  runtime code and verifier fixtures now cover bounded draft planning and
+  final-workbook semantic evidence for the 21 roadmap organisms.
 - `runtime/templateclass` provides the first deterministic request classifier,
   atom-sequence planner, and verifier-evidence evaluator for the productization
   slice. It still does not execute workbook operations by itself.

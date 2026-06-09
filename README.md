@@ -78,17 +78,46 @@ Canonical execution shape:
 
 ## Current Public Path
 
-The current public path supports a small set of workbook composition families
-while the broader harness continues to evolve:
+The current public path supports a broader set of workbook composition
+families, while the template research layer supplies advisory patterns for
+larger workbook workflows.
 
+- `append_structured_rows`
+- `extend_table_formulas`
+- `copy_period_sheet`
+- `add_data_validation`
+- `protect_formula_cells`
+- `normalize_headers`
+- `roll_forward_period`
+- `reconcile_tables`
+- `generate_printable_form`
 - `group_summarize`
 - `highlight_threshold`
 - `join_lookup`
+
+`write_values` remains a runtime primitive, not a public agent capability.
 
 The public entry is the `sheet-ops` skill for local Codex/Claude workbook
 requests. This repository is currently a local source-install harness; the
 installed runtime is materialized under `.codex/skills/sheet-ops/agent-system`,
 and local runtime state defaults to `.sheet-ops-state/`.
+
+## Template Research Front Door
+
+The front end is no longer only a thin natural-language-to-operation path.
+Sheet Ops now carries an advisory template research layer that helps classify
+spreadsheet work before it becomes runtime execution:
+
+- raw template observations and model-generated hypotheses
+- pattern classification and capability gap maps
+- atom, molecule, and organism composition catalogs
+- atom-builder audit records for code-generation assistance
+- draft planner coverage for 21 roadmap organisms
+- standalone final-workbook semantic verifier slices for those 21 organisms
+
+This layer is advisory. It helps shape request compilation and runtime
+coverage, but it does not make organism IDs public capabilities and it does not
+claim full template generation.
 
 ## Human-Facing Skill Entry
 
@@ -127,10 +156,17 @@ Supported today:
 
 - experimental local workflow surface for Codex/Claude workbook agents
 - single human-facing `sheet-ops` skill entry
-- currently implemented public path compositions: `group_summarize`,
-  `highlight_threshold`, and `join_lookup`
+- currently implemented public path compositions:
+  `append_structured_rows`, `extend_table_formulas`, `copy_period_sheet`,
+  `add_data_validation`, `protect_formula_cells`, `normalize_headers`,
+  `roll_forward_period`, `reconcile_tables`, `generate_printable_form`,
+  `group_summarize`, `highlight_threshold`, and `join_lookup`
 - schema-authorized `TaskSpec -> OperationIR -> Execute -> Verify -> Evidence`
   runtime path
+- advisory template research corpus with atom/molecule/organism composition
+  records and 21 roadmap organism coverage artifacts
+- explicit organism execution request path with draft planner coverage and
+  final-workbook semantic verifier slices for 21 roadmap organisms
 - deterministic fixture-backed harness smoke with checked-in frozen demo
   evidence
 - render artifact emission when renderer tools exist, or explicit unavailable
@@ -142,6 +178,11 @@ Preview limitations:
   required release gate
 - render artifact emission records file-open and preview artifact properties;
   it is not visual quality verification
+- template research artifacts are advisory; they are not execution authority
+  and do not imply full template generation
+- organism-level verifier slices prove bounded workbook evidence, not
+  domain-specific correctness, financial advice, safety certification, or rich
+  visual/print QA
 - Sheet Ops is not hosted or multi-tenant ready
 - `write_values` is not a public agent capability; it remains an internal
   runtime primitive until public orchestration and e2e tests exist
@@ -151,6 +192,8 @@ Follow-up:
 - harden the optional live smoke with stronger timeout/process supervision
 - add cross-platform visual quality assertions only after renderer support is
   proven
+- add richer template generation, native pivot/matrix expansion, and
+  domain-specific correctness layers after the current advisory/runtime bridge
 - harden state/privacy boundaries before any hosted claim
 - promote `write_values` only after public orchestration and e2e coverage exist
 
