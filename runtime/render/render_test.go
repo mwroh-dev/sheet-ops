@@ -260,6 +260,9 @@ func writeCurrentTestExecutable(t *testing.T, path string) {
 	if err != nil {
 		t.Fatalf("Executable: %v", err)
 	}
+	if err := os.Symlink(sourcePath, path); err == nil {
+		return
+	}
 	source, err := os.Open(sourcePath)
 	if err != nil {
 		t.Fatalf("Open(%s): %v", sourcePath, err)
