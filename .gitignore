@@ -1,4 +1,4 @@
-# Local mutable state created when exercising the release checkout.
+# Local mutable state created when exercising this public package.
 .DS_Store
 /node_modules/
 /coverage/

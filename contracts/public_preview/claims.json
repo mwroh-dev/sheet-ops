@@ -18,7 +18,7 @@
     "render_artifact_emission when renderer tools exist, or explicit unavailable evidence when they do not"
   ],
   "preview_limitations": [
-    "live_codex_delegation_smoke is a non-blocking opt-in diagnostic, not a required release gate",
+    "live_codex_delegation_smoke is a non-blocking opt-in diagnostic, not a required public harness gate",
     "render_artifact_emission records file-open and preview artifact properties; it is not visual quality verification",
     "hosted_multi_tenant_ready is false; local state retention has not been hardened for hosted privacy isolation",
     "write_values_public_capability is false; write_values remains an internal runtime primitive until orchestration and e2e coverage exist"

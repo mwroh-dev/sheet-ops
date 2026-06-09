@@ -1,5 +1,5 @@
-# Sheet Ops Release History
+# Sheet Ops History
 
 <!-- sheet-ops-history:start -->
-No work-item releases recorded yet.
+No public history entries recorded yet.
 <!-- sheet-ops-history:end -->
