@@ -1,6 +1,5 @@
 {
   "name": "copy_period_sheet",
-  "operation_family": "copy_period_sheet",
   "task_operations": [
     "copy_period_sheet"
   ],

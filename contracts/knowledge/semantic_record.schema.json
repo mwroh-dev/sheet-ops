@@ -1,114 +1,138 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "SemanticRecord",
-  "type": "object",
-  "required": [
-    "agent_namespace",
-    "record_id",
-    "version",
-    "strategy",
-    "summary"
-  ],
-  "properties": {
-    "agent_namespace": {
-      "type": "string",
-      "minLength": 1
-    },
-    "record_id": {
-      "type": "string",
-      "minLength": 1
-    },
-    "version": {
-      "type": "integer",
-      "minimum": 1
-    },
-    "replaces": {
-      "type": "string",
-      "minLength": 1
-    },
-    "strategy": {
-      "enum": [
-        "fixed_n",
-        "prediction_error",
-        "failure_registry"
-      ]
-    },
-    "updated_after_runs": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "minLength": 1
-      }
-    },
-    "summary": {
-      "type": "string",
-      "minLength": 1
-    },
-    "failure_class": {
-      "type": "string",
-      "minLength": 1
-    },
-    "domain_code": {
-      "type": "string",
-      "minLength": 1
-    },
-    "corrective_rule": {
-      "type": "string",
-      "minLength": 1
-    },
-    "repair_hint": {
-      "type": "string",
-      "minLength": 1
-    },
-    "evidence_runs": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "minLength": 1
-      },
-      "uniqueItems": true
-    },
-    "promotion_reason": {
-      "type": "string",
-      "minLength": 1
-    }
-  },
-  "allOf": [
+  "oneOf": [
     {
-      "if": {
-        "properties": {
-          "strategy": {
-            "const": "failure_registry"
+      "$ref": "#/$defs/failure_registry_record"
+    },
+    {
+      "$ref": "#/$defs/general_semantic_record"
+    }
+  ],
+  "$defs": {
+    "record_base": {
+      "type": "object",
+      "required": [
+        "agent_namespace",
+        "record_id",
+        "version",
+        "strategy",
+        "summary"
+      ],
+      "properties": {
+        "agent_namespace": {
+          "type": "string",
+          "minLength": 1
+        },
+        "record_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "replaces": {
+          "type": "string",
+          "minLength": 1
+        },
+        "updated_after_runs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
           }
         },
-        "required": [
-          "strategy"
-        ]
-      },
-      "then": {
-        "required": [
-          "failure_class",
-          "domain_code",
-          "corrective_rule",
-          "evidence_runs",
-          "promotion_reason"
-        ],
-        "properties": {
-          "agent_namespace": {
-            "const": "knowledge/verification/semantic"
-          },
-          "corrective_rule": {
-            "pattern": "^[^\\n]+\\.$"
-          },
-          "evidence_runs": {
-            "minItems": 2
-          },
-          "summary": {
-            "pattern": "^[^\\n]+\\.$"
-          }
+        "summary": {
+          "type": "string",
+          "minLength": 1
         }
       }
+    },
+    "failure_registry_fields": {
+      "type": "object",
+      "required": [
+        "strategy",
+        "failure_class",
+        "domain_code",
+        "corrective_rule",
+        "evidence_runs",
+        "promotion_reason"
+      ],
+      "properties": {
+        "agent_namespace": {
+          "const": "knowledge/verification/semantic"
+        },
+        "strategy": {
+          "const": "failure_registry"
+        },
+        "summary": {
+          "pattern": "^[^\\n]+\\.$"
+        },
+        "failure_class": {
+          "type": "string",
+          "minLength": 1
+        },
+        "domain_code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "corrective_rule": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^\\n]+\\.$"
+        },
+        "repair_hint": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_runs": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "promotion_reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "failure_registry_record": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/record_base"
+        },
+        {
+          "$ref": "#/$defs/failure_registry_fields"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "general_semantic_record": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/record_base"
+        },
+        {
+          "type": "object",
+          "required": [
+            "strategy"
+          ],
+          "properties": {
+            "strategy": {
+              "enum": [
+                "fixed_n",
+                "prediction_error"
+              ]
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
     }
-  ],
-  "additionalProperties": false
+  }
 }

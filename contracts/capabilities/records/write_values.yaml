@@ -1,6 +1,5 @@
 {
   "name": "write_values",
-  "operation_family": "write_values",
   "task_operations": [
     "write_values"
   ],

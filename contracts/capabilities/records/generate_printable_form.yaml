@@ -1,6 +1,5 @@
 {
   "name": "generate_printable_form",
-  "operation_family": "generate_printable_form",
   "task_operations": [
     "generate_printable_form"
   ],

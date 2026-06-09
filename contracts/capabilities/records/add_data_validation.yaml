@@ -1,6 +1,5 @@
 {
   "name": "add_data_validation",
-  "operation_family": "add_data_validation",
   "task_operations": [
     "add_data_validation"
   ],

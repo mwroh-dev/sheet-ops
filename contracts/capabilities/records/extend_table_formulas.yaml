@@ -1,6 +1,5 @@
 {
   "name": "extend_table_formulas",
-  "operation_family": "extend_table_formulas",
   "task_operations": [
     "extend_table_formulas"
   ],

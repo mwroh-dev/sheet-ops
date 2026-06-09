@@ -1,6 +1,5 @@
 {
   "name": "join_lookup",
-  "operation_family": "join_lookup",
   "task_operations": [
     "create_join_lookup_result_sheet"
   ],

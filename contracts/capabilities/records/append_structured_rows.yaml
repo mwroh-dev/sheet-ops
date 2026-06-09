@@ -1,6 +1,5 @@
 {
   "name": "append_structured_rows",
-  "operation_family": "append_structured_rows",
   "task_operations": [
     "append_structured_rows"
   ],

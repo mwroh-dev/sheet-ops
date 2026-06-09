@@ -1,6 +1,5 @@
 {
   "name": "reconcile_tables",
-  "operation_family": "reconcile_tables",
   "task_operations": [
     "reconcile_tables"
   ],

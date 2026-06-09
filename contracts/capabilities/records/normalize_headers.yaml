@@ -1,6 +1,5 @@
 {
   "name": "normalize_headers",
-  "operation_family": "normalize_headers",
   "task_operations": [
     "normalize_headers"
   ],

@@ -63,9 +63,8 @@ func TestLoadRegistryRejectsMissingReferencedPaths(t *testing.T) {
 	if err := os.MkdirAll(recordsDir, 0o755); err != nil {
 		t.Fatalf("MkdirAll: %v", err)
 	}
-	record := `{
+record := `{
   "name": "group_summarize",
-  "operation_family": "group_summarize",
   "task_operations": ["create_summary_sheet"],
   "inputs": ["input_workbook"],
   "outputs": ["output_workbook"],

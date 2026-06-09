@@ -1,6 +1,5 @@
 {
   "name": "group_summarize",
-  "operation_family": "group_summarize",
   "task_operations": [
     "create_summary_sheet"
   ],

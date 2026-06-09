@@ -1,6 +1,5 @@
 {
   "name": "highlight_threshold",
-  "operation_family": "highlight_threshold",
   "task_operations": [
     "highlight_threshold_rows"
   ],

@@ -1,6 +1,5 @@
 {
   "name": "protect_formula_cells",
-  "operation_family": "protect_formula_cells",
   "task_operations": [
     "protect_formula_cells"
   ],

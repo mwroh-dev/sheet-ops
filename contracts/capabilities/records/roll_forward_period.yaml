@@ -1,6 +1,5 @@
 {
   "name": "roll_forward_period",
-  "operation_family": "roll_forward_period",
   "task_operations": [
     "roll_forward_period"
   ],
