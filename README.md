@@ -3,21 +3,24 @@
 Scope: human-facing project intro. Derived view - for package authority see
 `AGENTS.md`, for runtime contracts see `contracts/` and `runtime/`.
 
-Sheet Ops is an experimental local workflow surface for repeated workbook work.
-It is still a safety belt + dashboard around deterministic workbook execution,
-but the front door is process reuse rather than a claim that models cannot do
-the work.
+Sheet Ops is an experimental skill harness for LLM-assisted workbook work. It
+assumes strong models can already reason about many Excel tasks; its job is to
+make that reasoning cheaper, more repeatable, more inspectable, and safer to
+hand off to deterministic execution.
 
-It treats a natural-language workbook request as the start of a process, not as
-the whole execution authority. The process separates the facts needed for a
-workbook change, writes them into structured files, compiles them into runtime
-operations, verifies the result, and keeps evidence and knowledge that can be
-reused by later similar tasks.
+It treats a natural-language workbook request as the start of an orchestration
+process, not as the whole execution authority. The harness guides a model
+through goal setting, request fact capture, capability selection, runtime
+handoff, verification, and evidence review. The process separates the facts
+needed for a workbook change, writes them into structured files, compiles them
+into runtime operations, verifies the result, and keeps evidence and knowledge
+that can be reused by later similar tasks.
 
-The goal is not to replace model reasoning. The goal is to keep repeated
-workbook patterns as local process files so a person or agent can inspect,
-test, reuse, and compose them over time instead of spending model context on
-rediscovering the same procedure.
+The goal is not to replace model reasoning or claim that Sheet Ops can
+understand every workbook by itself. The goal is to keep repeated workbook
+patterns as local process files so a person or agent can inspect, test, reuse,
+and compose them over time instead of spending model context on rediscovering
+the same procedure.
 
 Core positioning:
 
@@ -25,20 +28,44 @@ Core positioning:
 - Go runtime = executor/verifier
 - JSON schema/contracts = execution authority
 - artifacts/evidence = audit trail
+- template research = advisory retrieval and planning hints
+- atom/molecule/organism records = reusable decision scaffolding, not runtime
+  authority
 - structured request files preserve the resolved task facts
 - artifacts, evidence, and knowledge keep the process inspectable and reusable
+
+## What The Skill Harness Adds
+
+Modern LLMs can already solve many workbook problems directly. Sheet Ops is
+useful when the same kinds of workbook work repeat and the agent should not
+spend fresh context rebuilding the process from scratch.
+
+The harness gives the model reusable guidance for:
+
+- deciding whether a request is ready for execution or needs more facts
+- choosing supported workbook atoms instead of inventing ad hoc operations
+- using template-class hints to narrow larger workbook requests into bounded
+  atom sequences
+- stopping at advisory evidence when the request needs unsupported behavior
+- handing only schema-authorized work to deterministic runtime execution
+- checking runtime verifier output before making user-facing success claims
+- leaving request, plan, verification, evidence, and knowledge artifacts that
+  make the next similar task cheaper to reason about
+
+In short: Sheet Ops is not an Excel omniscience layer. It is a reusable
+orchestration and verification harness for LLM workbook agents.
 
 ## Why not just Codex/Claude?
 
 Modern LLMs can already help with workbook tasks. Sheet Ops starts from that
 assumption.
 
-This project focuses on the part that becomes useful after repetition: keeping
-the process behind a workbook edit as local files that can be reviewed, tested,
-adapted, and assembled into later work. A run should not only produce an output
-workbook; it should also leave behind the request shape, operation contract,
-verification result, evidence, and knowledge that make the next similar task
-cheaper to reason about.
+This project focuses on the part that becomes useful after repetition:
+preserving the process behind a workbook edit as local files that can be
+reviewed, tested, adapted, and assembled into later work. A run should not only
+produce an output workbook; it should also leave behind the request shape,
+operation contract, verification result, evidence, and knowledge that make the
+next similar task cheaper to reason about.
 
 In this boundary model, the LLM only plans and compiles. Go runtime executes and verifies
 workbook work; schema contracts decide what is valid, and evidence records what happened for review and repair.
@@ -78,9 +105,9 @@ Canonical execution shape:
 
 ## Current Public Path
 
-The current public path supports a broader set of workbook composition
-families, while the template research layer supplies advisory patterns for
-larger workbook workflows.
+The current public path supports a broader set of workbook composition atoms.
+These are the deterministic actions the skill harness may select after request
+facts are captured and schema validation allows execution.
 
 - `append_structured_rows`
 - `extend_table_formulas`
@@ -102,22 +129,23 @@ requests. This repository is currently a local source-install harness; the
 installed runtime is materialized under `.codex/skills/sheet-ops/agent-system`,
 and local runtime state defaults to `.sheet-ops-state/`.
 
-## Template Research Front Door
+## Template Research Guidance Layer
 
 The front end is no longer only a thin natural-language-to-operation path.
 Sheet Ops now carries an advisory template research layer that helps classify
-spreadsheet work before it becomes runtime execution:
+spreadsheet work before it becomes runtime execution. This layer exists to guide
+the LLM toward known workbook patterns and away from unsupported claims:
 
-- raw template observations and model-generated hypotheses
+- curated template patterns and model-generated hypotheses
 - pattern classification and capability gap maps
 - atom, molecule, and organism composition catalogs
 - atom-builder audit records for code-generation assistance
 - draft planner coverage for 21 roadmap organisms
 - standalone final-workbook semantic verifier slices for those 21 organisms
 
-This layer is advisory. It helps shape request compilation and runtime
-coverage, but it does not make organism IDs public capabilities and it does not
-claim full template generation.
+This layer is advisory. It helps shape request compilation, capability choice,
+runtime coverage, and verification focus, but it does not make organism IDs
+public capabilities and it does not claim full template generation.
 For template-like requests, compiler artifacts retain `template_class_plan`
 evidence before the request is narrowed to supported atom execution.
 
@@ -156,7 +184,7 @@ guidance, and local state behavior.
 
 Supported today:
 
-- experimental local workflow surface for Codex/Claude workbook agents
+- experimental local skill harness for Codex/Claude workbook agents
 - single human-facing `sheet-ops` skill entry
 - currently implemented public path compositions:
   `append_structured_rows`, `extend_table_formulas`, `copy_period_sheet`,
@@ -167,6 +195,8 @@ Supported today:
   runtime path
 - advisory template research corpus with atom/molecule/organism composition
   records and 21 roadmap organism coverage artifacts
+- template-class planning evidence that helps the model choose bounded
+  supported atom sequences before runtime handoff
 - explicit organism execution request path with draft planner coverage and
   final-workbook semantic verifier slices for 21 roadmap organisms
 - deterministic fixture-backed harness smoke with checked-in frozen demo
@@ -182,6 +212,8 @@ Preview limitations:
   it is not visual quality verification
 - template research artifacts are advisory; they are not execution authority
   and do not imply full template generation
+- the harness improves repeated agent workflow quality, but it is not a claim
+  that arbitrary Excel templates can be fully inferred or generated
 - organism-level verifier slices prove bounded workbook evidence, not
   domain-specific correctness, financial advice, safety certification, or rich
   visual/print QA
@@ -192,6 +224,8 @@ Preview limitations:
 Follow-up:
 
 - harden the optional live smoke with stronger timeout/process supervision
+- strengthen skill-level guidance that forces model decisions to cite request
+  facts, selected atoms, verifier focus, and stop conditions
 - add cross-platform visual quality assertions only after renderer support is
   proven
 - add richer template generation, native pivot/matrix expansion, and
@@ -207,6 +241,9 @@ Follow-up:
   state
 - [Preview Status](docs/public/preview.md): supported capabilities, limitations,
   and follow-up work
+- [Assist Orchestration Backlog](docs/public/orchestration-backlog.md): known
+  gaps in live skill guidance, evidence feedback, and model-orchestration
+  compliance
 
 ## Canonical Package Contract
 

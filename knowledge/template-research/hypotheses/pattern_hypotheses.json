@@ -7,9 +7,23 @@
       "title": "Invoice line-item billing",
       "domain": "sales_admin",
       "why": "A customer-facing billing sheet must turn detail lines into a printable invoice with totals and controlled inputs.",
-      "triggers": ["vis_multi_block_form", "data_append_rows", "val_required_identity", "wf_quote_to_invoice"],
-      "likely_existing_capabilities": ["join_lookup", "group_summarize"],
-      "likely_missing_capabilities": ["append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells", "generate_printable_form"],
+      "triggers": [
+        "vis_multi_block_form",
+        "data_append_rows",
+        "val_required_identity",
+        "wf_quote_to_invoice"
+      ],
+      "likely_existing_capabilities": [
+        "join_lookup",
+        "group_summarize"
+      ],
+      "likely_missing_capabilities": [
+        "append_structured_rows",
+        "extend_table_formulas",
+        "add_data_validation",
+        "protect_formula_cells",
+        "generate_printable_form"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -17,9 +31,22 @@
       "title": "Monthly budget control",
       "domain": "finance",
       "why": "Budget sheets compare plan, actual, and variance by month so owners can correct overruns and track control against target.",
-      "triggers": ["vis_month_sectioning", "data_table_rollup", "val_numeric_ranges", "wf_period_close"],
-      "likely_existing_capabilities": ["group_summarize", "create_pivot_summary"],
-      "likely_missing_capabilities": ["copy_period_sheet", "extend_table_formulas", "add_data_validation", "protect_formula_cells"],
+      "triggers": [
+        "vis_month_sectioning",
+        "data_table_rollup",
+        "val_numeric_ranges",
+        "wf_period_close"
+      ],
+      "likely_existing_capabilities": [
+        "group_summarize"
+      ],
+      "likely_missing_capabilities": [
+        "copy_period_sheet",
+        "extend_table_formulas",
+        "add_data_validation",
+        "protect_formula_cells",
+        "create_pivot_summary"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -27,9 +54,21 @@
       "title": "Project timeline tracker",
       "domain": "project_management",
       "why": "Project timeline sheets sequence dated tasks, milestones, dependencies, and owners; broad rollup dashboards are a separate pattern.",
-      "triggers": ["vis_gantt_timeline", "data_append_rows", "wf_review_approval", "val_date_windows"],
-      "likely_existing_capabilities": ["append_structured_rows", "protect_formula_cells"],
-      "likely_missing_capabilities": ["copy_period_sheet", "add_data_validation", "group_summarize"],
+      "triggers": [
+        "vis_gantt_timeline",
+        "data_append_rows",
+        "wf_review_approval",
+        "val_date_windows"
+      ],
+      "likely_existing_capabilities": [
+        "append_structured_rows",
+        "protect_formula_cells"
+      ],
+      "likely_missing_capabilities": [
+        "copy_period_sheet",
+        "add_data_validation",
+        "group_summarize"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -37,9 +76,21 @@
       "title": "Matrix attendance register",
       "domain": "education",
       "why": "Matrix attendance sheets keep a locked roster cross-tab with one row per person and one column per day or session, with protected total cells, per-date formula cascades, and roll-forward copies across periods. New students, new rows, and new periods must grow the matrix while preserving the locked roster structure and protected summaries; append-only check-in logs stay excluded.",
-      "triggers": ["vis_calendar_grid", "vis_frozen_reference_band", "data_period_rollforward", "data_formula_cascade"],
-      "likely_existing_capabilities": ["copy_period_sheet", "protect_formula_cells"],
-      "likely_missing_capabilities": ["extend_table_formulas", "append_structured_rows", "normalize_headers"],
+      "triggers": [
+        "vis_calendar_grid",
+        "vis_frozen_reference_band",
+        "data_period_rollforward",
+        "data_formula_cascade"
+      ],
+      "likely_existing_capabilities": [
+        "copy_period_sheet",
+        "protect_formula_cells"
+      ],
+      "likely_missing_capabilities": [
+        "extend_table_formulas",
+        "append_structured_rows",
+        "normalize_headers"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -47,9 +98,21 @@
       "title": "Inventory movement and reconciliation log",
       "domain": "operations",
       "why": "Inventory movement logs record receipts, issues, transfers, and adjustments as transaction rows that can be reconciled back to stock counts and balances.",
-      "triggers": ["data_append_rows", "data_reconcile_sources", "val_duplicate_prevention", "wf_reconciliation_cycle"],
-      "likely_existing_capabilities": ["append_structured_rows", "reconcile_tables"],
-      "likely_missing_capabilities": ["add_data_validation", "extend_table_formulas", "flag_outliers"],
+      "triggers": [
+        "data_append_rows",
+        "data_reconcile_sources",
+        "val_duplicate_prevention",
+        "wf_reconciliation_cycle"
+      ],
+      "likely_existing_capabilities": [
+        "append_structured_rows",
+        "reconcile_tables"
+      ],
+      "likely_missing_capabilities": [
+        "add_data_validation",
+        "extend_table_formulas",
+        "flag_outliers"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -57,9 +120,21 @@
       "title": "Expense reimbursement form",
       "domain": "finance",
       "why": "Expense reimbursement forms collect claim lines, receipts, approvers, and payout totals for submission.",
-      "triggers": ["vis_multi_block_form", "data_append_rows", "val_required_comment", "val_numeric_ranges"],
-      "likely_existing_capabilities": ["generate_printable_form", "protect_formula_cells"],
-      "likely_missing_capabilities": ["add_data_validation", "append_structured_rows", "normalize_headers"],
+      "triggers": [
+        "vis_multi_block_form",
+        "data_append_rows",
+        "val_required_comment",
+        "val_numeric_ranges"
+      ],
+      "likely_existing_capabilities": [
+        "generate_printable_form",
+        "protect_formula_cells"
+      ],
+      "likely_missing_capabilities": [
+        "add_data_validation",
+        "append_structured_rows",
+        "normalize_headers"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -67,9 +142,21 @@
       "title": "Service ticket queue",
       "domain": "support",
       "why": "Queue-first support workbooks track ticket state, owner, and priority in a row-based backlog with escalation visibility; request-intake forms are a separate pattern.",
-      "triggers": ["data_status_pipeline", "data_append_rows", "val_status_lists", "vis_table_with_emphasis"],
-      "likely_existing_capabilities": ["group_summarize", "create_pivot_summary"],
-      "likely_missing_capabilities": ["add_data_validation", "append_structured_rows", "protect_formula_cells"],
+      "triggers": [
+        "data_status_pipeline",
+        "data_append_rows",
+        "val_status_lists",
+        "vis_table_with_emphasis"
+      ],
+      "likely_existing_capabilities": [
+        "group_summarize"
+      ],
+      "likely_missing_capabilities": [
+        "add_data_validation",
+        "append_structured_rows",
+        "protect_formula_cells",
+        "create_pivot_summary"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -77,9 +164,21 @@
       "title": "Scheduled maintenance log",
       "domain": "facilities",
       "why": "Facilities sheets track planned inspections and service visits with completion notes, separate from incident-and-repair handling.",
-      "triggers": ["data_append_rows", "vis_table_with_emphasis", "val_date_windows", "data_summary_snapshot"],
-      "likely_existing_capabilities": ["append_structured_rows", "flag_outliers"],
-      "likely_missing_capabilities": ["add_data_validation", "copy_period_sheet", "protect_formula_cells"],
+      "triggers": [
+        "data_append_rows",
+        "vis_table_with_emphasis",
+        "val_date_windows",
+        "data_summary_snapshot"
+      ],
+      "likely_existing_capabilities": [
+        "append_structured_rows"
+      ],
+      "likely_missing_capabilities": [
+        "add_data_validation",
+        "copy_period_sheet",
+        "protect_formula_cells",
+        "flag_outliers"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -87,9 +186,21 @@
       "title": "Health metrics tracker",
       "domain": "health",
       "why": "Threshold-aware health trackers combine repeated measurements with explicit targets or ranges, protected summaries or locked flags, and durable trend or period review. Verifier-ready evidence must show the same measurement-control loop end to end; diary, regimen, archive, and planning variants split away unless they directly support that loop.",
-      "triggers": ["data_summary_snapshot", "val_threshold_alerts", "vis_color_key", "wf_repeating_check_in"],
-      "likely_existing_capabilities": ["create_pivot_summary", "flag_outliers"],
-      "likely_missing_capabilities": ["copy_period_sheet", "add_data_validation", "normalize_headers", "protect_formula_cells"],
+      "triggers": [
+        "data_summary_snapshot",
+        "val_threshold_alerts",
+        "vis_color_key",
+        "wf_repeating_check_in"
+      ],
+      "likely_existing_capabilities": [],
+      "likely_missing_capabilities": [
+        "copy_period_sheet",
+        "add_data_validation",
+        "normalize_headers",
+        "protect_formula_cells",
+        "create_pivot_summary",
+        "flag_outliers"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -97,9 +208,20 @@
       "title": "Loan repayment calculator",
       "domain": "finance",
       "why": "Calculation-heavy templates drive schedule outputs from a small set of controlled loan inputs.",
-      "triggers": ["data_lookup_rates", "val_numeric_ranges", "val_formula_lock", "data_formula_cascade"],
-      "likely_existing_capabilities": ["join_lookup", "protect_formula_cells"],
-      "likely_missing_capabilities": ["add_data_validation", "extend_table_formulas"],
+      "triggers": [
+        "data_lookup_rates",
+        "val_numeric_ranges",
+        "val_formula_lock",
+        "data_formula_cascade"
+      ],
+      "likely_existing_capabilities": [
+        "join_lookup",
+        "protect_formula_cells"
+      ],
+      "likely_missing_capabilities": [
+        "add_data_validation",
+        "extend_table_formulas"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -107,9 +229,20 @@
       "title": "Project status dashboard",
       "domain": "project_management",
       "why": "Project status dashboards roll up detailed status rows into compact progress signals, without sequencing dated tasks.",
-      "triggers": ["vis_dashboard_tiles", "vis_progress_bar", "data_table_rollup", "val_status_lists"],
-      "likely_existing_capabilities": ["create_pivot_summary", "group_summarize"],
-      "likely_missing_capabilities": ["generate_printable_form", "add_data_validation"],
+      "triggers": [
+        "vis_dashboard_tiles",
+        "vis_progress_bar",
+        "data_table_rollup",
+        "val_status_lists"
+      ],
+      "likely_existing_capabilities": [
+        "group_summarize"
+      ],
+      "likely_missing_capabilities": [
+        "generate_printable_form",
+        "add_data_validation",
+        "create_pivot_summary"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -117,9 +250,19 @@
       "title": "Purchase order control",
       "domain": "procurement",
       "why": "Purchase order control sheets manage request, approval, PO issuance, and receipt/invoice handoff checkpoints; procurement reconciliation is the separate pattern that matches requisitions, purchase orders, receipts, and invoices.",
-      "triggers": ["vis_multi_block_form", "wf_request_fulfillment", "val_required_identity"],
-      "likely_existing_capabilities": ["add_data_validation", "generate_printable_form"],
-      "likely_missing_capabilities": ["protect_formula_cells", "append_structured_rows"],
+      "triggers": [
+        "vis_multi_block_form",
+        "wf_request_fulfillment",
+        "val_required_identity"
+      ],
+      "likely_existing_capabilities": [
+        "add_data_validation",
+        "generate_printable_form"
+      ],
+      "likely_missing_capabilities": [
+        "protect_formula_cells",
+        "append_structured_rows"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -127,9 +270,21 @@
       "title": "Asset lifecycle register",
       "domain": "operations",
       "why": "Assets move through acquisition, use, maintenance, and retirement with stable IDs and review dates.",
-      "triggers": ["data_unique_id_tracking", "wf_period_close", "val_duplicate_prevention", "data_summary_snapshot"],
-      "likely_existing_capabilities": ["normalize_headers", "append_structured_rows"],
-      "likely_missing_capabilities": ["reconcile_tables", "add_data_validation", "copy_period_sheet"],
+      "triggers": [
+        "data_unique_id_tracking",
+        "wf_period_close",
+        "val_duplicate_prevention",
+        "data_summary_snapshot"
+      ],
+      "likely_existing_capabilities": [
+        "normalize_headers",
+        "append_structured_rows"
+      ],
+      "likely_missing_capabilities": [
+        "reconcile_tables",
+        "add_data_validation",
+        "copy_period_sheet"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -137,9 +292,22 @@
       "title": "Cash flow monitor",
       "domain": "finance",
       "why": "Cash flow monitors carry opening balance forward into inflows, outflows, and closing balance across repeating periods.",
-      "triggers": ["data_period_rollforward", "vis_sidebar_totals", "data_table_rollup", "wf_period_close"],
-      "likely_existing_capabilities": ["group_summarize", "create_pivot_summary"],
-      "likely_missing_capabilities": ["copy_period_sheet", "roll_forward_period", "protect_formula_cells", "extend_table_formulas"],
+      "triggers": [
+        "data_period_rollforward",
+        "vis_sidebar_totals",
+        "data_table_rollup",
+        "wf_period_close"
+      ],
+      "likely_existing_capabilities": [
+        "group_summarize"
+      ],
+      "likely_missing_capabilities": [
+        "copy_period_sheet",
+        "roll_forward_period",
+        "protect_formula_cells",
+        "extend_table_formulas",
+        "create_pivot_summary"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -147,9 +315,20 @@
       "title": "Sales pipeline tracker",
       "domain": "sales",
       "why": "Pipeline sheets track opportunities through stage, owner, and forecast totals.",
-      "triggers": ["data_status_pipeline", "val_status_lists", "data_table_rollup"],
-      "likely_existing_capabilities": ["create_pivot_summary", "group_summarize"],
-      "likely_missing_capabilities": ["add_data_validation", "normalize_headers", "generate_printable_form"],
+      "triggers": [
+        "data_status_pipeline",
+        "val_status_lists",
+        "data_table_rollup"
+      ],
+      "likely_existing_capabilities": [
+        "group_summarize"
+      ],
+      "likely_missing_capabilities": [
+        "add_data_validation",
+        "normalize_headers",
+        "generate_printable_form",
+        "create_pivot_summary"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -157,9 +336,21 @@
       "title": "Student gradebook",
       "domain": "education",
       "why": "Gradebooks mix roster data, graded items, weighted formulas, and summary outputs.",
-      "triggers": ["vis_frozen_reference_band", "val_formula_lock", "data_lookup_master", "data_summary_snapshot"],
-      "likely_existing_capabilities": ["join_lookup", "protect_formula_cells"],
-      "likely_missing_capabilities": ["add_data_validation", "extend_table_formulas", "group_summarize"],
+      "triggers": [
+        "vis_frozen_reference_band",
+        "val_formula_lock",
+        "data_lookup_master",
+        "data_summary_snapshot"
+      ],
+      "likely_existing_capabilities": [
+        "join_lookup",
+        "protect_formula_cells"
+      ],
+      "likely_missing_capabilities": [
+        "add_data_validation",
+        "extend_table_formulas",
+        "group_summarize"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -167,9 +358,21 @@
       "title": "Safety compliance register",
       "domain": "compliance",
       "why": "Safety compliance sheets track risk and control state, open exceptions, and review dates rather than corrective work to closure.",
-      "triggers": ["vis_table_with_emphasis", "val_threshold_alerts", "wf_audit_trail", "data_summary_snapshot"],
-      "likely_existing_capabilities": ["flag_outliers", "group_summarize"],
-      "likely_missing_capabilities": ["add_data_validation", "protect_formula_cells", "generate_printable_form"],
+      "triggers": [
+        "vis_table_with_emphasis",
+        "val_threshold_alerts",
+        "wf_audit_trail",
+        "data_summary_snapshot"
+      ],
+      "likely_existing_capabilities": [
+        "group_summarize"
+      ],
+      "likely_missing_capabilities": [
+        "add_data_validation",
+        "protect_formula_cells",
+        "generate_printable_form",
+        "flag_outliers"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -177,9 +380,21 @@
       "title": "Timesheet hours log",
       "domain": "hr",
       "why": "Timesheets repeatedly collect hours by person, date, and work code for payroll or billing, with period totals.",
-      "triggers": ["vis_month_sectioning", "data_append_rows", "val_numeric_ranges", "data_table_rollup"],
-      "likely_existing_capabilities": ["append_structured_rows", "copy_period_sheet"],
-      "likely_missing_capabilities": ["extend_table_formulas", "add_data_validation", "normalize_headers"],
+      "triggers": [
+        "vis_month_sectioning",
+        "data_append_rows",
+        "val_numeric_ranges",
+        "data_table_rollup"
+      ],
+      "likely_existing_capabilities": [
+        "append_structured_rows",
+        "copy_period_sheet"
+      ],
+      "likely_missing_capabilities": [
+        "extend_table_formulas",
+        "add_data_validation",
+        "normalize_headers"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -187,9 +402,21 @@
       "title": "Procurement reconciliation sheet",
       "domain": "procurement",
       "why": "Reconciliation sheets match requisitions, purchase orders, receipts, and invoices to isolate mismatches and missing links.",
-      "triggers": ["data_reconcile_sources", "wf_reconciliation_cycle", "val_cross_field_rule", "vis_sidebar_totals"],
-      "likely_existing_capabilities": ["reconcile_tables", "create_pivot_summary"],
-      "likely_missing_capabilities": ["protect_formula_cells", "normalize_headers", "add_data_validation"],
+      "triggers": [
+        "data_reconcile_sources",
+        "wf_reconciliation_cycle",
+        "val_cross_field_rule",
+        "vis_sidebar_totals"
+      ],
+      "likely_existing_capabilities": [
+        "reconcile_tables"
+      ],
+      "likely_missing_capabilities": [
+        "protect_formula_cells",
+        "normalize_headers",
+        "add_data_validation",
+        "create_pivot_summary"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -197,9 +424,20 @@
       "title": "Warehouse reorder tracker",
       "domain": "logistics",
       "why": "Warehouse reorder trackers maintain a snapshot of on-hand stock, reorder points, and replenishment flags rather than a movement ledger.",
-      "triggers": ["val_threshold_alerts", "data_summary_snapshot", "vis_table_with_emphasis", "val_category_lists"],
-      "likely_existing_capabilities": ["flag_outliers", "create_pivot_summary"],
-      "likely_missing_capabilities": ["add_data_validation", "join_lookup", "normalize_headers"],
+      "triggers": [
+        "val_threshold_alerts",
+        "data_summary_snapshot",
+        "vis_table_with_emphasis",
+        "val_category_lists"
+      ],
+      "likely_existing_capabilities": [],
+      "likely_missing_capabilities": [
+        "add_data_validation",
+        "join_lookup",
+        "normalize_headers",
+        "flag_outliers",
+        "create_pivot_summary"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -207,9 +445,22 @@
       "title": "Training completion matrix",
       "domain": "hr",
       "why": "Training matrices map people against required modules or certifications in a dense cross-tab of completion status and due state.",
-      "triggers": ["vis_frozen_reference_band", "data_lookup_master", "val_category_lists", "data_summary_snapshot"],
-      "likely_existing_capabilities": ["group_summarize", "create_pivot_summary"],
-      "likely_missing_capabilities": ["add_data_validation", "normalize_headers", "extend_table_formulas", "generate_printable_form"],
+      "triggers": [
+        "vis_frozen_reference_band",
+        "data_lookup_master",
+        "val_category_lists",
+        "data_summary_snapshot"
+      ],
+      "likely_existing_capabilities": [
+        "group_summarize"
+      ],
+      "likely_missing_capabilities": [
+        "add_data_validation",
+        "normalize_headers",
+        "extend_table_formulas",
+        "generate_printable_form",
+        "create_pivot_summary"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -217,9 +468,21 @@
       "title": "Event planning runbook",
       "domain": "operations",
       "why": "Event runbooks coordinate schedules, owners, and task sequences for a fixed date; generic print-ready template logic is not part of the hypothesis boundary.",
-      "triggers": ["vis_multi_block_form", "val_date_windows", "vis_progress_bar", "data_status_pipeline"],
-      "likely_existing_capabilities": ["generate_printable_form", "group_summarize"],
-      "likely_missing_capabilities": ["copy_period_sheet", "add_data_validation", "protect_formula_cells"],
+      "triggers": [
+        "vis_multi_block_form",
+        "val_date_windows",
+        "vis_progress_bar",
+        "data_status_pipeline"
+      ],
+      "likely_existing_capabilities": [
+        "generate_printable_form",
+        "group_summarize"
+      ],
+      "likely_missing_capabilities": [
+        "copy_period_sheet",
+        "add_data_validation",
+        "protect_formula_cells"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -227,9 +490,20 @@
       "title": "Client contact master",
       "domain": "sales",
       "why": "Master sheets centralize identities and related attributes for lookup by many downstream workbooks.",
-      "triggers": ["data_unique_id_tracking", "data_lookup_master", "val_duplicate_prevention", "vis_frozen_reference_band"],
-      "likely_existing_capabilities": ["join_lookup", "normalize_headers"],
-      "likely_missing_capabilities": ["append_structured_rows", "add_data_validation"],
+      "triggers": [
+        "data_unique_id_tracking",
+        "data_lookup_master",
+        "val_duplicate_prevention",
+        "vis_frozen_reference_band"
+      ],
+      "likely_existing_capabilities": [
+        "join_lookup",
+        "normalize_headers"
+      ],
+      "likely_missing_capabilities": [
+        "append_structured_rows",
+        "add_data_validation"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -237,9 +511,21 @@
       "title": "Quality inspection log",
       "domain": "manufacturing",
       "why": "Inspection logs capture measured values, pass-fail decisions, and exception follow-up.",
-      "triggers": ["val_threshold_alerts", "wf_exception_escalation", "vis_table_with_emphasis", "data_append_rows"],
-      "likely_existing_capabilities": ["append_structured_rows", "flag_outliers"],
-      "likely_missing_capabilities": ["add_data_validation", "protect_formula_cells", "generate_printable_form"],
+      "triggers": [
+        "val_threshold_alerts",
+        "wf_exception_escalation",
+        "vis_table_with_emphasis",
+        "data_append_rows"
+      ],
+      "likely_existing_capabilities": [
+        "append_structured_rows"
+      ],
+      "likely_missing_capabilities": [
+        "add_data_validation",
+        "protect_formula_cells",
+        "generate_printable_form",
+        "flag_outliers"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -247,9 +533,21 @@
       "title": "Vendor performance scorecard",
       "domain": "procurement",
       "why": "Scorecards summarize delivery, quality, and service outcomes for supplier review.",
-      "triggers": ["vis_dashboard_tiles", "data_table_rollup", "wf_status_review", "val_category_lists"],
-      "likely_existing_capabilities": ["group_summarize", "create_pivot_summary"],
-      "likely_missing_capabilities": ["normalize_headers", "add_data_validation", "protect_formula_cells"],
+      "triggers": [
+        "vis_dashboard_tiles",
+        "data_table_rollup",
+        "wf_status_review",
+        "val_category_lists"
+      ],
+      "likely_existing_capabilities": [
+        "group_summarize"
+      ],
+      "likely_missing_capabilities": [
+        "normalize_headers",
+        "add_data_validation",
+        "protect_formula_cells",
+        "create_pivot_summary"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -257,9 +555,21 @@
       "title": "Insurance claim tracker",
       "domain": "finance",
       "why": "Claims tracking needs status progression, document control, and time-based follow-up.",
-      "triggers": ["data_status_pipeline", "wf_audit_trail", "val_required_identity", "data_summary_snapshot"],
-      "likely_existing_capabilities": ["group_summarize", "create_pivot_summary"],
-      "likely_missing_capabilities": ["add_data_validation", "generate_printable_form", "protect_formula_cells"],
+      "triggers": [
+        "data_status_pipeline",
+        "wf_audit_trail",
+        "val_required_identity",
+        "data_summary_snapshot"
+      ],
+      "likely_existing_capabilities": [
+        "group_summarize"
+      ],
+      "likely_missing_capabilities": [
+        "add_data_validation",
+        "generate_printable_form",
+        "protect_formula_cells",
+        "create_pivot_summary"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -267,9 +577,21 @@
       "title": "Research data log",
       "domain": "analytics",
       "why": "Research logs need controlled entries, repeatable structure, and easy rollups for review.",
-      "triggers": ["data_append_rows", "val_duplicate_prevention", "wf_audit_trail", "data_summary_snapshot"],
-      "likely_existing_capabilities": ["append_structured_rows", "create_pivot_summary"],
-      "likely_missing_capabilities": ["add_data_validation", "normalize_headers", "protect_formula_cells"],
+      "triggers": [
+        "data_append_rows",
+        "val_duplicate_prevention",
+        "wf_audit_trail",
+        "data_summary_snapshot"
+      ],
+      "likely_existing_capabilities": [
+        "append_structured_rows"
+      ],
+      "likely_missing_capabilities": [
+        "add_data_validation",
+        "normalize_headers",
+        "protect_formula_cells",
+        "create_pivot_summary"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -277,9 +599,21 @@
       "title": "Construction cost tracker",
       "domain": "construction",
       "why": "Active construction cost sheets track committed spend, approved change orders, forecast-to-complete, and phase-by-phase cost rollups; estimate sheets, bid comparisons, and generic project budgets are separate hypotheses.",
-      "triggers": ["vis_table_with_emphasis", "data_append_rows", "data_table_rollup", "val_numeric_ranges"],
-      "likely_existing_capabilities": ["group_summarize", "create_pivot_summary"],
-      "likely_missing_capabilities": ["extend_table_formulas", "add_data_validation", "protect_formula_cells"],
+      "triggers": [
+        "vis_table_with_emphasis",
+        "data_append_rows",
+        "data_table_rollup",
+        "val_numeric_ranges"
+      ],
+      "likely_existing_capabilities": [
+        "group_summarize"
+      ],
+      "likely_missing_capabilities": [
+        "extend_table_formulas",
+        "add_data_validation",
+        "protect_formula_cells",
+        "create_pivot_summary"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -287,9 +621,21 @@
       "title": "Shift roster planner",
       "domain": "operations",
       "why": "Roster templates assign people to shifts while enforcing coverage targets, availability, and rotation or rest constraints.",
-      "triggers": ["vis_calendar_grid", "val_allowed_sequence", "val_date_windows", "vis_color_key"],
-      "likely_existing_capabilities": ["group_summarize", "copy_period_sheet"],
-      "likely_missing_capabilities": ["add_data_validation", "normalize_headers", "generate_printable_form"],
+      "triggers": [
+        "vis_calendar_grid",
+        "val_allowed_sequence",
+        "val_date_windows",
+        "vis_color_key"
+      ],
+      "likely_existing_capabilities": [
+        "group_summarize",
+        "copy_period_sheet"
+      ],
+      "likely_missing_capabilities": [
+        "add_data_validation",
+        "normalize_headers",
+        "generate_printable_form"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -297,9 +643,21 @@
       "title": "Expense policy checker",
       "domain": "finance",
       "why": "Spreadsheet-native policy checkers only count when the sheet itself enforces category limits, receipt requirements, and approval thresholds with formulas, validations, and locked rule cells. Reimbursement routing, approval prose, printable claim forms, and other downstream artifacts stay outside the pattern; if no in-sheet rule gate appears, keep the pattern retired rather than widened.",
-      "triggers": ["val_threshold_alerts", "val_category_lists", "val_cross_field_rule", "data_formula_cascade"],
-      "likely_existing_capabilities": ["flag_outliers", "group_summarize"],
-      "likely_missing_capabilities": ["add_data_validation", "protect_formula_cells", "extend_table_formulas"],
+      "triggers": [
+        "val_threshold_alerts",
+        "val_category_lists",
+        "val_cross_field_rule",
+        "data_formula_cascade"
+      ],
+      "likely_existing_capabilities": [
+        "group_summarize"
+      ],
+      "likely_missing_capabilities": [
+        "add_data_validation",
+        "protect_formula_cells",
+        "extend_table_formulas",
+        "flag_outliers"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -307,9 +665,21 @@
       "title": "Fleet dispatch board",
       "domain": "logistics",
       "why": "Dispatch boards coordinate vehicles, routes, availability, and delivery timing.",
-      "triggers": ["vis_dashboard_tiles", "data_status_pipeline", "val_date_windows", "wf_handoff_between_owners"],
-      "likely_existing_capabilities": ["group_summarize", "create_pivot_summary"],
-      "likely_missing_capabilities": ["add_data_validation", "copy_period_sheet", "normalize_headers"],
+      "triggers": [
+        "vis_dashboard_tiles",
+        "data_status_pipeline",
+        "val_date_windows",
+        "wf_handoff_between_owners"
+      ],
+      "likely_existing_capabilities": [
+        "group_summarize"
+      ],
+      "likely_missing_capabilities": [
+        "add_data_validation",
+        "copy_period_sheet",
+        "normalize_headers",
+        "create_pivot_summary"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -317,9 +687,21 @@
       "title": "Compliance action register",
       "domain": "compliance",
       "why": "Action registers track findings, corrective actions, owners, due dates, and closure evidence until issues are closed.",
-      "triggers": ["wf_audit_trail", "val_required_comment", "val_date_windows", "data_status_pipeline"],
-      "likely_existing_capabilities": ["group_summarize", "create_pivot_summary"],
-      "likely_missing_capabilities": ["add_data_validation", "protect_formula_cells", "generate_printable_form"],
+      "triggers": [
+        "wf_audit_trail",
+        "val_required_comment",
+        "val_date_windows",
+        "data_status_pipeline"
+      ],
+      "likely_existing_capabilities": [
+        "group_summarize"
+      ],
+      "likely_missing_capabilities": [
+        "add_data_validation",
+        "protect_formula_cells",
+        "generate_printable_form",
+        "create_pivot_summary"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -327,9 +709,21 @@
       "title": "Lab sample tracker",
       "domain": "science",
       "why": "Sample trackers manage identifiers, collection timing, status, and measurement results.",
-      "triggers": ["data_unique_id_tracking", "val_date_windows", "wf_audit_trail", "data_summary_snapshot"],
-      "likely_existing_capabilities": ["append_structured_rows", "normalize_headers"],
-      "likely_missing_capabilities": ["add_data_validation", "protect_formula_cells", "create_pivot_summary"],
+      "triggers": [
+        "data_unique_id_tracking",
+        "val_date_windows",
+        "wf_audit_trail",
+        "data_summary_snapshot"
+      ],
+      "likely_existing_capabilities": [
+        "append_structured_rows",
+        "normalize_headers"
+      ],
+      "likely_missing_capabilities": [
+        "add_data_validation",
+        "protect_formula_cells",
+        "create_pivot_summary"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -337,9 +731,21 @@
       "title": "Membership renewal monitor",
       "domain": "operations",
       "why": "Renewal sheets track expirations, notices, and recurring follow-up cycles.",
-      "triggers": ["vis_color_key", "data_period_rollforward", "val_date_windows", "data_summary_snapshot"],
-      "likely_existing_capabilities": ["copy_period_sheet", "group_summarize"],
-      "likely_missing_capabilities": ["add_data_validation", "protect_formula_cells", "append_structured_rows"],
+      "triggers": [
+        "vis_color_key",
+        "data_period_rollforward",
+        "val_date_windows",
+        "data_summary_snapshot"
+      ],
+      "likely_existing_capabilities": [
+        "copy_period_sheet",
+        "group_summarize"
+      ],
+      "likely_missing_capabilities": [
+        "add_data_validation",
+        "protect_formula_cells",
+        "append_structured_rows"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -347,9 +753,21 @@
       "title": "Donation campaign tracker",
       "domain": "nonprofit",
       "why": "Campaign sheets capture donors, pledges, receipts, and summary progress against goals.",
-      "triggers": ["vis_dashboard_tiles", "data_table_rollup", "wf_status_review", "val_required_identity"],
-      "likely_existing_capabilities": ["group_summarize", "create_pivot_summary"],
-      "likely_missing_capabilities": ["generate_printable_form", "add_data_validation", "normalize_headers"],
+      "triggers": [
+        "vis_dashboard_tiles",
+        "data_table_rollup",
+        "wf_status_review",
+        "val_required_identity"
+      ],
+      "likely_existing_capabilities": [
+        "group_summarize"
+      ],
+      "likely_missing_capabilities": [
+        "generate_printable_form",
+        "add_data_validation",
+        "normalize_headers",
+        "create_pivot_summary"
+      ],
       "evidence_status": "hypothesis_only"
     },
     {
@@ -357,9 +775,21 @@
       "title": "Subscription renewal ledger",
       "domain": "operations",
       "why": "Renewal ledgers track start dates, next charges, billing status, and recurring customer changes.",
-      "triggers": ["data_period_rollforward", "val_date_windows", "data_status_pipeline", "data_summary_snapshot"],
-      "likely_existing_capabilities": ["copy_period_sheet", "create_pivot_summary"],
-      "likely_missing_capabilities": ["add_data_validation", "protect_formula_cells", "append_structured_rows"],
+      "triggers": [
+        "data_period_rollforward",
+        "val_date_windows",
+        "data_status_pipeline",
+        "data_summary_snapshot"
+      ],
+      "likely_existing_capabilities": [
+        "copy_period_sheet"
+      ],
+      "likely_missing_capabilities": [
+        "add_data_validation",
+        "protect_formula_cells",
+        "append_structured_rows",
+        "create_pivot_summary"
+      ],
       "evidence_status": "hypothesis_only"
     }
   ]

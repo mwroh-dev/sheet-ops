@@ -39,6 +39,11 @@ Use this skill when Codex needs to coordinate a workbook request by:
 - requesting runtime handoff when execution is justified
 - reviewing the result before returning a final answer
 
+This skill is a guideline and orchestration harness for a strong model, not a
+claim that the model lacks spreadsheet knowledge. Its value is to reduce
+repeated reasoning cost, keep decisions tied to local contracts, and leave
+evidence that can improve later similar workbook work.
+
 ## Tool Authority
 
 Consumer restrictions live in `agents/profiles/*.toml` and are rendered into
@@ -73,6 +78,23 @@ as a structured request before the internal dispatcher runs. Use a plain text or
 markdown request only when text must enter the open request-compiler lane. Do
 not pre-read the workbook just to rediscover headers the runtime can validate
 for itself.
+
+## Planning guidance rule
+
+Before runtime handoff, make the model decision explicit enough to audit:
+
+- user goal and workbook boundary
+- known request facts versus missing facts
+- selected public atom capability or template-class hint
+- why the selected path is supported, advisory-only, or blocked
+- verifier focus that would prove success
+- stop condition if facts, policy, capability support, or verifier coverage are
+  insufficient
+
+For template-like requests, use the advisory atom/molecule/organism ecosystem as
+decision scaffolding. Do not present the ecosystem as runtime authority. Narrow
+to supported atom execution only when the request facts and schema contracts are
+sufficient.
 
 ## Routing guardrail
 
@@ -151,17 +173,19 @@ Follow-up:
 2. Spawn built-in subagents explicitly for specialist roles.
 3. Wait for each result.
 4. Evaluate the result in the parent.
-5. If the request is explicit enough for a structured `UseRequest`, write that
+5. Record the goal, known facts, selected path, verifier focus, and stop
+   condition before execution.
+6. If the request is explicit enough for a structured `UseRequest`, write that
    request file and skip manual workbook inspection in the parent.
-6. Create a typed `UseEnvelopeV2` only when the request is sufficiently
+7. Create a typed `UseEnvelopeV2` only when the request is sufficiently
    resolved; use the skill-owned deterministic packing step without probing for
    internal commands from the runner pane.
-7. Use the skill-owned runtime handoff as the compatibility boundary without
+8. Use the skill-owned runtime handoff as the compatibility boundary without
    typing or reconstructing an internal command. It routes structured requests
    to `use-structured` and open requests to `use-open`; closed validated
    requests belong to `run-validated`.
-8. Re-dispatch or stop based on explicit state.
-9. The parent owns the final answer and completion decision.
+9. Re-dispatch or stop based on explicit state.
+10. The parent owns the final answer and completion decision.
 
 ## Role templates
 

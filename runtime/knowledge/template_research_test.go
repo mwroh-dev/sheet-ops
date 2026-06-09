@@ -1,10 +1,10 @@
 package knowledge
 
 import (
-	"bufio"
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"testing"
@@ -15,14 +15,12 @@ import (
 func TestTemplateResearchCorpusRecordsValidate(t *testing.T) {
 	root := repoRoot(t)
 
-	rawSchema := compileSchema(t, filepath.Join(root, "contracts", "template_research", "raw_observation.schema.json"))
 	patternSchema := compileSchema(t, filepath.Join(root, "contracts", "template_research", "template_pattern.schema.json"))
 	opportunitySchema := compileSchema(t, filepath.Join(root, "contracts", "template_research", "capability_opportunity.schema.json"))
 
-	validateJSONL(t, rawSchema, filepath.Join(root, "knowledge", "template-research", "extracted", "templates.jsonl"))
-	validateJSONLFiles(t, rawSchema, filepath.Join(root, "knowledge", "template-research", "raw", "shards", "*.jsonl"), 9)
 	validateJSONFiles(t, patternSchema, filepath.Join(root, "knowledge", "template-research", "patterns", "*.json"))
 	validateJSONFiles(t, opportunitySchema, filepath.Join(root, "knowledge", "template-research", "opportunities", "*.json"))
+	assertTemplatePatternsReferenceKnownVocabulary(t, root)
 }
 
 func TestTemplateResearchTripleAgentArtifactsValidate(t *testing.T) {
@@ -37,7 +35,8 @@ func TestTemplateResearchTripleAgentArtifactsValidate(t *testing.T) {
 	validateJSONDocumentFromFile(t, hypothesisSchema, filepath.Join(root, "knowledge", "template-research", "hypotheses", "pattern_hypotheses.json"))
 	validateJSONDocumentFromFile(t, judgmentSchema, filepath.Join(root, "knowledge", "template-research", "judgments", "pattern_registry.json"))
 	validateJSONDocumentFromFile(t, scoringSchema, filepath.Join(root, "knowledge", "template-research", "judgments", "round_scoring.json"))
-	validateJSONLFilesWithMinRecords(t, scoringSchema, filepath.Join(root, "knowledge", "template-research", "judgments", "scoring-history", "*.jsonl"), 1, 1)
+	assertHypothesesReferenceTriggerCatalogAndJudgments(t, root)
+	assertJudgmentsReferenceKnownCapabilities(t, root)
 	assertTripleAgentArtifactCounts(t, root)
 }
 
@@ -54,19 +53,14 @@ func TestTemplateResearchClassificationCoversRoadmapCandidates(t *testing.T) {
 	validateJSONDocumentFromFile(t, sweepSchema, filepath.Join(root, "knowledge", "template-research", "classification", "classification-sweep.json"))
 
 	roadmapCandidates := loadRoadmapCandidateIDs(t, filepath.Join(root, "knowledge", "template-research", "judgments", "pattern_registry.json"))
-	classified := loadPrimaryClassifiedPatternIDs(t, classificationPath)
-	if len(classified) != len(roadmapCandidates) {
-		t.Fatalf("primary classified pattern count=%d want %d", len(classified), len(roadmapCandidates))
-	}
-	for candidate := range roadmapCandidates {
-		if !classified[candidate] {
-			t.Fatalf("roadmap candidate %q missing from primary classification", candidate)
-		}
-	}
-	for patternID := range classified {
-		if !roadmapCandidates[patternID] {
-			t.Fatalf("classification includes non-roadmap primary pattern %q", patternID)
-		}
+	for _, path := range []string{
+		classificationPath,
+		filepath.Join(root, "knowledge", "template-research", "classification", "fixture-priority-matrix.json"),
+		filepath.Join(root, "knowledge", "template-research", "classification", "capability-gap-map.json"),
+		filepath.Join(root, "knowledge", "template-research", "classification", "verifier-strategy-map.json"),
+	} {
+		classified := loadClassifiedPatternIDs(t, path)
+		assertExactStringSet(t, classified, roadmapCandidates, path)
 	}
 	assertClassificationSweepCoverage(t, filepath.Join(root, "knowledge", "template-research", "classification", "classification-sweep.json"))
 }
@@ -122,7 +116,8 @@ func TestTemplateResearchOrganismsValidateAsAdvisoryEcosystem(t *testing.T) {
 	validateJSONDocumentFromFile(t, organismSchema, organismPath)
 
 	roadmapCandidates := loadRoadmapCandidateIDs(t, filepath.Join(root, "knowledge", "template-research", "judgments", "pattern_registry.json"))
-	molecules := loadTemplateResearchMolecules(t, filepath.Join(root, "knowledge", "template-research", "composition", "molecules.json"))
+	moleculePath := filepath.Join(root, "knowledge", "template-research", "composition", "molecules.json")
+	molecules := loadTemplateResearchMolecules(t, moleculePath)
 	supportedAtoms := loadSupportedCapabilityNames(t, filepath.Join(root, "contracts", "capabilities", "capability.schema.json"))
 	opportunityAtoms := loadOpportunityCapabilityNames(t, filepath.Join(root, "knowledge", "template-research", "opportunities", "*.json"))
 
@@ -198,6 +193,7 @@ func TestTemplateResearchOrganismsValidateAsAdvisoryEcosystem(t *testing.T) {
 			t.Fatalf("roadmap candidate %q missing from organism catalog", candidate)
 		}
 	}
+	assertMoleculeOrganismLinksAreBidirectional(t, moleculePath, organismPath)
 }
 
 func TestTemplateResearchExecutableOrganismCoverageLadder(t *testing.T) {
@@ -419,6 +415,7 @@ func TestTemplateResearchRuntimeProductizationArtifactsValidate(t *testing.T) {
 	opportunityAtoms := loadOpportunityCapabilityNames(t, filepath.Join(root, "knowledge", "template-research", "opportunities", "*.json"))
 	coverageTiers := loadTemplateResearchCoverageTiers(t, filepath.Join(root, "knowledge", "template-research", "composition", "executable-organism-coverage.json"))
 	runtimeDraftOrganisms := loadTemplateResearchRuntimeDraftOrganisms(t, filepath.Join(root, "knowledge", "template-research", "composition", "draft-planner-coverage.json"))
+	atomBuilders := loadAtomBuilderIDs(t, filepath.Join(root, "knowledge", "atom-builders", "builders.json"))
 
 	verifierSpecs := loadRuntimeProductizationVerifierSpecs(t, verifierPath)
 	for _, organism := range runtimeDraftOrganisms {
@@ -455,6 +452,12 @@ func TestTemplateResearchRuntimeProductizationArtifactsValidate(t *testing.T) {
 		for _, atom := range plan.OperationSequence {
 			if !supportedAtoms[atom] {
 				t.Fatalf("planner plan %q references unsupported atom %q", organism, atom)
+			}
+			if !atomBuilders[atom] {
+				t.Fatalf("planner plan %q references atom %q without atom-builder mirror", organism, atom)
+			}
+			if !containsString(verifierSpecs[organism].AtomVerifierDependencies, atom) {
+				t.Fatalf("planner plan %q operation atom %q missing from verifier dependencies", organism, atom)
 			}
 		}
 		for _, verifierSpecID := range plan.RequiredVerifierSpecs {
@@ -630,10 +633,13 @@ func TestAtomBuilderLayerValidatesRuntimeMirrorAndPlanningContracts(t *testing.T
 	validateJSONDocumentFromFile(t, domainSchema, filepath.Join(root, "knowledge", "atom-builders", "workbook-app-primitives.json"))
 	builderPath := filepath.Join(root, "knowledge", "atom-builders", "builders.json")
 	validateJSONDocumentFromFile(t, builderSchema, builderPath)
-	validateJSONDocumentFromFile(t, planSchema, filepath.Join(root, "knowledge", "atom-builders", "builder-plan-shapes.json"))
+	planShapePath := filepath.Join(root, "knowledge", "atom-builders", "builder-plan-shapes.json")
+	validateJSONDocumentFromFile(t, planSchema, planShapePath)
 
 	supportedAtoms := loadSupportedCapabilityNames(t, filepath.Join(root, "contracts", "capabilities", "capability.schema.json"))
 	opportunityAtoms := loadOpportunityCapabilityNames(t, filepath.Join(root, "knowledge", "template-research", "opportunities", "*.json"))
+	knownAtoms := unionStringSets(supportedAtoms, opportunityAtoms)
+	planShapeAtoms := loadAtomBuilderPlanShapeAtoms(t, planShapePath)
 	raw, err := os.ReadFile(builderPath)
 	if err != nil {
 		t.Fatalf("ReadFile(%s): %v", builderPath, err)
@@ -692,6 +698,19 @@ func TestAtomBuilderLayerValidatesRuntimeMirrorAndPlanningContracts(t *testing.T
 			t.Fatalf("supported capability %q missing atom builder mirror", atom)
 		}
 	}
+	for atom := range seen {
+		if !planShapeAtoms[atom] {
+			t.Fatalf("atom builder %q missing from builder plan shapes", atom)
+		}
+	}
+	for atom := range planShapeAtoms {
+		if !seen[atom] {
+			t.Fatalf("builder plan shape references atom %q without builder mirror", atom)
+		}
+		if !knownAtoms[atom] {
+			t.Fatalf("builder plan shape references unknown atom %q", atom)
+		}
+	}
 }
 
 func TestTemplateResearchKeepsUnsupportedCapabilitiesOutOfSupportedRegistry(t *testing.T) {
@@ -736,6 +755,84 @@ func loadTemplateResearchMolecules(t *testing.T, path string) map[string][]strin
 		molecules[molecule.MoleculeID] = append([]string(nil), molecule.VerificationMethods...)
 	}
 	return molecules
+}
+
+func assertMoleculeOrganismLinksAreBidirectional(t *testing.T, moleculePath, organismPath string) {
+	t.Helper()
+	type moleculeRecord struct {
+		MoleculeID      string   `json:"molecule_id"`
+		UsedByOrganisms []string `json:"used_by_organisms"`
+	}
+	type organismRecord struct {
+		OrganismID       string   `json:"organism_id"`
+		RequiredMolecule []string `json:"required_molecule_ids"`
+	}
+
+	moleculeRaw, err := os.ReadFile(moleculePath)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", moleculePath, err)
+	}
+	var moleculeCatalog struct {
+		Molecules []moleculeRecord `json:"molecules"`
+	}
+	if err := json.Unmarshal(moleculeRaw, &moleculeCatalog); err != nil {
+		t.Fatalf("Unmarshal(%s): %v", moleculePath, err)
+	}
+
+	organismRaw, err := os.ReadFile(organismPath)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", organismPath, err)
+	}
+	var organismCatalog struct {
+		Organisms []organismRecord `json:"organisms"`
+	}
+	if err := json.Unmarshal(organismRaw, &organismCatalog); err != nil {
+		t.Fatalf("Unmarshal(%s): %v", organismPath, err)
+	}
+
+	moleculeToOrganisms := map[string]map[string]bool{}
+	for _, molecule := range moleculeCatalog.Molecules {
+		if moleculeToOrganisms[molecule.MoleculeID] != nil {
+			t.Fatalf("duplicate molecule %q", molecule.MoleculeID)
+		}
+		moleculeToOrganisms[molecule.MoleculeID] = map[string]bool{}
+		for _, organismID := range molecule.UsedByOrganisms {
+			moleculeToOrganisms[molecule.MoleculeID][organismID] = true
+		}
+	}
+	organismToMolecules := map[string]map[string]bool{}
+	for _, organism := range organismCatalog.Organisms {
+		if organismToMolecules[organism.OrganismID] != nil {
+			t.Fatalf("duplicate organism %q", organism.OrganismID)
+		}
+		organismToMolecules[organism.OrganismID] = map[string]bool{}
+		for _, moleculeID := range organism.RequiredMolecule {
+			organismToMolecules[organism.OrganismID][moleculeID] = true
+		}
+	}
+
+	for moleculeID, organisms := range moleculeToOrganisms {
+		for organismID := range organisms {
+			requiredMolecules, ok := organismToMolecules[organismID]
+			if !ok {
+				t.Fatalf("molecule %q used_by_organisms references unknown organism %q", moleculeID, organismID)
+			}
+			if !requiredMolecules[moleculeID] {
+				t.Fatalf("molecule %q lists organism %q, but organism does not require that molecule", moleculeID, organismID)
+			}
+		}
+	}
+	for organismID, molecules := range organismToMolecules {
+		for moleculeID := range molecules {
+			usedByOrganisms, ok := moleculeToOrganisms[moleculeID]
+			if !ok {
+				t.Fatalf("organism %q requires unknown molecule %q", organismID, moleculeID)
+			}
+			if !usedByOrganisms[organismID] {
+				t.Fatalf("organism %q requires molecule %q, but molecule does not list the organism", organismID, moleculeID)
+			}
+		}
+	}
 }
 
 func loadTemplateResearchOrganismPriorities(t *testing.T, path string) map[string]string {
@@ -932,6 +1029,63 @@ func loadRuntimeProductizationPromotionDecisions(t *testing.T, path string) map[
 	return decisions
 }
 
+func loadAtomBuilderIDs(t *testing.T, path string) map[string]bool {
+	t.Helper()
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", path, err)
+	}
+	var catalog struct {
+		Builders []struct {
+			AtomID string `json:"atom_id"`
+		} `json:"builders"`
+	}
+	if err := json.Unmarshal(raw, &catalog); err != nil {
+		t.Fatalf("Unmarshal(%s): %v", path, err)
+	}
+	ids := map[string]bool{}
+	for _, builder := range catalog.Builders {
+		if ids[builder.AtomID] {
+			t.Fatalf("duplicate atom builder %q", builder.AtomID)
+		}
+		ids[builder.AtomID] = true
+	}
+	return ids
+}
+
+func loadAtomBuilderPlanShapeAtoms(t *testing.T, path string) map[string]bool {
+	t.Helper()
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", path, err)
+	}
+	var catalog struct {
+		PlanShapes []struct {
+			ShapeID        string   `json:"shape_id"`
+			AppliesToAtoms []string `json:"applies_to_atoms"`
+		} `json:"plan_shapes"`
+	}
+	if err := json.Unmarshal(raw, &catalog); err != nil {
+		t.Fatalf("Unmarshal(%s): %v", path, err)
+	}
+	ids := map[string]bool{}
+	for _, shape := range catalog.PlanShapes {
+		for _, atom := range shape.AppliesToAtoms {
+			ids[atom] = true
+		}
+	}
+	return ids
+}
+
+func containsString(values []string, want string) bool {
+	for _, value := range values {
+		if value == want {
+			return true
+		}
+	}
+	return false
+}
+
 func loadSupportedCapabilityNames(t *testing.T, schemaPath string) map[string]bool {
 	t.Helper()
 	raw, err := os.ReadFile(schemaPath)
@@ -975,6 +1129,96 @@ func loadOpportunityCapabilityNames(t *testing.T, glob string) map[string]bool {
 	return found
 }
 
+func assertTemplatePatternsReferenceKnownVocabulary(t *testing.T, root string) {
+	t.Helper()
+	supportedAtoms := loadSupportedCapabilityNames(t, filepath.Join(root, "contracts", "capabilities", "capability.schema.json"))
+	opportunityAtoms := loadOpportunityCapabilityNames(t, filepath.Join(root, "knowledge", "template-research", "opportunities", "*.json"))
+	taxonomyPath := filepath.Join(root, "knowledge", "template-research", "taxonomy.md")
+	visualLabels := loadTaxonomyInlineCodeSet(t, taxonomyPath, "Visual/frontend labels")
+	dataLabels := loadTaxonomyInlineCodeSet(t, taxonomyPath, "Data/backend labels")
+	validationLabels := loadTaxonomyInlineCodeSet(t, taxonomyPath, "Validation labels")
+	workflowLabels := loadTaxonomyInlineCodeSet(t, taxonomyPath, "Workflow labels")
+
+	paths, err := filepath.Glob(filepath.Join(root, "knowledge", "template-research", "patterns", "*.json"))
+	if err != nil {
+		t.Fatalf("Glob(patterns): %v", err)
+	}
+	for _, path := range paths {
+		raw, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("ReadFile(%s): %v", path, err)
+		}
+		var pattern struct {
+			PatternID                   string   `json:"pattern_id"`
+			VisualPatterns              []string `json:"visual_patterns"`
+			DataPatterns                []string `json:"data_patterns"`
+			ValidationPatterns          []string `json:"validation_patterns"`
+			WorkflowPatterns            []string `json:"workflow_patterns"`
+			SourceObservations          []string `json:"source_observations"`
+			ExistingCapabilities        []string `json:"existing_capabilities"`
+			MissingCapabilityCandidates []string `json:"missing_capability_candidates"`
+			RecurrenceStatus            string   `json:"recurrence_status"`
+		}
+		if err := json.Unmarshal(raw, &pattern); err != nil {
+			t.Fatalf("Unmarshal(%s): %v", path, err)
+		}
+		if pattern.RecurrenceStatus == "recurring" && len(pattern.SourceObservations) < 2 {
+			t.Fatalf("recurring pattern %q has %d source observations, want at least 2", pattern.PatternID, len(pattern.SourceObservations))
+		}
+		assertAllKnown(t, path, "visual_patterns", pattern.VisualPatterns, visualLabels)
+		assertAllKnown(t, path, "data_patterns", pattern.DataPatterns, dataLabels)
+		assertAllKnown(t, path, "validation_patterns", pattern.ValidationPatterns, validationLabels)
+		assertAllKnown(t, path, "workflow_patterns", pattern.WorkflowPatterns, workflowLabels)
+		for _, atom := range pattern.ExistingCapabilities {
+			if !supportedAtoms[atom] {
+				t.Fatalf("pattern %q existing capability %q is not supported", pattern.PatternID, atom)
+			}
+		}
+		for _, atom := range pattern.MissingCapabilityCandidates {
+			if !supportedAtoms[atom] && !opportunityAtoms[atom] {
+				t.Fatalf("pattern %q missing capability candidate %q is neither supported nor tracked as opportunity", pattern.PatternID, atom)
+			}
+		}
+	}
+}
+
+func loadTaxonomyInlineCodeSet(t *testing.T, path, marker string) map[string]bool {
+	t.Helper()
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", path, err)
+	}
+	text := string(raw)
+	start := strings.Index(text, marker)
+	if start < 0 {
+		t.Fatalf("taxonomy marker %q missing from %s", marker, path)
+	}
+	rest := text[start:]
+	end := strings.Index(rest, "\n\n")
+	if end < 0 {
+		t.Fatalf("taxonomy marker %q has no paragraph boundary in %s", marker, path)
+	}
+	paragraph := rest[:end]
+	matches := regexp.MustCompile("`([a-z0-9_]+)`").FindAllStringSubmatch(paragraph, -1)
+	if len(matches) == 0 {
+		t.Fatalf("taxonomy marker %q has no inline code labels", marker)
+	}
+	labels := map[string]bool{}
+	for _, match := range matches {
+		labels[match[1]] = true
+	}
+	return labels
+}
+
+func assertAllKnown(t *testing.T, path, field string, values []string, known map[string]bool) {
+	t.Helper()
+	for _, value := range values {
+		if !known[value] {
+			t.Fatalf("%s %s contains unknown label %q", path, field, value)
+		}
+	}
+}
+
 func requireRepoRelativePathsExist(t *testing.T, root string, paths []string) {
 	t.Helper()
 	for _, rel := range paths {
@@ -984,81 +1228,6 @@ func requireRepoRelativePathsExist(t *testing.T, root string, paths []string) {
 		if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(rel))); err != nil {
 			t.Fatalf("required path %q: %v", rel, err)
 		}
-	}
-}
-
-func validateJSONL(t *testing.T, schema *jsonschema.Schema, path string) {
-	t.Helper()
-	file, err := os.Open(path)
-	if err != nil {
-		t.Fatalf("Open(%s): %v", path, err)
-	}
-	defer file.Close()
-
-	count := 0
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			continue
-		}
-		count++
-		validateJSONDocument(t, schema, []byte(line), path)
-	}
-	if err := scanner.Err(); err != nil {
-		t.Fatalf("Scan(%s): %v", path, err)
-	}
-	if count < 20 {
-		t.Fatalf("%s record count=%d want at least 20 seed observations", path, count)
-	}
-}
-
-func validateJSONLFiles(t *testing.T, schema *jsonschema.Schema, glob string, minFiles int) {
-	t.Helper()
-	validateJSONLFilesWithMinRecords(t, schema, glob, minFiles, 20)
-}
-
-func validateJSONLFilesWithMinRecords(t *testing.T, schema *jsonschema.Schema, glob string, minFiles, minRecords int) {
-	t.Helper()
-	paths, err := filepath.Glob(glob)
-	if err != nil {
-		t.Fatalf("Glob(%s): %v", glob, err)
-	}
-	if len(paths) < minFiles {
-		t.Fatalf("Glob(%s) found %d files, want at least %d", glob, len(paths), minFiles)
-	}
-	for _, path := range paths {
-		pathMinRecords := minRecords
-		if strings.Contains(filepath.Base(path), "round-009") {
-			pathMinRecords = 15
-		}
-		validateJSONLWithMinRecords(t, schema, path, pathMinRecords)
-	}
-}
-
-func validateJSONLWithMinRecords(t *testing.T, schema *jsonschema.Schema, path string, minRecords int) {
-	t.Helper()
-	file, err := os.Open(path)
-	if err != nil {
-		t.Fatalf("Open(%s): %v", path, err)
-	}
-	defer file.Close()
-
-	count := 0
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			continue
-		}
-		count++
-		validateJSONDocument(t, schema, []byte(line), path)
-	}
-	if err := scanner.Err(); err != nil {
-		t.Fatalf("Scan(%s): %v", path, err)
-	}
-	if count < minRecords {
-		t.Fatalf("%s record count=%d want at least %d", path, count, minRecords)
 	}
 }
 
@@ -1186,6 +1355,151 @@ func assertTripleAgentArtifactCounts(t *testing.T, root string) {
 	}
 }
 
+func assertHypothesesReferenceTriggerCatalogAndJudgments(t *testing.T, root string) {
+	t.Helper()
+	triggerPath := filepath.Join(root, "knowledge", "template-research", "hypotheses", "trigger_catalog.json")
+	hypothesisPath := filepath.Join(root, "knowledge", "template-research", "hypotheses", "pattern_hypotheses.json")
+	judgmentPath := filepath.Join(root, "knowledge", "template-research", "judgments", "pattern_registry.json")
+
+	triggerIDs := loadTriggerCatalogIDs(t, triggerPath)
+	judgmentDomains := loadJudgmentPatternDomains(t, judgmentPath)
+	judgmentIDs := stringSetFromMapKeys(judgmentDomains)
+	supportedAtoms := loadSupportedCapabilityNames(t, filepath.Join(root, "contracts", "capabilities", "capability.schema.json"))
+	opportunityAtoms := loadOpportunityCapabilityNames(t, filepath.Join(root, "knowledge", "template-research", "opportunities", "*.json"))
+	knownAtoms := unionStringSets(supportedAtoms, opportunityAtoms)
+	assertTriggerCatalogReferencesKnownCapabilities(t, triggerPath, knownAtoms)
+
+	raw, err := os.ReadFile(hypothesisPath)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", hypothesisPath, err)
+	}
+	var catalog struct {
+		Patterns []struct {
+			PatternID                  string   `json:"pattern_id"`
+			Domain                     string   `json:"domain"`
+			Triggers                   []string `json:"triggers"`
+			LikelyExistingCapabilities []string `json:"likely_existing_capabilities"`
+			LikelyMissingCapabilities  []string `json:"likely_missing_capabilities"`
+		} `json:"patterns"`
+	}
+	if err := json.Unmarshal(raw, &catalog); err != nil {
+		t.Fatalf("Unmarshal(%s): %v", hypothesisPath, err)
+	}
+	hypothesisIDs := map[string]bool{}
+	for _, pattern := range catalog.Patterns {
+		if hypothesisIDs[pattern.PatternID] {
+			t.Fatalf("duplicate hypothesis pattern %q", pattern.PatternID)
+		}
+		hypothesisIDs[pattern.PatternID] = true
+		if judgmentDomains[pattern.PatternID] != pattern.Domain {
+			t.Fatalf("hypothesis %q domain=%q want judgment domain %q", pattern.PatternID, pattern.Domain, judgmentDomains[pattern.PatternID])
+		}
+		assertAllKnown(t, hypothesisPath, pattern.PatternID+".triggers", pattern.Triggers, triggerIDs)
+		for _, atom := range pattern.LikelyExistingCapabilities {
+			if !supportedAtoms[atom] {
+				t.Fatalf("hypothesis %q likely existing capability %q is not supported", pattern.PatternID, atom)
+			}
+		}
+		for _, atom := range pattern.LikelyMissingCapabilities {
+			if !knownAtoms[atom] {
+				t.Fatalf("hypothesis %q likely missing capability %q is neither supported nor tracked as opportunity", pattern.PatternID, atom)
+			}
+		}
+	}
+	assertExactStringSet(t, hypothesisIDs, judgmentIDs, hypothesisPath)
+}
+
+func assertTriggerCatalogReferencesKnownCapabilities(t *testing.T, path string, knownAtoms map[string]bool) {
+	t.Helper()
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", path, err)
+	}
+	var catalog struct {
+		Groups map[string][]struct {
+			ID                         string   `json:"id"`
+			LikelySheetOpsCapabilities []string `json:"likely_sheet_ops_capabilities"`
+		} `json:"groups"`
+	}
+	if err := json.Unmarshal(raw, &catalog); err != nil {
+		t.Fatalf("Unmarshal(%s): %v", path, err)
+	}
+	for groupName, group := range catalog.Groups {
+		for _, trigger := range group {
+			for _, atom := range trigger.LikelySheetOpsCapabilities {
+				if !knownAtoms[atom] {
+					t.Fatalf("trigger %q in group %q references unknown capability %q", trigger.ID, groupName, atom)
+				}
+			}
+		}
+	}
+}
+
+func assertJudgmentsReferenceKnownCapabilities(t *testing.T, root string) {
+	t.Helper()
+	path := filepath.Join(root, "knowledge", "template-research", "judgments", "pattern_registry.json")
+	knownAtoms := unionStringSets(
+		loadSupportedCapabilityNames(t, filepath.Join(root, "contracts", "capabilities", "capability.schema.json")),
+		loadOpportunityCapabilityNames(t, filepath.Join(root, "knowledge", "template-research", "opportunities", "*.json")),
+	)
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", path, err)
+	}
+	var registry struct {
+		Judgments []struct {
+			PatternID            string   `json:"pattern_id"`
+			CapabilityCandidates []string `json:"capability_candidates"`
+		} `json:"judgments"`
+	}
+	if err := json.Unmarshal(raw, &registry); err != nil {
+		t.Fatalf("Unmarshal(%s): %v", path, err)
+	}
+	for _, judgment := range registry.Judgments {
+		for _, atom := range judgment.CapabilityCandidates {
+			if !knownAtoms[atom] {
+				t.Fatalf("judgment %q references unknown capability candidate %q", judgment.PatternID, atom)
+			}
+		}
+	}
+}
+
+func loadTriggerCatalogIDs(t *testing.T, path string) map[string]bool {
+	t.Helper()
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", path, err)
+	}
+	var catalog struct {
+		Groups map[string][]struct {
+			ID string `json:"id"`
+		} `json:"groups"`
+	}
+	if err := json.Unmarshal(raw, &catalog); err != nil {
+		t.Fatalf("Unmarshal(%s): %v", path, err)
+	}
+	ids := map[string]bool{}
+	for groupName, group := range catalog.Groups {
+		for _, trigger := range group {
+			if ids[trigger.ID] {
+				t.Fatalf("duplicate trigger id %q in group %q", trigger.ID, groupName)
+			}
+			ids[trigger.ID] = true
+		}
+	}
+	return ids
+}
+
+func unionStringSets(sets ...map[string]bool) map[string]bool {
+	union := map[string]bool{}
+	for _, set := range sets {
+		for value := range set {
+			union[value] = true
+		}
+	}
+	return union
+}
+
 func loadRoadmapCandidateIDs(t *testing.T, path string) map[string]bool {
 	t.Helper()
 	raw, err := os.ReadFile(path)
@@ -1213,7 +1527,64 @@ func loadRoadmapCandidateIDs(t *testing.T, path string) map[string]bool {
 	return candidates
 }
 
-func loadPrimaryClassifiedPatternIDs(t *testing.T, path string) map[string]bool {
+func loadJudgmentPatternIDs(t *testing.T, path string) map[string]bool {
+	t.Helper()
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", path, err)
+	}
+	var registry struct {
+		Judgments []struct {
+			PatternID string `json:"pattern_id"`
+		} `json:"judgments"`
+	}
+	if err := json.Unmarshal(raw, &registry); err != nil {
+		t.Fatalf("Unmarshal(%s): %v", path, err)
+	}
+	ids := map[string]bool{}
+	for _, judgment := range registry.Judgments {
+		if ids[judgment.PatternID] {
+			t.Fatalf("duplicate judgment pattern %q", judgment.PatternID)
+		}
+		ids[judgment.PatternID] = true
+	}
+	return ids
+}
+
+func loadJudgmentPatternDomains(t *testing.T, path string) map[string]string {
+	t.Helper()
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", path, err)
+	}
+	var registry struct {
+		Judgments []struct {
+			PatternID string `json:"pattern_id"`
+			Domain    string `json:"domain"`
+		} `json:"judgments"`
+	}
+	if err := json.Unmarshal(raw, &registry); err != nil {
+		t.Fatalf("Unmarshal(%s): %v", path, err)
+	}
+	domains := map[string]string{}
+	for _, judgment := range registry.Judgments {
+		if domains[judgment.PatternID] != "" {
+			t.Fatalf("duplicate judgment pattern %q", judgment.PatternID)
+		}
+		domains[judgment.PatternID] = judgment.Domain
+	}
+	return domains
+}
+
+func stringSetFromMapKeys[V any](values map[string]V) map[string]bool {
+	set := map[string]bool{}
+	for key := range values {
+		set[key] = true
+	}
+	return set
+}
+
+func loadClassifiedPatternIDs(t *testing.T, path string) map[string]bool {
 	t.Helper()
 	raw, err := os.ReadFile(path)
 	if err != nil {
@@ -1231,12 +1602,29 @@ func loadPrimaryClassifiedPatternIDs(t *testing.T, path string) map[string]bool 
 	for _, group := range classification.Groups {
 		for _, patternID := range group.Patterns {
 			if classified[patternID] {
-				t.Fatalf("pattern %q appears in multiple primary classification groups", patternID)
+				t.Fatalf("pattern %q appears in multiple classification groups in %s", patternID, path)
 			}
 			classified[patternID] = true
 		}
 	}
 	return classified
+}
+
+func assertExactStringSet(t *testing.T, got, want map[string]bool, label string) {
+	t.Helper()
+	if len(got) != len(want) {
+		t.Fatalf("%s set size=%d want %d", label, len(got), len(want))
+	}
+	for value := range want {
+		if !got[value] {
+			t.Fatalf("%s missing %q", label, value)
+		}
+	}
+	for value := range got {
+		if !want[value] {
+			t.Fatalf("%s includes unexpected %q", label, value)
+		}
+	}
 }
 
 func assertClassificationSweepCoverage(t *testing.T, path string) {

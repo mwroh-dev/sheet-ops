@@ -34,6 +34,16 @@
       "verification_assertions": ["source_preserved", "lookup_rows_match", "appended_columns_match"]
     },
     {
+      "shape_id": "direct_cell_write_plan",
+      "applies_to_atoms": ["write_values"],
+      "reads": ["target sheet", "target range", "literal values"],
+      "writes": ["target cells"],
+      "formulas": [],
+      "validations": [],
+      "protections": [],
+      "verification_assertions": ["target_values_match", "unrelated_cells_preserved"]
+    },
+    {
       "shape_id": "table_growth_plan",
       "applies_to_atoms": ["append_structured_rows", "extend_table_formulas", "add_data_validation", "protect_formula_cells"],
       "reads": ["table header", "table boundary", "existing formula pattern", "existing validation rules"],

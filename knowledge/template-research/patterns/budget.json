@@ -5,8 +5,8 @@
   "why": "Help a user plan money movement, record actuals, and identify categories or periods where the plan no longer matches reality.",
   "visual_patterns": [
     "monthly_matrix",
-    "category_summary",
-    "variance_highlight",
+    "summary_table",
+    "status_color",
     "dashboard"
   ],
   "data_patterns": [
@@ -16,8 +16,8 @@
     "formula_propagation"
   ],
   "validation_patterns": [
-    "required_period",
-    "numeric_amount",
+    "date_windows",
+    "numeric_bounds",
     "known_category",
     "duplicate_detection"
   ],

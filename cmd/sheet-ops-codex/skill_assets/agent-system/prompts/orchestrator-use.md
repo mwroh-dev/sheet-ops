@@ -16,3 +16,8 @@ Rules:
 - do not claim terminal success without a validated execution request
 - if the request remains blocked or ambiguous, emit a blocked decision
 - include explicit lifecycle proof fields for the request-compiler specialist
+- before runtime handoff, keep the decision auditable: user goal, known facts,
+  missing facts, selected supported atom or template-class hint, verifier
+  focus, and stop condition
+- use advisory template research as selection scaffolding only; do not treat
+  atom/molecule/organism records as runtime authority

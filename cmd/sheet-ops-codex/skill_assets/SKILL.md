@@ -46,11 +46,16 @@ adapted, and reused later.
 In this skill, the LLM only plans and compiles. Go runtime executes and verifies
 workbook work; schema contracts decide what is valid, and evidence records what happened for review and repair.
 
+This skill is a guideline and orchestration harness for a strong model, not a
+claim that the model lacks spreadsheet knowledge. Its value is to reduce
+repeated reasoning cost, keep decisions tied to local contracts, and leave
+evidence that can improve later similar workbook work.
+
 ## Public Preview Claims
 
 Supported today:
 
-- local source-install Sheet Ops skill entry for workbook requests
+- local source-install Sheet Ops skill harness entry for workbook requests
 - public agent capabilities: `group_summarize`, `highlight_threshold`,
   `join_lookup`, `append_structured_rows`, `extend_table_formulas`,
   `copy_period_sheet`, `add_data_validation`, `protect_formula_cells`,
@@ -62,6 +67,8 @@ Supported today:
   runtime path
 - advisory `template_class_plan` evidence for template-like workbook requests
   before narrowing to supported atom execution
+- explicit decision guidance for goal, known facts, selected path, verifier
+  focus, and stop condition before runtime handoff
 - render artifact emission as preview artifact evidence
 
 Preview limitations:
@@ -83,18 +90,22 @@ Follow-up:
 
 1. Capture the user's workbook request in natural language.
 2. Separate the task facts needed to identify the scenario, request text or request file, input workbook, and output workbook.
-3. If the user already supplied the source sheet, output boundary, and operation shape clearly enough, write a structured `UseRequest` JSON request file and pack it with `--request-kind structured_use_request`. For explicit multi-step template-class organism execution, write an `OrganismExecutionRequest` JSON request file and pack it with `--request-kind organism_execution_request`. Do not pre-read the workbook through Python, `openpyxl`, ZIP/XML scraping, or other ad hoc inspection just to confirm headers.
-4. If additional workbook facts are still needed, use a plain text or markdown request file and pack it with `--request-kind prompt_text` so the internal request-compiler inspects workbook facts in Go.
-5. Derived request, envelope, output, report, and evidence files must be written outside immutable case input folders. In loop-station or any harness that provides an attempt output directory, write the request reference and typed `UseEnvelopeV2` under that attempt output directory. Do not create `use-envelope.json` inside the case input folder.
-6. Hand the envelope to the internal compatibility dispatcher through the
+3. Record the goal, known facts, selected public atom capability or
+   template-class hint, verifier focus, and stop condition before execution.
+   For template-like requests, use the advisory atom/molecule/organism
+   ecosystem as decision scaffolding, not runtime authority.
+4. If the user already supplied the source sheet, output boundary, and operation shape clearly enough, write a structured `UseRequest` JSON request file and pack it with `--request-kind structured_use_request`. For explicit multi-step template-class organism execution, write an `OrganismExecutionRequest` JSON request file and pack it with `--request-kind organism_execution_request`. Do not pre-read the workbook through Python, `openpyxl`, ZIP/XML scraping, or other ad hoc inspection just to confirm headers.
+5. If additional workbook facts are still needed, use a plain text or markdown request file and pack it with `--request-kind prompt_text` so the internal request-compiler inspects workbook facts in Go.
+6. Derived request, envelope, output, report, and evidence files must be written outside immutable case input folders. In loop-station or any harness that provides an attempt output directory, write the request reference and typed `UseEnvelopeV2` under that attempt output directory. Do not create `use-envelope.json` inside the case input folder.
+7. Hand the envelope to the internal compatibility dispatcher through the
    skill-owned runtime handoff. Do not type or reconstruct an internal command
    in the runner pane. The dispatcher routes typed structured request JSON to
    `use-structured`, explicit organism execution requests to the organism
    execution bridge, and text or markdown requests to `use-open`. Closed
    validated execution requests are for `run-validated` only.
-7. Read the JSON result on stdout.
-8. Inspect the evidence path and output workbook only when the result succeeds.
-9. Return the final user-facing answer from this parent skill context.
+8. Read the JSON result on stdout.
+9. Inspect the evidence path and output workbook only when the result succeeds.
+10. Return the final user-facing answer from this parent skill context.
 
 ## Tool Authority
 

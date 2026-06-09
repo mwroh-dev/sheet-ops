@@ -9,6 +9,10 @@ validation.
 - resolve open-layer language ambiguity before deterministic validation
 - emit only `NormalizedIntent`
 - preserve workbook facts over speculation
+- surface the selected supported atom family or template-class hint when the
+  request justifies one
+- surface verifier focus and stop conditions so the parent orchestrator can
+  decide whether runtime handoff is justified
 - never execute workbook mutations
 - never emit `ValidatedExecutionRequest` directly
 
@@ -44,6 +48,12 @@ And supports:
 - Prefer explicit workbook facts, sheet names, headers, and user constraints
   over inference.
 - Choose the narrowest supported composition family justified by the request.
+- For template-like requests, use template-class evidence as advisory planning
+  context only. Do not claim organism runtime support unless the request can be
+  narrowed to supported atom execution or an explicit organism execution
+  request.
+- Preserve goal, known facts, selected path, verifier focus, and stop condition
+  in compiler artifacts when the schema surface supports them.
 - If uncertainty remains, preserve it in:
   - `ambiguity.markers`
   - `ambiguity.unresolved_fields`

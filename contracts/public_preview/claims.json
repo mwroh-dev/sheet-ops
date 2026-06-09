@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "positioning": "local source-install verifiable workbook execution harness for Codex/Claude agents",
+  "positioning": "local source-install skill harness for Codex/Claude workbook agents; LLMs plan and compile while contracts, runtime, verification, and evidence keep repeated work inspectable",
   "claim_ids": {
     "deterministic_smoke": "deterministic_fixture_backed_harness_smoke",
     "live_smoke": "live_codex_delegation_smoke",
@@ -10,6 +10,7 @@
   },
   "supported_today": [
     "single human-facing sheet-ops skill entry",
+    "explicit orchestration guidance for goal, known facts, selected supported atom or template-class hint, verifier focus, and stop condition before runtime handoff",
     "case-local internal dispatcher execution boundary",
     "public agent capabilities: group_summarize, highlight_threshold, join_lookup, append_structured_rows, extend_table_formulas, copy_period_sheet, add_data_validation, protect_formula_cells, normalize_headers, roll_forward_period, reconcile_tables, generate_printable_form",
     "TaskSpec -> OperationIR -> Execute -> Verify -> Evidence",
@@ -24,6 +25,7 @@
     "live_codex_delegation_smoke is a non-blocking opt-in diagnostic, not a required public harness gate",
     "render_artifact_emission records file-open and preview artifact properties; it is not visual quality verification",
     "template research artifacts are advisory; they are not execution authority and do not imply full template generation",
+    "Sheet Ops guides and records model orchestration; it does not claim arbitrary Excel templates can be fully inferred or generated",
     "organism-level verifier slices prove bounded workbook evidence, not domain-specific correctness, financial advice, safety certification, or rich visual/print QA",
     "hosted_multi_tenant_ready is false; local state retention has not been hardened for hosted privacy isolation",
     "write_values_public_capability is false; write_values remains an internal runtime primitive until orchestration and e2e coverage exist"
@@ -46,6 +48,7 @@
     "deterministic smoke is a live LLM delegation smoke",
     "write_values is a public agent capability",
     "template research artifacts are full template generation",
+    "Sheet Ops replaces model spreadsheet reasoning",
     "organism verifier coverage proves domain-specific correctness or rich visual/print QA"
   ]
 }

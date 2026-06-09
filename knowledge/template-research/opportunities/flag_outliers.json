@@ -1,0 +1,23 @@
+{
+  "name": "flag_outliers",
+  "status": "research_only",
+  "evidence_count": 1,
+  "source_categories": [
+    "Template Research Hypotheses"
+  ],
+  "representative_why": "Users need records that fall outside expected ranges, due dates, or risk bands to surface as review exceptions.",
+  "representative_how": [
+    "compare values against expected thresholds or reference ranges",
+    "emit an exception marker, status, or review flag"
+  ],
+  "concrete_workflows": [
+    "flag low stock, overdue maintenance, high-risk safety items, or unusual health measurements"
+  ],
+  "verification_strategy": "Keep as research-only until verifier coverage distinguishes simple threshold highlighting from statistical or domain-specific outlier rules.",
+  "related_patterns": [
+    "inventory",
+    "maintenance_log",
+    "health_log"
+  ],
+  "notes": "Some cases can map to highlight_threshold today; the broader outlier concept remains advisory until narrowed."
+}

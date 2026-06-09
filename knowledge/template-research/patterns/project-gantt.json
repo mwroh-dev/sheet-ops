@@ -6,20 +6,19 @@
   "visual_patterns": [
     "timeline_grid",
     "status_color",
-    "progress_bar",
-    "task_table"
+    "input_area",
+    "summary_table"
   ],
   "data_patterns": [
     "entity_table",
     "date_range_expansion",
     "formula_propagation",
-    "status_field"
+    "category_mapping"
   ],
   "validation_patterns": [
-    "required_task",
+    "required_fields",
     "valid_date_range",
-    "known_status",
-    "required_owner"
+    "known_status"
   ],
   "workflow_patterns": [
     "todo_in_progress_done",

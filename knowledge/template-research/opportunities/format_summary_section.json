@@ -1,0 +1,23 @@
+{
+  "name": "format_summary_section",
+  "status": "research_only",
+  "evidence_count": 1,
+  "source_categories": [
+    "Template Research Hypotheses"
+  ],
+  "representative_why": "Users need summary areas to be visually distinguishable, readable, and stable for review or print workflows.",
+  "representative_how": [
+    "apply consistent headings, totals, labels, and spacing around summary ranges",
+    "separate calculated summary regions from editable input areas"
+  ],
+  "concrete_workflows": [
+    "prepare invoice totals, budget summaries, or dashboard summary blocks for review"
+  ],
+  "verification_strategy": "Promote only when formatting expectations are represented as bounded workbook assertions rather than subjective layout preference.",
+  "related_patterns": [
+    "invoice",
+    "budget",
+    "financial_statement"
+  ],
+  "notes": "Tracked as advisory because current runtime support focuses on data correctness and protection, not general layout formatting."
+}

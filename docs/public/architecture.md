@@ -1,7 +1,8 @@
 # Sheet Ops Architecture
 
-Sheet Ops keeps natural-language interpretation in the open layer and workbook
-mutation in the closed layer.
+Sheet Ops is a skill harness for LLM-assisted workbook work. It keeps
+natural-language interpretation and orchestration guidance in the open layer,
+and workbook mutation in the closed layer.
 
 - open layer: capture the request, separate the task facts needed to form a
   typed request boundary, and stop when the request is not ready to cross that
@@ -10,8 +11,9 @@ mutation in the closed layer.
   `OperationIR`, execute deterministically, verify the outcome, and emit
   evidence
 
-The boundary exists so natural-language context is turned into files and
-contracts before workbook mutation happens.
+The boundary exists so natural-language context is turned into files,
+contracts, verifier focus, and stop conditions before workbook mutation
+happens.
 
 Canonical flow:
 
@@ -24,6 +26,11 @@ Humans invoke Sheet Ops through the `sheet-ops` Codex skill using natural
 language. That public entry captures the workbook request, chooses or writes a
 request reference, creates a typed `UseEnvelopeV2`, and hands execution to the
 internal proof-gated runtime boundary.
+
+The harness assumes the model can reason about spreadsheets. Its added value is
+to make repeated decisions explicit: goal, known facts, selected supported atom
+or template-class hint, verifier focus, and stop condition. Those decisions are
+kept in artifacts so later similar tasks can reuse and improve the process.
 
 When the request already contains the task facts needed for execution, the
 public entry can write a structured request file and skip open-layer
@@ -57,7 +64,7 @@ workbook agent harness. The current public docs keep the operational boundary
 model here; deeper design-history notes are intentionally kept out of this
 public package.
 
-The repository currently exposes a local source-install public path for
+The repository currently exposes a local source-install skill harness path for
 Codex/Claude workbook agents. In that path:
 
 - the single human-facing public entry is the `sheet-ops` skill
@@ -70,6 +77,8 @@ Codex/Claude workbook agents. In that path:
 - the template research layer provides advisory atom/molecule/organism
   composition records plus bounded draft-planner and final-workbook semantic
   verifier coverage for 21 roadmap organisms
+- template-class and atom-builder records guide model selection without
+  becoming execution authority
 - deterministic fixture-backed smoke is the public harness gate
 
 Some live subagent-gated and bootstrap/compatibility paths coexist today

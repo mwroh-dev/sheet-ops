@@ -37,7 +37,10 @@
         "protect_formula_cells",
         "reconcile_tables",
         "generate_printable_form",
-        "roll_forward_period"
+        "roll_forward_period",
+        "conditional_formatting",
+        "flag_outliers",
+        "format_summary_section"
       ]
     },
     "status": {

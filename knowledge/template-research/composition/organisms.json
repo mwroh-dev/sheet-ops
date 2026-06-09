@@ -573,7 +573,8 @@
         "risk_action_register_block",
         "score_completion_summary_block",
         "threshold_exception_block",
-        "printable_document_region"
+        "printable_document_region",
+        "protected_summary_region"
       ],
       "supporting_atom_ids": [
         "group_summarize",

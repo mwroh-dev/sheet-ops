@@ -5,10 +5,10 @@ bundle, or reuse third-party template files.
 
 ## Layers
 
-- `raw/shards/*.jsonl`: Agent A evidence shards from source-specific or
-  category-specific collection rounds.
-- `extracted/templates.jsonl`: source observations with URL, category, terms
-  note, observed why, observed how, and input/output shape.
+- `patterns/*.json`: normalized template patterns grouped by user workflow and
+  spreadsheet mechanics. These are curated seed records, not raw crawl logs.
+- `opportunities/*.json`: capability backlog candidates that are intentionally
+  separate from the supported capability registry.
 - `hypotheses/`: Agent B trigger catalogs, pattern hypotheses, and level
   requirements generated from model knowledge rather than source evidence.
 - `judgments/`: Agent C synthesis outputs that compare evidence against
@@ -23,8 +23,7 @@ bundle, or reuse third-party template files.
   organism coverage ladder that separates fixture-backed previews from
   supported-atom plans and planned-atom blockers. The draft planner coverage
   artifact records workbook-facts-to-request draft synthesis for all 21
-  roadmap organisms. The completion audit records the current evidence and
-  remaining limits for the advisory-to-productization layer.
+  roadmap organisms.
   Verified organism class records define advisory acceptance contracts for
   deeper p2/p3 coverage without promoting native pivot tables, financial
   calculators, or organism IDs to public runtime capabilities.
@@ -32,10 +31,6 @@ bundle, or reuse third-party template files.
   specs, operation planner sequences, request-to-verify template class harness
   scenarios, and advanced atom promotion decisions. These records guide future
   runtime work but do not execute plans by themselves.
-- `patterns/*.json`: normalized template patterns grouped by user workflow and
-  spreadsheet mechanics.
-- `opportunities/*.json`: capability backlog candidates that are intentionally
-  separate from the supported capability registry.
 - `taxonomy.md`: shared labels for domains, visual patterns, data patterns,
   validation patterns, and workflow patterns.
 - `../atom-builders/`: runtime-adjacent advisory records for workbook app
@@ -49,7 +44,10 @@ bundle, or reuse third-party template files.
 - Do not copy third-party workbook files, screenshots, layouts, formulas, or
   prose into release artifacts.
 - Prefer source summaries written in original language over quoted text.
-- Record a terms note for every observation.
+- Keep raw collection logs out of the release mirror unless they have been
+  rewritten into curated seed records with no copied workbook content,
+  screenshots, private paths, or source prose.
+- Record source/terms context in curated records when evidence is summarized.
 - Use low-cost parallel workers for raw extraction and first-pass summaries.
 - Use reviewer passes for taxonomy merge, duplicate detection, and promotion
   decisions.
@@ -68,11 +66,12 @@ collection adds more shards.
 ## Triple-Agent Research Loop
 
 Each research round separates source evidence, model-generated hypotheses, and
-promotion judgment.
+promotion judgment. The release mirror keeps the curated outputs of that loop,
+not the worker shards or scratch history.
 
-- Agent A, Evidence Researcher: collects real source observations into
-  `raw/shards/`. It records provenance and terms notes, but does not promote
-  patterns.
+- Agent A, Evidence Researcher: collects real source observations outside the
+  release mirror. Release records only keep rewritten, curated evidence
+  summaries where they are needed for pattern or opportunity review.
 - Agent B, Hypothesis Modeler: creates trigger catalogs, pattern hypotheses, and
   L1-L5 requirements in `hypotheses/`. It does not claim evidence.
 - Agent C, Judge Synthesizer: compares Agent A evidence and Agent B hypotheses

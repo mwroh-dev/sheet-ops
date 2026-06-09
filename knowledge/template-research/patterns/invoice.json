@@ -7,25 +7,24 @@
     "printable_form",
     "line_item_table",
     "total_box",
-    "customer_header"
+    "sectioned_form"
   ],
   "data_patterns": [
     "entity_table",
     "lookup",
     "append_rows",
     "formula_propagation",
-    "status_field"
+    "category_mapping"
   ],
   "validation_patterns": [
-    "required_customer",
-    "positive_quantity",
-    "positive_unit_price",
-    "valid_tax_rate"
+    "required_fields",
+    "numeric_bounds",
+    "known_category"
   ],
   "workflow_patterns": [
     "draft_sent_paid",
-    "quote_to_invoice",
-    "line_items_to_total"
+    "submitted_approved",
+    "review_publish"
   ],
   "source_observations": [
     "vertex42_invoice_seed"
