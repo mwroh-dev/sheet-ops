@@ -113,6 +113,21 @@ func TestReleaseSchemaReferencesAreLocallyResolvable(t *testing.T) {
 	}
 }
 
+func TestSchemaReferenceResolverAcceptsLocalSelfReference(t *testing.T) {
+	root := t.TempDir()
+	schemaPath := filepath.Join(root, "self_ref.schema.json")
+	if err := os.WriteFile(schemaPath, []byte(`{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {"$ref": "#"}
+  ]
+}`), 0o644); err != nil {
+		t.Fatalf("write self-ref schema: %v", err)
+	}
+
+	assertSchemaReferencesResolvable(t, root, schemaPath)
+}
+
 func TestBundledSchemasStayInSyncWithSourceContracts(t *testing.T) {
 	root := repoRoot(t)
 	assertBundledSchemaMatches(t, root, "contracts/requests/organism_execution_request.schema.json")
@@ -208,7 +223,7 @@ func assertSchemaReferencesResolvable(t *testing.T, root string, schemaPath stri
 	document := readJSON(t, schemaPath)
 	for _, ref := range collectSchemaRefs(document) {
 		switch {
-		case strings.HasPrefix(ref, "#/"):
+		case strings.HasPrefix(ref, "#"):
 			if !jsonPointerExists(document, strings.TrimPrefix(ref, "#")) {
 				t.Fatalf("%s references missing local pointer %s", schemaPath, ref)
 			}
