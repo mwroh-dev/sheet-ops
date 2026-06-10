@@ -309,3 +309,58 @@ Lane: Independent Verification.
 - Verifier and executor are separated for each phase.
 - Subagent sessions are closed after use.
 - No success claim relies on stdout alone when authoritative artifacts exist.
+
+## Execution Result Notes
+
+### Phase 12 Result Note
+
+Discovery outcome:
+
+- The strongest installed E2E candidate is an `append_structured_rows` workbook
+  request using an in-test generated workbook rather than checked-in `.xlsx`
+  files. This avoids relying on missing example workbooks and keeps the fixture
+  deterministic.
+- Existing runtime evidence for this candidate:
+  - `runtime/workbookcase.TestRunAppendStructuredRowsEndToEnd` creates a
+    `LineItems` workbook, executes the append rows task, verifies
+    `Verification.Pass`, checks operation `append_structured_rows`, checks three
+    written cells, opens the output workbook, and asserts `LineItems!A3`.
+  - `runtime/openlayer/requestcompiler.TestAppendRowsIntentCompilesThroughValidation`
+    proves the normalized intent can compile/validate to
+    `structured_row_append`.
+- Recommended Phase 15 installed path:
+  1. create a temp project,
+  2. install the project-local skill,
+  3. create the `LineItems` input workbook in the temp project,
+  4. write a normalized intent JSON for append rows,
+  5. execute installed `bin/sheet-ops-codex run-intent --intent-file ...`,
+  6. parse JSON result and assert authoritative fields,
+  7. inspect output workbook and required evidence artifacts.
+
+Authoritative success fields for Phase 15:
+
+- command exit code is 0;
+- result JSON parses and has `entry:"run-intent"`;
+- result status is executed or the Phase 13 envelope equivalent has `ok:true`;
+- output workbook exists and opens;
+- output workbook contains appended row `LineItems!A3 == "B002"`;
+- runtime verification pass is true;
+- runtime paths include evidence/report artifacts and required files exist;
+- no manual checkpoint or manual override is recorded.
+
+Verification:
+
+- `go test ./runtime/workbookcase -run 'TestRunAppendStructuredRowsEndToEnd|TestRunUsesClosedArtifactsForSummaryAndHighlight' -count=1`: pass.
+- `go test ./runtime/openlayer/requestcompiler -run 'TestAppendRowsIntentCompilesThroughValidation|TestNormalizeHeadersIntentCompilesThroughValidation' -count=1`: pass.
+- `go test ./runtime/openlayer/useorchestrator -run 'TestNormalizeHeadersValidatedRequestBuildsHeaderNormalizationTaskSpec' -count=1`: pass.
+
+Backlog self-review:
+
+- The fixture is fast enough at runtime-package level, but installed E2E may be
+  slower because it builds/installs the skill first.
+- There is not yet a committed installed E2E smoke skeleton; Phase 15 should add
+  the passing smoke after Phase 13 stabilizes the envelope.
+- Missing checked-in workbook files are not a blocker because the test can
+  generate the workbook deterministically.
+
+Commit: `phase12/e2e: discover installed workbook smoke contract`.
