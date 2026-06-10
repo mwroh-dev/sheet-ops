@@ -168,7 +168,8 @@ the installed skill handoff and must not be presented as the normal public
 request route. Its stdout is an internal handoff envelope with runtime evidence
 under `runtime`, not a public entry result. Validate it with
 `contracts/cli/internal_handoff_result.schema.json`, not the public entry
-schema. Mutating workbook commands currently report `dry_run_capable: false`;
+schema `contracts/results/public_entry_result.schema.json`. Mutating workbook
+commands currently report `dry_run_capable: false`;
 `preview-request` is impact inspection only, not runtime dry-run evidence. Do
 not claim dry-run behavior until a truthful runtime planning mode exists.
 

@@ -2,9 +2,9 @@
 
 Branch: `codex/cli-agent-contract`
 
-Review status: refreshed after Phase 34 failure-path smoke. The current evidence covers
+Review status: refreshed after Phase 35 mirror hardening. The current evidence covers
 the original execution-contract work plus the later handoff hardening phases
-28-34.
+28-35.
 
 ## Implemented Contract
 
@@ -35,7 +35,7 @@ the original execution-contract work plus the later handoff hardening phases
 
 | Area | Status | Authoritative Evidence | Success Claim |
 | --- | --- | --- | --- |
-| Phase/lane plan | pass | `docs/superpowers/plans/2026-06-10-sheet-ops-agent-execution-contract.md` defines execution, schema compatibility, and independent verification lanes through Phase 34. | Work proceeded phase-by-phase with dependency-aware lanes and phase notes. |
+| Phase/lane plan | pass | `docs/superpowers/plans/2026-06-10-sheet-ops-agent-execution-contract.md` defines execution, schema compatibility, and independent verification lanes through Phase 35. | Work proceeded phase-by-phase with dependency-aware lanes and phase notes. |
 | Installed public workbook E2E | pass | `TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd` runs public `install-skill.sh`, executes installed `bin/sheet-ops-codex run-intent`, asserts `ok:true`, artifacts, verification pass, evidence paths, hashes, and output workbook row `LineItems!A3:C3`. | Installed CLI can execute a real public workbook append with authoritative artifact evidence. |
 | Installed internal handoff E2E | pass | `TestInstallSkillBundledCLIRunValidatedEmitsHandoffEnvelope` and `TestInstallSkillBundledCLIRunRequestEmitsHandoffEnvelope` install the package, run installed `bin/sheet-ops-codex run-validated --request` and hidden `run-request --file`, validate the handoff schema, check workbook contents, output SHA-256, verification artifact, execution artifact, outcome artifact, and artifact roles. | Installed internal handoff callers receive schema-valid envelopes backed by workbook and evidence artifacts. |
 | Public result envelope | pass | `TestExecutedPublicEntryResultExposesAgentEnvelope`, `TestExecutedPublicEntryResultValidatesAgainstPublicSchema`, `TestTerminalCompilerPublicEntryResultValidatesAgainstPublicSchema`, and public result golden validation. | Agents get stable success and recoverable compiler-stop envelopes. |
@@ -46,7 +46,7 @@ the original execution-contract work plus the later handoff hardening phases
 | Typed errors | pass with reserved backlog | `TestStateRootMismatchClassifiesAsConfigurationError`, `TestPreviewRequestInvalidIntentJSONEmitsInvalidDataError`; `capabilities --json` marks `state_root_mismatch` and `invalid_json_or_schema` as `emitted`, while unproven runtime categories remain `reserved`. | Emitted error taxonomy is evidence-backed; unproven categories are not overclaimed. |
 | Published schemas | pass | `TestCLIJSONOutputsValidateAgainstPublishedSchemas`, `TestPublishedCLISchemasPinSchemaVersion`, internal handoff golden validation, public entry golden validation, and release schema compile/reference tests. | CLI JSON outputs and published schemas are version-pinned and compile under release-contract checks. |
 | Preview | pass | `TestPreviewRequestReportsImpactWithoutMutating`, `TestPreviewRequestIsExposedAsReadOnlyNonDryRunCommand`, installed preview smoke, and `contracts/cli/preview_request_result.schema.json`. | Agents can inspect planned impact without workbook output or state mutation. |
-| Docs alignment | pass with hardening backlog | Public and bundled skill docs mention the same internal handoff schema path and distinguish it from public entry schema; `TestCLIAgentContractDocsStayAligned` guards the capabilities mirror. | Installed docs and public docs teach the same safe contract, with stronger mirror drift enforcement still available as hardening. |
+| Docs alignment | pass | Public and bundled skill docs mention the same internal handoff schema path, distinguish it from `contracts/results/public_entry_result.schema.json`, preserve preview non-dry-run guidance, output hash guidance, and failure-evidence semantics; `TestCLIAgentContractDocsStayAligned` guards these public/bundled mirrors. | Installed docs and public docs teach the same safe contract, and release-contract tests now catch the prior mirror-drift hardening gap. |
 | Full regression | pass | `go test ./runtime/workbookcase ./cmd/sheet-ops-codex ./cmd/sheet-ops-agent ./internal/releasecontracts -count=1`; `git diff --check`. | No known regression in the packages most directly affected by the agent execution contract work. |
 
 Verifier separation was performed in-thread and the phase notes record separate
@@ -59,7 +59,7 @@ in this matrix.
 - `go test ./cmd/sheet-ops-codex -run 'TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd|TestInstallSkillBundledCLIRunValidatedEmitsHandoffEnvelope|TestInstallSkillBundledCLIRunRequestEmitsHandoffEnvelope|TestInstallSkillBundledCLIRunValidatedFailureEmitsHandoffEnvelope|TestRunIntentCommandWritesPublicEnvelopeThenReturnsFailure|TestRunValidatedCommandWritesInternalHandoffEnvelope|TestRunRequestCommandWritesInternalHandoffEnvelope|TestRunValidatedCommandWritesFailureHandoffEnvelopeThenReturnsFailure|TestRunValidatedCommandDoesNotEmitExecutedEnvelopeBeforeRuntimeStarts|TestInternalHandoff|TestPublicEntryResultSchemaRejectsRunValidatedHandoff|TestCLIJSONOutputsValidateAgainstPublishedSchemas|TestPublishedCLISchemasPinSchemaVersion' -count=1 -v`: pass.
 - `go test ./cmd/sheet-ops-codex -run 'TestPreviewRequestReportsImpactWithoutMutating|TestPreviewRequestIsExposedAsReadOnlyNonDryRunCommand|TestStateRootMismatchClassifiesAsConfigurationError|TestPreviewRequestInvalidIntentJSONEmitsInvalidDataError|TestExecutedPublicEntryResultExposesAgentEnvelope|TestExecutedPublicEntryResultValidatesAgainstPublicSchema|TestTerminalCompilerPublicEntryResultValidatesAgainstPublicSchema|TestExecutedPublicEntryResultLabelsFailedOutputAsFailureEvidence|TestExecutedPublicEntryResultSchemaRejectsFailedOutputMarkedAsPrimarySuccess' -count=1 -v`: pass.
 - `go test ./runtime/workbookcase ./cmd/sheet-ops-codex ./cmd/sheet-ops-agent ./internal/releasecontracts -count=1`: pass.
-- `go test ./internal/releasecontracts -run 'TestReleaseSchemasCompile|TestReleaseSchemaReferencesAreLocallyResolvable|TestCLIAgentContractDocsStayAligned|TestBundledSchemasStayInSyncWithSourceContracts' -count=1 -v`: pass in Phase 31 verifier.
+- `go test ./internal/releasecontracts -run 'TestReleaseSchemasCompile|TestReleaseSchemaReferencesAreLocallyResolvable|TestCLIAgentContractDocsStayAligned|TestBundledSchemasStayInSyncWithSourceContracts' -count=1 -v`: pass.
 - `go run ./cmd/sheet-ops-codex schema command run-validated --json`: pass and reports `classification:"internal_handoff"` plus internal handoff output mode.
 - `git diff --check`: pass.
 
@@ -94,8 +94,6 @@ in this matrix.
 
 ## Remaining Backlog
 
-- Strengthen release-contract mirror drift tests beyond the current
-  capabilities mirror.
 - Refresh or supersede older final-review checklist language if additional
   phases are added after Phase 32.
 - A deeper compiler-backed preview could be added later as a separate runtime

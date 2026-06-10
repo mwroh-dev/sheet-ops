@@ -50,6 +50,7 @@ Sequential implementation lane:
 19. Phase 32: final review refresh after handoff hardening.
 20. Phase 33: hidden run-request alias proof.
 21. Phase 34: installed run-validated failure-path smoke.
+22. Phase 35: release-contract mirror-drift hardening.
 
 Phase 12 comes before Phase 13 because the existing runtime output must be observed before a stable envelope is imposed. Phase 15 comes after Phases 13-14 so the E2E smoke can assert the final contract rather than a temporary shape.
 
@@ -1581,6 +1582,77 @@ Result:
   producer tests.
 - Active overall goal remains open pending a fresh requirement-by-requirement
   completion audit.
+
+## Phase 35 - Release-Contract Mirror-Drift Hardening
+
+Lane: Release Contracts / Documentation Mirrors.
+
+Web-search value: low. This phase hardens local public package mirror
+invariants; no external standards question is open.
+
+### TODO
+
+- [x] Strengthen public/bundled skill mirror checks.
+  - Evaluation: release-contract tests fail if `skills/sheet-ops/SKILL.md`
+    drifts from `cmd/sheet-ops-codex/skill_assets/SKILL.md` on CLI agent
+    contract guidance, or if source/bundled `references/usage.md` and
+    `references/capabilities.md` diverge.
+  - Result: installed skill docs and source public docs cannot silently teach
+    different agent CLI contracts. `TestCLIAgentContractDocsStayAligned` now
+    checks public and bundled `SKILL.md` plus bundled `references/usage.md`
+    for internal handoff schema, public entry schema separation, preview
+    non-dry-run guidance, fingerprint/hash guidance, and failure evidence
+    semantics.
+  - Likely files:
+    `internal/releasecontracts/release_contracts_test.go`.
+  - Risk: low, but exact whole-file equality may be too strict if public and
+    bundled files intentionally differ outside mirrored references.
+  - Rollback: keep only narrow needle checks and record mirror drift as a
+    manual review requirement.
+- [x] Guard CLI output contract doc claims.
+  - Evaluation: release-contract tests require `docs/public/cli-output-contracts.md`
+    to mention internal handoff schema, public entry schema separation,
+    `failure_evidence`, preview non-dry-run semantics, fingerprint comparison,
+    and verification hash cross-checking.
+  - Result: public contract docs remain aligned with the machine-readable
+    schemas and CLI behavior. The test failed first on missing public entry
+    schema names in mirrored skill docs, then passed after the docs were
+    aligned.
+- [x] Run separate verifier.
+  - Evaluation: verifier confirms tests are strong enough to catch real mirror
+    drift without overfitting unrelated prose, and current docs pass.
+  - Result: separate verifier passed with no blockers. It confirmed the new
+    guards cover public and bundled skill docs, bundled usage docs, and public
+    CLI contract docs for schema separation, preview non-dry-run semantics,
+    fingerprint/hash guidance, and failure-evidence semantics. Residual risk is
+    intentionally limited to needle-based prose checks instead of brittle
+    whole-file equality.
+- [x] Commit Phase 35.
+  - Evaluation: focused release-contract tests, related package tests, and
+    `git diff --check` pass.
+  - Result: `phase35/release: harden cli contract mirrors`.
+
+### Phase-End Backlog Review
+
+Ask:
+
+- Should reserved runtime error categories get deterministic producer tests
+  next, or stay reserved until broader failure taxonomy work?
+- Should hidden `run-request` failure behavior receive its own installed smoke,
+  or is shared handler proof sufficient?
+- Should final completion audit start after this phase, or do more contract
+  gaps remain?
+
+Result:
+
+- Reserved runtime error categories stay reserved until each category has a
+  deterministic producer test and public/agent-visible semantics.
+- Hidden `run-request` failure smoke remains optional because the shared
+  handoff handler plus `run-validated` failure proof already covers the current
+  compatibility path.
+- Final completion audit is the next strongest candidate phase, but the active
+  overall goal remains open until a fresh requirement-by-requirement audit is
+  complete.
 
 ## Final Review Phase - Agent Execution Contract Completion
 

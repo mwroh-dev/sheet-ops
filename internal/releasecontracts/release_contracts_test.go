@@ -127,6 +127,18 @@ func TestCLIAgentContractDocsStayAligned(t *testing.T) {
 		"`sheet-ops-codex run-validated` is an internal handoff surface",
 		"`dry_run_capable: false`",
 	}
+	cliContractNeedles := []string{
+		"`sheet-ops-codex run-validated` is an internal handoff surface",
+		"`contracts/cli/internal_handoff_result.schema.json`",
+		"`contracts/results/public_entry_result.schema.json`",
+		"`preview-request` is impact inspection only, not runtime dry-run evidence",
+		"`planner:\"requestcompiler_validate_intent\"`",
+		"`plan_confidence:\"compiler_validated_boundary\"`",
+		"`output_workbook_sha256`",
+		"`runtime.verification.output_workbook_sha256`",
+		"`output_file` require that hash",
+		"failure evidence, not primary success",
+	}
 
 	for _, rel := range []string{
 		"README.md",
@@ -146,6 +158,33 @@ func TestCLIAgentContractDocsStayAligned(t *testing.T) {
 			}
 		})
 	}
+	for _, rel := range []string{
+		"skills/sheet-ops/SKILL.md",
+		"cmd/sheet-ops-codex/skill_assets/SKILL.md",
+		"cmd/sheet-ops-codex/skill_assets/references/usage.md",
+	} {
+		t.Run(filepath.ToSlash(rel)+" cli contract", func(t *testing.T) {
+			assertTextContainsAll(t, readText(t, filepath.Join(root, filepath.FromSlash(rel))), rel, cliContractNeedles)
+		})
+	}
+	assertTextContainsAll(t,
+		readText(t, filepath.Join(root, "docs", "public", "cli-output-contracts.md")),
+		"docs/public/cli-output-contracts.md",
+		[]string{
+			"`contracts/cli/internal_handoff_result.schema.json` validates internal handoff results from `run-validated` and hidden compatibility `run-request`",
+			"`contracts/results/public_entry_result.schema.json` validates public execution results",
+			"`preview-request` is read-only impact inspection, not runtime dry-run",
+			"`preview-request.fingerprints`",
+			"`run-intent.fingerprints`",
+			"`runtime.verification.output_workbook_sha256`",
+			"Treat `output_workbook` as the primary success artifact",
+			"only when the public result has `ok:true`",
+			"on `ok:false`, a materialized output",
+			"workbook is failure evidence",
+			"`classification:\"internal_handoff\"`",
+			"The public entry schema intentionally rejects this envelope.",
+		},
+	)
 
 	assertTextFilesEqual(t, root,
 		"skills/sheet-ops/references/capabilities.md",
@@ -668,6 +707,15 @@ func assertTextFilesEqual(t *testing.T, root string, leftRel string, rightRel st
 	right := readText(t, rightPath)
 	if left != right {
 		t.Fatalf("%s and %s drifted", leftRel, rightRel)
+	}
+}
+
+func assertTextContainsAll(t *testing.T, text string, rel string, needles []string) {
+	t.Helper()
+	for _, needle := range needles {
+		if !strings.Contains(text, needle) {
+			t.Fatalf("%s missing %q", rel, needle)
+		}
 	}
 }
 
