@@ -165,12 +165,12 @@ func TestCapabilitiesJSONReportsSafeEntryBoundaries(t *testing.T) {
 			t.Fatalf("error code %q has empty producer: %+v", code.Code, code)
 		}
 	}
-	for _, code := range []string{"invalid_usage", "missing_required_option", "unknown_command", "state_root_mismatch", "internal_error"} {
+	for _, code := range []string{"invalid_usage", "missing_required_option", "unknown_command", "invalid_json_or_schema", "state_root_mismatch", "internal_error"} {
 		if got := findErrorCode(doc.ErrorContract.Codes, code); got.Status != "emitted" {
 			t.Fatalf("error code %q status = %q, want emitted", code, got.Status)
 		}
 	}
-	for _, code := range []string{"invalid_json_or_schema", "request_checkpoint", "validation_blocked", "execution_failed", "verification_failed"} {
+	for _, code := range []string{"request_checkpoint", "validation_blocked", "execution_failed", "verification_failed"} {
 		if got := findErrorCode(doc.ErrorContract.Codes, code); got.Status != "reserved" {
 			t.Fatalf("error code %q status = %q, want reserved", code, got.Status)
 		}

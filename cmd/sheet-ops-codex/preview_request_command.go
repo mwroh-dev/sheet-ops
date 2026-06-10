@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -77,7 +78,12 @@ func newPreviewRequestCommand() *cobra.Command {
 			}
 			result, err := runPreviewRequest(options)
 			if err != nil {
-				return err
+				var typed *cliError
+				if errors.As(err, &typed) {
+					return writeCLIErrorJSONAndReturn(cmd.OutOrStdout(), typed)
+				}
+				classified := classifyCLIError(err)
+				return writeCLIErrorJSONAndReturn(cmd.OutOrStdout(), &classified)
 			}
 			return writePreviewRequestJSON(cmd.OutOrStdout(), result)
 		},
@@ -113,7 +119,7 @@ func runPreviewRequest(options previewRequestOptions) (previewRequestResult, err
 	if err != nil {
 		return previewRequestResult{}, err
 	}
-	intent, err := requestcompiler.LoadNormalizedIntent(intentFile)
+	intent, err := loadPreviewNormalizedIntent(intentFile)
 	if err != nil {
 		return previewRequestResult{}, err
 	}
@@ -215,6 +221,18 @@ func runPreviewRequest(options previewRequestOptions) (previewRequestResult, err
 			"Preview is not a dry-run and must not be used as evidence of execution success.",
 		},
 	}, nil
+}
+
+func loadPreviewNormalizedIntent(path string) (requestcompiler.NormalizedIntent, error) {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return requestcompiler.NormalizedIntent{}, err
+	}
+	intent, err := requestcompiler.LoadNormalizedIntentFromBytes(raw)
+	if err != nil {
+		return requestcompiler.NormalizedIntent{}, newInvalidDataError(fmt.Sprintf("load normalized intent %q: %v", path, err))
+	}
+	return intent, nil
 }
 
 func fileSHA256(path string) (string, error) {

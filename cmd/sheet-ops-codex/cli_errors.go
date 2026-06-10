@@ -87,6 +87,22 @@ func newStateRootMismatchError(message string) *cliError {
 	)
 }
 
+func newInvalidDataError(message string, suggestedCommands ...string) *cliError {
+	if len(suggestedCommands) == 0 {
+		suggestedCommands = []string{
+			"schema command preview-request --json",
+			"capabilities --json",
+		}
+	}
+	return newCLIError(
+		cliErrorInvalidData,
+		message,
+		true,
+		cliExitData,
+		suggestedCommands...,
+	)
+}
+
 func classifyCLIError(err error) cliError {
 	if err == nil {
 		return cliError{Code: "", ExitCode: cliExitOK}
@@ -174,8 +190,8 @@ func buildCLIErrorContractPayload() cliErrorContractPayload {
 				Code:        cliErrorInvalidData,
 				ExitCode:    cliExitData,
 				Recoverable: true,
-				Status:      cliErrorStatusReserved,
-				Producer:    "runtime_input_validation",
+				Status:      cliErrorStatusEmitted,
+				Producer:    "normalized_intent_loader",
 				Meaning:     "Input JSON, request data, or schema validation failed before execution.",
 			},
 			{

@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -142,6 +143,81 @@ func TestStateRootMismatchClassifiesAsConfigurationError(t *testing.T) {
 	}
 	if !containsString(cliErr.SuggestedCommands, "preflight --json --input-file <workbook>") {
 		t.Fatalf("suggested commands = %v, want preflight", cliErr.SuggestedCommands)
+	}
+}
+
+func TestPreviewRequestInvalidIntentJSONEmitsInvalidDataError(t *testing.T) {
+	projectDir := t.TempDir()
+	inputFile := filepath.Join(projectDir, "line-items.xlsx")
+	outputFile := filepath.Join(projectDir, "line-items-output.xlsx")
+	intentFile := filepath.Join(projectDir, "broken-intent.json")
+	writeLineItemsWorkbook(t, inputFile)
+	if err := os.WriteFile(intentFile, []byte(`{"composition_candidates": [`), 0o644); err != nil {
+		t.Fatalf("WriteFile(%s): %v", intentFile, err)
+	}
+
+	stdout, stderr, err := executeCLIExpectError(t,
+		"preview-request",
+		"--json",
+		"--intent-file", intentFile,
+		"--input-file", inputFile,
+		"--output-file", outputFile,
+	)
+	if err == nil {
+		t.Fatalf("Execute returned nil, want invalid data error")
+	}
+	if stderr != "" {
+		t.Fatalf("stderr = %q, want empty for JSON error", stderr)
+	}
+
+	var envelope cliErrorEnvelopeView
+	if unmarshalErr := json.Unmarshal([]byte(stdout), &envelope); unmarshalErr != nil {
+		t.Fatalf("json.Unmarshal error envelope: %v\nstdout:\n%s", unmarshalErr, stdout)
+	}
+	if envelope.OK {
+		t.Fatalf("ok = true, want false")
+	}
+	if envelope.Error.Code != cliErrorInvalidData {
+		t.Fatalf("error.code = %q, want %q\nstdout:\n%s", envelope.Error.Code, cliErrorInvalidData, stdout)
+	}
+	if envelope.Error.ExitCode != cliExitData {
+		t.Fatalf("error.exit_code = %d, want %d", envelope.Error.ExitCode, cliExitData)
+	}
+	if !envelope.Error.Recoverable {
+		t.Fatalf("error.recoverable = false, want true")
+	}
+	if !containsString(envelope.Error.SuggestedCommands, "schema command preview-request --json") {
+		t.Fatalf("suggested_commands = %v, want preview schema command", envelope.Error.SuggestedCommands)
+	}
+}
+
+func TestPreviewRequestMissingIntentFileDoesNotClassifyAsInvalidData(t *testing.T) {
+	projectDir := t.TempDir()
+	inputFile := filepath.Join(projectDir, "line-items.xlsx")
+	outputFile := filepath.Join(projectDir, "line-items-output.xlsx")
+	intentFile := filepath.Join(projectDir, "missing-intent.json")
+	writeLineItemsWorkbook(t, inputFile)
+
+	stdout, stderr, err := executeCLIExpectError(t,
+		"preview-request",
+		"--json",
+		"--intent-file", intentFile,
+		"--input-file", inputFile,
+		"--output-file", outputFile,
+	)
+	if err == nil {
+		t.Fatalf("Execute returned nil, want missing file error")
+	}
+	if stderr != "" {
+		t.Fatalf("stderr = %q, want empty for JSON error", stderr)
+	}
+
+	var envelope cliErrorEnvelopeView
+	if unmarshalErr := json.Unmarshal([]byte(stdout), &envelope); unmarshalErr != nil {
+		t.Fatalf("json.Unmarshal error envelope: %v\nstdout:\n%s", unmarshalErr, stdout)
+	}
+	if envelope.Error.Code == cliErrorInvalidData {
+		t.Fatalf("error.code = %q, want non-invalid-data classification for missing file\nstdout:\n%s", envelope.Error.Code, stdout)
 	}
 }
 

@@ -35,6 +35,7 @@ Sequential implementation lane:
 4. Phase 15: installed end-to-end workbook smoke promotion.
 5. Phase 17: non-mutating plan/impact preview.
 6. Phase 19: preview trust metadata and fingerprints.
+7. Phase 20: invalid data typed producer promotion.
 
 Phase 12 comes before Phase 13 because the existing runtime output must be observed before a stable envelope is imposed. Phase 15 comes after Phases 13-14 so the E2E smoke can assert the final contract rather than a temporary shape.
 
@@ -338,6 +339,59 @@ Ask:
 Do not set `dry_run:true` or `dry_run_capable:true` until the runtime can prove
 normal validation/planning ran without persistence.
 
+## Phase 20 - Invalid Data Typed Producer Promotion
+
+Lane: Execution Contract.
+
+Web-search value: low. Phase 14 already captured MCP validation-error guidance:
+agent-correctable input/schema failures should be visible as tool execution
+errors rather than generic internal failures. This phase applies that guidance
+to a deterministic local producer.
+
+### TODO
+
+- [x] Add failing producer tests for malformed or schema-invalid normalized
+  intent input.
+  - Evaluation: a public preview entry that receives invalid normalized intent
+    JSON is classified as `invalid_json_or_schema`, recoverable, exit 65, and
+    gives schema/preview repair commands.
+  - Result: invalid input can be corrected by an agent without treating it as
+    internal CLI failure.
+  - Likely files: `cmd/sheet-ops-codex/cli_errors_test.go`,
+    `cmd/sheet-ops-codex/preview_request_test.go`.
+  - Risk: low.
+  - Rollback: keep the code reserved and document why the producer is not
+    deterministic.
+- [x] Implement typed invalid-data producer.
+  - Evaluation: schema/JSON load errors from normalized intent boundaries map
+    to `newCLIError(cliErrorInvalidData, ...)`.
+  - Result: generated JSON error envelopes and `error_contract.codes[]` agree.
+- [x] Promote `invalid_json_or_schema` to emitted.
+  - Evaluation: `capabilities --json` marks the code emitted only after producer
+    tests pass.
+  - Result: taxonomy no longer reserves a producer that now has live evidence.
+- [x] Run separate verifier.
+  - Evaluation: verifier confirms the promoted code has a deterministic
+    producer and does not swallow unrelated internal errors.
+  - Result: pass/fail before commit.
+- [x] Commit Phase 20.
+  - Evaluation: focused error/preview/capabilities tests pass.
+  - Result: `phase20/errors: emit invalid data producer`.
+
+### Phase-End Backlog Review
+
+Ask:
+
+- Should request checkpoint and validation blocked be separate JSON error
+  producers or remain success-like preview decisions?
+- Do typed input errors need artifact references, or are suggested commands
+  enough for this phase?
+- Does any producer leak absolute paths in error messages that should be
+  normalized later?
+
+Keep execution/verification runtime errors reserved until deterministic failing
+fixtures exist for those paths.
+
 ## Final Review Phase - Agent Execution Contract Completion
 
 Lane: Independent Verification.
@@ -481,8 +535,9 @@ Implementation outcome:
 - Updated `error_contract.codes[]` so `state_root_mismatch` is `emitted` with
   producer `state_root_guard`.
 - Kept runtime categories without deterministic producer tests as `reserved`:
-  `invalid_json_or_schema`, `request_checkpoint`, `validation_blocked`,
-  `execution_failed`, and `verification_failed`.
+  `request_checkpoint`, `validation_blocked`, `execution_failed`, and
+  `verification_failed`. Phase 20 later promoted `invalid_json_or_schema` after
+  adding a deterministic normalized intent loader producer.
 
 Verification:
 
@@ -711,3 +766,48 @@ Backlog self-review:
 - Operation selection now follows request-compiler validation. Unknown or
   unresolved selections remain possible and must not be presented as executed
   runtime operations.
+
+### Phase 20 Result Note
+
+Implementation outcome:
+
+- Added a typed `invalid_json_or_schema` producer for normalized intent loading
+  failures on `preview-request --json`.
+- Invalid normalized intent JSON now returns a JSON error envelope on stdout
+  with `ok:false`, `error.code:"invalid_json_or_schema"`,
+  `recoverable:true`, exit code 65, and repair-oriented suggested commands.
+- Added `newInvalidDataError` so deterministic input/schema failures can be
+  separated from fallback `internal_error`.
+- Promoted `invalid_json_or_schema` from `reserved` to `emitted` in
+  `capabilities --json` because it now has a focused producer test.
+
+Verification:
+
+- Red evidence:
+  `go test ./cmd/sheet-ops-codex -run TestPreviewRequestInvalidIntentJSONEmitsInvalidDataError -count=1 -v`
+  initially failed because stdout was empty and no JSON error envelope was
+  emitted for malformed normalized intent JSON.
+- Separate verifier blocker evidence:
+  the first verifier found that wrapping `LoadNormalizedIntent` wholesale
+  incorrectly classified missing intent files as `invalid_json_or_schema`.
+  The loader path now separates file I/O from JSON/schema validation, and
+  `TestPreviewRequestMissingIntentFileDoesNotClassifyAsInvalidData` covers the
+  boundary.
+- `go test ./cmd/sheet-ops-codex -run 'TestPreviewRequestInvalidIntentJSONEmitsInvalidDataError|TestCapabilitiesJSONReportsSafeEntryBoundaries|TestCLIErrorEnvelopeValidatesAgainstPublishedSchema|TestCLIJSONOutputsValidateAgainstPublishedSchemas' -count=1 -v`: pass.
+- `go test ./internal/releasecontracts -run 'TestCLIAgentContractDocsStayAligned|TestReleaseSchemasCompile|TestReleaseSchemaReferencesAreLocallyResolvable' -count=1`: pass.
+- Separate verifier: first pass found that wrapping the whole normalized intent
+  loader swallowed missing intent files as `invalid_json_or_schema`; after
+  separating file I/O from JSON/schema validation, re-verifier reported no
+  blockers.
+
+Backlog self-review:
+
+- This phase only promotes deterministic normalized intent load/schema failures.
+  It does not claim `request_checkpoint`, `validation_blocked`,
+  `execution_failed`, or `verification_failed` producers.
+- `run-intent` invalid intent loading can be considered in a later phase, but
+  this slice intentionally starts with the agent-contract preview boundary that
+  already requires JSON mode.
+- Error messages still include local paths for agent repair context. Redaction
+  can be revisited if error envelopes become user-shareable outside the local
+  agent boundary.

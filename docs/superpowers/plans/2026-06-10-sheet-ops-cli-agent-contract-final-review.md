@@ -26,7 +26,7 @@ Final status: pass after Phase 18 documentation closure.
 | Phase/lane plan | pass | `docs/superpowers/plans/2026-06-10-sheet-ops-agent-execution-contract.md` defines Lane A execution, Lane B schema compatibility, and Lane C independent verification. | Work proceeded phase-by-phase with dependency-aware lanes. |
 | Installed workbook E2E | pass | `TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd` runs public `install-skill.sh`, executes installed `bin/sheet-ops-codex run-intent`, asserts `ok:true`, artifacts, verification pass, evidence paths, and output workbook row `LineItems!A3:C3`. | Installed CLI can execute a real workbook append with authoritative artifact evidence. |
 | Result envelope | pass | `TestExecutedPublicEntryResultExposesAgentEnvelope`, `TestExecutedPublicEntryResultValidatesAgainstPublicSchema`, and `TestTerminalCompilerPublicEntryResultValidatesAgainstPublicSchema`. | Agents get stable success and recoverable compiler-stop envelopes. |
-| Typed errors | pass with reserved backlog | `TestStateRootMismatchClassifiesAsConfigurationError`; `capabilities --json` marks `state_root_mismatch` as `emitted` and unproven runtime categories as `reserved`. | Emitted error taxonomy is evidence-backed; unproven categories are not overclaimed. |
+| Typed errors | pass with reserved backlog | `TestStateRootMismatchClassifiesAsConfigurationError`, `TestPreviewRequestInvalidIntentJSONEmitsInvalidDataError`; `capabilities --json` marks `state_root_mismatch` and `invalid_json_or_schema` as `emitted`, while unproven runtime categories remain `reserved`. | Emitted error taxonomy is evidence-backed; unproven categories are not overclaimed. |
 | JSON Schemas and golden fixture | pass | `TestCLIJSONOutputsValidateAgainstPublishedSchemas`, `TestPublishedCLISchemasPinSchemaVersion`, `TestPublicEntryResultGoldenValidatesAgainstPublicSchema`, release schema compile/reference tests. | Public CLI JSON outputs are schema-valid and version-pinned. |
 | Preview | pass | `TestPreviewRequestReportsImpactWithoutMutating`, `TestPreviewRequestIsExposedAsReadOnlyNonDryRunCommand`, installed CLI smoke, and `contracts/cli/preview_request_result.schema.json`. | Agents can inspect planned impact without workbook output or state mutation. |
 | Docs alignment | pass | `TestCLIAgentContractDocsStayAligned` keeps public and bundled skill references aligned. | Installed docs and public docs teach the same safe contract. |
@@ -60,7 +60,8 @@ Final status: pass after Phase 18 documentation closure.
 - Preflight is readiness diagnostics only. It does not prove future workbook
   mutation success.
 - Runtime categories remain `reserved` until deterministic producers and tests
-  exist.
+  exist. `invalid_json_or_schema` is no longer reserved after Phase 20 because
+  malformed normalized intent JSON now has a deterministic typed producer.
 - Installed workbook success is claimed only from the installed E2E test that
   checks JSON result fields, evidence paths, and workbook contents.
 - No success claim is based on stdout alone when an authoritative artifact or
@@ -94,8 +95,8 @@ Actions before Phase 18 commit:
   planning track.
 - A real dry-run remains deferred until runtime planning can prove non-mutation
   while simulating execution semantics.
-- Runtime `validation_blocked`, `execution_failed`, and `verification_failed`
-  should move from `reserved` to `emitted` only with deterministic producer
-  tests.
+- Runtime `request_checkpoint`, `validation_blocked`, `execution_failed`, and
+  `verification_failed` should move from `reserved` to `emitted` only with
+  deterministic producer tests.
 - Schema generation can be reconsidered if hand-written output schemas become
   hard to maintain.
