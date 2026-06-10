@@ -169,10 +169,11 @@ Use these read-only contract surfaces for agent/CI discovery:
 `sheet-ops-codex run-validated` is an internal handoff surface. It is owned by
 the installed skill handoff and must not be presented as the normal public
 request route. Its stdout is an internal handoff envelope with runtime evidence
-under `runtime`, not a public entry result. Mutating workbook commands currently report
-`dry_run_capable: false`; `preview-request` is impact inspection only, not
-runtime dry-run evidence. Do not claim dry-run behavior until a truthful runtime
-planning mode exists.
+under `runtime`, not a public entry result. Validate it with
+`contracts/cli/internal_handoff_result.schema.json`, not the public entry
+schema. Mutating workbook commands currently report `dry_run_capable: false`;
+`preview-request` is impact inspection only, not runtime dry-run evidence. Do
+not claim dry-run behavior until a truthful runtime planning mode exists.
 
 `preview-request` also reports `planner:"requestcompiler_validate_intent"`,
 `plan_confidence:"compiler_validated_boundary"`, `operation`, `would_mutate`,

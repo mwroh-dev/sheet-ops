@@ -9,6 +9,7 @@ root `$schema` and `$id` fields explicit.
 - `contracts/cli/capabilities.schema.json` validates `sheet-ops-codex capabilities --json`.
 - `contracts/cli/command_schema.schema.json` validates `sheet-ops-codex schema --json` and `sheet-ops-codex schema command <name> --json`.
 - `contracts/cli/error_envelope.schema.json` validates JSON error envelopes.
+- `contracts/cli/internal_handoff_result.schema.json` validates internal handoff results from `run-validated` and hidden compatibility `run-request`.
 - `contracts/cli/preflight_result.schema.json` validates `sheet-ops-codex preflight --json`.
 - `contracts/cli/preview_request_result.schema.json` validates `sheet-ops-codex preview-request --json`.
 - `contracts/results/public_entry_result.schema.json` validates public execution results from `run-prompt`, `run-text`, and `run-intent`.
@@ -47,6 +48,14 @@ artifact. Any verification artifact that names a non-empty `output_file`
 requires this hash. Treat `output_workbook` as the primary success artifact
 only when the public result has `ok:true`; on `ok:false`, a materialized output
 workbook is failure evidence.
+
+## Internal Handoff Contract
+
+`run-validated` is not a public workbook request entry. It is an internal
+handoff used after a validated execution request already exists. Its stdout
+uses `contracts/cli/internal_handoff_result.schema.json`, carries
+`classification:"internal_handoff"`, and places runtime evidence under
+`runtime`. The public entry schema intentionally rejects this envelope.
 
 ## Versioning Policy
 

@@ -1,0 +1,105 @@
+{
+  "schema_version": "sheet-ops-cli/v1",
+  "ok": true,
+  "command": "run-validated",
+  "status": "executed",
+  "classification": "internal_handoff",
+  "recoverable": false,
+  "artifacts": [
+    {
+      "kind": "output_workbook",
+      "path": "line-items-output.xlsx",
+      "required": true,
+      "success_role": "primary_success"
+    },
+    {
+      "kind": "verification",
+      "path": "verification.json",
+      "required": true,
+      "success_role": "success_evidence"
+    },
+    {
+      "kind": "evidence_dir",
+      "path": "evidence",
+      "required": true,
+      "success_role": "audit_trail"
+    },
+    {
+      "kind": "execution",
+      "path": "execution.json",
+      "required": false,
+      "success_role": "supporting_evidence"
+    },
+    {
+      "kind": "outcome",
+      "path": "outcome.json",
+      "required": false,
+      "success_role": "supporting_evidence"
+    },
+    {
+      "kind": "report",
+      "path": "report.md",
+      "required": false,
+      "success_role": "human_review"
+    }
+  ],
+  "next_actions": [
+    "Inspect runtime.verification before claiming workbook success.",
+    "Treat this as an internal handoff result, not a public workbook request entry."
+  ],
+  "runtime": {
+    "ids": {
+      "run_id": "run-validated-20260611",
+      "trace_id": "trace-validated-20260611"
+    },
+    "paths": {
+      "telemetry_dir": "",
+      "evidence_dir": "evidence",
+      "report_dir": "reports",
+      "request_path": "",
+      "inspection_path": "",
+      "plan_path": "",
+      "policy_path": "",
+      "task_spec_path": "",
+      "operation_ir_path": "",
+      "episode_path": "",
+      "execution_path": "execution.json",
+      "verification_path": "verification.json",
+      "verification_review_path": "",
+      "outcome_path": "outcome.json",
+      "failure_evidence_path": "",
+      "repair_advice_path": "",
+      "evidence_index": "",
+      "report_path": "report.md"
+    },
+    "inspection": {
+      "input_file": "line-items.xlsx",
+      "sheet_names": ["LineItems"],
+      "target_sheet": "LineItems",
+      "header_names": ["sku", "quantity", "unit_price"],
+      "header_row": 1,
+      "row_count": 2
+    },
+    "summary_inspection": null,
+    "plan": null,
+    "policy": {
+      "allow": true,
+      "preserve_original": true,
+      "approval_required": false,
+      "reasons": ["validated request accepted"]
+    },
+    "execution": {
+      "operation": "append_structured_rows",
+      "output_file": "line-items-output.xlsx"
+    },
+    "episode": null,
+    "verification": {
+      "pass": true,
+      "operation": "append_structured_rows",
+      "output_file": "line-items-output.xlsx",
+      "output_workbook_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "reasons": ["output workbook contains appended row"]
+    },
+    "failure": null
+  }
+}

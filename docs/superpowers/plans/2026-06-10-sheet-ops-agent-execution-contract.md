@@ -46,6 +46,7 @@ Sequential implementation lane:
 15. Phase 28: failed run-intent public envelope emission.
 16. Phase 29: run-validated internal handoff envelope.
 17. Phase 30: installed run-validated handoff smoke.
+18. Phase 31: internal handoff result schema.
 
 Phase 12 comes before Phase 13 because the existing runtime output must be observed before a stable envelope is imposed. Phase 15 comes after Phases 13-14 so the E2E smoke can assert the final contract rather than a temporary shape.
 
@@ -1290,6 +1291,90 @@ Do not broaden public entry schema in this phase.
 - Backlog self-review: keep hidden installed `run-request` smoke and formal
   internal handoff JSON Schema as future work. Installed `run-validated` success
   is now covered by authoritative workbook/evidence checks.
+
+## Phase 31 - Internal Handoff Result Schema
+
+Lane: Schema Compatibility.
+
+Web-search value: low. This phase applies the existing JSON Schema 2020-12
+contract pattern already used by Sheet Ops CLI outputs. No new external
+methodology is needed because the envelope shape was stabilized in Phases 29
+and 30.
+
+### TODO
+
+- [x] Add failing schema/golden tests for internal handoff results.
+  - Evaluation: a golden `run-validated` internal handoff result validates
+    against a dedicated schema, and the schema rejects missing top-level control
+    fields.
+  - Result: internal handoff output is formally specified without broadening the
+    public entry result schema.
+  - Likely files:
+    `cmd/sheet-ops-codex/internal_handoff_result_test.go`,
+    `cmd/sheet-ops-codex/testdata/internal_handoff_run_validated.golden.json`,
+    `contracts/cli/internal_handoff_result.schema.json`.
+  - Risk: medium.
+  - Rollback: keep Phase 29/30 behavioral tests and document schema gap.
+- [x] Publish a dedicated internal handoff schema.
+  - Evaluation: schema allows `command:"run-validated"` and hidden
+    `command:"run-request"` only, requires `classification:"internal_handoff"`
+    for `run-validated`, requires `runtime.verification`, and enforces artifact
+    roles for executed success/failure.
+  - Result: agents can validate internal handoff output separately from public
+    entry results.
+- [x] Keep public entry schema narrow.
+  - Evaluation: `contracts/results/public_entry_result.schema.json` still does
+    not include `run-validated` or `run-request`.
+  - Result: internal handoff remains separate from public workbook entry.
+- [x] Run separate verifier.
+  - Evaluation: verifier checks schema validity, golden compatibility,
+    public-schema separation, release contract compatibility, and docs truth.
+  - Result: pass/fail before commit.
+- [x] Commit Phase 31.
+  - Evaluation: focused schema/golden tests, release contract tests, related
+    package tests, and `git diff --check` pass.
+  - Result: `phase31/schema: publish internal handoff result`.
+
+### Phase-End Backlog Review
+
+Ask:
+
+- Should schema command/capabilities expose this new internal handoff schema
+  path explicitly?
+- Should installed failure-path `run-validated` smoke be added now that schema
+  exists?
+- Should the stale Final Review Phase be reopened to include Phases 28-31?
+
+Do not add internal handoff commands to public entry schemas in this phase.
+
+### Phase 31 Result Note
+
+- Implementation: published
+  `contracts/cli/internal_handoff_result.schema.json` for `run-validated` and
+  hidden compatibility `run-request` internal handoff envelopes.
+- Contract guard: the schema requires `schema_version`, `ok`, `command`,
+  `status:"executed"`, `classification`, `recoverable:false`, `artifacts`,
+  `next_actions`, and `runtime.verification`.
+- Artifact guard: the schema requires `verification` as `success_evidence`,
+  `evidence_dir` as `audit_trail`, requires successful `output_workbook` as
+  `primary_success`, and rejects failed output workbooks marked as primary
+  success.
+- Boundary guard: focused tests prove
+  `contracts/results/public_entry_result.schema.json` still rejects
+  `run-validated` internal handoff envelopes.
+- Compatibility: added a golden
+  `cmd/sheet-ops-codex/testdata/internal_handoff_run_validated.golden.json`
+  and included the new schema in published CLI schema version pinning.
+- Red evidence:
+  `go test ./cmd/sheet-ops-codex -run 'TestInternalHandoff.*Schema|TestPublicEntryResultSchemaRejectsRunValidatedHandoff' -count=1 -v`
+  initially failed because the internal handoff schema and golden did not exist.
+- Verification evidence: focused schema/golden tests, published schema pinning,
+  installed `run-validated` smoke with schema validation, release contract
+  schema compilation, related package tests, and `git diff --check` pass.
+  Separate verifier reported no blockers.
+- Backlog self-review: installed failure-path `run-validated` smoke, stronger
+  mirror-drift enforcement, and stale final-review refresh remain follow-up
+  candidates; public entry schema remains intentionally narrow.
 
 ## Final Review Phase - Agent Execution Contract Completion
 

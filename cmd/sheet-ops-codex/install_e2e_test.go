@@ -228,6 +228,7 @@ func TestInstallSkillBundledCLIRunValidatedEmitsHandoffEnvelope(t *testing.T) {
 	if result.Recoverable {
 		t.Fatalf("recoverable = true, want false")
 	}
+	assertValidatesAgainstSchema(t, result, "contracts/cli/internal_handoff_result.schema.json")
 	if !result.Runtime.Verification.Pass {
 		t.Fatalf("runtime verification pass = false: %+v", result.Runtime.Verification)
 	}

@@ -93,6 +93,7 @@ func TestPublishedCLISchemasPinSchemaVersion(t *testing.T) {
 		"contracts/cli/capabilities.schema.json",
 		"contracts/cli/command_schema.schema.json",
 		"contracts/cli/error_envelope.schema.json",
+		"contracts/cli/internal_handoff_result.schema.json",
 		"contracts/cli/preflight_result.schema.json",
 		"contracts/cli/preview_request_result.schema.json",
 		"contracts/results/public_entry_result.schema.json",

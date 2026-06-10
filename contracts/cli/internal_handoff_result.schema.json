@@ -1,0 +1,291 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/cli/internal_handoff_result.schema.json",
+  "title": "InternalHandoffResult",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "ok",
+    "command",
+    "status",
+    "classification",
+    "recoverable",
+    "artifacts",
+    "next_actions",
+    "runtime"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "sheet-ops-cli/v1"
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "command": {
+      "enum": ["run-validated", "run-request"]
+    },
+    "status": {
+      "const": "executed"
+    },
+    "classification": {
+      "const": "internal_handoff"
+    },
+    "recoverable": {
+      "const": false
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/artifact"
+      }
+    },
+    "next_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "runtime": {
+      "$ref": "#/$defs/public_runtime_result"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "required": ["kind", "path", "required", "success_role"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "success_role": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "public_runtime_result": {
+      "type": "object",
+      "required": ["ids", "paths", "verification"],
+      "properties": {
+        "ids": {
+          "type": "object",
+          "required": ["run_id", "trace_id"],
+          "properties": {
+            "run_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "trace_id": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "paths": {
+          "type": "object",
+          "required": ["evidence_dir"],
+          "properties": {
+            "telemetry_dir": { "type": "string" },
+            "evidence_dir": {
+              "type": "string",
+              "minLength": 1
+            },
+            "report_dir": { "type": "string" },
+            "request_path": { "type": "string" },
+            "inspection_path": { "type": "string" },
+            "plan_path": { "type": "string" },
+            "policy_path": { "type": "string" },
+            "task_spec_path": { "type": "string" },
+            "operation_ir_path": { "type": "string" },
+            "episode_path": { "type": "string" },
+            "execution_path": { "type": "string" },
+            "verification_path": { "type": "string" },
+            "verification_review_path": { "type": "string" },
+            "outcome_path": { "type": "string" },
+            "failure_evidence_path": { "type": "string" },
+            "repair_advice_path": { "type": "string" },
+            "evidence_index": { "type": "string" },
+            "report_path": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "inspection": { "type": "object" },
+        "summary_inspection": { "type": ["object", "null"] },
+        "plan": {},
+        "policy": { "type": "object" },
+        "execution": { "type": "object" },
+        "episode": { "type": ["object", "null"] },
+        "verification": {
+          "type": "object",
+          "required": ["pass", "operation", "output_file", "reasons"],
+          "properties": {
+            "pass": { "type": "boolean" },
+            "operation": {
+              "type": "string",
+              "minLength": 1
+            },
+            "output_file": {
+              "type": "string"
+            },
+            "output_workbook_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "reasons": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "additionalProperties": true,
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "pass": { "const": true }
+                },
+                "required": ["pass"]
+              },
+              "then": {
+                "required": ["output_workbook_sha256"]
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "output_file": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": ["output_file"]
+              },
+              "then": {
+                "required": ["output_workbook_sha256"]
+              }
+            }
+          ]
+        },
+        "verification_review": { "type": ["object", "null"] },
+        "repair_advice": { "type": ["object", "null"] },
+        "failure": { "type": ["object", "null"] }
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {
+      "properties": {
+        "artifacts": {
+          "allOf": [
+            {
+              "contains": {
+                "allOf": [
+                  { "$ref": "#/$defs/artifact" },
+                  {
+                    "properties": {
+                      "kind": { "const": "verification" },
+                      "required": { "const": true },
+                      "success_role": { "const": "success_evidence" },
+                      "path": { "minLength": 1 }
+                    },
+                    "required": ["kind", "required", "success_role", "path"]
+                  }
+                ]
+              },
+              "minContains": 1
+            },
+            {
+              "contains": {
+                "allOf": [
+                  { "$ref": "#/$defs/artifact" },
+                  {
+                    "properties": {
+                      "kind": { "const": "evidence_dir" },
+                      "required": { "const": true },
+                      "success_role": { "const": "audit_trail" },
+                      "path": { "minLength": 1 }
+                    },
+                    "required": ["kind", "required", "success_role", "path"]
+                  }
+                ]
+              },
+              "minContains": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "ok": { "const": true }
+        },
+        "required": ["ok"]
+      },
+      "then": {
+        "properties": {
+          "artifacts": {
+            "contains": {
+              "allOf": [
+                { "$ref": "#/$defs/artifact" },
+                {
+                  "properties": {
+                    "kind": { "const": "output_workbook" },
+                    "required": { "const": true },
+                    "success_role": { "const": "primary_success" },
+                    "path": { "minLength": 1 }
+                  },
+                  "required": ["kind", "required", "success_role", "path"]
+                }
+              ]
+            },
+            "minContains": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "ok": { "const": false }
+        },
+        "required": ["ok"]
+      },
+      "then": {
+        "properties": {
+          "artifacts": {
+            "items": {
+              "if": {
+                "properties": {
+                  "kind": { "const": "output_workbook" }
+                },
+                "required": ["kind"]
+              },
+              "then": {
+                "properties": {
+                  "required": { "const": false },
+                  "success_role": { "const": "failure_evidence" }
+                },
+                "required": ["required", "success_role"]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
