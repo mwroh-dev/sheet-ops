@@ -27,6 +27,10 @@
     "Inspect runtime.verification before claiming workbook success.",
     "Open the output workbook only after verification pass is true."
   ],
+  "fingerprints": {
+    "normalized_intent_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "input_workbook_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
   "entry": "run-intent",
   "status": "executed",
   "work_unit_id": "append-rows-20260610",

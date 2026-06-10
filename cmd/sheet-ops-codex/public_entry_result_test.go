@@ -35,6 +35,20 @@ func TestExecutedPublicEntryResultExposesAgentEnvelope(t *testing.T) {
 	assertPublicResultArtifact(t, envelope.Artifacts, "evidence_dir", true, "audit_trail")
 }
 
+func TestExecutedPublicEntryResultExposesInputFingerprints(t *testing.T) {
+	envelope := newTestExecutedPublicEntryResult(t)
+
+	if envelope.Fingerprints == nil {
+		t.Fatalf("fingerprints is nil")
+	}
+	if len(envelope.Fingerprints.NormalizedIntentSHA256) != 64 {
+		t.Fatalf("normalized_intent_sha256 length = %d, want 64", len(envelope.Fingerprints.NormalizedIntentSHA256))
+	}
+	if len(envelope.Fingerprints.InputWorkbookSHA256) != 64 {
+		t.Fatalf("input_workbook_sha256 length = %d, want 64", len(envelope.Fingerprints.InputWorkbookSHA256))
+	}
+}
+
 func TestExecutedPublicEntryResultValidatesAgainstPublicSchema(t *testing.T) {
 	envelope := newTestExecutedPublicEntryResult(t)
 
@@ -64,6 +78,15 @@ func TestExecutedPublicEntryResultSchemaRejectsMissingSuccessArtifacts(t *testin
 
 	if err := runtimeschema.ValidateStruct(publicEntryResultSchemaPath(), document); err == nil {
 		t.Fatalf("public entry result schema accepted executed envelope without success artifacts")
+	}
+}
+
+func TestExecutedPublicEntryResultSchemaRejectsMissingFingerprints(t *testing.T) {
+	document := publicEntryResultDocument(t, newTestExecutedPublicEntryResult(t))
+	delete(document, "fingerprints")
+
+	if err := runtimeschema.ValidateStruct(publicEntryResultSchemaPath(), document); err == nil {
+		t.Fatalf("public entry result schema accepted executed envelope without input fingerprints")
 	}
 }
 
@@ -127,7 +150,10 @@ func newTestExecutedPublicEntryResult(t *testing.T) PublicEntryResult {
 		},
 	}
 
-	return newExecutedPublicEntryResult("run-intent", compiled, result)
+	return newExecutedPublicEntryResult("run-intent", compiled, result, previewFingerprints{
+		NormalizedIntentSHA256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		InputWorkbookSHA256:    "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+	})
 }
 
 func publicEntryResultDocument(t *testing.T, envelope PublicEntryResult) map[string]any {

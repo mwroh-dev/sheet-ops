@@ -181,11 +181,7 @@ func runPreviewRequest(options previewRequestOptions) (previewRequestResult, err
 			{Kind: "runtime_evidence", Path: filepath.Join(stateRoot, "artifacts"), Required: true},
 		}
 	}
-	intentFingerprint, err := fileSHA256(intentFile)
-	if err != nil {
-		return previewRequestResult{}, err
-	}
-	workbookFingerprint, err := fileSHA256(inputFile)
+	fingerprints, err := inputFingerprints(intentFile, inputFile)
 	if err != nil {
 		return previewRequestResult{}, err
 	}
@@ -201,14 +197,11 @@ func runPreviewRequest(options previewRequestOptions) (previewRequestResult, err
 		Operation:       operation,
 		WouldMutate:     wouldMutate,
 		MutationSummary: mutationSummary,
-		Fingerprints: previewFingerprints{
-			NormalizedIntentSHA256: intentFingerprint,
-			InputWorkbookSHA256:    workbookFingerprint,
-		},
-		ScenarioID: scenarioID,
-		InputFile:  inputFile,
-		OutputFile: outputFile,
-		StateRoot:  stateRoot,
+		Fingerprints:    fingerprints,
+		ScenarioID:      scenarioID,
+		InputFile:       inputFile,
+		OutputFile:      outputFile,
+		StateRoot:       stateRoot,
 		PlannedReads: []previewPlannedArtifact{
 			{Kind: "normalized_intent", Path: intentFile, Required: true},
 			{Kind: "input_workbook", Path: inputFile, Required: true},
@@ -220,6 +213,21 @@ func runPreviewRequest(options previewRequestOptions) (previewRequestResult, err
 			"Preview does not compile a persisted request, execute runtime orchestration, create .sheet-ops-state, or write the output workbook.",
 			"Preview is not a dry-run and must not be used as evidence of execution success.",
 		},
+	}, nil
+}
+
+func inputFingerprints(intentFile string, inputFile string) (previewFingerprints, error) {
+	intentFingerprint, err := fileSHA256(intentFile)
+	if err != nil {
+		return previewFingerprints{}, err
+	}
+	workbookFingerprint, err := fileSHA256(inputFile)
+	if err != nil {
+		return previewFingerprints{}, err
+	}
+	return previewFingerprints{
+		NormalizedIntentSHA256: intentFingerprint,
+		InputWorkbookSHA256:    workbookFingerprint,
 	}, nil
 }
 

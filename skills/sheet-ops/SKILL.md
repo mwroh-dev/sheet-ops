@@ -176,7 +176,9 @@ planning mode exists.
 `preview-request` also reports `planner:"requestcompiler_validate_intent"`,
 `plan_confidence:"compiler_validated_boundary"`, `operation`, `would_mutate`,
 `mutation_summary`, and input `fingerprints`. Treat these as trust metadata for
-the inspected inputs, not proof of runtime execution success.
+the inspected inputs, not proof of runtime execution success. After
+`run-intent`, compare the execution result `fingerprints` to the preview
+fingerprints before trusting runtime artifacts.
 
 Follow-up:
 

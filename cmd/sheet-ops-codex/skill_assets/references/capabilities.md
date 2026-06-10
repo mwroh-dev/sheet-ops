@@ -32,8 +32,9 @@ planning mode exists.
 `preview-request` includes `planner:"requestcompiler_validate_intent"` and
 `plan_confidence:"compiler_validated_boundary"`. Treat its `operation`, `would_mutate`,
 `mutation_summary`, and `fingerprints` fields as planning/trust metadata only;
-they do not prove that runtime execution succeeded or that a later run used the
-same inputs.
+they do not prove that runtime execution succeeded. After `run-intent`, compare
+the execution result `fingerprints` to the preview fingerprints before trusting
+runtime artifacts.
 
 ## Public agent capabilities
 

@@ -21,6 +21,7 @@ type installedRunIntentResult struct {
 	Command       string                  `json:"command"`
 	Recoverable   bool                    `json:"recoverable"`
 	Artifacts     []PublicResultArtifact  `json:"artifacts"`
+	Fingerprints  previewFingerprints     `json:"fingerprints"`
 	Entry         string                  `json:"entry"`
 	Status        string                  `json:"status"`
 	Runtime       installedRuntimePayload `json:"runtime"`
@@ -79,6 +80,18 @@ func TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd(t *testing.T) {
 	writeAppendRowsIntent(t, intentFile)
 
 	installedCLI := filepath.Join(projectDir, ".codex", "skills", "sheet-ops", "bin", "sheet-ops-codex")
+	var preview previewRequestDocument
+	runInstalledCLIJSONWithEnv(t, installedCLI, &preview, []string{
+		runtimeconfig.RetentionModeEnv + "=" + string(runtimeconfig.RetentionModeFull),
+		runtimeconfig.RenderModeEnv + "=" + string(runtimeconfig.RenderModeNever),
+	}, "preview-request",
+		"--json",
+		"--intent-file", intentFile,
+		"--input-file", inputFile,
+		"--output-file", outputFile,
+		"--scenario-id", "installed-append-rows-e2e",
+	)
+
 	var result installedRunIntentResult
 	runInstalledCLIJSONWithEnv(t, installedCLI, &result, []string{
 		runtimeconfig.RetentionModeEnv + "=" + string(runtimeconfig.RetentionModeFull),
@@ -104,6 +117,12 @@ func TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd(t *testing.T) {
 	}
 	if result.Recoverable {
 		t.Fatalf("recoverable = true, want false")
+	}
+	if result.Fingerprints.NormalizedIntentSHA256 != preview.Fingerprints.NormalizedIntentSHA256 {
+		t.Fatalf("normalized_intent_sha256 = %q, want preview fingerprint %q", result.Fingerprints.NormalizedIntentSHA256, preview.Fingerprints.NormalizedIntentSHA256)
+	}
+	if result.Fingerprints.InputWorkbookSHA256 != preview.Fingerprints.InputWorkbookSHA256 {
+		t.Fatalf("input_workbook_sha256 = %q, want preview fingerprint %q", result.Fingerprints.InputWorkbookSHA256, preview.Fingerprints.InputWorkbookSHA256)
 	}
 	if !result.Runtime.Verification.Pass {
 		t.Fatalf("runtime verification pass = false: %+v", result.Runtime.Verification)

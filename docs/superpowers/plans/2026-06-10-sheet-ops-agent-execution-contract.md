@@ -36,6 +36,7 @@ Sequential implementation lane:
 5. Phase 17: non-mutating plan/impact preview.
 6. Phase 19: preview trust metadata and fingerprints.
 7. Phase 20: invalid data typed producer promotion.
+8. Phase 21: preview-run input identity sealing.
 
 Phase 12 comes before Phase 13 because the existing runtime output must be observed before a stable envelope is imposed. Phase 15 comes after Phases 13-14 so the E2E smoke can assert the final contract rather than a temporary shape.
 
@@ -391,6 +392,103 @@ Ask:
 
 Keep execution/verification runtime errors reserved until deterministic failing
 fixtures exist for those paths.
+
+## Phase 21 - Preview-Run Input Identity Sealing
+
+Lane: Execution Contract.
+
+Web-search value: low. Phase 19 already used plan/dry-run automation guidance.
+This phase applies the local backlog item: preview fingerprints are only useful
+for agent workflow decisions if mutating execution repeats the same input
+identity fields.
+
+### TODO
+
+- [x] Add failing installed/source workflow test for preview-run fingerprint
+  identity.
+  - Evaluation: `preview-request` and subsequent `run-intent` expose matching
+    normalized intent and input workbook SHA-256 fingerprints.
+  - Result: an agent can prove the run used the same request/workbook that it
+    previewed before trusting execution artifacts.
+  - Likely files: `cmd/sheet-ops-codex/public_entry_result_test.go`,
+    `cmd/sheet-ops-codex/install_e2e_test.go`.
+  - Risk: medium.
+  - Rollback: keep preview fingerprints advisory-only.
+- [x] Add execution fingerprints to public run results.
+  - Evaluation: executed `run-intent` envelopes include
+    `fingerprints.normalized_intent_sha256` and
+    `fingerprints.input_workbook_sha256`.
+  - Result: public execution result can be compared with preview output.
+- [x] Update public result schema/golden.
+  - Evaluation: schema requires fingerprints on executed success and golden
+    fixture validates.
+  - Result: compatibility drift is visible in schema tests.
+- [x] Run separate verifier.
+  - Evaluation: verifier checks the fingerprints are derived from actual input
+    files, not invented constants, and no success claim relies only on stdout.
+  - Result: pass/fail before commit.
+- [x] Commit Phase 21.
+  - Evaluation: focused public result, installed E2E, schema, and release
+    contract tests pass.
+  - Result: `phase21/results: seal preview run identity`.
+
+### Phase-End Backlog Review
+
+Ask:
+
+- Should output workbook fingerprints be added after execution to prove the
+  produced workbook identity?
+- Should preflight also emit input fingerprints, or is preview the right
+  identity checkpoint?
+- Do fingerprints need redaction or hashing policy docs before non-local use?
+- Should the normalized intent fingerprint be computed from the same byte slice
+  that is parsed, rather than re-reading the file, to eliminate narrow
+  concurrent file mutation ambiguity?
+
+Do not claim full workflow matrix coverage from this phase; it seals one
+identity invariant for the existing append-rows installed workflow.
+
+### Phase 21 Result Note
+
+Implementation outcome:
+
+- Executed public entry results now include
+  `fingerprints.normalized_intent_sha256` and
+  `fingerprints.input_workbook_sha256`.
+- `preview-request` and `run-intent` share the same file-hash helper so the
+  two command outputs can be compared directly by an agent.
+- The installed E2E workflow now runs installed `preview-request` before
+  installed `run-intent` and asserts both fingerprint fields match.
+- `contracts/results/public_entry_result.schema.json` requires fingerprints
+  for `status:"executed"` results while keeping terminal compiler results
+  free of runtime identity fields.
+- Public docs and installed skill references tell agents to compare
+  preview/run fingerprints before trusting runtime artifacts, without treating
+  fingerprints as proof of runtime success.
+
+Verification:
+
+- Red evidence:
+  `go test ./cmd/sheet-ops-codex -run 'TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd|TestExecutedPublicEntryResultSchemaRejectsMissingFingerprints' -count=1 -v`
+  failed because `run-intent` emitted empty fingerprints and the public result
+  schema still accepted executed envelopes without fingerprints.
+- `go test ./cmd/sheet-ops-codex -run 'TestExecutedPublicEntryResult.*Fingerprint|TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd|TestPublicEntryResultGoldenValidatesAgainstPublicSchema|Test.*PublicEntryResult.*Schema|TestCLIJSONOutputsValidateAgainstPublishedSchemas|TestPreviewRequest' -count=1 -v`: pass.
+- `go test ./internal/releasecontracts -run 'TestReleaseSchemasCompile|TestReleaseSchemaReferencesAreLocallyResolvable|TestCLIAgentContractDocsStayAligned' -count=1 -v`: pass.
+- `go test ./cmd/sheet-ops-codex ./cmd/sheet-ops-agent ./internal/releasecontracts -count=1`: pass.
+- `git diff --check`: pass.
+- Separate verifier: no blockers. Non-blocking risk is a narrow TOCTOU gap
+  where `run-intent` loads normalized intent before hashing the file, so a
+  concurrent file mutation could make the emitted fingerprint describe bytes
+  loaded after parsing.
+
+Backlog self-review:
+
+- Add output workbook fingerprinting after execution if agents need to prove
+  produced workbook identity, not only input identity.
+- Consider computing normalized intent fingerprint from the same byte slice
+  parsed by the loader to remove the narrow concurrent mutation ambiguity.
+- This phase proves the installed append-rows preview/run identity invariant;
+  it does not claim full workflow matrix coverage.
 
 ## Final Review Phase - Agent Execution Contract Completion
 

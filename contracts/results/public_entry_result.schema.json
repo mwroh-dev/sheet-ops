@@ -44,6 +44,9 @@
         "minLength": 1
       }
     },
+    "fingerprints": {
+      "$ref": "#/$defs/fingerprints"
+    },
     "entry": {
       "enum": ["run-prompt", "run-text", "run-intent"]
     },
@@ -105,6 +108,21 @@
         },
         "generated_request_path": {
           "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "fingerprints": {
+      "type": "object",
+      "required": ["normalized_intent_sha256", "input_workbook_sha256"],
+      "properties": {
+        "normalized_intent_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "input_workbook_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
         }
       },
       "additionalProperties": false
@@ -198,6 +216,7 @@
         "required": ["status"]
       },
       "then": {
+        "required": ["fingerprints"],
         "properties": {
           "ok": { "const": true },
           "recoverable": { "const": false },

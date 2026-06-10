@@ -19,6 +19,7 @@ type PublicEntryResult struct {
 	Recoverable     bool                   `json:"recoverable"`
 	Artifacts       []PublicResultArtifact `json:"artifacts"`
 	NextActions     []string               `json:"next_actions"`
+	Fingerprints    *previewFingerprints   `json:"fingerprints,omitempty"`
 	Entry           string                 `json:"entry"`
 	Status          string                 `json:"status"`
 	WorkUnitID      string                 `json:"work_unit_id"`
@@ -218,7 +219,7 @@ func newTerminalCompilerResult(entry string, compiled requestcompiler.PersistedR
 	}, fmt.Errorf("request compiler stopped before runtime execution (status=%s)", compiled.Decision.Status)
 }
 
-func newExecutedPublicEntryResult(entry string, compiled requestcompiler.PersistedResult, result runtimeworkbookcase.RunResult) PublicEntryResult {
+func newExecutedPublicEntryResult(entry string, compiled requestcompiler.PersistedResult, result runtimeworkbookcase.RunResult, fingerprints previewFingerprints) PublicEntryResult {
 	requestDir := compiled.RequestDir
 	decisionPath := compiled.DecisionPath()
 	generatedRequestPath := compiled.GeneratedRequestPath()
@@ -240,9 +241,10 @@ func newExecutedPublicEntryResult(entry string, compiled requestcompiler.Persist
 			"Inspect runtime.verification before claiming workbook success.",
 			"Open the output workbook only after verification pass is true.",
 		},
-		Entry:      entry,
-		Status:     "executed",
-		WorkUnitID: compiled.WorkUnitID,
+		Fingerprints: &fingerprints,
+		Entry:        entry,
+		Status:       "executed",
+		WorkUnitID:   compiled.WorkUnitID,
 		RequestCompiler: PublicEntryCompilerRef{
 			Status:               string(requestcompiler.StatusCompiled),
 			RequestDir:           requestDir,

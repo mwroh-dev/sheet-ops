@@ -201,6 +201,10 @@ func runIntentEntry(intent requestcompiler.NormalizedIntent, input intentCompile
 	if err != nil {
 		return nil, nil, err
 	}
+	fingerprints, err := inputFingerprints(input.IntentFile, input.InputFile)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	workspaceRoot := resolveWorkspaceRoot(input.InputFile)
 	workspaceRoot, err = configureStateRootsFromStateRoot(workspaceRoot)
@@ -241,7 +245,7 @@ func runIntentEntry(intent requestcompiler.NormalizedIntent, input intentCompile
 		}
 		return nil, nil, orchestrateErr
 	}
-	publicEntryResult := newExecutedPublicEntryResult("run-intent", compiled, result)
+	publicEntryResult := newExecutedPublicEntryResult("run-intent", compiled, result, fingerprints)
 	return &result, &publicEntryResult, orchestrateErr
 }
 
