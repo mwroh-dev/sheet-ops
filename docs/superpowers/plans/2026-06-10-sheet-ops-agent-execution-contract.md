@@ -49,6 +49,7 @@ Sequential implementation lane:
 18. Phase 31: internal handoff result schema.
 19. Phase 32: final review refresh after handoff hardening.
 20. Phase 33: hidden run-request alias proof.
+21. Phase 34: installed run-validated failure-path smoke.
 
 Phase 12 comes before Phase 13 because the existing runtime output must be observed before a stable envelope is imposed. Phase 15 comes after Phases 13-14 so the E2E smoke can assert the final contract rather than a temporary shape.
 
@@ -1511,6 +1512,73 @@ Result:
 - Installed failure-path `run-validated` smoke remains the next direct
   execution-contract gap.
 - Mirror-drift hardening remains a separate release-contract hardening phase.
+- Active overall goal remains open pending a fresh requirement-by-requirement
+  completion audit.
+
+## Phase 34 - Installed Run-Validated Failure-Path Smoke
+
+Lane: Installed Boundary / Failure Evidence.
+
+Web-search value: low. This phase verifies local installed-binary behavior for
+an already designed failure envelope. No external methodology question is open.
+
+### TODO
+
+- [x] Add installed-bundle runtime-started failure smoke for `run-validated`.
+  - Evaluation: installed `.codex/skills/sheet-ops/bin/sheet-ops-codex
+    run-validated --request <request>` returns non-zero for a deterministic
+    runtime-started failure, still writes a schema-valid internal handoff
+    envelope to stdout, reports `ok:false`, preserves
+    `command:"run-validated"` and `classification:"internal_handoff"`, and
+    points to authoritative evidence artifacts.
+  - Result: installed internal handoff callers can parse failure evidence
+    without relying on source-level stubs.
+    `TestInstallSkillBundledCLIRunValidatedFailureEmitsHandoffEnvelope` covers
+    non-zero exit, stdout JSON, `ok:false`, internal handoff schema validation,
+    `failure_evidence` output workbook role, verification/review/repair
+    artifacts, and output hash agreement.
+  - Likely files:
+    `cmd/sheet-ops-codex/install_e2e_test.go`.
+  - Risk: medium because the installed smoke must distinguish pre-runtime
+    validation failure from runtime-started failure.
+  - Rollback: keep source-level failure coverage only and leave installed
+    failure proof in backlog.
+- [x] Update final review/backlog language.
+  - Evaluation: installed failure-path `run-validated` is moved out of backlog
+    only if the installed smoke proves schema-valid failure evidence.
+  - Result: final review evidence now lists installed `run-validated`
+    failure-path coverage and removes the stale backlog item.
+- [x] Run separate verifier.
+  - Evaluation: verifier confirms the failure is runtime-started, stdout JSON
+    is schema-valid, the command exits non-zero, and no success artifact is
+    overclaimed.
+  - Result: separate verifier passed with no blockers. It confirmed installed
+    binary invocation, non-zero exit, runtime-started schema-valid stdout
+    envelope, `failure_evidence` output role, evidence hash/review/repair
+    checks, and public/internal contract separation.
+- [x] Commit Phase 34.
+  - Evaluation: focused installed failure test, related package tests, and
+    `git diff --check` pass.
+  - Result: `phase34/install: smoke run-validated failure handoff`.
+
+### Phase-End Backlog Review
+
+Ask:
+
+- Should mirror-drift hardening become the next release-contract phase?
+- Should reserved runtime error categories now be promoted with deterministic
+  installed/source producers, or stay reserved?
+- Is a hidden `run-request` installed failure smoke necessary, or is
+  `run-validated` failure proof plus shared handler sufficient?
+
+Result:
+
+- Hidden `run-request` installed failure smoke stays optional; `run-validated`
+  failure proof covers the internal handler boundary, and the alias remains
+  hidden compatibility.
+- Mirror-drift hardening is the next direct release-contract candidate.
+- Reserved runtime error categories stay reserved until each has deterministic
+  producer tests.
 - Active overall goal remains open pending a fresh requirement-by-requirement
   completion audit.
 

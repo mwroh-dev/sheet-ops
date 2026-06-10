@@ -40,10 +40,12 @@ type installedRuntimePayload struct {
 }
 
 type installedRunPaths struct {
-	EvidenceDir      string `json:"evidence_dir"`
-	VerificationPath string `json:"verification_path"`
-	ExecutionPath    string `json:"execution_path"`
-	OutcomePath      string `json:"outcome_path"`
+	EvidenceDir            string `json:"evidence_dir"`
+	VerificationPath       string `json:"verification_path"`
+	ExecutionPath          string `json:"execution_path"`
+	OutcomePath            string `json:"outcome_path"`
+	RepairAdvicePath       string `json:"repair_advice_path"`
+	VerificationReviewPath string `json:"verification_review_path"`
 }
 
 type installedVerification struct {
@@ -52,6 +54,7 @@ type installedVerification struct {
 	OutputFile           string   `json:"output_file"`
 	OutputWorkbookSHA256 string   `json:"output_workbook_sha256"`
 	WrittenCells         []string `json:"written_cells"`
+	Reasons              []string `json:"reasons"`
 }
 
 type installedExecutionResult struct {
@@ -181,6 +184,94 @@ func TestInstallSkillBundledCLIRunValidatedEmitsHandoffEnvelope(t *testing.T) {
 
 func TestInstallSkillBundledCLIRunRequestEmitsHandoffEnvelope(t *testing.T) {
 	runInstalledInternalHandoffSmoke(t, "run-request", "--file")
+}
+
+func TestInstallSkillBundledCLIRunValidatedFailureEmitsHandoffEnvelope(t *testing.T) {
+	if status := inspectGo("go"); status.kind != goStatusReady {
+		t.Skipf("go runtime is not ready for installed run-validated failure smoke: %s %v", status.kind, status.err)
+	}
+
+	projectDir := t.TempDir()
+	installScript := filepath.Join("..", "..", "install-skill.sh")
+	cmd := exec.Command(installScript,
+		"--project", projectDir,
+		"--go-bin", "go",
+	)
+	installOutput, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("install-skill.sh failed: %v\noutput=%s", err, installOutput)
+	}
+
+	workspaceDir := filepath.Join(projectDir, "workspace")
+	if err := os.MkdirAll(workspaceDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll(workspace): %v", err)
+	}
+	inputFile := filepath.Join(workspaceDir, "formula-protection.xlsx")
+	outputFile := filepath.Join(workspaceDir, "formula-protection-output.xlsx")
+	requestFile := filepath.Join(workspaceDir, "validated-failure-request.json")
+	writeFormulaProtectionFailureWorkbook(t, inputFile)
+	writeFormulaProtectionFailureRequest(t, requestFile, inputFile, outputFile)
+
+	installedCLI := filepath.Join(projectDir, ".codex", "skills", "sheet-ops", "bin", "sheet-ops-codex")
+	var result InternalHandoffRunResult
+	runInstalledCLIJSONExpectFailureWithEnv(t, installedCLI, &result, []string{
+		runtimeconfig.RetentionModeEnv + "=" + string(runtimeconfig.RetentionModeFull),
+		runtimeconfig.RenderModeEnv + "=" + string(runtimeconfig.RenderModeNever),
+	}, "run-validated",
+		"--request", requestFile,
+	)
+
+	if result.SchemaVersion != cliContractSchemaVersion {
+		t.Fatalf("schema_version = %q, want %q", result.SchemaVersion, cliContractSchemaVersion)
+	}
+	if result.OK {
+		t.Fatalf("ok = true, want false: %+v", result)
+	}
+	if result.Command != "run-validated" {
+		t.Fatalf("command = %q, want run-validated", result.Command)
+	}
+	if result.Classification != cliClassificationInternalHandoff {
+		t.Fatalf("classification = %q, want %q", result.Classification, cliClassificationInternalHandoff)
+	}
+	if result.Status != "executed" {
+		t.Fatalf("status = %q, want executed", result.Status)
+	}
+	if result.Recoverable {
+		t.Fatalf("recoverable = true, want false")
+	}
+	assertValidatesAgainstSchema(t, result, "contracts/cli/internal_handoff_result.schema.json")
+	if result.Runtime.Verification.Pass {
+		t.Fatalf("runtime verification pass = true, want false: %+v", result.Runtime.Verification)
+	}
+	if result.Runtime.Verification.Operation != runtimeworkbookcase.ProtectFormulaCellsOperationName {
+		t.Fatalf("verification operation = %q, want %q", result.Runtime.Verification.Operation, runtimeworkbookcase.ProtectFormulaCellsOperationName)
+	}
+	if !slices.Contains(result.Runtime.Verification.Reasons, "D2 has no formula to protect") {
+		t.Fatalf("verification reasons = %v, want D2 has no formula to protect", result.Runtime.Verification.Reasons)
+	}
+	outputFingerprint, err := fileSHA256(outputFile)
+	if err != nil {
+		t.Fatalf("fileSHA256(%s): %v", outputFile, err)
+	}
+	if result.Runtime.Verification.OutputWorkbookSHA256 != outputFingerprint {
+		t.Fatalf("runtime verification output_workbook_sha256 = %q, want output file fingerprint %q", result.Runtime.Verification.OutputWorkbookSHA256, outputFingerprint)
+	}
+	var verificationArtifact installedVerification
+	readJSONFileLocal(t, result.Runtime.Paths.VerificationPath, &verificationArtifact)
+	if verificationArtifact.Pass {
+		t.Fatalf("verification artifact pass = true, want false")
+	}
+	if verificationArtifact.OutputWorkbookSHA256 != outputFingerprint {
+		t.Fatalf("verification artifact output_workbook_sha256 = %q, want output file fingerprint %q", verificationArtifact.OutputWorkbookSHA256, outputFingerprint)
+	}
+	assertInstalledArtifactExists(t, result.Artifacts, "output_workbook", false, "failure_evidence")
+	assertInstalledArtifactExists(t, result.Artifacts, "verification", true, "success_evidence")
+	assertInstalledArtifactExists(t, result.Artifacts, "evidence_dir", true, "audit_trail")
+	assertFileExistsLocal(t, result.Runtime.Paths.ExecutionPath)
+	assertFileExistsLocal(t, result.Runtime.Paths.OutcomePath)
+	assertFileExistsLocal(t, result.Runtime.Paths.RepairAdvicePath)
+	assertFileExistsLocal(t, result.Runtime.Paths.VerificationReviewPath)
+	assertOutputWorkbookCell(t, outputFile, "LineItems", "D2", "not a formula")
 }
 
 func runInstalledInternalHandoffSmoke(t *testing.T, commandName string, requestFlag string) {
@@ -335,6 +426,54 @@ func writeAppendRowsIntent(t *testing.T, path string) {
 	}
 }
 
+func writeFormulaProtectionFailureWorkbook(t *testing.T, path string) {
+	t.Helper()
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "LineItems"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	header := []any{"sku", "quantity", "unit_price", "line_total"}
+	if err := file.SetSheetRow("LineItems", "A1", &header); err != nil {
+		t.Fatalf("SetSheetRow(header): %v", err)
+	}
+	row := []any{"A001", 2, 10, "not a formula"}
+	if err := file.SetSheetRow("LineItems", "A2", &row); err != nil {
+		t.Fatalf("SetSheetRow(row): %v", err)
+	}
+	if err := file.SaveAs(path); err != nil {
+		t.Fatalf("SaveAs(%s): %v", path, err)
+	}
+}
+
+func writeFormulaProtectionFailureRequest(t *testing.T, path, inputFile, outputFile string) {
+	t.Helper()
+
+	request := map[string]any{
+		"scenario_id":      "installed-formula-protection-failure",
+		"request_kind":     "prompt_text",
+		"request_text":     "LineItems 계산 수식 셀을 보호한다.",
+		"input_file":       inputFile,
+		"source_sheet":     "LineItems",
+		"output_file":      outputFile,
+		"execution_kind":   "composition",
+		"composition_kind": "formula_protection",
+		"protection_rule": map[string]any{
+			"formula_ranges": []string{"D2"},
+			"input_ranges":   []string{"A2:C10"},
+		},
+	}
+	raw, err := json.MarshalIndent(request, "", "  ")
+	if err != nil {
+		t.Fatalf("Marshal formula protection failure request: %v", err)
+	}
+	if err := os.WriteFile(path, raw, 0o644); err != nil {
+		t.Fatalf("WriteFile(%s): %v", path, err)
+	}
+}
+
 func runInstalledCLIJSONWithEnv(t *testing.T, binary string, target any, env []string, args ...string) {
 	t.Helper()
 
@@ -351,6 +490,28 @@ func runInstalledCLIJSONWithEnv(t *testing.T, binary string, target any, env []s
 	}
 	if err := json.Unmarshal(stdout, target); err != nil {
 		t.Fatalf("json.Unmarshal(%s %s): %v\nstdout:\n%s", binary, strings.Join(args, " "), err, stdout)
+	}
+}
+
+func runInstalledCLIJSONExpectFailureWithEnv(t *testing.T, binary string, target any, env []string, args ...string) {
+	t.Helper()
+
+	cmd := exec.Command(binary, args...)
+	cmd.Env = cleanSheetOpsEnv(os.Environ())
+	cmd.Env = append(cmd.Env, env...)
+	stdout, err := cmd.Output()
+	if err == nil {
+		t.Fatalf("%s %s returned nil error, want failure\nstdout:\n%s", binary, strings.Join(args, " "), stdout)
+	}
+	var exitErr *exec.ExitError
+	if !errors.As(err, &exitErr) {
+		t.Fatalf("%s %s failed without exit status: %v\nstdout:\n%s", binary, strings.Join(args, " "), err, stdout)
+	}
+	if len(stdout) == 0 {
+		t.Fatalf("%s %s wrote empty stdout on failure\nstderr:\n%s", binary, strings.Join(args, " "), exitErr.Stderr)
+	}
+	if err := json.Unmarshal(stdout, target); err != nil {
+		t.Fatalf("json.Unmarshal(%s %s): %v\nstderr:\n%s\nstdout:\n%s", binary, strings.Join(args, " "), err, exitErr.Stderr, stdout)
 	}
 }
 
