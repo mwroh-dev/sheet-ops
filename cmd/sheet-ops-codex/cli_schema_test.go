@@ -13,6 +13,7 @@ type cliCapabilitiesDocument struct {
 	CLIName              string                      `json:"cli_name"`
 	HumanWorkbookEntry   string                      `json:"human_workbook_entry"`
 	MachineEntryCommands []string                    `json:"machine_entry_commands"`
+	RootCommand          cliCapabilityCommandBrief   `json:"root_command"`
 	ReadOnlyCommands     []string                    `json:"read_only_commands"`
 	CommandGroups        []cliCapabilityGroup        `json:"command_groups"`
 	Commands             []cliCapabilityCommandBrief `json:"commands"`
@@ -105,6 +106,18 @@ func TestCapabilitiesJSONReportsSafeEntryBoundaries(t *testing.T) {
 	}
 	if !slices.Equal(doc.MachineEntryCommands, []string{"capabilities", "schema"}) {
 		t.Fatalf("machine_entry_commands = %v, want [capabilities schema]", doc.MachineEntryCommands)
+	}
+	if doc.RootCommand.Name != doc.CLIName {
+		t.Fatalf("root_command.name = %q, want cli_name %q", doc.RootCommand.Name, doc.CLIName)
+	}
+	if doc.RootCommand.Classification != cliClassificationBuiltinSupport {
+		t.Fatalf("root_command.classification = %q, want %q", doc.RootCommand.Classification, cliClassificationBuiltinSupport)
+	}
+	if !doc.RootCommand.ReadOnly || doc.RootCommand.Mutating || doc.RootCommand.Hidden {
+		t.Fatalf("root_command has unexpected flags: %+v", doc.RootCommand)
+	}
+	if slices.Contains(doc.ReadOnlyCommands, doc.CLIName) {
+		t.Fatalf("read_only_commands includes root command %q: %v", doc.CLIName, doc.ReadOnlyCommands)
 	}
 	for _, name := range []string{"capabilities", "schema", "help", "completion"} {
 		if !slices.Contains(doc.ReadOnlyCommands, name) {

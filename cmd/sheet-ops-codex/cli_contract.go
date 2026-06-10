@@ -498,6 +498,7 @@ type cliCapabilitiesPayload struct {
 	CLIName              string                      `json:"cli_name"`
 	HumanWorkbookEntry   string                      `json:"human_workbook_entry"`
 	MachineEntryCommands []string                    `json:"machine_entry_commands"`
+	RootCommand          cliCapabilityBriefPayload   `json:"root_command"`
 	ReadOnlyCommands     []string                    `json:"read_only_commands"`
 	CommandGroups        []cliCapabilityGroupPayload `json:"command_groups"`
 	Commands             []cliCapabilityBriefPayload `json:"commands"`
@@ -655,11 +656,11 @@ func buildCapabilitiesPayload(rootName string) cliCapabilitiesPayload {
 	commands := make([]cliCapabilityBriefPayload, 0, len(contracts))
 	for _, name := range sortedContractNames(contracts) {
 		contract := contracts[name]
-		if contract.ReadOnly {
-			readOnlyCommands = append(readOnlyCommands, contract.Name)
-		}
 		if name == rootName {
 			continue
+		}
+		if contract.ReadOnly {
+			readOnlyCommands = append(readOnlyCommands, contract.Name)
 		}
 		commands = append(commands, cliCapabilityBriefPayload{
 			Name:           contract.Name,
@@ -675,10 +676,21 @@ func buildCapabilitiesPayload(rootName string) cliCapabilitiesPayload {
 		CLIName:              rootName,
 		HumanWorkbookEntry:   "sheet-ops",
 		MachineEntryCommands: []string{"capabilities", "schema"},
+		RootCommand:          buildCapabilityBriefPayload(contracts[rootName]),
 		ReadOnlyCommands:     readOnlyCommands,
 		CommandGroups:        commandGroups,
 		Commands:             commands,
 		ErrorContract:        buildCLIErrorContractPayload(),
+	}
+}
+
+func buildCapabilityBriefPayload(contract cliCommandContract) cliCapabilityBriefPayload {
+	return cliCapabilityBriefPayload{
+		Name:           contract.Name,
+		Classification: contract.Classification,
+		Mutating:       contract.Mutating,
+		ReadOnly:       contract.ReadOnly,
+		Hidden:         contract.Hidden,
 	}
 }
 
