@@ -176,8 +176,18 @@ func TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd(t *testing.T) {
 }
 
 func TestInstallSkillBundledCLIRunValidatedEmitsHandoffEnvelope(t *testing.T) {
+	runInstalledInternalHandoffSmoke(t, "run-validated", "--request")
+}
+
+func TestInstallSkillBundledCLIRunRequestEmitsHandoffEnvelope(t *testing.T) {
+	runInstalledInternalHandoffSmoke(t, "run-request", "--file")
+}
+
+func runInstalledInternalHandoffSmoke(t *testing.T, commandName string, requestFlag string) {
+	t.Helper()
+
 	if status := inspectGo("go"); status.kind != goStatusReady {
-		t.Skipf("go runtime is not ready for installed run-validated smoke: %s %v", status.kind, status.err)
+		t.Skipf("go runtime is not ready for installed %s smoke: %s %v", commandName, status.kind, status.err)
 	}
 
 	projectDir := t.TempDir()
@@ -206,8 +216,8 @@ func TestInstallSkillBundledCLIRunValidatedEmitsHandoffEnvelope(t *testing.T) {
 	runInstalledCLIJSONWithEnv(t, installedCLI, &result, []string{
 		runtimeconfig.RetentionModeEnv + "=" + string(runtimeconfig.RetentionModeFull),
 		runtimeconfig.RenderModeEnv + "=" + string(runtimeconfig.RenderModeNever),
-	}, "run-validated",
-		"--request", requestFile,
+	}, commandName,
+		requestFlag, requestFile,
 	)
 
 	if result.SchemaVersion != cliContractSchemaVersion {
@@ -216,8 +226,8 @@ func TestInstallSkillBundledCLIRunValidatedEmitsHandoffEnvelope(t *testing.T) {
 	if !result.OK {
 		t.Fatalf("ok = false, want true: %+v", result)
 	}
-	if result.Command != "run-validated" {
-		t.Fatalf("command = %q, want run-validated", result.Command)
+	if result.Command != commandName {
+		t.Fatalf("command = %q, want %s", result.Command, commandName)
 	}
 	if result.Classification != cliClassificationInternalHandoff {
 		t.Fatalf("classification = %q, want %q", result.Classification, cliClassificationInternalHandoff)

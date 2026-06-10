@@ -52,6 +52,47 @@ func TestRunValidatedCommandWritesInternalHandoffEnvelope(t *testing.T) {
 	assertDocumentArtifact(t, artifacts, "evidence_dir", true, "audit_trail")
 }
 
+func TestRunRequestCommandWritesInternalHandoffEnvelope(t *testing.T) {
+	resetRunIntentTestEnv(t)
+	tempDir := t.TempDir()
+	inputFile := filepath.Join(tempDir, "line-items.xlsx")
+	outputFile := filepath.Join(tempDir, "line-items-output.xlsx")
+	requestFile := filepath.Join(tempDir, "validated-request.json")
+	writeLineItemsWorkbook(t, inputFile)
+	writeValidatedAppendRowsRequest(t, requestFile, inputFile, outputFile)
+	stubRunValidatedSuccess(t, tempDir, outputFile)
+
+	cmd := newRootCommand()
+	var stdout bytes.Buffer
+	cmd.SetOut(&stdout)
+	cmd.SetArgs([]string{"run-request", "--file", requestFile})
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("run-request command returned error: %v", err)
+	}
+	var document map[string]any
+	if err := json.Unmarshal(stdout.Bytes(), &document); err != nil {
+		t.Fatalf("run-request stdout is not JSON: %v\nstdout:\n%s", err, stdout.String())
+	}
+	assertStringField(t, document, "schema_version", cliContractSchemaVersion)
+	assertBoolField(t, document, "ok", true)
+	assertStringField(t, document, "command", "run-request")
+	assertStringField(t, document, "status", "executed")
+	assertStringField(t, document, "classification", "internal_handoff")
+	assertBoolField(t, document, "recoverable", false)
+	if _, ok := document["runtime"].(map[string]any); !ok {
+		t.Fatalf("runtime has type %T, want object", document["runtime"])
+	}
+	artifacts, ok := document["artifacts"].([]any)
+	if !ok || len(artifacts) == 0 {
+		t.Fatalf("artifacts = %+v, want non-empty array", document["artifacts"])
+	}
+	assertDocumentArtifact(t, artifacts, "output_workbook", true, "primary_success")
+	assertDocumentArtifact(t, artifacts, "verification", true, "success_evidence")
+	assertDocumentArtifact(t, artifacts, "evidence_dir", true, "audit_trail")
+	assertValidatesAgainstSchema(t, document, "contracts/cli/internal_handoff_result.schema.json")
+}
+
 func TestRunValidatedCommandWritesFailureHandoffEnvelopeThenReturnsFailure(t *testing.T) {
 	resetRunIntentTestEnv(t)
 	tempDir := t.TempDir()

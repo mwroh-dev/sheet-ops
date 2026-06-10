@@ -48,6 +48,7 @@ Sequential implementation lane:
 17. Phase 30: installed run-validated handoff smoke.
 18. Phase 31: internal handoff result schema.
 19. Phase 32: final review refresh after handoff hardening.
+20. Phase 33: hidden run-request alias proof.
 
 Phase 12 comes before Phase 13 because the existing runtime output must be observed before a stable envelope is imposed. Phase 15 comes after Phases 13-14 so the E2E smoke can assert the final contract rather than a temporary shape.
 
@@ -1441,6 +1442,75 @@ goal requirements and current plan evidence are satisfied.
   `classification:"internal_handoff"`.
 - `git diff --check` passed.
 - Separate verifier passed with no blockers.
+- Active overall goal remains open pending a fresh requirement-by-requirement
+  completion audit.
+
+## Phase 33 - Hidden Run-Request Alias Proof
+
+Lane: Schema Compatibility / Installed Boundary.
+
+Web-search value: low. This phase closes a local compatibility-proof gap for
+an already implemented hidden alias. No external methodology question is open.
+
+### TODO
+
+- [x] Add direct source-level `run-request` success coverage.
+  - Evaluation: invoking `run-request --file <request>` emits an internal
+    handoff envelope with `command:"run-request"`,
+    `classification:"internal_handoff"`, runtime evidence, artifacts, and
+    schema-valid JSON.
+  - Result: the hidden alias is no longer inferred only from shared handler
+    wiring. `TestRunRequestCommandWritesInternalHandoffEnvelope` covers
+    `run-request --file`, `command:"run-request"`, `classification`,
+    artifacts, runtime evidence, and internal handoff schema validation.
+  - Likely files:
+    `cmd/sheet-ops-codex/run_validated_entry_test.go`.
+  - Risk: low.
+  - Rollback: keep alias behavior unproven and leave it in backlog.
+- [x] Add installed-bundle `run-request` smoke.
+  - Evaluation: the installed `.codex/skills/sheet-ops/bin/sheet-ops-codex`
+    binary accepts `run-request --file <request>`, emits a schema-valid
+    internal handoff envelope, writes the workbook, and records evidence hashes.
+  - Result: legacy compatibility callers have installed-boundary proof.
+  - Likely files:
+    `cmd/sheet-ops-codex/install_e2e_test.go`.
+  - Risk: medium because installed E2E tests are slower and exercise installer
+    packaging.
+  - Rollback: retain source-level alias proof only and keep installed proof in
+    backlog.
+- [x] Update final review/backlog language.
+  - Evaluation: `run-request` no longer appears as an unproven alias once the
+    source and installed smokes pass; remaining backlog still names true gaps.
+  - Result: final review evidence now lists direct and installed
+    `run-request` proof and removes the stale alias-proof backlog.
+- [x] Run separate verifier.
+  - Evaluation: verifier confirms `run-request` proof is real, still hidden,
+    still internal-only, and not added to public entry schemas.
+  - Result: separate verifier passed with no blockers. It confirmed source and
+    installed alias proof, hidden/internal-only status, public-entry separation,
+    final-review backlog cleanup, and sufficient executor verification.
+- [x] Commit Phase 33.
+  - Evaluation: focused source/installed tests, related package tests, and
+    `git diff --check` pass.
+  - Result: `phase33/compat: prove run-request handoff alias`.
+
+### Phase-End Backlog Review
+
+Ask:
+
+- Should installed failure-path `run-validated` smoke be the next immediate
+  phase?
+- Should mirror-drift hardening move ahead of failure-path coverage?
+- Does proving `run-request` change any public docs, or should it stay hidden
+  and compatibility-only?
+
+Result:
+
+- Keep `run-request` hidden and compatibility-only; no public docs promotion is
+  needed.
+- Installed failure-path `run-validated` smoke remains the next direct
+  execution-contract gap.
+- Mirror-drift hardening remains a separate release-contract hardening phase.
 - Active overall goal remains open pending a fresh requirement-by-requirement
   completion audit.
 
