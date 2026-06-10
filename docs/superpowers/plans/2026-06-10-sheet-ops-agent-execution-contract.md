@@ -20,6 +20,8 @@ These sources have design value before implementation:
 - JSON Schema dialect: [MCP JSON Schema usage](https://modelcontextprotocol.io/specification/2025-11-25/basic) recommends JSON Schema 2020-12.
 - JSON Schema declaration: [JSON Schema dialect reference](https://json-schema.org/understanding-json-schema/reference/schema) recommends root `$schema` to tell tooling the intended dialect.
 - Tool output schemas: [MCP schema reference](https://modelcontextprotocol.io/specification/2025-06-18/schema) includes `outputSchema` for structured tool results.
+- Dry-run semantics: [Kubernetes dry-run KEP](https://github.com/kubernetes/enhancements/blob/master/keps/sig-api-machinery/576-dry-run/README.md) frames dry-run as running normal admission/validation without persistence, which is why Sheet Ops must not call preview a dry-run until runtime execution planning is also non-persisting.
+- Plan automation: [Terraform plan command reference](https://developer.hashicorp.com/terraform/cli/commands/plan) keeps machine-readable plan output and detailed exit-code semantics explicit for automation callers.
 
 ## Lanes
 
@@ -32,6 +34,7 @@ Sequential implementation lane:
 3. Phase 14: runtime error typed producers.
 4. Phase 15: installed end-to-end workbook smoke promotion.
 5. Phase 17: non-mutating plan/impact preview.
+6. Phase 19: preview trust metadata and fingerprints.
 
 Phase 12 comes before Phase 13 because the existing runtime output must be observed before a stable envelope is imposed. Phase 15 comes after Phases 13-14 so the E2E smoke can assert the final contract rather than a temporary shape.
 
@@ -280,6 +283,60 @@ Ask:
 - Is a real dry-run now feasible, or still a later runtime planning mode?
 
 Keep real dry-run deferred unless the runtime can prove non-mutation.
+
+## Phase 19 - Preview Trust Metadata And Fingerprints
+
+Lane: Execution Contract.
+
+Web-search value: medium. Kubernetes dry-run and Terraform plan guidance both
+confirm that a truthful preview must expose what was validated, what would
+mutate, and where the plan is weaker than execution. MCP structured-output
+guidance confirms these fields belong in the JSON/schema contract, not
+human-only text.
+
+### TODO
+
+- [x] Add failing tests for preview trust metadata.
+  - Evaluation: `preview-request` output exposes `planner`,
+    `plan_confidence`, `operation`, `would_mutate`, `mutation_summary`, and
+    input fingerprints.
+  - Result: agents can distinguish compiler-validated preview from runtime
+    dry-run and can compare request/workbook inputs across preview and run.
+  - Likely files: `cmd/sheet-ops-codex/preview_request_test.go`,
+    `contracts/cli/preview_request_result.schema.json`.
+  - Risk: medium.
+  - Rollback: keep Phase 17 output and document the missing trust metadata.
+- [x] Implement minimal read-only metadata.
+  - Evaluation: implementation runs non-persisting request-compiler validation
+    over normalized intent and input workbook facts; it does not create
+    `.sheet-ops-state`, output workbooks, or runtime artifacts.
+  - Result: preview reports `planner:"requestcompiler_validate_intent"` and
+    `plan_confidence:"compiler_validated_boundary"` rather than claiming dry-run equivalence.
+- [x] Update schema and public docs.
+  - Evaluation: live preview output validates against the published schema, and
+    docs tell agents to treat the fingerprints as input identity evidence only.
+  - Result: contract consumers see the same fields in JSON, schema, and docs.
+- [x] Run separate verifier.
+  - Evaluation: verifier checks no dry-run overclaim, no write side effects, and
+    schema/docs alignment.
+  - Result: pass/fail before commit.
+- [x] Commit Phase 19.
+  - Evaluation: focused preview/schema/release tests pass.
+  - Result: `phase19/preview: expose trust metadata`.
+
+### Phase-End Backlog Review
+
+Ask:
+
+- Is `compiler_validated_boundary` strong enough for agent execution decisions,
+  or should the next phase add a compiler-backed planner artifact?
+- Should fingerprints later be repeated in `run-intent` results so agents can
+  prove preview/run input identity?
+- Does request-compiler validation expose enough plan detail, or should preview
+  include structural signals and validation notes next?
+
+Do not set `dry_run:true` or `dry_run_capable:true` until the runtime can prove
+normal validation/planning ran without persistence.
 
 ## Final Review Phase - Agent Execution Contract Completion
 
@@ -592,3 +649,65 @@ Backlog self-review:
   if this output becomes user-shareable or leaves the local agent boundary.
 
 Commit: `phase17/preview: add truthful impact inspection`.
+
+### Phase 19 Result Note
+
+Implementation outcome:
+
+- Extended `preview-request` output with agent trust metadata:
+  `planner`, `plan_confidence`, `operation`, `would_mutate`,
+  `mutation_summary`, and `fingerprints`.
+- The command still reports `dry_run:false`, `read_only:true`, and
+  `plan_confidence:"compiler_validated_boundary"` so agents do not mistake it for runtime
+  dry-run evidence.
+- `operation` comes from request-compiler validation's selected operation, so
+  multi-candidate normalized intents follow compiler priority rather than input
+  array order.
+- `would_mutate` is true only for compiled preview decisions. Unresolved,
+  checkpoint, or blocked decisions report `operation:"unresolved"` and
+  no-mutation summary values with empty `planned_writes` and
+  `planned_artifacts` instead of predicting workbook/artifact writes.
+- `fingerprints.normalized_intent_sha256` and
+  `fingerprints.input_workbook_sha256` identify the exact request/workbook
+  inputs read by preview without writing state or output artifacts.
+- Updated `contracts/cli/preview_request_result.schema.json` so the new fields
+  are required and schema-validated.
+
+Verification:
+
+- Red evidence:
+  `go test ./cmd/sheet-ops-codex -run TestPreviewRequestReportsImpactWithoutMutating -count=1 -v`
+  failed because `preview_request_result.schema.json` rejected
+  `planner`, `plan_confidence`, `operation`, `would_mutate`,
+  `mutation_summary`, and `fingerprints`.
+- Verifier blocker evidence:
+  an independent verifier found that multi-candidate intents could report the
+  first composition candidate rather than the compiler-selected operation. A
+  second verifier found that `unresolved` decisions were reachable but not
+  schema-valid and still reported `would_mutate:true`. A later verifier found
+  that unresolved previews still populated required planned write/artifact
+  arrays; those arrays are now empty for unresolved preview decisions. A final
+  blocker pass found that the schema did not enforce no-mutation invariants and
+  command schema read artifacts omitted `SHEET_OPS_ARTIFACT_ROOT` and
+  `SHEET_OPS_KNOWLEDGE_ROOT`; both contract gaps are now covered by tests and
+  schema/command metadata.
+- `go test ./cmd/sheet-ops-codex -run TestPreviewRequestReportsImpactWithoutMutating -count=1 -v`: pass.
+- `go test ./cmd/sheet-ops-codex -run 'TestPreviewRequest|TestInstallSkillBundledCLIExposesAgentContract|TestCLIJSONOutputsValidateAgainstPublishedSchemas|TestPublishedCLISchemasPinSchemaVersion' -count=1 -v`: pass.
+- `go test ./internal/releasecontracts -run 'TestCLIAgentContractDocsStayAligned|TestReleaseSchemasCompile|TestReleaseSchemaReferencesAreLocallyResolvable' -count=1`: pass.
+- `go test ./cmd/sheet-ops-codex ./cmd/sheet-ops-agent ./internal/releasecontracts -count=1`: pass.
+- `git diff --check`: pass.
+- Separate verifier: final pass reported no blockers. Residual risks are limited
+  to a multi-candidate regression that proves compiler selection without a
+  simultaneously satisfiable second operation, and installed-path metadata
+  coverage that is narrower than source-path read-artifact assertions.
+
+Backlog self-review:
+
+- This phase intentionally does not promote real dry-run. The preview still
+  validates the normalized intent and workbook boundary only.
+- The next architectural step should repeat the fingerprints in mutating
+  `run-intent` results, or add a compiler-backed planner result, so agents can
+  prove preview/run input identity.
+- Operation selection now follows request-compiler validation. Unknown or
+  unresolved selections remain possible and must not be presented as executed
+  runtime operations.

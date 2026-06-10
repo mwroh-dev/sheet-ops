@@ -13,6 +13,33 @@ root `$schema` and `$id` fields explicit.
 - `contracts/cli/preview_request_result.schema.json` validates `sheet-ops-codex preview-request --json`.
 - `contracts/results/public_entry_result.schema.json` validates public execution results from `run-prompt`, `run-text`, and `run-intent`.
 
+## Preview Contract
+
+`preview-request` is read-only impact inspection, not runtime dry-run. Agents
+must treat `dry_run:false` and `plan_confidence:"compiler_validated_boundary"` as the
+authoritative limit of the claim.
+
+The preview result includes:
+
+- `planner:"requestcompiler_validate_intent"`: the command ran non-persisting
+  request-compiler validation over the normalized intent and workbook boundary,
+  but did not run runtime execution or persist compiler artifacts.
+- `operation`: the operation selected by request-compiler validation,
+  `unresolved` for checkpoint/blocked decisions, or `unknown` when no operation
+  is selected.
+- `would_mutate`: true only when request-compiler validation selected a
+  compiled operation. It is false for unresolved/checkpoint/blocked previews.
+- `mutation_summary`: machine-readable categories for planned workbook,
+  artifact, and state-root mutation; unresolved previews use `none`.
+- `planned_writes` and `planned_artifacts`: populated only for compiled preview
+  decisions. Unresolved/checkpoint/blocked previews use empty arrays.
+- `fingerprints`: SHA-256 hashes for the normalized intent file and input
+  workbook read by preview.
+
+Fingerprints identify preview inputs only. Until mutating execution results
+publish matching fingerprints, agents should not treat preview as proof that a
+later run used identical inputs.
+
 ## Versioning Policy
 
 The current schema version is `sheet-ops-cli/v1`.

@@ -9,6 +9,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	runtimeworkbookcase "github.com/mwroh/sheet-ops/runtime/workbookcase"
 )
 
 func TestInstallSkillInstallsProjectLocalSkillWhenGoIsReady(t *testing.T) {
@@ -136,6 +138,33 @@ func TestInstallSkillBundledCLIExposesAgentContract(t *testing.T) {
 	)
 	if !preview.ReadOnly || preview.DryRun || preview.Command != "preview-request" {
 		t.Fatalf("installed preview has unsafe flags: %+v", preview)
+	}
+	if preview.Planner != "requestcompiler_validate_intent" {
+		t.Fatalf("installed preview planner = %q, want requestcompiler_validate_intent", preview.Planner)
+	}
+	if preview.PlanConfidence != "compiler_validated_boundary" {
+		t.Fatalf("installed preview plan_confidence = %q, want compiler_validated_boundary", preview.PlanConfidence)
+	}
+	if preview.Operation != runtimeworkbookcase.AppendRowsOperationName {
+		t.Fatalf("installed preview operation = %q, want %q", preview.Operation, runtimeworkbookcase.AppendRowsOperationName)
+	}
+	if !preview.WouldMutate {
+		t.Fatalf("installed preview would_mutate = false, want true")
+	}
+	if preview.MutationSummary.Workbook != "planned_output_workbook" {
+		t.Fatalf("installed preview mutation_summary.workbook = %q, want planned_output_workbook", preview.MutationSummary.Workbook)
+	}
+	if preview.MutationSummary.Artifacts != "planned_runtime_artifacts" {
+		t.Fatalf("installed preview mutation_summary.artifacts = %q, want planned_runtime_artifacts", preview.MutationSummary.Artifacts)
+	}
+	if preview.MutationSummary.State != "planned_state_root" {
+		t.Fatalf("installed preview mutation_summary.state = %q, want planned_state_root", preview.MutationSummary.State)
+	}
+	if !preview.MutationSummary.ExecutionRequired {
+		t.Fatalf("installed preview mutation_summary.execution_required = false, want true")
+	}
+	if len(preview.Fingerprints.NormalizedIntentSHA256) != 64 || len(preview.Fingerprints.InputWorkbookSHA256) != 64 {
+		t.Fatalf("installed preview fingerprints = %+v, want sha256 values", preview.Fingerprints)
 	}
 	if _, err := os.Stat(outputFile); !os.IsNotExist(err) {
 		t.Fatalf("installed preview created output workbook: %v", err)

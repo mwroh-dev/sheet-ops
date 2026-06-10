@@ -165,12 +165,15 @@ Agent and CI discovery should use:
 - `sheet-ops-codex capabilities --json`
 - `sheet-ops-codex schema command preflight --json`
 - `sheet-ops-codex preflight --json`
+- `sheet-ops-codex preview-request --json --intent-file <path> --input-file <path> --output-file <path>`
 
 `sheet-ops-codex run-validated` is an internal handoff surface. It is owned by
 the installed skill handoff and must not be presented as the normal public
 request route. Mutating workbook commands currently report
-`dry_run_capable: false`; do not claim dry-run behavior until a truthful runtime
-planning mode exists.
+`dry_run_capable: false`; `preview-request` is read-only impact inspection with
+`planner:"requestcompiler_validate_intent"` and
+`plan_confidence:"compiler_validated_boundary"`, not dry-run evidence. Do not
+claim dry-run behavior until a truthful runtime planning mode exists.
 
 ## Internal Execution Boundary
 

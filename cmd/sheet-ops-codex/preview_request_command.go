@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -27,6 +29,12 @@ type previewRequestResult struct {
 	OK               bool                     `json:"ok"`
 	ReadOnly         bool                     `json:"read_only"`
 	DryRun           bool                     `json:"dry_run"`
+	Planner          string                   `json:"planner"`
+	PlanConfidence   string                   `json:"plan_confidence"`
+	Operation        string                   `json:"operation"`
+	WouldMutate      bool                     `json:"would_mutate"`
+	MutationSummary  previewMutationSummary   `json:"mutation_summary"`
+	Fingerprints     previewFingerprints      `json:"fingerprints"`
 	ScenarioID       string                   `json:"scenario_id"`
 	InputFile        string                   `json:"input_file"`
 	OutputFile       string                   `json:"output_file"`
@@ -35,6 +43,18 @@ type previewRequestResult struct {
 	PlannedWrites    []previewPlannedArtifact `json:"planned_writes"`
 	PlannedArtifacts []previewPlannedArtifact `json:"planned_artifacts"`
 	Limitations      []string                 `json:"limitations"`
+}
+
+type previewMutationSummary struct {
+	Workbook          string `json:"workbook"`
+	Artifacts         string `json:"artifacts"`
+	State             string `json:"state"`
+	ExecutionRequired bool   `json:"execution_required"`
+}
+
+type previewFingerprints struct {
+	NormalizedIntentSHA256 string `json:"normalized_intent_sha256"`
+	InputWorkbookSHA256    string `json:"input_workbook_sha256"`
 }
 
 type previewPlannedArtifact struct {
@@ -93,7 +113,8 @@ func runPreviewRequest(options previewRequestOptions) (previewRequestResult, err
 	if err != nil {
 		return previewRequestResult{}, err
 	}
-	if _, err := requestcompiler.LoadNormalizedIntent(intentFile); err != nil {
+	intent, err := requestcompiler.LoadNormalizedIntent(intentFile)
+	if err != nil {
 		return previewRequestResult{}, err
 	}
 	if info, err := os.Stat(inputFile); err != nil {
@@ -111,35 +132,103 @@ func runPreviewRequest(options previewRequestOptions) (previewRequestResult, err
 	if scenarioID == "" {
 		scenarioID = defaultScenarioSlug("", intentFile)
 	}
+	compilerResult, err := requestcompiler.ValidateIntent(requestcompiler.Input{
+		RequestSource: requestcompiler.RequestSource{
+			Kind: requestcompiler.RequestSourceDirectText,
+			Text: "preview-request",
+		},
+		WorkspaceRoot:  workspaceRoot,
+		WorkingDir:     workspaceRoot,
+		ScenarioSlug:   scenarioID,
+		InputWorkbooks: []requestcompiler.WorkbookInput{{Path: inputFile, Role: "primary_input"}},
+		OutputFile:     outputFile,
+	}, intent)
+	if err != nil {
+		return previewRequestResult{}, err
+	}
+	operation := strings.TrimSpace(compilerResult.Decision.SelectedOperation)
+	if operation == "" {
+		operation = "unknown"
+	}
+	wouldMutate := compilerResult.Decision.Status == requestcompiler.StatusCompiled
+	mutationSummary := previewMutationSummary{
+		Workbook:          "none",
+		Artifacts:         "none",
+		State:             "none",
+		ExecutionRequired: false,
+	}
+	plannedWrites := []previewPlannedArtifact{}
+	plannedArtifacts := []previewPlannedArtifact{}
+	if wouldMutate {
+		mutationSummary = previewMutationSummary{
+			Workbook:          "planned_output_workbook",
+			Artifacts:         "planned_runtime_artifacts",
+			State:             "planned_state_root",
+			ExecutionRequired: true,
+		}
+		plannedWrites = []previewPlannedArtifact{
+			{Kind: "output_workbook", Path: outputFile, Required: true},
+		}
+		plannedArtifacts = []previewPlannedArtifact{
+			{Kind: "state_root", Path: stateRoot, Required: true},
+			{Kind: "request_compiler_artifacts", Path: filepath.Join(stateRoot, "artifacts", "work"), Required: true},
+			{Kind: "runtime_evidence", Path: filepath.Join(stateRoot, "artifacts"), Required: true},
+		}
+	}
+	intentFingerprint, err := fileSHA256(intentFile)
+	if err != nil {
+		return previewRequestResult{}, err
+	}
+	workbookFingerprint, err := fileSHA256(inputFile)
+	if err != nil {
+		return previewRequestResult{}, err
+	}
 
 	return previewRequestResult{
-		SchemaVersion: cliContractSchemaVersion,
-		Command:       "preview-request",
-		OK:            true,
-		ReadOnly:      true,
-		DryRun:        false,
-		ScenarioID:    scenarioID,
-		InputFile:     inputFile,
-		OutputFile:    outputFile,
-		StateRoot:     stateRoot,
+		SchemaVersion:   cliContractSchemaVersion,
+		Command:         "preview-request",
+		OK:              true,
+		ReadOnly:        true,
+		DryRun:          false,
+		Planner:         "requestcompiler_validate_intent",
+		PlanConfidence:  "compiler_validated_boundary",
+		Operation:       operation,
+		WouldMutate:     wouldMutate,
+		MutationSummary: mutationSummary,
+		Fingerprints: previewFingerprints{
+			NormalizedIntentSHA256: intentFingerprint,
+			InputWorkbookSHA256:    workbookFingerprint,
+		},
+		ScenarioID: scenarioID,
+		InputFile:  inputFile,
+		OutputFile: outputFile,
+		StateRoot:  stateRoot,
 		PlannedReads: []previewPlannedArtifact{
 			{Kind: "normalized_intent", Path: intentFile, Required: true},
 			{Kind: "input_workbook", Path: inputFile, Required: true},
 		},
-		PlannedWrites: []previewPlannedArtifact{
-			{Kind: "output_workbook", Path: outputFile, Required: true},
-		},
-		PlannedArtifacts: []previewPlannedArtifact{
-			{Kind: "state_root", Path: stateRoot, Required: true},
-			{Kind: "request_compiler_artifacts", Path: filepath.Join(stateRoot, "artifacts", "work"), Required: true},
-			{Kind: "runtime_evidence", Path: filepath.Join(stateRoot, "artifacts"), Required: true},
-		},
+		PlannedWrites:    plannedWrites,
+		PlannedArtifacts: plannedArtifacts,
 		Limitations: []string{
-			"Preview validates the normalized intent JSON and input workbook boundary only.",
+			"Preview runs non-persisting request-compiler validation over the normalized intent and input workbook boundary.",
 			"Preview does not compile a persisted request, execute runtime orchestration, create .sheet-ops-state, or write the output workbook.",
 			"Preview is not a dry-run and must not be used as evidence of execution success.",
 		},
 	}, nil
+}
+
+func fileSHA256(path string) (string, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	hash := sha256.New()
+	if _, err := io.Copy(hash, file); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
 func previewStateRoot(workspaceRoot string) (string, error) {

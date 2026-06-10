@@ -29,6 +29,12 @@ request route. Mutating workbook commands currently report
 runtime dry-run evidence. Do not claim dry-run behavior until a truthful runtime
 planning mode exists.
 
+`preview-request` includes `planner:"requestcompiler_validate_intent"` and
+`plan_confidence:"compiler_validated_boundary"`. Treat its `operation`, `would_mutate`,
+`mutation_summary`, and `fingerprints` fields as planning/trust metadata only;
+they do not prove that runtime execution succeeded or that a later run used the
+same inputs.
+
 ## Public agent capabilities
 
 - `group_summarize`: use when the request asks to summarize rows by keys, such as "summarize revenue by region".

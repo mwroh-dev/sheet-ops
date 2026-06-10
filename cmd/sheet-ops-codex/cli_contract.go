@@ -466,8 +466,10 @@ func sheetOpsCLIReadOnlyDiscoveryContracts(rootName string) map[string]cliComman
 			},
 			ReadArtifacts: []string{
 				"Normalized intent JSON file.",
-				"Input workbook metadata.",
+				"Input workbook facts and bytes for non-persisting compiler validation and fingerprinting.",
 				"SHEET_OPS_STATE_ROOT when set.",
+				"SHEET_OPS_ARTIFACT_ROOT when set.",
+				"SHEET_OPS_KNOWLEDGE_ROOT when set.",
 			},
 			WrittenArtifacts: []string{
 				"None. Output workbook and state artifacts are reported as planned impact only.",

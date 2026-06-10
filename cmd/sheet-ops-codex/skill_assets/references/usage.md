@@ -73,6 +73,11 @@ request route. Mutating workbook commands currently report
 runtime dry-run evidence. Do not claim dry-run behavior until a truthful runtime
 planning mode exists.
 
+`preview-request` also reports `planner:"requestcompiler_validate_intent"`,
+`plan_confidence:"compiler_validated_boundary"`, `operation`, `would_mutate`,
+`mutation_summary`, and input `fingerprints`. Treat these as trust metadata for
+the inspected inputs, not proof of runtime execution success.
+
 ## Public split surface
 
 The public-side path is `sheet-ops-codex prepare-use`, which captures the user
