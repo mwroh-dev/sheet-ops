@@ -406,3 +406,42 @@ Backlog self-review:
   files do not churn while runtime error producers are still changing.
 
 Commit: `phase13/envelope: standardize agent execution results`.
+
+### Phase 14 Result Note
+
+Implementation outcome:
+
+- Added a typed `state_root_mismatch` producer for public-entry state-root guard
+  failures.
+- `configureStateRootsFromStateRoot` and `validateDerivedStateRootEnv` now return
+  a recoverable `state_root_mismatch` CLI error instead of a generic internal
+  error when state roots conflict.
+- Updated `error_contract.codes[]` so `state_root_mismatch` is `emitted` with
+  producer `state_root_guard`.
+- Kept runtime categories without deterministic producer tests as `reserved`:
+  `invalid_json_or_schema`, `request_checkpoint`, `validation_blocked`,
+  `execution_failed`, and `verification_failed`.
+
+Verification:
+
+- Red evidence:
+  `go test ./cmd/sheet-ops-codex -run 'TestStateRootMismatchClassifiesAsConfigurationError' -count=1`
+  failed because the mismatch classified as `internal_error`.
+- `go test ./cmd/sheet-ops-codex -run 'TestStateRootMismatchClassifiesAsConfigurationError|Test.*Error.*|TestCapabilitiesJSONReportsSafeEntryBoundaries' -count=1`: pass.
+- `go test ./cmd/sheet-ops-codex -count=1`: pass.
+- `go run ./cmd/sheet-ops-codex capabilities --json`: pass; output marks
+  `state_root_mismatch` as `emitted` and leaves unproven runtime categories
+  `reserved`.
+- Separate verifier: pass, no blockers.
+
+Backlog self-review:
+
+- `state_root_mismatch` is safe to promote because it has a deterministic guard
+  and focused classification test.
+- `request_checkpoint` is represented in the public result envelope but should
+  not move to `emitted` in the CLI error taxonomy until the error/envelope split
+  is explicitly designed.
+- Runtime execution and verification failures still need deterministic producer
+  tests before promotion.
+
+Commit: `phase14/errors: emit state root mismatch producer`.

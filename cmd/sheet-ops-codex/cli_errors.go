@@ -75,6 +75,17 @@ func newCLIError(code, message string, recoverable bool, exitCode int, suggested
 	}
 }
 
+func newStateRootMismatchError(message string) *cliError {
+	return newCLIError(
+		cliErrorStateRootMismatch,
+		message,
+		true,
+		cliExitConfiguration,
+		"preflight --json --input-file <workbook>",
+		"capabilities --json",
+	)
+}
+
 func classifyCLIError(err error) cliError {
 	if err == nil {
 		return cliError{Code: "", ExitCode: cliExitOK}
@@ -177,7 +188,7 @@ func buildCLIErrorContractPayload() cliErrorContractPayload {
 				Code:        cliErrorStateRootMismatch,
 				ExitCode:    cliExitConfiguration,
 				Recoverable: true,
-				Status:      cliErrorStatusReserved,
+				Status:      cliErrorStatusEmitted,
 				Producer:    "state_root_guard",
 				Meaning:     "State-root configuration would place artifacts outside the workbook-case state root.",
 			},

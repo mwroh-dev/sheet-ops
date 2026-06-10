@@ -253,12 +253,12 @@ func configureStateRootsFromStateRoot(workspaceRoot string) (string, error) {
 		stateRoot = filepath.Clean(stateRoot)
 	}
 	if !samePath(stateRoot, expectedStateRoot) {
-		return "", fmt.Errorf(
+		return "", newStateRootMismatchError(fmt.Sprintf(
 			"%s=%q is not supported for public entry; expected %q so request-compiler and runtime artifacts stay under one state root",
 			stateRootEnv,
 			stateRoot,
 			expectedStateRoot,
-		)
+		))
 	}
 
 	expectedArtifactRoot := filepath.Join(stateRoot, "artifacts")
@@ -318,13 +318,13 @@ func validateDerivedStateRootEnv(envName, expectedValue string) error {
 	if samePath(currentValue, expectedValue) {
 		return nil
 	}
-	return fmt.Errorf(
+	return newStateRootMismatchError(fmt.Sprintf(
 		"%s=%q conflicts with %s; expected %q",
 		envName,
 		currentValue,
 		stateRootEnv,
 		expectedValue,
-	)
+	))
 }
 
 func samePath(left, right string) bool {

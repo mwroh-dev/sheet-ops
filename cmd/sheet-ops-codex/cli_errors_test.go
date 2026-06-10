@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -113,6 +114,30 @@ func TestUnknownRootCommandClassifiesAsUsageError(t *testing.T) {
 	}
 	if !containsString(cliErr.SuggestedCommands, "capabilities --json") {
 		t.Fatalf("suggested commands = %v, want capabilities --json", cliErr.SuggestedCommands)
+	}
+}
+
+func TestStateRootMismatchClassifiesAsConfigurationError(t *testing.T) {
+	workspaceRoot := t.TempDir()
+	t.Setenv(stateRootEnv, filepath.Join(t.TempDir(), "other-state"))
+
+	_, err := configureStateRootsFromStateRoot(workspaceRoot)
+	if err == nil {
+		t.Fatalf("configureStateRootsFromStateRoot returned nil, want mismatch error")
+	}
+
+	cliErr := classifyCLIError(err)
+	if cliErr.Code != cliErrorStateRootMismatch {
+		t.Fatalf("code = %q, want %q", cliErr.Code, cliErrorStateRootMismatch)
+	}
+	if cliErr.ExitCode != cliExitConfiguration {
+		t.Fatalf("exit code = %d, want %d", cliErr.ExitCode, cliExitConfiguration)
+	}
+	if !cliErr.Recoverable {
+		t.Fatalf("recoverable = false, want true")
+	}
+	if !containsString(cliErr.SuggestedCommands, "preflight --json --input-file <workbook>") {
+		t.Fatalf("suggested commands = %v, want preflight", cliErr.SuggestedCommands)
 	}
 }
 
