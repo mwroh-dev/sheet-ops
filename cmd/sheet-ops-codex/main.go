@@ -42,6 +42,7 @@ func newRootCommand() *cobra.Command {
 	rootCmd.AddCommand(newRunRequestCommand())
 	rootCmd.AddCommand(newRunIntentCommand())
 	rootCmd.AddCommand(newInstallSkillCommand())
+	applyCLIContracts(rootCmd)
 	return rootCmd
 }
 
