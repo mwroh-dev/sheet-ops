@@ -505,6 +505,15 @@ Verification commands passed:
 - `go test ./cmd/sheet-ops-codex -count=1`.
 - `go test ./internal/releasecontracts -count=1`.
 
+Independent verifier result: `PASS`.
+
+Phase 5 backlog:
+
+- Optional: add a minimal installed workbook execution smoke later if a fast,
+  stable fixture is introduced.
+- Optional: add installed `schema command prepare-use --json` coverage if Phase
+  6 chooses to align the older TODO wording exactly.
+
 ### Phase-End Backlog Review
 
 Ask:
