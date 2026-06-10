@@ -201,7 +201,7 @@ func runIntentEntry(intent requestcompiler.NormalizedIntent, input intentCompile
 	if err != nil {
 		return nil, nil, err
 	}
-	fingerprints, err := inputFingerprints(input.IntentFile, input.InputFile)
+	inputIdentity, err := inputFingerprints(input.IntentFile, input.InputFile)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -244,6 +244,10 @@ func runIntentEntry(intent requestcompiler.NormalizedIntent, input intentCompile
 			return &result, nil, orchestrateErr
 		}
 		return nil, nil, orchestrateErr
+	}
+	fingerprints, err := executedFingerprints(inputIdentity, result.Verification.OutputFile)
+	if err != nil {
+		return &result, nil, err
 	}
 	publicEntryResult := newExecutedPublicEntryResult("run-intent", compiled, result, fingerprints)
 	return &result, &publicEntryResult, orchestrateErr

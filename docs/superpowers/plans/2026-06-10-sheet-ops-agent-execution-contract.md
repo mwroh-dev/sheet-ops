@@ -37,6 +37,7 @@ Sequential implementation lane:
 6. Phase 19: preview trust metadata and fingerprints.
 7. Phase 20: invalid data typed producer promotion.
 8. Phase 21: preview-run input identity sealing.
+9. Phase 22: output workbook identity sealing.
 
 Phase 12 comes before Phase 13 because the existing runtime output must be observed before a stable envelope is imposed. Phase 15 comes after Phases 13-14 so the E2E smoke can assert the final contract rather than a temporary shape.
 
@@ -489,6 +490,110 @@ Backlog self-review:
   parsed by the loader to remove the narrow concurrent mutation ambiguity.
 - This phase proves the installed append-rows preview/run identity invariant;
   it does not claim full workflow matrix coverage.
+
+## Phase 22 - Output Workbook Identity Sealing
+
+Lane: Execution Contract.
+
+Web-search value: low. This phase extends the existing local SHA-256 identity
+contract from inputs to the produced workbook. No new external protocol or
+time-sensitive best practice is needed before design.
+
+### TODO
+
+- [x] Add failing public result and installed workflow tests for output
+  workbook fingerprints.
+  - Evaluation: executed `run-intent` envelopes expose
+    `fingerprints.output_workbook_sha256`, and the installed E2E verifies it
+    matches the bytes of the output workbook on disk.
+  - Result: an agent can bind `ok:true` and
+    `runtime.verification.output_file` to a concrete produced workbook
+    identity.
+  - Likely files: `cmd/sheet-ops-codex/public_entry_result_test.go`,
+    `cmd/sheet-ops-codex/install_e2e_test.go`.
+  - Risk: medium.
+  - Rollback: keep Phase 21 input identity only and document output identity as
+    unresolved.
+- [x] Split execution fingerprints from preview fingerprints.
+  - Evaluation: preview output remains unchanged with only input fingerprints,
+    while executed public results add output identity.
+  - Result: preview does not claim a produced workbook hash before execution.
+- [x] Update public result schema/golden/docs.
+  - Evaluation: `status:"executed"` result schema requires
+    `output_workbook_sha256`; preview schema remains unchanged.
+  - Result: schema drift catches missing output identity.
+- [x] Run separate verifier.
+  - Evaluation: verifier checks output hash is computed after execution from
+    the actual output file and that docs avoid claiming output quality from a
+    hash alone.
+  - Result: pass/fail before commit.
+- [x] Commit Phase 22.
+  - Evaluation: focused public result, installed E2E, preview schema, release
+    contract, and package tests pass.
+  - Result: `phase22/results: seal output identity`.
+
+### Phase-End Backlog Review
+
+Ask:
+
+- Should verification artifacts also record the output workbook hash, so the
+  public envelope and verification report can cross-check each other?
+- Should failed-but-runtime-started executions emit a typed public failure
+  envelope with partial fingerprints?
+- Should output identity be promoted into a separate `artifacts[].sha256`
+  field later, or is the root `fingerprints` object sufficient for agents?
+- Should output hashing be moved into verification/runtime evidence to remove
+  the narrow post-verification mutation window?
+- If terminal compiler results later need input-only fingerprints, split the
+  public result schema into terminal and execution fingerprint definitions
+  rather than weakening executed-result requirements.
+
+Do not treat output hash equality as proof of workbook semantic correctness.
+Semantic success remains `runtime.verification.pass` plus required artifacts.
+
+### Phase 22 Result Note
+
+Implementation outcome:
+
+- Executed public entry results now expose
+  `fingerprints.output_workbook_sha256` in addition to normalized intent and
+  input workbook fingerprints.
+- `preview-request` remains input-only; it does not emit an output workbook
+  fingerprint before execution.
+- `run-intent` computes output identity after runtime execution from
+  `runtime.verification.output_file`.
+- Installed E2E now hashes the output workbook on disk and compares it to the
+  public execution result fingerprint.
+- `contracts/results/public_entry_result.schema.json` requires
+  `output_workbook_sha256` for executed results through an
+  `execution_fingerprints` definition, while terminal compiler results still
+  omit fingerprints.
+- Public docs and skill references describe output fingerprints as byte
+  identity, not proof of semantic workbook correctness.
+
+Verification:
+
+- Red evidence:
+  `go test ./cmd/sheet-ops-codex -run 'TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd|TestExecutedPublicEntryResultExposesInputFingerprints|TestExecutedPublicEntryResultSchemaRejectsMissingOutputFingerprint' -count=1 -v`
+  failed because `run-intent` emitted no output workbook fingerprint and the
+  public result schema accepted executed results without one.
+- `go test ./cmd/sheet-ops-codex -run 'TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd|TestExecutedPublicEntryResultExposesInputFingerprints|TestExecutedPublicEntryResultSchemaRejectsMissingOutputFingerprint|TestExecutedPublicEntryResultValidatesAgainstPublicSchema|TestPublicEntryResultGoldenValidatesAgainstPublicSchema' -count=1 -v`: pass.
+- `go test ./cmd/sheet-ops-codex -run 'TestExecutedPublicEntryResult.*Fingerprint|TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd|TestPublicEntryResultGoldenValidatesAgainstPublicSchema|Test.*PublicEntryResult.*Schema|TestCLIJSONOutputsValidateAgainstPublishedSchemas|TestPreviewRequest' -count=1 -v`: pass.
+- `go test ./internal/releasecontracts -run 'TestReleaseSchemasCompile|TestReleaseSchemaReferencesAreLocallyResolvable|TestCLIAgentContractDocsStayAligned' -count=1 -v`: pass.
+- `go test ./cmd/sheet-ops-codex ./cmd/sheet-ops-agent ./internal/releasecontracts -count=1`: pass.
+- `git diff --check`: pass.
+- Separate verifier: no blockers. Non-blocking risks are the narrow
+  post-verification output hash TOCTOU window and future schema splitting if
+  terminal compiler results later need input-only fingerprints.
+
+Backlog self-review:
+
+- Do not move output hash into `artifacts[].sha256` until agents need per-
+  artifact generic hashing across more artifact kinds.
+- Consider hashing inside runtime verification so `verification.json` and the
+  public result can cross-check the same output bytes.
+- Keep semantic success tied to verification pass and required artifacts; a
+  matching hash alone only identifies bytes.
 
 ## Final Review Phase - Agent Execution Contract Completion
 

@@ -175,7 +175,8 @@ planning mode exists.
 `mutation_summary`, and input `fingerprints`. Treat these as trust metadata for
 the inspected inputs, not proof of runtime execution success. After
 `run-intent`, compare the execution result `fingerprints` to the preview
-fingerprints before trusting runtime artifacts.
+fingerprints, and use `output_workbook_sha256` to bind the produced workbook
+bytes before trusting runtime artifacts.
 
 ## Diagnostic Workflow
 

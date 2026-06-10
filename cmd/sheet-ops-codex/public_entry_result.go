@@ -19,7 +19,7 @@ type PublicEntryResult struct {
 	Recoverable     bool                   `json:"recoverable"`
 	Artifacts       []PublicResultArtifact `json:"artifacts"`
 	NextActions     []string               `json:"next_actions"`
-	Fingerprints    *previewFingerprints   `json:"fingerprints,omitempty"`
+	Fingerprints    *executionFingerprints `json:"fingerprints,omitempty"`
 	Entry           string                 `json:"entry"`
 	Status          string                 `json:"status"`
 	WorkUnitID      string                 `json:"work_unit_id"`
@@ -39,6 +39,12 @@ type PublicEntryCompilerRef struct {
 	RequestDir           string `json:"request_dir"`
 	DecisionPath         string `json:"decision_path"`
 	GeneratedRequestPath string `json:"generated_request_path"`
+}
+
+type executionFingerprints struct {
+	NormalizedIntentSHA256 string `json:"normalized_intent_sha256"`
+	InputWorkbookSHA256    string `json:"input_workbook_sha256"`
+	OutputWorkbookSHA256   string `json:"output_workbook_sha256"`
 }
 
 type PublicRuntimeResult struct {
@@ -219,7 +225,7 @@ func newTerminalCompilerResult(entry string, compiled requestcompiler.PersistedR
 	}, fmt.Errorf("request compiler stopped before runtime execution (status=%s)", compiled.Decision.Status)
 }
 
-func newExecutedPublicEntryResult(entry string, compiled requestcompiler.PersistedResult, result runtimeworkbookcase.RunResult, fingerprints previewFingerprints) PublicEntryResult {
+func newExecutedPublicEntryResult(entry string, compiled requestcompiler.PersistedResult, result runtimeworkbookcase.RunResult, fingerprints executionFingerprints) PublicEntryResult {
 	requestDir := compiled.RequestDir
 	decisionPath := compiled.DecisionPath()
 	generatedRequestPath := compiled.GeneratedRequestPath()

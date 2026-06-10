@@ -36,10 +36,11 @@ The preview result includes:
 - `fingerprints`: SHA-256 hashes for the normalized intent file and input
   workbook read by preview.
 
-Executed public results also include the same fingerprint fields. Agents can
-compare `preview-request.fingerprints` with the later `run-intent.fingerprints`
-to prove the run used the same normalized intent and input workbook before
-trusting runtime artifacts.
+Executed public results include the same input fingerprint fields plus
+`output_workbook_sha256`. Agents can compare `preview-request.fingerprints`
+with the later `run-intent.fingerprints` to prove the run used the same
+normalized intent and input workbook, then bind the reported output workbook to
+a concrete file hash before trusting runtime artifacts.
 
 ## Versioning Policy
 

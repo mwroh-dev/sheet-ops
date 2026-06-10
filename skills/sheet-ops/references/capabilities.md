@@ -33,7 +33,8 @@ planning mode exists.
 `plan_confidence:"compiler_validated_boundary"`. Treat its `operation`, `would_mutate`,
 `mutation_summary`, and `fingerprints` fields as planning/trust metadata only;
 they do not prove that runtime execution succeeded. After `run-intent`, compare
-the execution result `fingerprints` to the preview fingerprints before trusting
+the execution result `fingerprints` to the preview fingerprints, and use
+`output_workbook_sha256` to bind the produced workbook bytes before trusting
 runtime artifacts.
 
 ## Public agent capabilities

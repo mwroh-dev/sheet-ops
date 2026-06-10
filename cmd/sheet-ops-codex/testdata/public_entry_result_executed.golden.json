@@ -29,7 +29,8 @@
   ],
   "fingerprints": {
     "normalized_intent_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "input_workbook_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    "input_workbook_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "output_workbook_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
   },
   "entry": "run-intent",
   "status": "executed",

@@ -37,6 +37,11 @@ func TestExecutedPublicEntryResultExposesAgentEnvelope(t *testing.T) {
 
 func TestExecutedPublicEntryResultExposesInputFingerprints(t *testing.T) {
 	envelope := newTestExecutedPublicEntryResult(t)
+	document := publicEntryResultDocument(t, envelope)
+	fingerprints, ok := document["fingerprints"].(map[string]any)
+	if !ok {
+		t.Fatalf("fingerprints has type %T, want object", document["fingerprints"])
+	}
 
 	if envelope.Fingerprints == nil {
 		t.Fatalf("fingerprints is nil")
@@ -46,6 +51,13 @@ func TestExecutedPublicEntryResultExposesInputFingerprints(t *testing.T) {
 	}
 	if len(envelope.Fingerprints.InputWorkbookSHA256) != 64 {
 		t.Fatalf("input_workbook_sha256 length = %d, want 64", len(envelope.Fingerprints.InputWorkbookSHA256))
+	}
+	outputFingerprint, ok := fingerprints["output_workbook_sha256"].(string)
+	if !ok {
+		t.Fatalf("output_workbook_sha256 missing or non-string in %+v", fingerprints)
+	}
+	if len(outputFingerprint) != 64 {
+		t.Fatalf("output_workbook_sha256 length = %d, want 64", len(outputFingerprint))
 	}
 }
 
@@ -87,6 +99,19 @@ func TestExecutedPublicEntryResultSchemaRejectsMissingFingerprints(t *testing.T)
 
 	if err := runtimeschema.ValidateStruct(publicEntryResultSchemaPath(), document); err == nil {
 		t.Fatalf("public entry result schema accepted executed envelope without input fingerprints")
+	}
+}
+
+func TestExecutedPublicEntryResultSchemaRejectsMissingOutputFingerprint(t *testing.T) {
+	document := publicEntryResultDocument(t, newTestExecutedPublicEntryResult(t))
+	fingerprints, ok := document["fingerprints"].(map[string]any)
+	if !ok {
+		t.Fatalf("fingerprints has type %T, want object", document["fingerprints"])
+	}
+	delete(fingerprints, "output_workbook_sha256")
+
+	if err := runtimeschema.ValidateStruct(publicEntryResultSchemaPath(), document); err == nil {
+		t.Fatalf("public entry result schema accepted executed envelope without output workbook fingerprint")
 	}
 }
 
@@ -150,9 +175,10 @@ func newTestExecutedPublicEntryResult(t *testing.T) PublicEntryResult {
 		},
 	}
 
-	return newExecutedPublicEntryResult("run-intent", compiled, result, previewFingerprints{
+	return newExecutedPublicEntryResult("run-intent", compiled, result, executionFingerprints{
 		NormalizedIntentSHA256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		InputWorkbookSHA256:    "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+		OutputWorkbookSHA256:   "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
 	})
 }
 

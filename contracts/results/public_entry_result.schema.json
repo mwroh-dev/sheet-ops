@@ -45,7 +45,7 @@
       }
     },
     "fingerprints": {
-      "$ref": "#/$defs/fingerprints"
+      "$ref": "#/$defs/execution_fingerprints"
     },
     "entry": {
       "enum": ["run-prompt", "run-text", "run-intent"]
@@ -112,15 +112,19 @@
       },
       "additionalProperties": false
     },
-    "fingerprints": {
+    "execution_fingerprints": {
       "type": "object",
-      "required": ["normalized_intent_sha256", "input_workbook_sha256"],
+      "required": ["normalized_intent_sha256", "input_workbook_sha256", "output_workbook_sha256"],
       "properties": {
         "normalized_intent_sha256": {
           "type": "string",
           "pattern": "^[a-f0-9]{64}$"
         },
         "input_workbook_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "output_workbook_sha256": {
           "type": "string",
           "pattern": "^[a-f0-9]{64}$"
         }

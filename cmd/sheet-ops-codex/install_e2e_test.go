@@ -16,15 +16,21 @@ import (
 )
 
 type installedRunIntentResult struct {
-	SchemaVersion string                  `json:"schema_version"`
-	OK            bool                    `json:"ok"`
-	Command       string                  `json:"command"`
-	Recoverable   bool                    `json:"recoverable"`
-	Artifacts     []PublicResultArtifact  `json:"artifacts"`
-	Fingerprints  previewFingerprints     `json:"fingerprints"`
-	Entry         string                  `json:"entry"`
-	Status        string                  `json:"status"`
-	Runtime       installedRuntimePayload `json:"runtime"`
+	SchemaVersion string                   `json:"schema_version"`
+	OK            bool                     `json:"ok"`
+	Command       string                   `json:"command"`
+	Recoverable   bool                     `json:"recoverable"`
+	Artifacts     []PublicResultArtifact   `json:"artifacts"`
+	Fingerprints  installedRunFingerprints `json:"fingerprints"`
+	Entry         string                   `json:"entry"`
+	Status        string                   `json:"status"`
+	Runtime       installedRuntimePayload  `json:"runtime"`
+}
+
+type installedRunFingerprints struct {
+	NormalizedIntentSHA256 string `json:"normalized_intent_sha256"`
+	InputWorkbookSHA256    string `json:"input_workbook_sha256"`
+	OutputWorkbookSHA256   string `json:"output_workbook_sha256"`
 }
 
 type installedRuntimePayload struct {
@@ -123,6 +129,13 @@ func TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd(t *testing.T) {
 	}
 	if result.Fingerprints.InputWorkbookSHA256 != preview.Fingerprints.InputWorkbookSHA256 {
 		t.Fatalf("input_workbook_sha256 = %q, want preview fingerprint %q", result.Fingerprints.InputWorkbookSHA256, preview.Fingerprints.InputWorkbookSHA256)
+	}
+	outputFingerprint, err := fileSHA256(outputFile)
+	if err != nil {
+		t.Fatalf("fileSHA256(%s): %v", outputFile, err)
+	}
+	if result.Fingerprints.OutputWorkbookSHA256 != outputFingerprint {
+		t.Fatalf("output_workbook_sha256 = %q, want output file fingerprint %q", result.Fingerprints.OutputWorkbookSHA256, outputFingerprint)
 	}
 	if !result.Runtime.Verification.Pass {
 		t.Fatalf("runtime verification pass = false: %+v", result.Runtime.Verification)
