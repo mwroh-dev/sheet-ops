@@ -174,6 +174,49 @@ Ask:
 
 Fields that cannot be made truthful in this phase should be removed or marked explicitly as deferred; do not ship speculative metadata.
 
+## Phase 1 Result Note
+
+Implementation commit: `00076c4 phase1/help: classify cli command surfaces`.
+
+Executor evidence:
+
+- Red test was reported by the executor as:
+  `go test ./cmd/sheet-ops-codex -run 'Test.*CLI.*|Test.*Help.*|Test.*Contract.*' -count=1`
+  failing with missing contract symbols before implementation.
+- Green verification reported and re-run by the parent:
+  `go test ./cmd/sheet-ops-codex -run 'Test.*CLI.*|Test.*Help.*|Test.*Contract.*' -count=1`.
+- Full command package verification reported and re-run by the parent:
+  `go test ./cmd/sheet-ops-codex -count=1`.
+
+Independent verifier: `Gauss`, closed after review to satisfy subagent memory management.
+
+Verifier result: `PASS_WITH_CONCERNS`.
+
+Verifier findings:
+
+- No blocking Phase 1 failure.
+- Scope is limited to `cmd/sheet-ops-codex/cli_contract.go`,
+  `cmd/sheet-ops-codex/cli_contract_test.go`, and
+  `cmd/sheet-ops-codex/main.go`.
+- Top-level help distinguishes install, agent-contract, internal handoff,
+  maintainer diagnostic, and support surfaces.
+- Top-level help does not teach `sheet-ops-agent use` as a user entry and keeps
+  `sheet-ops` as the workbook request entry.
+- Execution behavior appears limited to help/metadata wiring.
+
+Phase 1 backlog classification:
+
+- TDD sequencing is not independently provable from the single implementation
+  commit. Treat this as a process-evidence concern, not a code blocker, because
+  the executor supplied red-test output and the parent/verifier re-ran green
+  checks. For future phases, keep red-test evidence in phase notes before
+  production-code commits whenever practical.
+- Cobra generated completion subcommands and the hidden
+  `--sheet-ops-codex-bin` install flag are not individually modeled. This is not
+  a Phase 1 blocker because Phase 1 treats `completion` as one support surface,
+  but Phase 2 must decide whether machine-readable schema output should expose
+  generated completion subcommands and hidden install flags.
+
 ## Phase 3 - Structured Errors And Exit Codes
 
 Lane: CLI contract core.
