@@ -231,10 +231,14 @@ func inputFingerprints(intentFile string, inputFile string) (previewFingerprints
 	}, nil
 }
 
-func executedFingerprints(inputIdentity previewFingerprints, outputFile string) (executionFingerprints, error) {
-	outputFingerprint, err := fileSHA256(outputFile)
-	if err != nil {
-		return executionFingerprints{}, err
+func executedFingerprints(inputIdentity previewFingerprints, outputFile string, verificationOutputFingerprint string) (executionFingerprints, error) {
+	outputFingerprint := strings.TrimSpace(verificationOutputFingerprint)
+	if outputFingerprint == "" {
+		var err error
+		outputFingerprint, err = fileSHA256(outputFile)
+		if err != nil {
+			return executionFingerprints{}, err
+		}
 	}
 	return executionFingerprints{
 		NormalizedIntentSHA256: inputIdentity.NormalizedIntentSHA256,

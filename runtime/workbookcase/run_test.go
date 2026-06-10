@@ -156,6 +156,23 @@ func TestWorkbookcaseSummariesCarryWrittenCells(t *testing.T) {
 	}
 }
 
+func TestVerificationSummaryCarriesOutputWorkbookFingerprint(t *testing.T) {
+	outputFile := filepath.Join(t.TempDir(), "output.xlsx")
+	if err := os.WriteFile(outputFile, []byte("workbook bytes"), 0o644); err != nil {
+		t.Fatalf("WriteFile(%s): %v", outputFile, err)
+	}
+
+	verification := verificationSummaryFromRuntime(WriteValuesOperationName, runtimeverify.VerificationResult{
+		Pass:           true,
+		OutputWorkbook: outputFile,
+		Reasons:        []string{"pass"},
+	})
+
+	if verification.OutputWorkbookSHA256 != "92860184f82a31ed8824ef2f06029d344c6e806f6d8922bbbbd6feca4a01551e" {
+		t.Fatalf("output_workbook_sha256 = %q, want SHA-256 of output file", verification.OutputWorkbookSHA256)
+	}
+}
+
 func TestRunAppendStructuredRowsEndToEnd(t *testing.T) {
 	setRuntimeRoots(t)
 

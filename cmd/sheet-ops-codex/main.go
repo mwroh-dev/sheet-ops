@@ -245,7 +245,7 @@ func runIntentEntry(intent requestcompiler.NormalizedIntent, input intentCompile
 		}
 		return nil, nil, orchestrateErr
 	}
-	fingerprints, err := executedFingerprints(inputIdentity, result.Verification.OutputFile)
+	fingerprints, err := executedFingerprints(inputIdentity, result.Verification.OutputFile, result.Verification.OutputWorkbookSHA256)
 	if err != nil {
 		return &result, nil, err
 	}

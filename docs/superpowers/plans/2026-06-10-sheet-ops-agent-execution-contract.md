@@ -38,6 +38,7 @@ Sequential implementation lane:
 7. Phase 20: invalid data typed producer promotion.
 8. Phase 21: preview-run input identity sealing.
 9. Phase 22: output workbook identity sealing.
+10. Phase 23: verification artifact output identity sealing.
 
 Phase 12 comes before Phase 13 because the existing runtime output must be observed before a stable envelope is imposed. Phase 15 comes after Phases 13-14 so the E2E smoke can assert the final contract rather than a temporary shape.
 
@@ -594,6 +595,110 @@ Backlog self-review:
   public result can cross-check the same output bytes.
 - Keep semantic success tied to verification pass and required artifacts; a
   matching hash alone only identifies bytes.
+
+## Phase 23 - Verification Artifact Output Identity Sealing
+
+Lane: Execution Contract.
+
+Web-search value: low. The design choice is internal contract alignment:
+runtime verification and public result should report the same output workbook
+SHA-256. No new external dependency or time-sensitive standard is needed before
+implementation.
+
+### TODO
+
+- [x] Add failing installed E2E test for verification/public output hash
+  equality.
+  - Evaluation: installed `run-intent` result
+    `fingerprints.output_workbook_sha256`, `runtime.verification`, and the
+    on-disk verification artifact all report the same output workbook hash.
+  - Result: an agent can cross-check the public envelope against authoritative
+    runtime evidence.
+  - Likely files: `cmd/sheet-ops-codex/install_e2e_test.go`.
+  - Risk: medium.
+  - Rollback: keep Phase 22 public-envelope output identity only.
+- [x] Add runtime verification field and schema coverage.
+  - Evaluation: `runtimeworkbookcase.VerificationResult` and
+    `contracts/verification/verification_result.schema.json` include
+    `output_workbook_sha256` for emitted verification summaries.
+  - Result: runtime evidence carries the same byte identity as the public
+    envelope.
+- [x] Reuse verification hash for public execution fingerprints.
+  - Evaluation: public result derives `output_workbook_sha256` from
+    `result.Verification.OutputWorkbookSHA256` and only falls back to hashing
+    the file when needed.
+  - Result: the public envelope and verification artifact do not drift through
+    independent hashing paths.
+- [x] Run separate verifier.
+  - Evaluation: verifier checks source of truth, schema compatibility, installed
+    E2E assertions, and no semantic-success overclaim.
+  - Result: pass/fail before commit.
+- [x] Commit Phase 23.
+  - Evaluation: focused installed/runtime/schema tests, release contract tests,
+    package tests, and `git diff --check` pass.
+  - Result: `phase23/verification: mirror output identity`.
+
+### Phase-End Backlog Review
+
+Ask:
+
+- Should operation-specific verification implementations in `runtime/verify`
+  expose source/output hashes directly, or is workbookcase summary enrichment
+  the right boundary?
+- Should failed verification summaries also carry output hash when the output
+  workbook exists?
+- Should input fingerprints also move into verification artifacts for a full
+  input/output evidence tuple?
+- Should `output_workbook_sha256` become required in the verification schema
+  after all historical fixtures and non-success paths are audited?
+- Should missing output hash become a hard verification artifact emission error
+  instead of an omitted field?
+
+Do not claim this eliminates all TOCTOU risk until hashing is performed at the
+same boundary as semantic verification for every operation.
+
+### Phase 23 Result Note
+
+Implementation outcome:
+
+- `runtimeworkbookcase.VerificationResult` now carries
+  `output_workbook_sha256` when the output workbook can be read.
+- The persisted `verification-summary.json`, `runtime.verification`, and public
+  `fingerprints.output_workbook_sha256` now agree for the installed
+  append-rows E2E path.
+- Public execution fingerprints use
+  `result.Verification.OutputWorkbookSHA256` as the source of truth when it is
+  present, falling back to direct output-file hashing only for older or partial
+  runtime results.
+- `contracts/verification/verification_result.schema.json` accepts
+  `output_workbook_sha256` with the SHA-256 pattern.
+- Docs and skill references tell agents to cross-check the public fingerprint
+  against `runtime.verification.output_workbook_sha256` without treating hash
+  equality as semantic workbook correctness.
+
+Verification:
+
+- Red evidence:
+  `go test ./cmd/sheet-ops-codex -run TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd -count=1 -v`
+  failed because `runtime.verification.output_workbook_sha256` was empty while
+  the public result already emitted an output workbook fingerprint.
+- `go test ./runtime/workbookcase ./cmd/sheet-ops-codex -run 'TestVerificationSummaryCarriesOutputWorkbookFingerprint|TestRunAppendStructuredRowsEndToEnd|TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd' -count=1 -v`: pass.
+- `go test ./runtime/workbookcase ./cmd/sheet-ops-codex -run 'TestVerificationSummaryCarriesOutputWorkbookFingerprint|TestRunAppendStructuredRowsEndToEnd|TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd|TestCLIJSONOutputsValidateAgainstPublishedSchemas|TestPublicEntryResultGoldenValidatesAgainstPublicSchema|TestExecutedPublicEntryResult.*Fingerprint' -count=1 -v`: pass.
+- `go test ./internal/releasecontracts -run 'TestReleaseSchemasCompile|TestReleaseSchemaReferencesAreLocallyResolvable|TestCLIAgentContractDocsStayAligned' -count=1 -v`: pass.
+- `go test ./runtime/workbookcase ./cmd/sheet-ops-codex ./cmd/sheet-ops-agent ./internal/releasecontracts -count=1`: pass.
+- `git diff --check`: pass.
+- Separate verifier: no blockers. Non-blocking risks are that unreadable output
+  files currently omit the hash rather than failing hard, and the verification
+  schema accepts but does not require `output_workbook_sha256`.
+
+Backlog self-review:
+
+- Do not make the verification schema field required until historical fixtures
+  and failure/partial-result paths are audited.
+- Consider changing `fileSHA256IfReadable` into an error-returning helper once
+  every operation can fail explicitly on missing output hash.
+- Input fingerprints in verification artifacts remain a later evidence-tuple
+  enhancement; this phase only cross-checks output identity.
 
 ## Final Review Phase - Agent Execution Contract Completion
 

@@ -47,10 +47,11 @@ type installedRunPaths struct {
 }
 
 type installedVerification struct {
-	Pass         bool     `json:"pass"`
-	Operation    string   `json:"operation"`
-	OutputFile   string   `json:"output_file"`
-	WrittenCells []string `json:"written_cells"`
+	Pass                 bool     `json:"pass"`
+	Operation            string   `json:"operation"`
+	OutputFile           string   `json:"output_file"`
+	OutputWorkbookSHA256 string   `json:"output_workbook_sha256"`
+	WrittenCells         []string `json:"written_cells"`
 }
 
 type installedExecutionResult struct {
@@ -136,6 +137,17 @@ func TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd(t *testing.T) {
 	}
 	if result.Fingerprints.OutputWorkbookSHA256 != outputFingerprint {
 		t.Fatalf("output_workbook_sha256 = %q, want output file fingerprint %q", result.Fingerprints.OutputWorkbookSHA256, outputFingerprint)
+	}
+	if result.Runtime.Verification.OutputWorkbookSHA256 != outputFingerprint {
+		t.Fatalf("runtime verification output_workbook_sha256 = %q, want output file fingerprint %q", result.Runtime.Verification.OutputWorkbookSHA256, outputFingerprint)
+	}
+	var verificationArtifact installedVerification
+	readJSONFileLocal(t, result.Runtime.Paths.VerificationPath, &verificationArtifact)
+	if verificationArtifact.OutputWorkbookSHA256 != outputFingerprint {
+		t.Fatalf("verification artifact output_workbook_sha256 = %q, want output file fingerprint %q", verificationArtifact.OutputWorkbookSHA256, outputFingerprint)
+	}
+	if verificationArtifact.OutputWorkbookSHA256 != result.Fingerprints.OutputWorkbookSHA256 {
+		t.Fatalf("verification artifact output_workbook_sha256 = %q, want public result fingerprint %q", verificationArtifact.OutputWorkbookSHA256, result.Fingerprints.OutputWorkbookSHA256)
 	}
 	if !result.Runtime.Verification.Pass {
 		t.Fatalf("runtime verification pass = false: %+v", result.Runtime.Verification)
@@ -293,6 +305,18 @@ func assertFileExistsLocal(t *testing.T, path string) {
 	}
 	if info.IsDir() {
 		t.Fatalf("%s is a directory, want file", path)
+	}
+}
+
+func readJSONFileLocal(t *testing.T, path string, target any) {
+	t.Helper()
+
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", path, err)
+	}
+	if err := json.Unmarshal(raw, target); err != nil {
+		t.Fatalf("json.Unmarshal(%s): %v", path, err)
 	}
 }
 

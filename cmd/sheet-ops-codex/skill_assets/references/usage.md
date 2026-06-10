@@ -79,7 +79,8 @@ planning mode exists.
 the inspected inputs, not proof of runtime execution success. After
 `run-intent`, compare the execution result `fingerprints` to the preview
 fingerprints, and use `output_workbook_sha256` to bind the produced workbook
-bytes before trusting runtime artifacts.
+bytes before trusting runtime artifacts. Cross-check it against
+`runtime.verification.output_workbook_sha256`.
 
 ## Public split surface
 

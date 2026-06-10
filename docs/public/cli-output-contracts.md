@@ -40,7 +40,9 @@ Executed public results include the same input fingerprint fields plus
 `output_workbook_sha256`. Agents can compare `preview-request.fingerprints`
 with the later `run-intent.fingerprints` to prove the run used the same
 normalized intent and input workbook, then bind the reported output workbook to
-a concrete file hash before trusting runtime artifacts.
+a concrete file hash before trusting runtime artifacts. The same output hash is
+also carried in `runtime.verification.output_workbook_sha256` and the persisted
+verification artifact.
 
 ## Versioning Policy
 

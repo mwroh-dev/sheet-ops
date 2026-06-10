@@ -35,7 +35,8 @@ planning mode exists.
 they do not prove that runtime execution succeeded. After `run-intent`, compare
 the execution result `fingerprints` to the preview fingerprints, and use
 `output_workbook_sha256` to bind the produced workbook bytes before trusting
-runtime artifacts.
+runtime artifacts. Cross-check it against
+`runtime.verification.output_workbook_sha256`.
 
 ## Public agent capabilities
 
