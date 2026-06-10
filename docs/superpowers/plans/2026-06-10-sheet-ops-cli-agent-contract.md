@@ -333,6 +333,22 @@ Verification commands passed:
 - `go run ./cmd/sheet-ops-codex capabilities --json`.
 - `go run ./cmd/sheet-ops-codex schema command nope --json`.
 
+Independent verifier result: `PASS_WITH_CONCERNS`.
+
+Phase 3 backlog:
+
+- The `error_contract` taxonomy intentionally includes reserved categories that
+  are not yet emitted by `classifyCLIError` unless future command paths return a
+  typed `cliError`. Phase 4+ should either mark these as reserved in docs or
+  wire typed producers for invalid data, install dependency, state root,
+  validation, execution, and verification failures.
+- `go run` wraps non-zero program exit into shell exit `1` while preserving the
+  program's `exit status 64` in stderr. Agent-facing docs should describe
+  compiled binary exit semantics separately from `go run` harness behavior.
+- Successful runtime stdout contracts were not changed; keep JSON failure
+  envelopes scoped to supported `--json` meta-command failures until runtime
+  command error typing is explicitly tested.
+
 ### Phase-End Backlog Review
 
 Ask:
