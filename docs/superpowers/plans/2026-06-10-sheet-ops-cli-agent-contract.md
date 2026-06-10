@@ -300,6 +300,39 @@ Lane: CLI contract core.
   - Evaluation: Phase 1-3 focused tests pass.
   - Result: `phase3/errors: stabilize cli failure contract`.
 
+### Phase 3 Red Test Evidence (Pre-Implementation)
+
+- Added focused Phase 3 tests in `cmd/sheet-ops-codex/cli_errors_test.go`
+  before production implementation.
+- Initial red command:
+  `go test ./cmd/sheet-ops-codex -run 'Test.*Error.*|Test.*Unknown.*|Test.*Missing.*' -count=1`.
+- Red result: build failed because `classifyCLIError` was undefined, and the
+  current CLI has no structured error taxonomy or JSON error envelope for
+  `schema command <name> --json` failures.
+- Added a second focused expectation that `capabilities --json` exposes an
+  `error_contract`. Red result:
+  `TestCapabilitiesJSONReportsSafeEntryBoundaries` failed with
+  `json_failure_shape = ""`.
+
+## Phase 3 Result Note
+
+Implementation outcome:
+
+- Added wrapper-level Sheet Ops CLI error classification with exit-code
+  metadata.
+- Added stable JSON failure envelope for supported `--json` meta-command
+  failures: `{ "ok": false, "error": { ... } }`.
+- Added `error_contract` to `capabilities --json` so agents can discover
+  recoverability and exit-code semantics without parsing help prose.
+- Kept successful runtime/stdout contracts unchanged.
+
+Verification commands passed:
+
+- `go test ./cmd/sheet-ops-codex -run 'Test.*Error.*|Test.*Unknown.*|Test.*Missing.*|Test.*Schema.*|Test.*Capabilities.*|Test.*Contract.*' -count=1`.
+- `go test ./cmd/sheet-ops-codex -count=1`.
+- `go run ./cmd/sheet-ops-codex capabilities --json`.
+- `go run ./cmd/sheet-ops-codex schema command nope --json`.
+
 ### Phase-End Backlog Review
 
 Ask:

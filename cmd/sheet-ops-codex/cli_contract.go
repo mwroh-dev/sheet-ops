@@ -453,6 +453,7 @@ type cliCapabilitiesPayload struct {
 	ReadOnlyCommands     []string                    `json:"read_only_commands"`
 	CommandGroups        []cliCapabilityGroupPayload `json:"command_groups"`
 	Commands             []cliCapabilityBriefPayload `json:"commands"`
+	ErrorContract        cliErrorContractPayload     `json:"error_contract"`
 }
 
 type cliCapabilityGroupPayload struct {
@@ -515,7 +516,7 @@ func newCapabilitiesCommand() *cobra.Command {
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !jsonOutput {
-				return fmt.Errorf("capabilities requires --json")
+				return newCLIError(cliErrorInvalidUsage, "capabilities requires --json", true, cliExitUsage, "capabilities --json")
 			}
 			return writeContractJSON(cmd.OutOrStdout(), buildCapabilitiesPayload(cmd.Root().Name()))
 		},
@@ -534,7 +535,7 @@ func newSchemaCommand() *cobra.Command {
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !jsonOutput {
-				return fmt.Errorf("schema requires --json")
+				return newCLIError(cliErrorInvalidUsage, "schema requires --json", true, cliExitUsage, "schema --json")
 			}
 			return writeContractJSON(cmd.OutOrStdout(), buildSchemaPayload(cmd.Root().Name()))
 		},
@@ -547,12 +548,15 @@ func newSchemaCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !jsonOutput {
-				return fmt.Errorf("schema command requires --json")
+				return newCLIError(cliErrorInvalidUsage, "schema command requires --json", true, cliExitUsage, "schema command <name> --json")
 			}
 			contracts := sheetOpsCLIAllContracts(cmd.Root().Name())
 			contract, ok := contracts[args[0]]
 			if !ok {
-				return fmt.Errorf("unknown command %q", args[0])
+				return writeCLIErrorJSONAndReturn(
+					cmd.OutOrStdout(),
+					newCLIError(cliErrorUnknownCommand, fmt.Sprintf("unknown command %q", args[0]), true, cliExitUsage, "schema --json", "capabilities --json"),
+				)
 			}
 			return writeContractJSON(cmd.OutOrStdout(), cliCommandSchemaEnvelopePayload{
 				SchemaVersion: cliContractSchemaVersion,
@@ -625,6 +629,7 @@ func buildCapabilitiesPayload(rootName string) cliCapabilitiesPayload {
 		ReadOnlyCommands:     readOnlyCommands,
 		CommandGroups:        commandGroups,
 		Commands:             commands,
+		ErrorContract:        buildCLIErrorContractPayload(),
 	}
 }
 

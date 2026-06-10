@@ -16,6 +16,7 @@ type cliCapabilitiesDocument struct {
 	ReadOnlyCommands     []string                    `json:"read_only_commands"`
 	CommandGroups        []cliCapabilityGroup        `json:"command_groups"`
 	Commands             []cliCapabilityCommandBrief `json:"commands"`
+	ErrorContract        cliErrorContractView        `json:"error_contract"`
 }
 
 type cliCapabilityGroup struct {
@@ -31,6 +32,18 @@ type cliCapabilityCommandBrief struct {
 	Mutating       bool   `json:"mutating"`
 	ReadOnly       bool   `json:"read_only"`
 	Hidden         bool   `json:"hidden"`
+}
+
+type cliErrorContractView struct {
+	JSONFailureShape string             `json:"json_failure_shape"`
+	Codes            []cliErrorCodeView `json:"codes"`
+}
+
+type cliErrorCodeView struct {
+	Code        string `json:"code"`
+	ExitCode    int    `json:"exit_code"`
+	Recoverable bool   `json:"recoverable"`
+	Meaning     string `json:"meaning"`
 }
 
 type cliSchemaDocument struct {
@@ -115,6 +128,15 @@ func TestCapabilitiesJSONReportsSafeEntryBoundaries(t *testing.T) {
 	}
 	if !runValidated.Mutating {
 		t.Fatalf("run-validated mutating = false, want true")
+	}
+
+	if doc.ErrorContract.JSONFailureShape != `{"ok":false,"error":{...}}` {
+		t.Fatalf("json_failure_shape = %q", doc.ErrorContract.JSONFailureShape)
+	}
+	for _, code := range []string{"invalid_usage", "missing_required_option", "unknown_command", "state_root_mismatch", "execution_failed", "verification_failed", "internal_error"} {
+		if findErrorCode(doc.ErrorContract.Codes, code).Code == "" {
+			t.Fatalf("error_contract.codes missing %q: %+v", code, doc.ErrorContract.Codes)
+		}
 	}
 }
 
@@ -243,6 +265,15 @@ func findCapabilityCommand(t *testing.T, commands []cliCapabilityCommandBrief, n
 	}
 	t.Fatalf("missing capabilities command %q", name)
 	return cliCapabilityCommandBrief{}
+}
+
+func findErrorCode(codes []cliErrorCodeView, name string) cliErrorCodeView {
+	for _, code := range codes {
+		if code.Code == name {
+			return code
+		}
+	}
+	return cliErrorCodeView{}
 }
 
 func findCommandSchema(t *testing.T, commands []cliCommandSchemaView, name string) cliCommandSchemaView {

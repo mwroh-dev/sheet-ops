@@ -21,8 +21,9 @@ const stateRootEnv = "SHEET_OPS_STATE_ROOT"
 
 func main() {
 	if err := newRootCommand().Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		cliErr := classifyCLIError(err)
+		fmt.Fprintln(os.Stderr, cliErr.Message)
+		os.Exit(cliErr.ExitCode)
 	}
 }
 
