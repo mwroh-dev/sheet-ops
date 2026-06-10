@@ -45,6 +45,7 @@ Sequential implementation lane:
 14. Phase 27: executed failure artifact role contract.
 15. Phase 28: failed run-intent public envelope emission.
 16. Phase 29: run-validated internal handoff envelope.
+17. Phase 30: installed run-validated handoff smoke.
 
 Phase 12 comes before Phase 13 because the existing runtime output must be observed before a stable envelope is imposed. Phase 15 comes after Phases 13-14 so the E2E smoke can assert the final contract rather than a temporary shape.
 
@@ -1215,6 +1216,80 @@ Do not add `run-validated` to the public entry result schema in this phase.
 - Backlog self-review: keep installed-bundle `run-validated` execution smoke
   and a formal internal handoff JSON Schema as future work. The installed bundle
   currently rebuilds successfully through existing install tests.
+
+## Phase 30 - Installed Run-Validated Handoff Smoke
+
+Lane: Execution Contract.
+
+Web-search value: low. This phase verifies the installed package/runtime
+surface, not a new external CLI methodology. The authoritative evidence is an
+installed bundled `sheet-ops-codex` binary executing `run-validated` and
+emitting the internal handoff envelope.
+
+### TODO
+
+- [x] Add failing installed-bundle `run-validated` smoke.
+  - Evaluation: after `install-skill`, the installed
+    `.codex/skills/sheet-ops/bin/sheet-ops-codex run-validated --request`
+    executes a validated append-rows request.
+  - Result: test fails until installed bundled runtime exposes the Phase 29
+    envelope contract end to end.
+  - Likely files: `cmd/sheet-ops-codex/install_e2e_test.go`.
+  - Risk: medium.
+  - Rollback: keep source-level handoff tests and document installed smoke gap.
+- [x] Assert installed handoff envelope semantics.
+  - Evaluation: stdout includes `schema_version`, `ok:true`,
+    `command:"run-validated"`, `classification:"internal_handoff"`,
+    `status:"executed"`, runtime verification, and required artifacts.
+  - Result: installed internal callers can parse the same contract as source
+    tests.
+- [x] Assert workbook and authoritative evidence.
+  - Evaluation: output workbook contains appended row; verification artifact,
+    execution artifact, outcome artifact, and evidence dir exist.
+  - Result: installed smoke is not stdout-only.
+- [x] Run separate verifier.
+  - Evaluation: verifier checks installed package boundary, source tests,
+    artifact roles, and no public schema drift.
+  - Result: pass/fail before commit.
+- [x] Commit Phase 30.
+  - Evaluation: focused installed smoke, related package tests, and
+    `git diff --check` pass.
+  - Result: `phase30/install: smoke run-validated handoff`.
+
+### Phase-End Backlog Review
+
+Ask:
+
+- Should installed `run-request` hidden compatibility alias get its own smoke?
+- Should a formal internal handoff JSON Schema become the next phase?
+- Should installed failure-path `run-validated` smoke be added, or is
+  source-level failure coverage enough until schema exists?
+
+Do not broaden public entry schema in this phase.
+
+### Phase 30 Result Note
+
+- Implementation: installed E2E coverage now runs the bundled
+  `.codex/skills/sheet-ops/bin/sheet-ops-codex run-validated --request`
+  command against a validated append-rows request.
+- Contract guard: the installed binary must emit the Phase 29 internal handoff
+  envelope with `schema_version`, `ok:true`, `command:"run-validated"`,
+  `classification:"internal_handoff"`, `status:"executed"`, non-recoverable
+  status, artifacts, and runtime verification.
+- Evidence guard: the smoke verifies output workbook contents, output workbook
+  SHA-256 in runtime verification, verification artifact identity, execution
+  artifact, outcome artifact, and required artifact roles.
+- Red evidence: this phase is a promotion of Phase 29 source-level behavior into
+  installed binary evidence; the new smoke would fail on pre-Phase 29 installed
+  binaries that emitted raw `RunResult` JSON without the outer handoff envelope.
+- Verification evidence: focused installed `run-validated` smoke, installed
+  `run-intent` E2E, source handoff tests, related package tests, and
+  `git diff --check` pass. Separate verifier found no code/schema blocker; it
+  flagged only the temporal issue that the commit checkbox was marked before
+  the commit existed, which is resolved by this phase commit.
+- Backlog self-review: keep hidden installed `run-request` smoke and formal
+  internal handoff JSON Schema as future work. Installed `run-validated` success
+  is now covered by authoritative workbook/evidence checks.
 
 ## Final Review Phase - Agent Execution Contract Completion
 

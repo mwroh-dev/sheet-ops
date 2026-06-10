@@ -175,6 +175,91 @@ func TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd(t *testing.T) {
 	assertOutputWorkbookCell(t, outputFile, "LineItems", "C3", "15")
 }
 
+func TestInstallSkillBundledCLIRunValidatedEmitsHandoffEnvelope(t *testing.T) {
+	if status := inspectGo("go"); status.kind != goStatusReady {
+		t.Skipf("go runtime is not ready for installed run-validated smoke: %s %v", status.kind, status.err)
+	}
+
+	projectDir := t.TempDir()
+	installScript := filepath.Join("..", "..", "install-skill.sh")
+	cmd := exec.Command(installScript,
+		"--project", projectDir,
+		"--go-bin", "go",
+	)
+	installOutput, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("install-skill.sh failed: %v\noutput=%s", err, installOutput)
+	}
+
+	workspaceDir := filepath.Join(projectDir, "workspace")
+	if err := os.MkdirAll(workspaceDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll(workspace): %v", err)
+	}
+	inputFile := filepath.Join(workspaceDir, "line-items.xlsx")
+	outputFile := filepath.Join(workspaceDir, "line-items-output.xlsx")
+	requestFile := filepath.Join(workspaceDir, "validated-request.json")
+	writeLineItemsWorkbook(t, inputFile)
+	writeValidatedAppendRowsRequest(t, requestFile, inputFile, outputFile)
+
+	installedCLI := filepath.Join(projectDir, ".codex", "skills", "sheet-ops", "bin", "sheet-ops-codex")
+	var result InternalHandoffRunResult
+	runInstalledCLIJSONWithEnv(t, installedCLI, &result, []string{
+		runtimeconfig.RetentionModeEnv + "=" + string(runtimeconfig.RetentionModeFull),
+		runtimeconfig.RenderModeEnv + "=" + string(runtimeconfig.RenderModeNever),
+	}, "run-validated",
+		"--request", requestFile,
+	)
+
+	if result.SchemaVersion != cliContractSchemaVersion {
+		t.Fatalf("schema_version = %q, want %q", result.SchemaVersion, cliContractSchemaVersion)
+	}
+	if !result.OK {
+		t.Fatalf("ok = false, want true: %+v", result)
+	}
+	if result.Command != "run-validated" {
+		t.Fatalf("command = %q, want run-validated", result.Command)
+	}
+	if result.Classification != cliClassificationInternalHandoff {
+		t.Fatalf("classification = %q, want %q", result.Classification, cliClassificationInternalHandoff)
+	}
+	if result.Status != "executed" {
+		t.Fatalf("status = %q, want executed", result.Status)
+	}
+	if result.Recoverable {
+		t.Fatalf("recoverable = true, want false")
+	}
+	if !result.Runtime.Verification.Pass {
+		t.Fatalf("runtime verification pass = false: %+v", result.Runtime.Verification)
+	}
+	if result.Runtime.Verification.Operation != runtimeworkbookcase.AppendRowsOperationName {
+		t.Fatalf("verification operation = %q, want %q", result.Runtime.Verification.Operation, runtimeworkbookcase.AppendRowsOperationName)
+	}
+	if !slices.Contains(result.Runtime.Verification.WrittenCells, "LineItems!A3") {
+		t.Fatalf("written_cells = %v, want LineItems!A3", result.Runtime.Verification.WrittenCells)
+	}
+	outputFingerprint, err := fileSHA256(outputFile)
+	if err != nil {
+		t.Fatalf("fileSHA256(%s): %v", outputFile, err)
+	}
+	if result.Runtime.Verification.OutputWorkbookSHA256 != outputFingerprint {
+		t.Fatalf("runtime verification output_workbook_sha256 = %q, want output file fingerprint %q", result.Runtime.Verification.OutputWorkbookSHA256, outputFingerprint)
+	}
+	var verificationArtifact installedVerification
+	readJSONFileLocal(t, result.Runtime.Paths.VerificationPath, &verificationArtifact)
+	if verificationArtifact.OutputWorkbookSHA256 != outputFingerprint {
+		t.Fatalf("verification artifact output_workbook_sha256 = %q, want output file fingerprint %q", verificationArtifact.OutputWorkbookSHA256, outputFingerprint)
+	}
+	assertInstalledArtifactExists(t, result.Artifacts, "output_workbook", true, "primary_success")
+	assertInstalledArtifactExists(t, result.Artifacts, "verification", true, "success_evidence")
+	assertInstalledArtifactExists(t, result.Artifacts, "evidence_dir", true, "audit_trail")
+	assertFileExistsLocal(t, result.Runtime.Paths.ExecutionPath)
+	assertFileExistsLocal(t, result.Runtime.Paths.OutcomePath)
+	assertOutputWorkbookRow(t, outputFile, "LineItems", 3, []string{"B002", "3", "15"})
+	assertOutputWorkbookCell(t, outputFile, "LineItems", "A3", "B002")
+	assertOutputWorkbookCell(t, outputFile, "LineItems", "B3", "3")
+	assertOutputWorkbookCell(t, outputFile, "LineItems", "C3", "15")
+}
+
 func writeLineItemsWorkbook(t *testing.T, path string) {
 	t.Helper()
 
