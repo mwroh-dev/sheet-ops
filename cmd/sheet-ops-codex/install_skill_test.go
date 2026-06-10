@@ -80,6 +80,21 @@ func TestInstallSkillBundledCLIExposesAgentContract(t *testing.T) {
 		t.Fatalf("agent_contract commands = %v, want preflight", agentGroup.Commands)
 	}
 
+	var prepareUseSchema cliCommandSchemaEnvelope
+	runInstalledCLIJSON(t, installedCLI, &prepareUseSchema, "schema", "command", "prepare-use", "--json")
+	if prepareUseSchema.Command.Name != "prepare-use" {
+		t.Fatalf("schema command name = %q, want prepare-use", prepareUseSchema.Command.Name)
+	}
+	if prepareUseSchema.Command.Classification != cliClassificationAgentContract {
+		t.Fatalf("prepare-use classification = %q, want %q", prepareUseSchema.Command.Classification, cliClassificationAgentContract)
+	}
+	if !prepareUseSchema.Command.Mutating || prepareUseSchema.Command.ReadOnly {
+		t.Fatalf("prepare-use schema has unsafe flags: %+v", prepareUseSchema.Command)
+	}
+	if !schemaOptionsInclude(prepareUseSchema.Command.Options, "--envelope-file") {
+		t.Fatalf("prepare-use options = %+v, want --envelope-file", prepareUseSchema.Command.Options)
+	}
+
 	var preflightSchema cliCommandSchemaEnvelope
 	runInstalledCLIJSON(t, installedCLI, &preflightSchema, "schema", "command", "preflight", "--json")
 	if preflightSchema.Command.Name != "preflight" {
@@ -129,6 +144,15 @@ func runInstalledCLIJSON(t *testing.T, binary string, target any, args ...string
 	if err := json.Unmarshal(stdout, target); err != nil {
 		t.Fatalf("json.Unmarshal(%s %s): %v\nstdout:\n%s", binary, strings.Join(args, " "), err, stdout)
 	}
+}
+
+func schemaOptionsInclude(options []cliSchemaOptionView, name string) bool {
+	for _, option := range options {
+		if option.Name == name {
+			return true
+		}
+	}
+	return false
 }
 
 func TestInstallSkillPromptsBeforeContinuingWhenGoIsOutdated(t *testing.T) {
