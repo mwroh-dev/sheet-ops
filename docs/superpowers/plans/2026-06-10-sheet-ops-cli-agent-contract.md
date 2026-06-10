@@ -214,6 +214,20 @@ Phase 2 backlog:
 - Phase 3 should decide whether unknown schema-command lookup errors need a
   typed JSON error payload in `--json` mode or can remain plain Cobra/Go errors
   until the broader error taxonomy lands.
+- Independent verifier result: `PASS_WITH_CONCERNS`.
+- Verification commands passed:
+  `go test ./cmd/sheet-ops-codex -run 'Test.*Schema.*|Test.*Capabilities.*|Test.*Contract.*' -count=1`,
+  `go test ./cmd/sheet-ops-codex -count=1`,
+  `go run ./cmd/sheet-ops-codex capabilities --json`, and
+  `go run ./cmd/sheet-ops-codex schema command prepare-use --json`.
+- Concern to resolve or document in Phase 3/4: `read_only_commands` currently
+  includes the root command while `capabilities.commands` omits the root. This
+  is not a blocker because root help/dispatch is read-only, but the contract
+  should clarify root representation.
+- Concern to resolve or document in Phase 3/4: command schema describes
+  options and artifacts but does not yet expose first-class input schema
+  references for agents that want to validate inputs directly from the CLI
+  contract.
 
 ## Phase 1 Result Note
 
