@@ -11,6 +11,7 @@ import (
 	"github.com/mwroh/sheet-ops/internal/testfixtures"
 	runtimecompiler "github.com/mwroh/sheet-ops/runtime/compiler"
 	runtimeexecute "github.com/mwroh/sheet-ops/runtime/execute"
+	runtimeschema "github.com/mwroh/sheet-ops/runtime/schema"
 	runtimetaskspec "github.com/mwroh/sheet-ops/runtime/taskspec"
 	runtimeverify "github.com/mwroh/sheet-ops/runtime/verify"
 	"github.com/xuri/excelize/v2"
@@ -170,6 +171,32 @@ func TestVerificationSummaryCarriesOutputWorkbookFingerprint(t *testing.T) {
 
 	if verification.OutputWorkbookSHA256 != "92860184f82a31ed8824ef2f06029d344c6e806f6d8922bbbbd6feca4a01551e" {
 		t.Fatalf("output_workbook_sha256 = %q, want SHA-256 of output file", verification.OutputWorkbookSHA256)
+	}
+}
+
+func TestVerificationSchemaRejectsSuccessfulResultWithoutOutputFingerprint(t *testing.T) {
+	document := map[string]any{
+		"pass":        true,
+		"operation":   WriteValuesOperationName,
+		"output_file": "/tmp/output.xlsx",
+		"reasons":     []string{"pass"},
+	}
+
+	if err := runtimeschema.ValidateStruct(repoJoin("contracts", "verification", "verification_result.schema.json"), document); err == nil {
+		t.Fatalf("verification schema accepted pass=true result without output_workbook_sha256")
+	}
+}
+
+func TestVerificationSchemaAllowsFailedResultWithoutOutputFingerprint(t *testing.T) {
+	document := map[string]any{
+		"pass":        false,
+		"operation":   WriteValuesOperationName,
+		"output_file": "/tmp/output.xlsx",
+		"reasons":     []string{"failed before output identity was available"},
+	}
+
+	if err := runtimeschema.ValidateStruct(repoJoin("contracts", "verification", "verification_result.schema.json"), document); err != nil {
+		t.Fatalf("verification schema rejected pass=false result without output_workbook_sha256: %v", err)
 	}
 }
 

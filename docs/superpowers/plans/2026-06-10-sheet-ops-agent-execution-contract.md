@@ -39,6 +39,7 @@ Sequential implementation lane:
 8. Phase 21: preview-run input identity sealing.
 9. Phase 22: output workbook identity sealing.
 10. Phase 23: verification artifact output identity sealing.
+11. Phase 24: successful verification hash requirement.
 
 Phase 12 comes before Phase 13 because the existing runtime output must be observed before a stable envelope is imposed. Phase 15 comes after Phases 13-14 so the E2E smoke can assert the final contract rather than a temporary shape.
 
@@ -699,6 +700,78 @@ Backlog self-review:
   every operation can fail explicitly on missing output hash.
 - Input fingerprints in verification artifacts remain a later evidence-tuple
   enhancement; this phase only cross-checks output identity.
+
+## Phase 24 - Successful Verification Hash Requirement
+
+Lane: Execution Contract.
+
+Web-search value: low. This phase tightens a local JSON Schema 2020-12
+contract already used in the repository: successful verification artifacts must
+include output workbook identity. No new external methodology is needed.
+
+### TODO
+
+- [x] Add failing schema test for successful verification without output hash.
+  - Evaluation: `contracts/verification/verification_result.schema.json`
+    rejects `pass:true` verification summaries that omit
+    `output_workbook_sha256`.
+  - Result: schema validation alone proves successful verification artifacts
+    carry output identity.
+  - Likely files: `runtime/workbookcase/run_test.go` or a focused schema test.
+  - Risk: medium.
+  - Rollback: keep Phase 23 E2E proof and document the schema gap.
+- [x] Add conditional schema requirement.
+  - Evaluation: `pass:true` requires `output_workbook_sha256`; failure or
+    partial summaries remain compatible while failure-path evidence is audited.
+  - Result: successful runtime verification cannot be emitted without a hash.
+- [x] Update docs/phase evidence.
+  - Evaluation: public docs distinguish success artifact requirement from
+    optional failure-path evidence.
+  - Result: agents know successful verification summaries should always expose
+    output identity.
+- [x] Run separate verifier.
+  - Evaluation: verifier checks schema condition, test coverage, no failure-path
+    overclaim, and no preview contract drift.
+  - Result: pass/fail before commit.
+- [x] Commit Phase 24.
+  - Evaluation: focused runtime/schema tests, release contract tests, package
+    tests, and `git diff --check` pass.
+  - Result: `phase24/verification: require successful output identity`.
+
+### Phase-End Backlog Review
+
+Ask:
+
+- Should failed verification summaries also require output hash whenever
+  `output_file` is non-empty?
+- Should `fileSHA256IfReadable` return an error so missing hash failures are
+  explicit before schema validation?
+- Should runtime verification hash the output before and after semantic checks
+  to close the remaining mutation window?
+
+Do not claim failure-path identity is fully sealed in this phase; the
+requirement is limited to successful verification summaries.
+
+### Phase 24 Result Note
+
+- Implementation: `contracts/verification/verification_result.schema.json`
+  conditionally requires `output_workbook_sha256` when `pass:true`. Failed
+  verification summaries remain schema-compatible without the hash until the
+  failure-path policy is separately audited.
+- Coverage: `runtime/workbookcase/run_test.go` rejects successful verification
+  summaries without output identity, allows failed summaries without output
+  identity, and keeps the runtime summary hash proof.
+- Documentation: public CLI output contracts and mirrored skill references now
+  tell agents to cross-check successful verification artifacts against
+  `runtime.verification.output_workbook_sha256`.
+- Red evidence: before the schema change,
+  `go test ./runtime/workbookcase -run TestVerificationSchemaRejectsSuccessfulResultWithoutOutputFingerprint -count=1 -v`
+  failed because the schema accepted a successful verification summary without
+  `output_workbook_sha256`.
+- Verification evidence: focused runtime/schema tests pass. Separate verifier
+  reported no blockers and identified only non-blocking follow-up risk around
+  explicit `pass:false` coverage and typed file-read failure handling; the
+  compatibility test covers the former.
 
 ## Final Review Phase - Agent Execution Contract Completion
 

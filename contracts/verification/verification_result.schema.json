@@ -105,5 +105,18 @@
       }
     }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "pass": { "const": true }
+        },
+        "required": ["pass"]
+      },
+      "then": {
+        "required": ["output_workbook_sha256"]
+      }
+    }
+  ]
 }
