@@ -2,9 +2,9 @@
 
 Branch: `codex/cli-agent-contract`
 
-Review status: refreshed after Phase 35 mirror hardening. The current evidence covers
+Review status: refreshed after Phase 36 completion audit. The current evidence covers
 the original execution-contract work plus the later handoff hardening phases
-28-35.
+28-36.
 
 ## Implemented Contract
 
@@ -48,6 +48,26 @@ the original execution-contract work plus the later handoff hardening phases
 | Preview | pass | `TestPreviewRequestReportsImpactWithoutMutating`, `TestPreviewRequestIsExposedAsReadOnlyNonDryRunCommand`, installed preview smoke, and `contracts/cli/preview_request_result.schema.json`. | Agents can inspect planned impact without workbook output or state mutation. |
 | Docs alignment | pass | Public and bundled skill docs mention the same internal handoff schema path, distinguish it from `contracts/results/public_entry_result.schema.json`, preserve preview non-dry-run guidance, output hash guidance, and failure-evidence semantics; `TestCLIAgentContractDocsStayAligned` guards these public/bundled mirrors. | Installed docs and public docs teach the same safe contract, and release-contract tests now catch the prior mirror-drift hardening gap. |
 | Full regression | pass | `go test ./runtime/workbookcase ./cmd/sheet-ops-codex ./cmd/sheet-ops-agent ./internal/releasecontracts -count=1`; `git diff --check`. | No known regression in the packages most directly affected by the agent execution contract work. |
+
+## Completion Audit
+
+| Requirement | Evidence | Completion Judgment |
+| --- | --- | --- |
+| Work proceeded by sequential phases and dependency-aware lanes. | `docs/superpowers/plans/2026-06-10-sheet-ops-agent-execution-contract.md` lists Lane A sequential phases, Lane B schema compatibility, Lane C verification, and phase notes through Phase 36. | complete |
+| Web research was used where design value existed, and skipped where local evidence was authoritative. | Web Research Inputs cite CLI Guidelines, MCP error and schema guidance, JSON Schema, Kubernetes dry-run, and Terraform plan semantics; later phases record low web-search value when the work was local mirror or audit validation. | complete |
+| Each phase records TODO, evaluation criteria, result, and phase-end backlog review. | Phase notes from the execution-contract plan record checklists with `Evaluation` and `Result` entries plus backlog review sections; Phase 36 adds the closeout criteria. | complete |
+| Each phase was committed independently. | Git history contains phase-scoped commits through `phase36/review: record cli contract completion audit`. | complete |
+| Executor and verifier were separated for verification. | Lane C requires separate verifier review, phase notes record verifier outcomes, and Phase 35/36 use a read-only verifier before commit. | complete |
+| Subagent sessions are closed after use. | Conversation/session operational evidence shows verifier subagents closed after result consumption. This is not repository-verifiable, so it remains an operational closeout check rather than a release artifact. | complete operationally |
+| Agent-facing CLI has one public workbook request entry. | Public docs and command schema state `sheet-ops`/`run-intent` as the public workbook entry; `run-validated` is internal handoff and `run-request` hidden compatibility. Public result schema rejects internal handoff envelopes. | complete |
+| Installed package proves real workbook execution, not just source behavior. | Installed E2E tests install through `install-skill.sh`, execute bundled `bin/sheet-ops-codex`, validate JSON results, evidence paths, hashes, and workbook contents. | complete |
+| Public success and runtime-started failure outputs are machine-readable. | Public result tests validate `ok:true` success, recoverable compiler stops, runtime-started failure envelopes, and no invented envelope before runtime starts. | complete |
+| Internal handoff output is separate and schema-valid. | `contracts/cli/internal_handoff_result.schema.json`, handoff golden tests, source command tests, installed `run-validated` smoke, and hidden `run-request` alias proof validate control fields and runtime evidence. | complete |
+| Materialized failed workbooks cannot be mistaken for successful output. | Failure artifact role tests and schema rejection tests enforce `failure_evidence` semantics for failed materialized output workbooks. | complete |
+| Preview is truthful and non-mutating without overclaiming dry-run. | Preview tests, schema, capabilities, docs, and release-contract mirror checks describe `preview-request` as read-only impact inspection and `dry_run_capable:false`. | complete |
+| Typed error taxonomy does not overclaim unproven runtime categories. | Deterministic producers cover `state_root_mismatch` and `invalid_json_or_schema`; unproven runtime categories remain `reserved` in capabilities and backlog. | complete |
+| Published schemas and docs stay aligned with runtime behavior. | Release-contract tests compile schemas, resolve local references, validate CLI JSON outputs, pin schema versions, and guard public/bundled docs against mirror drift. | complete |
+| Remaining backlog is separated from closeout blockers. | Deferred compiler-backed preview, real dry-run, and reserved runtime categories are explicitly future work and are not required for the current agent-executable CLI contract. | complete |
 
 Verifier separation was performed in-thread and the phase notes record separate
 verifier outcomes. Session closure is operational conversation evidence rather
@@ -94,8 +114,6 @@ in this matrix.
 
 ## Remaining Backlog
 
-- Refresh or supersede older final-review checklist language if additional
-  phases are added after Phase 32.
 - A deeper compiler-backed preview could be added later as a separate runtime
   planning track.
 - A real dry-run remains deferred until runtime planning can prove non-mutation

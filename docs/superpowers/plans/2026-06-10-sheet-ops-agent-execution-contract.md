@@ -51,6 +51,7 @@ Sequential implementation lane:
 20. Phase 33: hidden run-request alias proof.
 21. Phase 34: installed run-validated failure-path smoke.
 22. Phase 35: release-contract mirror-drift hardening.
+23. Phase 36: completion audit and closeout evidence.
 
 Phase 12 comes before Phase 13 because the existing runtime output must be observed before a stable envelope is imposed. Phase 15 comes after Phases 13-14 so the E2E smoke can assert the final contract rather than a temporary shape.
 
@@ -1692,6 +1693,73 @@ post-handoff-hardening evidence matrix.
 - Verifier and executor are separated for each phase.
 - Subagent sessions are closed after use.
 - No success claim relies on stdout alone when authoritative artifacts exist.
+
+## Phase 36 - Completion Audit and Closeout Evidence
+
+Lane: Independent Verification / Release Closeout.
+
+Web-search value: low. The external methodology questions were already
+researched for CLI stdout/exit semantics, agent-visible errors, JSON Schema
+dialects, plan/preview semantics, and output schemas. This phase is a
+current-state audit against local repository evidence, so fresh web research
+would not change the acceptance criteria.
+
+### TODO
+
+- [x] Derive concrete completion requirements from the active objective and
+  final review.
+  - Evaluation: the audit separates process requirements from agent CLI
+    contract requirements and names authoritative evidence for each row.
+  - Result: `docs/superpowers/plans/2026-06-10-sheet-ops-cli-agent-contract-final-review.md`
+    now contains a completion audit table covering phase/lane process,
+    web-research rationale, per-phase TODO/evaluation/result discipline,
+    backlog review, verifier separation, subagent closure, single public entry,
+    public/internal envelope split, schemas, installed E2E evidence, failure
+    semantics, preview semantics, typed errors, and release-contract mirrors.
+- [x] Re-run closeout verification.
+  - Evaluation: focused CLI contract tests, release-contract tests, related
+    package regression, schema command sanity, and `git diff --check` pass.
+  - Result: closeout verification passed before commit.
+- [x] Run separate verifier.
+  - Evaluation: verifier independently checks whether the audit evidence is
+    strong enough to support closeout without masking deferred backlog as
+    completion.
+  - Result: first verifier failed the closeout artifact because this Phase 36
+    result field and backlog review result were still placeholders. The
+    verifier otherwise confirmed the CLI contract evidence was strong and the
+    deferred backlog items were non-blocking. After recording those results, a
+    second verifier passed with no blockers and said overall goal completion is
+    justified after this Phase 36 commit and a clean worktree check.
+- [x] Commit Phase 36.
+  - Evaluation: clean worktree after commit and phase notes match the evidence.
+  - Result: `phase36/review: record cli contract completion audit`.
+
+### Phase-End Backlog Review
+
+Ask:
+
+- Do deferred runtime categories, compiler-backed preview, or real dry-run
+  semantics block this agent CLI contract closeout?
+- Is any remaining process evidence only conversational and therefore too weak
+  to support a repository-level completion claim?
+- Does the audit need more source or installed-bundle evidence before the
+  overall goal can be marked complete?
+
+Result:
+
+- Deferred runtime categories do not block closeout because current capability
+  metadata keeps unproven categories `reserved`; promoting them requires a
+  later deterministic producer/test phase.
+- Compiler-backed preview and real dry-run semantics do not block closeout
+  because the current contract deliberately claims only non-mutating impact
+  inspection, not simulated execution.
+- Conversation-only evidence remains limited to subagent session closure. The
+  release artifact does not rely on it for CLI behavior; it is used only for
+  process closeout.
+- No additional source or installed-bundle evidence is required before marking
+  the current agent-executable CLI contract complete. The second separate
+  verifier passed; after Phase 36 is committed and the worktree is clean, the
+  active goal can be marked complete.
 
 ## Execution Result Notes
 
