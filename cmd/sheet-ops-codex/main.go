@@ -19,6 +19,8 @@ import (
 
 const stateRootEnv = "SHEET_OPS_STATE_ROOT"
 
+var orchestrateValidated = useorchestrator.OrchestrateValidated
+
 func main() {
 	if err := newRootCommand().Execute(); err != nil {
 		cliErr := classifyCLIError(err)
@@ -101,7 +103,7 @@ func runValidatedExecutionRequest(cmd *cobra.Command, requestFile string) error 
 	if err != nil {
 		return err
 	}
-	result, orchestrateErr := useorchestrator.OrchestrateValidated(validatedReq)
+	result, orchestrateErr := orchestrateValidated(validatedReq)
 	if err := writeResultJSON(cmd.OutOrStdout(), result); err != nil {
 		return errors.Join(orchestrateErr, err)
 	}
@@ -238,15 +240,15 @@ func runIntentEntry(intent requestcompiler.NormalizedIntent, input intentCompile
 		}
 	}
 
-	result, orchestrateErr := useorchestrator.OrchestrateValidated(*compiled.ValidatedExecutionRequest)
-	if orchestrateErr != nil {
-		if runtimeStarted(result) {
-			return &result, nil, orchestrateErr
-		}
+	result, orchestrateErr := orchestrateValidated(*compiled.ValidatedExecutionRequest)
+	if orchestrateErr != nil && !runtimeStarted(result) {
 		return nil, nil, orchestrateErr
 	}
 	fingerprints, err := executedFingerprints(inputIdentity, result.Verification.OutputFile, result.Verification.OutputWorkbookSHA256)
 	if err != nil {
+		if orchestrateErr != nil {
+			return &result, nil, errors.Join(orchestrateErr, err)
+		}
 		return &result, nil, err
 	}
 	publicEntryResult := newExecutedPublicEntryResult("run-intent", compiled, result, fingerprints)

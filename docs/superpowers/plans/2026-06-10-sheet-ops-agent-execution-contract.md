@@ -43,6 +43,7 @@ Sequential implementation lane:
 12. Phase 25: verification output-file hash requirement.
 13. Phase 26: executed failure public fingerprint contract.
 14. Phase 27: executed failure artifact role contract.
+15. Phase 28: failed run-intent public envelope emission.
 
 Phase 12 comes before Phase 13 because the existing runtime output must be observed before a stable envelope is imposed. Phase 15 comes after Phases 13-14 so the E2E smoke can assert the final contract rather than a temporary shape.
 
@@ -1062,6 +1063,78 @@ Do not change successful execution artifact semantics in this phase.
 - Backlog self-review: keep failed `run-intent` end-to-end coverage as a later
   enhancement. This phase locks the public generator/schema semantics with
   focused coverage.
+
+## Phase 28 - Failed Run-Intent Public Envelope Emission
+
+Lane: Execution Contract.
+
+Web-search value: low. Phase 28 applies the established local contract: a CLI
+agent must receive structured stdout whenever runtime execution started, even
+if verification fails and the command exits non-zero.
+
+### TODO
+
+- [x] Add failing test for runtime-started `run-intent` orchestration failure.
+  - Evaluation: `runIntentEntry` returns a non-nil `PublicEntryResult` and a
+    non-nil orchestration error when the runtime has a run id or telemetry path.
+  - Result: agents can parse a failed execution envelope instead of receiving
+    only stderr.
+  - Likely files: `cmd/sheet-ops-codex/run_intent_entry_test.go`.
+  - Risk: medium.
+  - Rollback: keep Phase 27 generator/schema coverage and document the CLI path
+    gap.
+- [x] Add an orchestrator seam for the command adapter.
+  - Evaluation: tests can stub `OrchestrateValidated` without invoking the full
+    workbook runtime.
+  - Result: command adapter behavior is covered deterministically.
+- [x] Emit public result on runtime-started orchestration errors.
+  - Evaluation: failed verification output is labeled as `failure_evidence`,
+    fingerprints are preserved, and the original orchestration error still
+    controls the non-zero exit.
+  - Result: stdout remains machine-readable while exit status remains truthful.
+- [x] Run separate verifier.
+  - Evaluation: verifier checks the failure command path, schema compatibility,
+    success path preservation, and no preview drift.
+  - Result: pass/fail before commit.
+- [x] Commit Phase 28.
+  - Evaluation: focused command adapter tests, related package tests, and
+    `git diff --check` pass.
+  - Result: `phase28/run-intent: emit failed execution envelope`.
+
+### Phase-End Backlog Review
+
+Ask:
+
+- Should there be a command-level stdout/stderr smoke test for `run-intent`
+  after this adapter-level coverage?
+- Should `run-validated` also gain a public entry envelope instead of raw
+  runtime JSON?
+- Should fingerprint construction failures produce a smaller structured
+  terminal envelope instead of falling back to stderr only?
+
+Do not change successful execution semantics in this phase.
+
+### Phase 28 Result Note
+
+- Implementation: `run-intent` now emits an executed public entry result when
+  orchestration returns an error after the runtime has started. The original
+  orchestration error is still returned so the CLI remains non-zero.
+- Contract guard: pre-runtime orchestration failures still return no executed
+  public envelope, avoiding false runtime evidence when no run id or telemetry
+  path exists.
+- Coverage: focused tests cover helper-level failed envelope emission,
+  command-level stdout JSON plus non-zero error behavior, and the pre-runtime
+  failure branch.
+- Red evidence:
+  `go test ./cmd/sheet-ops-codex -run TestRunIntentEntryEmitsPublicEnvelopeWhenRuntimeStartedThenFails -count=1 -v`
+  initially failed because there was no orchestrator seam and the helper
+  returned a nil public entry result for runtime-started failures.
+- Verification evidence: focused run-intent failure tests, focused public
+  schema/emitter tests, related package tests, and `git diff --check` pass.
+  Separate verifier reported no blockers; its two residual risks were converted
+  into command-level and pre-runtime branch tests before commit.
+- Backlog self-review: keep `run-validated` public envelope migration and
+  structured fallback for fingerprint-construction failures as future work.
 
 ## Final Review Phase - Agent Execution Contract Completion
 
