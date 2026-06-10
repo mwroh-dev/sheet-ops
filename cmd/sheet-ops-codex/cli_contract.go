@@ -405,7 +405,7 @@ func sheetOpsCLIReadOnlyDiscoveryContracts(rootName string) map[string]cliComman
 				"--json: Emit machine-readable JSON on stdout.",
 				"--project: Project directory whose local Sheet Ops install/readiness should be checked.",
 				"--input-file: Optional workbook path used to check readability and state-root ownership.",
-				"--output-file: Optional output workbook path used to check parent-directory writability.",
+				"--output-file: Optional output workbook path used to check nearest parent ancestor accessibility.",
 				"--go-bin: Go binary used for readiness checks.",
 			},
 			OutputMode: "Machine-readable readiness JSON on stdout.",

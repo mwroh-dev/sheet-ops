@@ -372,7 +372,7 @@ Lane: CLI contract core.
   - Risk: medium.
   - Rollback: keep metadata read-only and do not add dry-run behavior until commands are classified.
 - [ ] Add or document `doctor`/`preflight` command scope.
-  - Evaluation: preflight checks Go availability where relevant, bundled binary presence, schema asset availability, state-root behavior, input workbook readability, output workbook writability, and project-local install shape.
+  - Evaluation: preflight checks Go availability where relevant, bundled binary presence, schema asset availability, state-root behavior, input workbook readability, output parent ancestor accessibility, and project-local install shape.
   - Result: agents can diagnose readiness before mutating workbooks.
   - Likely files: `cmd/sheet-ops-codex/preflight_command.go`, `cmd/sheet-ops-codex/preflight_command_test.go`, `cmd/sheet-ops-codex/main.go`.
   - Risk: medium-high.
@@ -422,8 +422,17 @@ Phase 4 backlog:
 
 - Preflight remains a read-only readiness diagnostic, not a workbook mutation
   dry-run. A real dry-run should be a separate runtime planning feature.
-- Output writability is checked without creating files; deeper permission
-  probing can be added if future tests require it.
+- Output parent readiness is limited to nearest ancestor accessibility without
+  creating files; deeper permission probing can be added if future tests require
+  it.
+
+Independent verifier result: `PASS_WITH_CONCERNS`.
+
+Verifier follow-up:
+
+- Reworded preflight output metadata from parent-directory writability to
+  nearest output parent ancestor accessibility, because the implementation stays
+  read-only and does not create probe files.
 
 ### Phase-End Backlog Review
 
