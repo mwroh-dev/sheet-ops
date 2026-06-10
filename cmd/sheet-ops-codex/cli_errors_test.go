@@ -9,8 +9,9 @@ import (
 )
 
 type cliErrorEnvelopeView struct {
-	OK    bool               `json:"ok"`
-	Error cliErrorDetailView `json:"error"`
+	SchemaVersion string             `json:"schema_version"`
+	OK            bool               `json:"ok"`
+	Error         cliErrorDetailView `json:"error"`
 }
 
 type cliErrorDetailView struct {
@@ -36,6 +37,9 @@ func TestSchemaCommandUnknownJSONEmitsTypedError(t *testing.T) {
 	}
 	if envelope.OK {
 		t.Fatalf("ok = true, want false")
+	}
+	if envelope.SchemaVersion != cliContractSchemaVersion {
+		t.Fatalf("schema_version = %q, want %q", envelope.SchemaVersion, cliContractSchemaVersion)
 	}
 	if envelope.Error.Code != "unknown_command" {
 		t.Fatalf("error.code = %q, want unknown_command", envelope.Error.Code)

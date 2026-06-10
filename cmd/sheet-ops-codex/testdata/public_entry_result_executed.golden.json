@@ -1,0 +1,64 @@
+{
+  "schema_version": "sheet-ops-cli/v1",
+  "ok": true,
+  "command": "run-intent",
+  "recoverable": false,
+  "artifacts": [
+    {
+      "kind": "output_workbook",
+      "path": "/workspace/out.xlsx",
+      "required": true,
+      "success_role": "primary_success"
+    },
+    {
+      "kind": "verification",
+      "path": "/workspace/.sheet-ops-state/evidence/verification.json",
+      "required": true,
+      "success_role": "success_evidence"
+    },
+    {
+      "kind": "evidence_dir",
+      "path": "/workspace/.sheet-ops-state/evidence",
+      "required": true,
+      "success_role": "audit_trail"
+    }
+  ],
+  "next_actions": [
+    "Inspect runtime.verification before claiming workbook success.",
+    "Open the output workbook only after verification pass is true."
+  ],
+  "entry": "run-intent",
+  "status": "executed",
+  "work_unit_id": "append-rows-20260610",
+  "request_compiler": {
+    "status": "compiled",
+    "request_dir": "/workspace/.sheet-ops-state/artifacts/work/append-rows-20260610/request-compiler",
+    "decision_path": "/workspace/.sheet-ops-state/artifacts/work/append-rows-20260610/request-compiler/compiler_decision.json",
+    "generated_request_path": "/workspace/.sheet-ops-state/artifacts/work/append-rows-20260610/request-compiler/validated_execution_request.json"
+  },
+  "runtime": {
+    "ids": {
+      "run_id": "run-append-rows-20260610",
+      "trace_id": "trace-append-rows-20260610"
+    },
+    "paths": {
+      "evidence_dir": "/workspace/.sheet-ops-state/evidence",
+      "verification_path": "/workspace/.sheet-ops-state/evidence/verification.json",
+      "execution_path": "/workspace/.sheet-ops-state/evidence/execution.json",
+      "outcome_path": "/workspace/.sheet-ops-state/reports/outcome.json"
+    },
+    "verification": {
+      "pass": true,
+      "operation": "append_structured_rows",
+      "output_file": "/workspace/out.xlsx",
+      "reasons": [
+        "output workbook contains appended row"
+      ],
+      "written_cells": [
+        "LineItems!A3",
+        "LineItems!B3",
+        "LineItems!C3"
+      ]
+    }
+  }
+}

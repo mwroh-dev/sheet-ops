@@ -1,23 +1,109 @@
 package main
 
 import (
+	"encoding/json"
+	"os"
 	"path/filepath"
 	"testing"
 
 	requestcompiler "github.com/mwroh/sheet-ops/runtime/openlayer/requestcompiler"
+	runtimeschema "github.com/mwroh/sheet-ops/runtime/schema"
+	runtimevalidate "github.com/mwroh/sheet-ops/runtime/validate"
 	runtimeworkbookcase "github.com/mwroh/sheet-ops/runtime/workbookcase"
 )
 
 func TestExecutedPublicEntryResultExposesAgentEnvelope(t *testing.T) {
+	envelope := newTestExecutedPublicEntryResult(t)
+
+	if envelope.SchemaVersion != cliContractSchemaVersion {
+		t.Fatalf("schema_version = %q, want %q", envelope.SchemaVersion, cliContractSchemaVersion)
+	}
+	if !envelope.OK {
+		t.Fatalf("ok = false, want true")
+	}
+	if envelope.Command != "run-intent" {
+		t.Fatalf("command = %q, want run-intent", envelope.Command)
+	}
+	if envelope.Recoverable {
+		t.Fatalf("recoverable = true, want false for executed success")
+	}
+	if len(envelope.NextActions) == 0 {
+		t.Fatalf("next_actions is empty")
+	}
+	assertPublicResultArtifact(t, envelope.Artifacts, "output_workbook", true, "primary_success")
+	assertPublicResultArtifact(t, envelope.Artifacts, "verification", true, "success_evidence")
+	assertPublicResultArtifact(t, envelope.Artifacts, "evidence_dir", true, "audit_trail")
+}
+
+func TestExecutedPublicEntryResultValidatesAgainstPublicSchema(t *testing.T) {
+	envelope := newTestExecutedPublicEntryResult(t)
+
+	if err := runtimeschema.ValidateStruct(publicEntryResultSchemaPath(), envelope); err != nil {
+		t.Fatalf("public entry result schema rejected executed envelope: %v", err)
+	}
+}
+
+func TestPublicEntryResultGoldenValidatesAgainstPublicSchema(t *testing.T) {
+	goldenPath := filepath.Join("testdata", "public_entry_result_executed.golden.json")
+	raw, err := os.ReadFile(goldenPath)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", goldenPath, err)
+	}
+	var document any
+	if err := json.Unmarshal(raw, &document); err != nil {
+		t.Fatalf("json.Unmarshal(%s): %v", goldenPath, err)
+	}
+	if err := runtimeschema.ValidateStruct(publicEntryResultSchemaPath(), document); err != nil {
+		t.Fatalf("public entry result golden failed schema validation: %v", err)
+	}
+}
+
+func TestExecutedPublicEntryResultSchemaRejectsMissingSuccessArtifacts(t *testing.T) {
+	document := publicEntryResultDocument(t, newTestExecutedPublicEntryResult(t))
+	document["artifacts"] = []any{}
+
+	if err := runtimeschema.ValidateStruct(publicEntryResultSchemaPath(), document); err == nil {
+		t.Fatalf("public entry result schema accepted executed envelope without success artifacts")
+	}
+}
+
+func TestTerminalCompilerPublicEntryResultSchemaRejectsStatusMismatch(t *testing.T) {
+	compiled := requestcompiler.PersistedResult{
+		Result: requestcompiler.Result{
+			Decision: requestcompiler.Decision{Status: requestcompiler.StatusNeedsHumanCheckpoint},
+		},
+		WorkUnitID: "needs-review-20260610",
+		RequestDir: filepath.Join(t.TempDir(), "request-compiler"),
+	}
+	envelope, err := newTerminalCompilerResult("run-intent", compiled)
+	if err == nil {
+		t.Fatalf("newTerminalCompilerResult returned nil error, want checkpoint error")
+	}
+	document := publicEntryResultDocument(t, envelope)
+	document["status"] = "blocked"
+
+	if err := runtimeschema.ValidateStruct(publicEntryResultSchemaPath(), document); err == nil {
+		t.Fatalf("public entry result schema accepted mismatched outer/request_compiler status")
+	}
+}
+
+func newTestExecutedPublicEntryResult(t *testing.T) PublicEntryResult {
+	t.Helper()
+
 	tempDir := t.TempDir()
 	compiled := requestcompiler.PersistedResult{
 		Result: requestcompiler.Result{
-			Decision: requestcompiler.Decision{Status: requestcompiler.StatusCompiled},
+			Decision:                  requestcompiler.Decision{Status: requestcompiler.StatusCompiled},
+			ValidatedExecutionRequest: &runtimevalidate.ValidatedExecutionRequest{},
 		},
 		WorkUnitID: "append-rows-20260610",
 		RequestDir: filepath.Join(tempDir, "request-compiler"),
 	}
 	result := runtimeworkbookcase.RunResult{
+		IDs: runtimeworkbookcase.RunIDs{
+			RunID:   "run-append-rows-20260610",
+			TraceID: "trace-append-rows-20260610",
+		},
 		Paths: runtimeworkbookcase.RunPaths{
 			EvidenceDir:         filepath.Join(tempDir, "evidence"),
 			ReportDir:           filepath.Join(tempDir, "reports"),
@@ -41,26 +127,21 @@ func TestExecutedPublicEntryResultExposesAgentEnvelope(t *testing.T) {
 		},
 	}
 
-	envelope := newExecutedPublicEntryResult("run-intent", compiled, result)
+	return newExecutedPublicEntryResult("run-intent", compiled, result)
+}
 
-	if envelope.SchemaVersion != cliContractSchemaVersion {
-		t.Fatalf("schema_version = %q, want %q", envelope.SchemaVersion, cliContractSchemaVersion)
+func publicEntryResultDocument(t *testing.T, envelope PublicEntryResult) map[string]any {
+	t.Helper()
+
+	raw, err := json.Marshal(envelope)
+	if err != nil {
+		t.Fatalf("Marshal public entry result: %v", err)
 	}
-	if !envelope.OK {
-		t.Fatalf("ok = false, want true")
+	var document map[string]any
+	if err := json.Unmarshal(raw, &document); err != nil {
+		t.Fatalf("Unmarshal public entry result: %v", err)
 	}
-	if envelope.Command != "run-intent" {
-		t.Fatalf("command = %q, want run-intent", envelope.Command)
-	}
-	if envelope.Recoverable {
-		t.Fatalf("recoverable = true, want false for executed success")
-	}
-	if len(envelope.NextActions) == 0 {
-		t.Fatalf("next_actions is empty")
-	}
-	assertPublicResultArtifact(t, envelope.Artifacts, "output_workbook", true, "primary_success")
-	assertPublicResultArtifact(t, envelope.Artifacts, "verification", true, "success_evidence")
-	assertPublicResultArtifact(t, envelope.Artifacts, "evidence_dir", true, "audit_trail")
+	return document
 }
 
 func TestPublicEntryResultTerminalCompilerExposesRecoverableAgentEnvelope(t *testing.T) {
@@ -94,6 +175,24 @@ func TestPublicEntryResultTerminalCompilerExposesRecoverableAgentEnvelope(t *tes
 	assertPublicResultArtifact(t, envelope.Artifacts, "compiler_decision", true, "failure_context")
 }
 
+func TestTerminalCompilerPublicEntryResultValidatesAgainstPublicSchema(t *testing.T) {
+	compiled := requestcompiler.PersistedResult{
+		Result: requestcompiler.Result{
+			Decision: requestcompiler.Decision{Status: requestcompiler.StatusNeedsHumanCheckpoint},
+		},
+		WorkUnitID: "needs-review-20260610",
+		RequestDir: filepath.Join(t.TempDir(), "request-compiler"),
+	}
+
+	envelope, err := newTerminalCompilerResult("run-intent", compiled)
+	if err == nil {
+		t.Fatalf("newTerminalCompilerResult returned nil error, want checkpoint error")
+	}
+	if err := runtimeschema.ValidateStruct(publicEntryResultSchemaPath(), envelope); err != nil {
+		t.Fatalf("public entry result schema rejected terminal compiler envelope: %v", err)
+	}
+}
+
 func assertPublicResultArtifact(t *testing.T, artifacts []PublicResultArtifact, kind string, required bool, role string) {
 	t.Helper()
 
@@ -112,4 +211,8 @@ func assertPublicResultArtifact(t *testing.T, artifacts []PublicResultArtifact, 
 		}
 	}
 	t.Fatalf("missing artifact kind %q in %+v", kind, artifacts)
+}
+
+func publicEntryResultSchemaPath() string {
+	return filepath.Join("..", "..", "contracts", "results", "public_entry_result.schema.json")
 }

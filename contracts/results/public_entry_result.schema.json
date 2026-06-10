@@ -3,8 +3,47 @@
   "$id": "https://sheet-ops.local/contracts/results/public_entry_result.schema.json",
   "title": "PublicEntryResult",
   "type": "object",
-  "required": ["entry", "status", "work_unit_id", "request_compiler", "runtime"],
+  "required": [
+    "schema_version",
+    "ok",
+    "command",
+    "recoverable",
+    "artifacts",
+    "next_actions",
+    "entry",
+    "status",
+    "work_unit_id",
+    "request_compiler",
+    "runtime"
+  ],
   "properties": {
+    "schema_version": {
+      "const": "sheet-ops-cli/v1"
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "command": {
+      "enum": ["run-prompt", "run-text", "run-intent"]
+    },
+    "recoverable": {
+      "type": "boolean"
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/artifact"
+      }
+    },
+    "next_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
     "entry": {
       "enum": ["run-prompt", "run-text", "run-intent"]
     },
@@ -21,12 +60,34 @@
     "runtime": {
       "oneOf": [
         { "type": "null" },
-        { "$ref": "https://sheet-ops.local/contracts/results/public-runtime-result" }
+        { "$ref": "#/$defs/public_runtime_result" }
       ]
     }
   },
   "additionalProperties": false,
   "$defs": {
+    "artifact": {
+      "type": "object",
+      "required": ["kind", "path", "required", "success_role"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "success_role": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
     "request_compiler": {
       "type": "object",
       "required": ["status", "request_dir", "decision_path", "generated_request_path"],
@@ -49,7 +110,6 @@
       "additionalProperties": false
     },
     "public_runtime_result": {
-      "$id": "https://sheet-ops.local/contracts/results/public-runtime-result",
       "type": "object",
       "required": ["ids", "paths", "verification"],
       "properties": {
@@ -72,87 +132,41 @@
           "type": "object",
           "required": ["evidence_dir"],
           "properties": {
-            "telemetry_dir": {
-              "type": "string"
-            },
+            "telemetry_dir": { "type": "string" },
             "evidence_dir": {
               "type": "string",
               "minLength": 1
             },
-            "report_dir": {
-              "type": "string"
-            },
-            "request_path": {
-              "type": "string"
-            },
-            "inspection_path": {
-              "type": "string"
-            },
-            "plan_path": {
-              "type": "string"
-            },
-            "policy_path": {
-              "type": "string"
-            },
-            "task_spec_path": {
-              "type": "string"
-            },
-            "operation_ir_path": {
-              "type": "string"
-            },
-            "episode_path": {
-              "type": "string"
-            },
-            "execution_path": {
-              "type": "string"
-            },
-            "verification_path": {
-              "type": "string"
-            },
-            "verification_review_path": {
-              "type": "string"
-            },
-            "outcome_path": {
-              "type": "string"
-            },
-            "failure_evidence_path": {
-              "type": "string"
-            },
-            "repair_advice_path": {
-              "type": "string"
-            },
-            "evidence_index": {
-              "type": "string"
-            },
-            "report_path": {
-              "type": "string"
-            }
+            "report_dir": { "type": "string" },
+            "request_path": { "type": "string" },
+            "inspection_path": { "type": "string" },
+            "plan_path": { "type": "string" },
+            "policy_path": { "type": "string" },
+            "task_spec_path": { "type": "string" },
+            "operation_ir_path": { "type": "string" },
+            "episode_path": { "type": "string" },
+            "execution_path": { "type": "string" },
+            "verification_path": { "type": "string" },
+            "verification_review_path": { "type": "string" },
+            "outcome_path": { "type": "string" },
+            "failure_evidence_path": { "type": "string" },
+            "repair_advice_path": { "type": "string" },
+            "evidence_index": { "type": "string" },
+            "report_path": { "type": "string" }
           },
           "additionalProperties": false
         },
-        "inspection": {
-          "type": "object"
-        },
-        "summary_inspection": {
-          "type": ["object", "null"]
-        },
+        "inspection": { "type": "object" },
+        "summary_inspection": { "type": ["object", "null"] },
         "plan": {},
-        "policy": {
-          "type": "object"
-        },
-        "execution": {
-          "type": "object"
-        },
-        "episode": {
-          "type": ["object", "null"]
-        },
+        "policy": { "type": "object" },
+        "execution": { "type": "object" },
+        "episode": { "type": ["object", "null"] },
         "verification": {
           "type": "object",
           "required": ["pass", "operation", "output_file", "reasons"],
           "properties": {
-            "pass": {
-              "type": "boolean"
-            },
+            "pass": { "type": "boolean" },
             "operation": {
               "type": "string",
               "minLength": 1
@@ -163,22 +177,14 @@
             },
             "reasons": {
               "type": "array",
-              "items": {
-                "type": "string"
-              }
+              "items": { "type": "string" }
             }
           },
           "additionalProperties": true
         },
-        "verification_review": {
-          "type": ["object", "null"]
-        },
-        "repair_advice": {
-          "type": ["object", "null"]
-        },
-        "failure": {
-          "type": ["object", "null"]
-        }
+        "verification_review": { "type": ["object", "null"] },
+        "repair_advice": { "type": ["object", "null"] },
+        "failure": { "type": ["object", "null"] }
       },
       "additionalProperties": false
     }
@@ -187,25 +193,82 @@
     {
       "if": {
         "properties": {
-          "status": { "const": "compiled" }
+          "status": { "const": "executed" }
         },
         "required": ["status"]
       },
       "then": {
         "properties": {
+          "ok": { "const": true },
+          "recoverable": { "const": false },
           "request_compiler": {
             "allOf": [
               { "$ref": "#/$defs/request_compiler" },
               {
                 "properties": {
                   "status": { "const": "compiled" },
-                  "generated_request_path": { "const": "" }
+                  "generated_request_path": { "minLength": 1 }
                 },
                 "required": ["status", "generated_request_path"]
               }
             ]
           },
-          "runtime": { "type": "null" }
+          "artifacts": {
+            "allOf": [
+              {
+                "contains": {
+                  "allOf": [
+                    { "$ref": "#/$defs/artifact" },
+                    {
+                      "properties": {
+                        "kind": { "const": "output_workbook" },
+                        "required": { "const": true },
+                        "success_role": { "const": "primary_success" },
+                        "path": { "minLength": 1 }
+                      },
+                      "required": ["kind", "required", "success_role", "path"]
+                    }
+                  ]
+                },
+                "minContains": 1
+              },
+              {
+                "contains": {
+                  "allOf": [
+                    { "$ref": "#/$defs/artifact" },
+                    {
+                      "properties": {
+                        "kind": { "const": "verification" },
+                        "required": { "const": true },
+                        "success_role": { "const": "success_evidence" },
+                        "path": { "minLength": 1 }
+                      },
+                      "required": ["kind", "required", "success_role", "path"]
+                    }
+                  ]
+                },
+                "minContains": 1
+              },
+              {
+                "contains": {
+                  "allOf": [
+                    { "$ref": "#/$defs/artifact" },
+                    {
+                      "properties": {
+                        "kind": { "const": "evidence_dir" },
+                        "required": { "const": true },
+                        "success_role": { "const": "audit_trail" },
+                        "path": { "minLength": 1 }
+                      },
+                      "required": ["kind", "required", "success_role", "path"]
+                    }
+                  ]
+                },
+                "minContains": 1
+              }
+            ]
+          },
+          "runtime": { "$ref": "#/$defs/public_runtime_result" }
         }
       }
     },
@@ -218,6 +281,8 @@
       },
       "then": {
         "properties": {
+          "ok": { "const": false },
+          "recoverable": { "const": true },
           "request_compiler": {
             "allOf": [
               { "$ref": "#/$defs/request_compiler" },
@@ -243,6 +308,8 @@
       },
       "then": {
         "properties": {
+          "ok": { "const": false },
+          "recoverable": { "const": true },
           "request_compiler": {
             "allOf": [
               { "$ref": "#/$defs/request_compiler" },
@@ -256,31 +323,6 @@
             ]
           },
           "runtime": { "type": "null" }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "status": { "const": "executed" }
-        },
-        "required": ["status"]
-      },
-      "then": {
-        "properties": {
-          "request_compiler": {
-            "allOf": [
-              { "$ref": "#/$defs/request_compiler" },
-              {
-                "properties": {
-                  "status": { "const": "compiled" },
-                  "generated_request_path": { "minLength": 1 }
-                },
-                "required": ["status", "generated_request_path"]
-              }
-            ]
-          },
-          "runtime": { "$ref": "https://sheet-ops.local/contracts/results/public-runtime-result" }
         }
       }
     }

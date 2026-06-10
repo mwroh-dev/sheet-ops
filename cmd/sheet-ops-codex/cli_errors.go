@@ -47,8 +47,9 @@ func (err cliError) Error() string {
 }
 
 type cliErrorEnvelope struct {
-	OK    bool     `json:"ok"`
-	Error cliError `json:"error"`
+	SchemaVersion string   `json:"schema_version"`
+	OK            bool     `json:"ok"`
+	Error         cliError `json:"error"`
 }
 
 type cliErrorContractPayload struct {
@@ -128,8 +129,9 @@ func writeCLIErrorJSON(output io.Writer, err *cliError) error {
 	encoder := json.NewEncoder(output)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(cliErrorEnvelope{
-		OK:    false,
-		Error: *err,
+		SchemaVersion: cliContractSchemaVersion,
+		OK:            false,
+		Error:         *err,
 	})
 }
 

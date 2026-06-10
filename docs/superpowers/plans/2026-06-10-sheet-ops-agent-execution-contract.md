@@ -212,25 +212,25 @@ Web-search value: high. Use JSON Schema 2020-12, root `$schema`, modular `$defs`
 
 ### TODO
 
-- [ ] Add JSON Schema files for public CLI outputs.
+- [x] Add JSON Schema files for public CLI outputs.
   - Evaluation: schemas exist for capabilities, command schema, error contract, result envelope, preflight, and installed E2E result.
   - Result: external agents can validate outputs without reading Go structs.
   - Likely files: `contracts/cli/*.schema.json`, `cmd/sheet-ops-codex/*_test.go`.
   - Risk: medium.
   - Rollback: start with capabilities and result envelope only.
-- [ ] Add golden JSON fixtures.
+- [x] Add golden JSON fixtures.
   - Evaluation: representative command outputs are captured with stable fields and validated against schemas.
   - Result: compatibility drift is visible in review.
-- [ ] Add compatibility policy tests.
+- [x] Add compatibility policy tests.
   - Evaluation: `schema_version` changes are required for breaking field removals/renames; additive optional fields are allowed.
   - Result: tests encode backward compatibility expectations.
-- [ ] Add docs for schema versioning.
+- [x] Add docs for schema versioning.
   - Evaluation: docs define when to bump `schema_version` and how agents should handle unknown fields.
   - Result: consumers know what is stable.
-- [ ] Run separate verifier.
+- [x] Run separate verifier.
   - Evaluation: verifier checks schemas use JSON Schema 2020-12 and validate generated outputs.
   - Result: pass/fail before commit.
-- [ ] Commit Phase 16.
+- [x] Commit Phase 16.
   - Evaluation: schema/golden tests pass.
   - Result: `phase16/schema: publish cli output contracts`.
 
@@ -487,3 +487,61 @@ Backlog self-review:
   can validate the envelope without executing a workbook.
 
 Commit: `phase15/e2e: prove installed workbook execution`.
+
+### Phase 16 Result Note
+
+Web research:
+
+- JSON Schema 2020-12 references confirmed the use of explicit root `$schema`,
+  `$id`, and modular `$defs`.
+- MCP tool output-schema guidance reinforced the contract shape: structured
+  outputs should have a schema and clients should be able to validate them.
+- Schema-evolution references informed the local compatibility policy:
+  breaking output changes require a new `schema_version`; additive optional
+  fields can stay on `sheet-ops-cli/v1`.
+
+Implementation outcome:
+
+- Added published CLI output schemas for:
+  - `capabilities --json`,
+  - `schema --json` and `schema command <name> --json`,
+  - JSON error envelopes,
+  - `preflight --json`.
+- Updated `contracts/results/public_entry_result.schema.json` for the Phase 13
+  outer agent envelope fields.
+- Added a public entry result golden fixture for a minimal executed
+  `run-intent` success envelope.
+- JSON error envelopes now include `schema_version`.
+- Added schema tests against live CLI outputs, generated public-entry
+  envelopes, terminal compiler-stop envelopes, the golden fixture, negative
+  malformed public-entry cases, and schema-version pins.
+- Added `docs/public/cli-output-contracts.md` with versioning and unknown-field
+  consumer guidance.
+
+Verification:
+
+- Red evidence:
+  `go test ./cmd/sheet-ops-codex -run 'TestExecutedPublicEntryResultValidatesAgainstPublicSchema' -count=1 -v`
+  failed because `public_entry_result.schema.json` rejected the Phase 13 outer
+  fields `schema_version`, `ok`, `command`, `recoverable`, `artifacts`, and
+  `next_actions`.
+- `go test ./cmd/sheet-ops-codex -run 'TestSchemaCommandUnknownJSONEmitsTypedError|TestCLIJSONOutputsValidateAgainstPublishedSchemas|TestCLIErrorEnvelopeValidatesAgainstPublishedSchema|TestPublishedCLISchemasPinSchemaVersion|Test.*PublicEntryResult.*Schema|TestTerminalCompilerPublicEntryResultValidatesAgainstPublicSchema' -count=1 -v`: pass.
+- `go test ./internal/releasecontracts -run 'TestReleaseSchemasCompile|TestReleaseSchemaReferencesAreLocallyResolvable' -count=1`: pass.
+- `go test ./cmd/sheet-ops-codex ./cmd/sheet-ops-agent ./internal/releasecontracts -count=1`: pass.
+- `go test ./... -count=1`: pass.
+- Separate verifier initially found three blockers: executed success artifacts
+  were too permissive, checkpoint/blocked status consistency was not enforced,
+  and error envelopes lacked `schema_version`; all three were closed before
+  commit.
+
+Backlog self-review:
+
+- Hand-written schemas are acceptable for this phase because they encode the
+  agent-facing contract rather than every internal Go struct detail.
+- Schema generation remains a possible future maintenance improvement if CLI
+  output structs grow, but introducing it now would add toolchain surface before
+  the contract finishes stabilizing.
+- `sheet-ops-cli/v1` is sufficient for now; no semantic sub-version is needed
+  until a real breaking output migration exists.
+
+Commit: `phase16/schema: publish cli output contracts`.
