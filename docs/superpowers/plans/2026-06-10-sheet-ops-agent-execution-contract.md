@@ -364,3 +364,45 @@ Backlog self-review:
   generate the workbook deterministically.
 
 Commit: `phase12/e2e: discover installed workbook smoke contract`.
+
+### Phase 13 Result Note
+
+Implementation outcome:
+
+- Added a stable outer envelope to `PublicEntryResult` while preserving existing
+  detailed payload fields.
+- New outer fields:
+  - `schema_version`
+  - `ok`
+  - `command`
+  - `recoverable`
+  - `artifacts`
+  - `next_actions`
+- Executed public results now expose required artifact references for:
+  - `output_workbook` as `primary_success`,
+  - `verification` as `success_evidence`,
+  - `evidence_dir` as `audit_trail`.
+- Terminal compiler stops now return a recoverable envelope with
+  `compiler_decision` as `failure_context`.
+
+Verification:
+
+- Red evidence:
+  `go test ./cmd/sheet-ops-codex -run 'Test.*PublicEntryResult.*Envelope' -count=1`
+  failed because `PublicEntryResult` had no `schema_version`, `ok`, `command`,
+  `recoverable`, `artifacts`, or `next_actions` fields.
+- `go test ./cmd/sheet-ops-codex -run 'Test.*PublicEntryResult.*Envelope' -count=1 -v`: pass and runs both executed-success and terminal-compiler envelope tests.
+- `go test ./cmd/sheet-ops-codex -count=1`: pass.
+- Separate verifier: first pass found the focused regex did not cover terminal
+  compiler stop; after renaming the test, re-verifier passed with no blockers.
+
+Backlog self-review:
+
+- The public `run-intent` entry now has a stable agent envelope without hiding
+  runtime detail.
+- `run-validated` remains an internal handoff surface and should be evaluated in
+  Phase 14 when runtime typed producers are wired.
+- Formal JSON Schema for the new envelope remains deferred to Phase 16 so schema
+  files do not churn while runtime error producers are still changing.
+
+Commit: `phase13/envelope: standardize agent execution results`.

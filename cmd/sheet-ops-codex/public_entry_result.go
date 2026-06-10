@@ -13,11 +13,24 @@ import (
 )
 
 type PublicEntryResult struct {
+	SchemaVersion   string                 `json:"schema_version"`
+	OK              bool                   `json:"ok"`
+	Command         string                 `json:"command"`
+	Recoverable     bool                   `json:"recoverable"`
+	Artifacts       []PublicResultArtifact `json:"artifacts"`
+	NextActions     []string               `json:"next_actions"`
 	Entry           string                 `json:"entry"`
 	Status          string                 `json:"status"`
 	WorkUnitID      string                 `json:"work_unit_id"`
 	RequestCompiler PublicEntryCompilerRef `json:"request_compiler"`
 	Runtime         any                    `json:"runtime"`
+}
+
+type PublicResultArtifact struct {
+	Kind        string `json:"kind"`
+	Path        string `json:"path"`
+	Required    bool   `json:"required"`
+	SuccessRole string `json:"success_role"`
 }
 
 type PublicEntryCompilerRef struct {
@@ -176,6 +189,22 @@ func newTerminalCompilerResult(entry string, compiled requestcompiler.PersistedR
 		}
 	}
 	return PublicEntryResult{
+		SchemaVersion: cliContractSchemaVersion,
+		OK:            false,
+		Command:       entry,
+		Recoverable:   true,
+		Artifacts: []PublicResultArtifact{
+			{
+				Kind:        "compiler_decision",
+				Path:        decisionPath,
+				Required:    true,
+				SuccessRole: "failure_context",
+			},
+		},
+		NextActions: []string{
+			"Inspect request_compiler.decision_path.",
+			"Resolve the compiler checkpoint or blocked request before retrying.",
+		},
 		Entry:      entry,
 		Status:     status,
 		WorkUnitID: compiled.WorkUnitID,
@@ -200,7 +229,17 @@ func newExecutedPublicEntryResult(entry string, compiled requestcompiler.Persist
 			generatedRequestPath = filepath.Base(generatedRequestPath)
 		}
 	}
+	publicRuntime := newPublicRuntimeResult(result)
 	return PublicEntryResult{
+		SchemaVersion: cliContractSchemaVersion,
+		OK:            result.Verification.Pass,
+		Command:       entry,
+		Recoverable:   false,
+		Artifacts:     publicSuccessArtifacts(publicRuntime),
+		NextActions: []string{
+			"Inspect runtime.verification before claiming workbook success.",
+			"Open the output workbook only after verification pass is true.",
+		},
 		Entry:      entry,
 		Status:     "executed",
 		WorkUnitID: compiled.WorkUnitID,
@@ -210,8 +249,31 @@ func newExecutedPublicEntryResult(entry string, compiled requestcompiler.Persist
 			DecisionPath:         decisionPath,
 			GeneratedRequestPath: generatedRequestPath,
 		},
-		Runtime: newPublicRuntimeResult(result),
+		Runtime: publicRuntime,
 	}
+}
+
+func publicSuccessArtifacts(result PublicRuntimeResult) []PublicResultArtifact {
+	artifacts := make([]PublicResultArtifact, 0, 6)
+	artifacts = appendPublicResultArtifact(artifacts, "output_workbook", result.Verification.OutputFile, true, "primary_success")
+	artifacts = appendPublicResultArtifact(artifacts, "verification", result.Paths.VerificationPath, true, "success_evidence")
+	artifacts = appendPublicResultArtifact(artifacts, "evidence_dir", result.Paths.EvidenceDir, true, "audit_trail")
+	artifacts = appendPublicResultArtifact(artifacts, "execution", result.Paths.ExecutionPath, false, "supporting_evidence")
+	artifacts = appendPublicResultArtifact(artifacts, "outcome", result.Paths.OutcomePath, false, "supporting_evidence")
+	artifacts = appendPublicResultArtifact(artifacts, "report", result.Paths.ReportPath, false, "human_review")
+	return artifacts
+}
+
+func appendPublicResultArtifact(artifacts []PublicResultArtifact, kind, path string, required bool, role string) []PublicResultArtifact {
+	if path == "" {
+		return artifacts
+	}
+	return append(artifacts, PublicResultArtifact{
+		Kind:        kind,
+		Path:        path,
+		Required:    required,
+		SuccessRole: role,
+	})
 }
 
 func redactPublicRunPaths(paths runtimeworkbookcase.RunPaths) PublicRunPaths {
