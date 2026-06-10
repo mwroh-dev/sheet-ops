@@ -182,3 +182,86 @@ Ask:
 - Are any browser-flow verification lessons missing from the final matrix?
 
 Do not mark the goal complete until the completion audit proves every explicit objective requirement.
+
+## Execution Result Notes
+
+### Phase 8 Result Note
+
+Implementation outcome:
+
+- Extended installed bundled CLI smoke so it runs installed
+  `.codex/skills/sheet-ops/bin/sheet-ops-codex schema command prepare-use --json`.
+- The installed smoke now verifies `prepare-use` name, `agent_contract`
+  classification, `mutating:true`, `read_only:false`, and `--envelope-file`.
+- Kept the smoke scoped to installed meta-contract surfaces; full workbook
+  execution remains a separate high-risk fixture task.
+
+Verification:
+
+- Red evidence: `rg -n "prepare-use" cmd/sheet-ops-codex/install_skill_test.go`
+  exited 1 before the test was added.
+- `go test ./cmd/sheet-ops-codex -run 'TestInstallSkillBundledCLIExposesAgentContract' -count=1`: pass.
+- `go test ./cmd/sheet-ops-codex -count=1`: pass.
+- Separate verifier: pass, no blockers.
+
+Commit: `phase8/install-smoke: cover prepare-use installed contract`.
+
+### Phase 9 Result Note
+
+Implementation outcome:
+
+- Added `status` and `producer` to each `error_contract.codes[]` descriptor.
+- Marked currently observed producers as `emitted`: `invalid_usage`,
+  `missing_required_option`, `unknown_command`, and `internal_error`.
+- Marked runtime/future categories as `reserved` until typed producers and
+  focused tests exist.
+
+Verification:
+
+- Red evidence:
+  `go test ./cmd/sheet-ops-codex -run 'TestCapabilitiesJSONReportsSafeEntryBoundaries' -count=1`
+  failed because `invalid_usage` had empty `status`.
+- `go test ./cmd/sheet-ops-codex -run 'Test.*Error.*|TestCapabilitiesJSONReportsSafeEntryBoundaries' -count=1`: pass.
+- `go test ./cmd/sheet-ops-codex -count=1`: pass.
+- Separate verifier: pass, no blockers.
+
+Commit: `phase9/errors: mark emitted and reserved taxonomy`.
+
+### Phase 10 Result Note
+
+Implementation outcome:
+
+- Added `root_command` to `capabilities --json`.
+- Removed root `sheet-ops-codex` from `read_only_commands` so that list contains
+  executable read-only subcommands only.
+- Kept `commands` as subcommands only.
+
+Verification:
+
+- Red evidence:
+  `go test ./cmd/sheet-ops-codex -run 'TestCapabilitiesJSONReportsSafeEntryBoundaries' -count=1`
+  failed because `root_command.name` was empty.
+- `go test ./cmd/sheet-ops-codex -run 'TestCapabilitiesJSONReportsSafeEntryBoundaries|TestSchemaJSONReportsCommandContracts' -count=1`: pass.
+- `go test ./cmd/sheet-ops-codex -count=1`: pass.
+- `go run ./cmd/sheet-ops-codex capabilities --json`: pass; output includes
+  `root_command` and excludes `sheet-ops-codex` from `read_only_commands`.
+- Separate verifier: pass, no blockers.
+
+Commit: `phase10/capabilities: separate root command metadata`.
+
+### Phase 11 Result Note
+
+Implementation outcome:
+
+- Updated the final review artifact with a browser-flow-style evidence matrix.
+- Added unsupported assumptions, allowed strategy, and rejected strategy notes.
+- Recorded hardening result notes in this plan to preserve phase/lane evidence.
+
+Verification:
+
+- `go test ./cmd/sheet-ops-codex ./cmd/sheet-ops-agent ./internal/releasecontracts -count=1`: pass.
+- `go run ./cmd/sheet-ops-codex capabilities --json`: pass.
+- `go run ./cmd/sheet-ops-codex schema command prepare-use --json`: pass.
+- `go run ./cmd/sheet-ops-codex preflight --json`: pass.
+- `go test ./... -count=1`: pass.
+- Separate final verifier: pass, no blockers.
