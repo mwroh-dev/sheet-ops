@@ -32,6 +32,7 @@ cmd/sheet-ops-codex/preflight_command.go
 cmd/sheet-ops-codex/preview_request_command.go
 cmd/sheet-ops-codex/install_skill.go
 cmd/sheet-ops-codex/install_manifest.txt
+cmd/sheet-ops-codex/internal_handoff_result.go
 cmd/sheet-ops-codex/public_entry_result.go
 cmd/sheet-ops-codex/skill_assets/agent-system/bundle.manifest.json
 cmd/sheet-ops-codex/skill_assets/agent-system/manifest.paths

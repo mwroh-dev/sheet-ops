@@ -266,7 +266,7 @@ func sheetOpsCLIContracts(rootName string) map[string]cliCommandContract {
 			Options: []string{
 				"--file: Path to a validated execution request JSON file.",
 			},
-			OutputMode: "Runtime orchestration result JSON on stdout.",
+			OutputMode: "Internal handoff envelope JSON on stdout, with runtime evidence under runtime.",
 			SideEffects: []string{
 				"May execute workbook mutations described by the validated request.",
 				"May write workbook-case runtime artifacts under .sheet-ops-state.",
@@ -302,7 +302,7 @@ func sheetOpsCLIContracts(rootName string) map[string]cliCommandContract {
 			Options: []string{
 				"--request: Path to a validated execution request JSON file.",
 			},
-			OutputMode: "Runtime orchestration result JSON on stdout.",
+			OutputMode: "Internal handoff envelope JSON on stdout, with runtime evidence under runtime.",
 			SideEffects: []string{
 				"May execute workbook mutations described by the validated request.",
 				"May write workbook-case runtime artifacts under .sheet-ops-state.",

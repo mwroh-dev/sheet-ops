@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -61,7 +60,7 @@ func newRunValidatedCommand() *cobra.Command {
 		Short: "Run a validated execution request",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runValidatedExecutionRequest(cmd, requestFile)
+			return runValidatedExecutionRequest(cmd, "run-validated", requestFile)
 		},
 	}
 
@@ -82,7 +81,7 @@ func newRunRequestCommand() *cobra.Command {
 		Short:  "Compatibility alias for run-validated",
 		Args:   cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runValidatedExecutionRequest(cmd, requestFile)
+			return runValidatedExecutionRequest(cmd, "run-request", requestFile)
 		},
 	}
 
@@ -94,7 +93,7 @@ func newRunRequestCommand() *cobra.Command {
 	return cmd
 }
 
-func runValidatedExecutionRequest(cmd *cobra.Command, requestFile string) error {
+func runValidatedExecutionRequest(cmd *cobra.Command, commandName, requestFile string) error {
 	validatedReq, err := useorchestrator.LoadValidatedExecutionRequest(requestFile)
 	if err != nil {
 		return err
@@ -104,7 +103,11 @@ func runValidatedExecutionRequest(cmd *cobra.Command, requestFile string) error 
 		return err
 	}
 	result, orchestrateErr := orchestrateValidated(validatedReq)
-	if err := writeResultJSON(cmd.OutOrStdout(), result); err != nil {
+	if orchestrateErr != nil && !runtimeStarted(result) {
+		return orchestrateErr
+	}
+	envelope := newInternalHandoffRunResult(commandName, result)
+	if err := writeInternalHandoffRunResultJSON(cmd.OutOrStdout(), envelope); err != nil {
 		return errors.Join(orchestrateErr, err)
 	}
 	return orchestrateErr
@@ -389,12 +392,6 @@ func currentWorkingDirOrPanic() string {
 		panic(err)
 	}
 	return workingDir
-}
-
-func writeResultJSON(output io.Writer, result useorchestrator.RunResult) error {
-	encoder := json.NewEncoder(output)
-	encoder.SetIndent("", "  ")
-	return encoder.Encode(result)
 }
 
 func runtimeStarted(result useorchestrator.RunResult) bool {

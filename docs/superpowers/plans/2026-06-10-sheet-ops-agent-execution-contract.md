@@ -44,6 +44,7 @@ Sequential implementation lane:
 13. Phase 26: executed failure public fingerprint contract.
 14. Phase 27: executed failure artifact role contract.
 15. Phase 28: failed run-intent public envelope emission.
+16. Phase 29: run-validated internal handoff envelope.
 
 Phase 12 comes before Phase 13 because the existing runtime output must be observed before a stable envelope is imposed. Phase 15 comes after Phases 13-14 so the E2E smoke can assert the final contract rather than a temporary shape.
 
@@ -1135,6 +1136,85 @@ Do not change successful execution semantics in this phase.
   into command-level and pre-runtime branch tests before commit.
 - Backlog self-review: keep `run-validated` public envelope migration and
   structured fallback for fingerprint-construction failures as future work.
+
+## Phase 29 - Run-Validated Internal Handoff Envelope
+
+Lane: Execution Contract.
+
+Web-search value: low. This is a local contract-boundary phase. Existing docs
+and capabilities classify `run-validated` as `internal_handoff`, so the goal is
+not to promote it to a public entry. The goal is to make its stdout agent-stable
+instead of raw Go runtime JSON.
+
+### TODO
+
+- [x] Add failing command-level test for `run-validated` stdout shape.
+  - Evaluation: successful `run-validated` writes an outer envelope with
+    `schema_version`, `ok`, `command`, `recoverable`, `artifacts`,
+    `next_actions`, `status`, `classification`, and `runtime`.
+  - Result: internal handoff callers can parse the same top-level control
+    fields as public execution entries without treating this as a public
+    workbook request entry.
+  - Likely files: `cmd/sheet-ops-codex/run_validated_entry_test.go`.
+  - Risk: medium.
+  - Rollback: keep raw runtime JSON and document the handoff gap.
+- [x] Preserve non-public boundary.
+  - Evaluation: `run-validated` remains classified as `internal_handoff` in
+    capabilities/schema surfaces and docs.
+  - Result: humans still use the `sheet-ops` skill / `run-intent` route, while
+    internal agents get machine-readable handoff output.
+- [x] Emit structured artifacts for the runtime result.
+  - Evaluation: output workbook, verification, evidence dir, execution,
+    outcome, and report use the same artifact role semantics as public executed
+    results.
+  - Result: callers can locate authoritative evidence without parsing raw
+    runtime internals first.
+- [x] Run separate verifier.
+  - Evaluation: verifier checks handoff stdout shape, classification
+    preservation, success/failure artifact roles, and public entry schema drift.
+  - Result: pass/fail before commit.
+- [x] Commit Phase 29.
+  - Evaluation: focused handoff tests, related package tests, and
+    `git diff --check` pass.
+  - Result: `phase29/run-validated: wrap internal handoff result`.
+
+### Phase-End Backlog Review
+
+Ask:
+
+- Should a separate JSON Schema be published for internal handoff results?
+- Should `run-request`, the hidden compatibility alias, advertise the same
+  envelope command value or preserve `run-request` as the command value?
+- Should fingerprint-construction failures for public entries produce a smaller
+  structured terminal envelope?
+
+Do not add `run-validated` to the public entry result schema in this phase.
+
+### Phase 29 Result Note
+
+- Implementation: `run-validated` and hidden `run-request` now write an
+  internal handoff envelope with `schema_version`, `ok`, `command`, `status`,
+  `classification:"internal_handoff"`, `recoverable`, `artifacts`,
+  `next_actions`, and `runtime`.
+- Contract guard: pre-runtime orchestration failures return the original error
+  without emitting an executed handoff envelope, matching the `run-intent`
+  runtime-started guard.
+- Coverage: command-level tests cover successful `run-validated`, runtime-started
+  failure with non-zero error plus JSON stdout, and pre-runtime failure with no
+  executed stdout.
+- Boundary: `run-validated` remains classified as `internal_handoff`; public
+  entry schema was not broadened to include it.
+- Red evidence:
+  `go test ./cmd/sheet-ops-codex -run TestRunValidatedCommandWritesInternalHandoffEnvelope -count=1 -v`
+  failed before implementation because stdout was raw `RunResult` JSON with Go
+  field names such as `IDs` and no outer `schema_version`.
+- Verification evidence: focused handoff tests, capability/schema tests, related
+  package tests, and `git diff --check` pass. Separate verifier initially found
+  a pre-runtime failure blocker; Phase 29 added the guard and regression test
+  before commit.
+- Backlog self-review: keep installed-bundle `run-validated` execution smoke
+  and a formal internal handoff JSON Schema as future work. The installed bundle
+  currently rebuilds successfully through existing install tests.
 
 ## Final Review Phase - Agent Execution Contract Completion
 
