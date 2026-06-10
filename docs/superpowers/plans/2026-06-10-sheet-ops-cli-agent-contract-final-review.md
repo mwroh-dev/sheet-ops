@@ -2,20 +2,32 @@
 
 Branch: `codex/cli-agent-contract`
 
-Final status: pass after Phase 18 documentation closure.
+Review status: refreshed after Phase 32 planning. The current evidence covers
+the original execution-contract work plus the later handoff hardening phases
+28-31.
 
 ## Implemented Contract
 
 - `sheet-ops` remains the single human-facing workbook request entry.
 - `sheet-ops-codex` exposes classified install, discovery, typed handoff,
   maintainer diagnostic, internal execution, preview, and support surfaces.
-- Installed `.codex/skills/sheet-ops/bin/sheet-ops-codex` is tested for both
-  metadata discovery and real workbook execution.
+- Installed `.codex/skills/sheet-ops/bin/sheet-ops-codex` is tested for
+  metadata discovery, public `run-intent` workbook execution, and internal
+  `run-validated` handoff execution.
 - Public `run-intent` results expose a stable agent envelope with
   `schema_version`, `ok`, `command`, `recoverable`, `artifacts`,
-  `next_actions`, compiler status, and runtime evidence.
-- Public CLI outputs have JSON Schema 2020-12 contracts and compatibility
-  tests.
+  `next_actions`, compiler status, runtime evidence, and execution
+  fingerprints.
+- Failed public `run-intent` executions that start the runtime emit a public
+  envelope while still returning a non-zero orchestration error. Materialized
+  failed output workbooks are labeled `failure_evidence`, not primary success.
+- Internal `run-validated` handoffs emit a separate internal handoff envelope
+  with `classification:"internal_handoff"` and runtime evidence under
+  `runtime`. Hidden `run-request` compatibility is schema-allowed and shares
+  the internal handler, but dedicated source and installed-boundary smokes stay
+  backlog until legacy callers need that proof.
+- Public CLI outputs and internal handoff outputs have JSON Schema 2020-12
+  contracts and compatibility tests.
 - `preview-request` is a truthful non-mutating impact inspection surface. It is
   not a dry-run and does not claim execution success.
 
@@ -23,26 +35,32 @@ Final status: pass after Phase 18 documentation closure.
 
 | Area | Status | Authoritative Evidence | Success Claim |
 | --- | --- | --- | --- |
-| Phase/lane plan | pass | `docs/superpowers/plans/2026-06-10-sheet-ops-agent-execution-contract.md` defines Lane A execution, Lane B schema compatibility, and Lane C independent verification. | Work proceeded phase-by-phase with dependency-aware lanes. |
-| Installed workbook E2E | pass | `TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd` runs public `install-skill.sh`, executes installed `bin/sheet-ops-codex run-intent`, asserts `ok:true`, artifacts, verification pass, evidence paths, and output workbook row `LineItems!A3:C3`. | Installed CLI can execute a real workbook append with authoritative artifact evidence. |
-| Result envelope | pass | `TestExecutedPublicEntryResultExposesAgentEnvelope`, `TestExecutedPublicEntryResultValidatesAgainstPublicSchema`, and `TestTerminalCompilerPublicEntryResultValidatesAgainstPublicSchema`. | Agents get stable success and recoverable compiler-stop envelopes. |
+| Phase/lane plan | pass | `docs/superpowers/plans/2026-06-10-sheet-ops-agent-execution-contract.md` defines execution, schema compatibility, and independent verification lanes through Phase 32. | Work proceeded phase-by-phase with dependency-aware lanes and phase notes. |
+| Installed public workbook E2E | pass | `TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd` runs public `install-skill.sh`, executes installed `bin/sheet-ops-codex run-intent`, asserts `ok:true`, artifacts, verification pass, evidence paths, hashes, and output workbook row `LineItems!A3:C3`. | Installed CLI can execute a real public workbook append with authoritative artifact evidence. |
+| Installed internal handoff E2E | pass | `TestInstallSkillBundledCLIRunValidatedEmitsHandoffEnvelope` installs the package, runs installed `bin/sheet-ops-codex run-validated --request`, validates the handoff schema, checks workbook contents, output SHA-256, verification artifact, execution artifact, outcome artifact, and artifact roles. | Installed internal handoff callers receive a schema-valid envelope backed by workbook and evidence artifacts. |
+| Public result envelope | pass | `TestExecutedPublicEntryResultExposesAgentEnvelope`, `TestExecutedPublicEntryResultValidatesAgainstPublicSchema`, `TestTerminalCompilerPublicEntryResultValidatesAgainstPublicSchema`, and public result golden validation. | Agents get stable success and recoverable compiler-stop envelopes. |
+| Failed public execution envelope | pass | `TestRunIntentCommandWritesPublicEnvelopeThenReturnsFailure`, `TestRunIntentEntryEmitsPublicEnvelopeWhenRuntimeStartedThenFails`, and `TestRunIntentEntryDoesNotEmitExecutionEnvelopeBeforeRuntimeStarts`. | Runtime-started failures still provide machine-readable public evidence while pre-runtime failures do not invent executed evidence. |
+| Failed output artifact semantics | pass | `TestExecutedPublicEntryResultLabelsFailedOutputAsFailureEvidence`, `TestExecutedPublicEntryResultSchemaRejectsFailedOutputMarkedAsPrimarySuccess`, and schema checks for early failures with or without output. | Failed materialized output workbooks are diagnostic evidence, not success artifacts. |
+| Internal handoff envelope | pass | `TestRunValidatedCommandWritesInternalHandoffEnvelope`, `TestRunValidatedCommandWritesFailureHandoffEnvelopeThenReturnsFailure`, and `TestRunValidatedCommandDoesNotEmitExecutedEnvelopeBeforeRuntimeStarts`. | `run-validated` has stable control fields and preserves non-zero errors while avoiding false executed evidence before runtime start. |
+| Internal handoff schema | pass | `contracts/cli/internal_handoff_result.schema.json`, `TestInternalHandoffRunResultValidatesAgainstSchema`, `TestInternalHandoffResultGoldenValidatesAgainstSchema`, `TestInternalHandoffResultSchemaRejectsPublicEntryCommand`, and `TestPublicEntryResultSchemaRejectsRunValidatedHandoff`. | Internal handoff output is formally specified and separated from public entry output. |
 | Typed errors | pass with reserved backlog | `TestStateRootMismatchClassifiesAsConfigurationError`, `TestPreviewRequestInvalidIntentJSONEmitsInvalidDataError`; `capabilities --json` marks `state_root_mismatch` and `invalid_json_or_schema` as `emitted`, while unproven runtime categories remain `reserved`. | Emitted error taxonomy is evidence-backed; unproven categories are not overclaimed. |
-| JSON Schemas and golden fixture | pass | `TestCLIJSONOutputsValidateAgainstPublishedSchemas`, `TestPublishedCLISchemasPinSchemaVersion`, `TestPublicEntryResultGoldenValidatesAgainstPublicSchema`, release schema compile/reference tests. | Public CLI JSON outputs are schema-valid and version-pinned. |
-| Preview | pass | `TestPreviewRequestReportsImpactWithoutMutating`, `TestPreviewRequestIsExposedAsReadOnlyNonDryRunCommand`, installed CLI smoke, and `contracts/cli/preview_request_result.schema.json`. | Agents can inspect planned impact without workbook output or state mutation. |
-| Docs alignment | pass | `TestCLIAgentContractDocsStayAligned` keeps public and bundled skill references aligned. | Installed docs and public docs teach the same safe contract. |
-| Verifier separation and closure | pass | Separate verifier agents reviewed Phases 13-17 and final review; final verifier found documentation closure gaps, was closed after reporting, and Phase 12 was retrospectively verified before Phase 18. | Execution and verification roles are separated, and verifier sessions used in this thread were closed after use. |
-| Full regression | pass | `go test ./cmd/sheet-ops-codex ./cmd/sheet-ops-agent ./internal/releasecontracts -count=1`; `go test ./... -count=1`; `git diff --check`. | No known repo regression from the agent execution contract work. |
+| Published schemas | pass | `TestCLIJSONOutputsValidateAgainstPublishedSchemas`, `TestPublishedCLISchemasPinSchemaVersion`, internal handoff golden validation, public entry golden validation, and release schema compile/reference tests. | CLI JSON outputs and published schemas are version-pinned and compile under release-contract checks. |
+| Preview | pass | `TestPreviewRequestReportsImpactWithoutMutating`, `TestPreviewRequestIsExposedAsReadOnlyNonDryRunCommand`, installed preview smoke, and `contracts/cli/preview_request_result.schema.json`. | Agents can inspect planned impact without workbook output or state mutation. |
+| Docs alignment | pass with hardening backlog | Public and bundled skill docs mention the same internal handoff schema path and distinguish it from public entry schema; `TestCLIAgentContractDocsStayAligned` guards the capabilities mirror. | Installed docs and public docs teach the same safe contract, with stronger mirror drift enforcement still available as hardening. |
+| Full regression | pass | `go test ./runtime/workbookcase ./cmd/sheet-ops-codex ./cmd/sheet-ops-agent ./internal/releasecontracts -count=1`; `git diff --check`. | No known regression in the packages most directly affected by the agent execution contract work. |
+
+Verifier separation was performed in-thread and the phase notes record separate
+verifier outcomes. Session closure is operational conversation evidence rather
+than a repository artifact, so it is not used as a repo-verifiable success row
+in this matrix.
 
 ## Verification Commands
 
-- `go test ./cmd/sheet-ops-codex -run 'TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd|TestPreviewRequest|TestCLIJSONOutputsValidateAgainstPublishedSchemas|TestPublishedCLISchemasPinSchemaVersion|Test.*PublicEntryResult.*Schema|TestTerminalCompilerPublicEntryResultValidatesAgainstPublicSchema' -count=1 -v`: pass.
-- `go test ./cmd/sheet-ops-codex ./cmd/sheet-ops-agent ./internal/releasecontracts -count=1`: pass.
-- `go test ./internal/releasecontracts -run 'TestReleaseSchemasCompile|TestReleaseSchemaReferencesAreLocallyResolvable|TestCLIAgentContractDocsStayAligned' -count=1 -v`: pass.
-- `go test ./... -count=1`: pass.
-- `go run ./cmd/sheet-ops-codex capabilities --json`: pass.
-- `go run ./cmd/sheet-ops-codex schema command preview-request --json`: pass.
-- `go run ./cmd/sheet-ops-codex preflight --json`: pass.
-- `go run ./cmd/sheet-ops-codex --help`: pass.
+- `go test ./cmd/sheet-ops-codex -run 'TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd|TestInstallSkillBundledCLIRunValidatedEmitsHandoffEnvelope|TestRunIntentCommandWritesPublicEnvelopeThenReturnsFailure|TestRunValidatedCommandWritesInternalHandoffEnvelope|TestRunValidatedCommandWritesFailureHandoffEnvelopeThenReturnsFailure|TestRunValidatedCommandDoesNotEmitExecutedEnvelopeBeforeRuntimeStarts|TestInternalHandoff|TestPublicEntryResultSchemaRejectsRunValidatedHandoff|TestCLIJSONOutputsValidateAgainstPublishedSchemas|TestPublishedCLISchemasPinSchemaVersion' -count=1 -v`: pass.
+- `go test ./cmd/sheet-ops-codex -run 'TestPreviewRequestReportsImpactWithoutMutating|TestPreviewRequestIsExposedAsReadOnlyNonDryRunCommand|TestStateRootMismatchClassifiesAsConfigurationError|TestPreviewRequestInvalidIntentJSONEmitsInvalidDataError|TestExecutedPublicEntryResultExposesAgentEnvelope|TestExecutedPublicEntryResultValidatesAgainstPublicSchema|TestTerminalCompilerPublicEntryResultValidatesAgainstPublicSchema|TestExecutedPublicEntryResultLabelsFailedOutputAsFailureEvidence|TestExecutedPublicEntryResultSchemaRejectsFailedOutputMarkedAsPrimarySuccess' -count=1 -v`: pass.
+- `go test ./runtime/workbookcase ./cmd/sheet-ops-codex ./cmd/sheet-ops-agent ./internal/releasecontracts -count=1`: pass.
+- `go test ./internal/releasecontracts -run 'TestReleaseSchemasCompile|TestReleaseSchemaReferencesAreLocallyResolvable|TestCLIAgentContractDocsStayAligned|TestBundledSchemasStayInSyncWithSourceContracts' -count=1 -v`: pass in Phase 31 verifier.
+- `go run ./cmd/sheet-ops-codex schema command run-validated --json`: pass and reports `classification:"internal_handoff"` plus internal handoff output mode.
 - `git diff --check`: pass.
 
 ## Web-Research-Backed Design Choices
@@ -59,38 +77,31 @@ Final status: pass after Phase 18 documentation closure.
   planned impact only.
 - Preflight is readiness diagnostics only. It does not prove future workbook
   mutation success.
+- `run-validated` is an internal handoff surface, not a second public workbook
+  request entry. Validate it with
+  `contracts/cli/internal_handoff_result.schema.json`, not
+  `contracts/results/public_entry_result.schema.json`.
+- Public entry schema intentionally rejects internal handoff envelopes.
+- Hidden `run-request` compatibility is not claimed as installed-boundary proof
+  until a direct source test and installed smoke cover the alias explicitly.
 - Runtime categories remain `reserved` until deterministic producers and tests
   exist. `invalid_json_or_schema` is no longer reserved after Phase 20 because
   malformed normalized intent JSON now has a deterministic typed producer.
-- Installed workbook success is claimed only from the installed E2E test that
-  checks JSON result fields, evidence paths, and workbook contents.
+- Installed workbook success is claimed only from installed E2E tests that check
+  JSON result fields, evidence paths, hashes, and workbook contents.
 - No success claim is based on stdout alone when an authoritative artifact or
   schema-validated JSON result exists.
 
-## Final Verifier Closure
-
-The final verifier found no code-level contract regressions, but did find three
-evidence/closure blockers:
-
-- Final review checklist and artifact still described a pending state.
-- Phase 12 and Phase 17 did not both record separate verifier outcomes in their
-  phase notes.
-- Subagent closure was not represented in the durable evidence matrix.
-
-Actions before Phase 18 commit:
-
-- Final review checklist was marked complete only after fresh verification and
-  final verifier review.
-- Phase 12 received a retrospective independent verifier pass confirming the
-  deterministic installed E2E candidate and authoritative success fields.
-- Phase 17 result note now records its independent verifier pass and the closed
-  residual schema-sweep risk.
-- The evidence matrix now includes verifier separation and closure. All
-  verifier subagents used in this final review turn were closed after their
-  reports were consumed.
-
 ## Remaining Backlog
 
+- Add installed failure-path `run-validated` smoke if failure behavior must be
+  proven at the installed binary boundary.
+- Add direct source and installed `run-request` hidden compatibility smokes if
+  legacy callers need alias-specific proof.
+- Strengthen release-contract mirror drift tests beyond the current
+  capabilities mirror.
+- Refresh or supersede older final-review checklist language if additional
+  phases are added after Phase 32.
 - A deeper compiler-backed preview could be added later as a separate runtime
   planning track.
 - A real dry-run remains deferred until runtime planning can prove non-mutation
@@ -98,5 +109,3 @@ Actions before Phase 18 commit:
 - Runtime `request_checkpoint`, `validation_blocked`, `execution_failed`, and
   `verification_failed` should move from `reserved` to `emitted` only with
   deterministic producer tests.
-- Schema generation can be reconsidered if hand-written output schemas become
-  hard to maintain.

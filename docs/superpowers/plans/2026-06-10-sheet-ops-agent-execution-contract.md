@@ -47,6 +47,7 @@ Sequential implementation lane:
 16. Phase 29: run-validated internal handoff envelope.
 17. Phase 30: installed run-validated handoff smoke.
 18. Phase 31: internal handoff result schema.
+19. Phase 32: final review refresh after handoff hardening.
 
 Phase 12 comes before Phase 13 because the existing runtime output must be observed before a stable envelope is imposed. Phase 15 comes after Phases 13-14 so the E2E smoke can assert the final contract rather than a temporary shape.
 
@@ -1376,21 +1377,98 @@ Do not add internal handoff commands to public entry schemas in this phase.
   mirror-drift enforcement, and stale final-review refresh remain follow-up
   candidates; public entry schema remains intentionally narrow.
 
+## Phase 32 - Final Review Refresh After Handoff Hardening
+
+Lane: Independent Verification.
+
+Web-search value: low. This phase updates local evidence and no-overclaim
+constraints after Phases 28-31. The web-researched methodology sources remain
+the same as the earlier final review.
+
+### TODO
+
+- [x] Refresh final review status and implemented contract summary.
+  - Evaluation: final review artifact includes failed `run-intent` envelope,
+    internal handoff envelope, installed `run-validated` smoke, and internal
+    handoff schema.
+  - Result: reviewers do not rely on stale Phase 18-only evidence.
+  - Likely files:
+    `docs/superpowers/plans/2026-06-10-sheet-ops-cli-agent-contract-final-review.md`.
+  - Risk: low.
+  - Rollback: leave final review stale and record blocker.
+- [x] Update evidence matrix and verification commands.
+  - Evaluation: matrix points to authoritative current tests and schemas for
+    Phases 28-31, including installed and schema evidence.
+  - Result: final review proves the latest branch state.
+- [x] Update backlog/no-overclaim constraints.
+  - Evaluation: remaining gaps are explicit: installed failure-path smoke,
+    hidden `run-request` installed smoke, mirror-drift hardening, and any
+    runtime categories still reserved.
+  - Result: final review does not overclaim complete runtime coverage.
+- [x] Run separate verifier.
+  - Evaluation: verifier checks final review truthfulness, current test
+    coverage, no stale Phase 18 language, and no public-entry/internal-handoff
+    confusion.
+  - Result: separate verifier passed with no blockers. It confirmed
+    `run-request` is not overclaimed, verifier closure is not used as
+    repo-verifiable matrix proof, Phase 18 is historical, and backlog remains
+    explicit.
+- [x] Commit Phase 32.
+  - Evaluation: final review docs, focused tests, related package tests, and
+    `git diff --check` pass.
+  - Result: `phase32/review: refresh handoff contract evidence`.
+
+### Phase-End Backlog Review
+
+Ask:
+
+- Is the active goal now complete enough to mark complete, or do remaining
+  backlog items still require more phases?
+- Should installed failure-path handoff smoke be immediate now that schemas
+  exist?
+- Should mirror-drift hardening become the next release-contract phase?
+
+Do not mark the overall goal complete until a fresh completion audit proves all
+goal requirements and current plan evidence are satisfied.
+
+### Phase 32 Result
+
+- Focused handoff/public/schema tests passed.
+- Focused preview, typed-error, and public-envelope tests passed.
+- Related package regression passed:
+  `go test ./runtime/workbookcase ./cmd/sheet-ops-codex ./cmd/sheet-ops-agent ./internal/releasecontracts -count=1`.
+- `schema command run-validated --json` reports
+  `classification:"internal_handoff"`.
+- `git diff --check` passed.
+- Separate verifier passed with no blockers.
+- Active overall goal remains open pending a fresh requirement-by-requirement
+  completion audit.
+
 ## Final Review Phase - Agent Execution Contract Completion
 
 Lane: Independent Verification.
 
+Status: historical Phase 18 closure, superseded by Phase 32 for the current
+post-handoff-hardening evidence matrix.
+
 ### TODO
 
 - [x] Run full verification.
-  - Evaluation: focused phase tests, `go test ./cmd/sheet-ops-codex ./cmd/sheet-ops-agent ./internal/releasecontracts -count=1`, `go test ./... -count=1`, generated JSON validation, installed E2E smoke, and schema compatibility tests pass.
-  - Result: completion evidence is fresh.
+  - Evaluation: Phase 18 focused phase tests, generated JSON validation,
+    installed E2E smoke, and schema compatibility tests pass.
+  - Result: Phase 18 completion evidence was fresh at the time of that commit;
+    Phase 32 refreshes the current evidence after Phases 28-31.
 - [x] Dispatch final verifier.
-  - Evaluation: verifier reviews all phases, authoritative artifacts, web-research-backed design choices, and no-overclaim constraints.
-  - Result: pass/fail before final commit.
+  - Evaluation: Phase 18 verifier reviewed then-current phases,
+    authoritative artifacts, web-research-backed design choices, and
+    no-overclaim constraints.
+  - Result: pass/fail before the Phase 18 final review commit.
 - [x] Update final review artifact.
-  - Evaluation: evidence matrix covers installed E2E, typed errors, result envelopes, schemas/goldens, preview, dry-run deferral, and remaining backlog.
-  - Result: branch is reviewable.
+  - Evaluation: Phase 18 evidence matrix covered installed E2E, typed errors,
+    result envelopes, schemas/goldens, preview, dry-run deferral, and remaining
+    backlog.
+  - Result: Phase 32 updates the same final review artifact for the current
+    branch state.
 - [x] Commit final review.
   - Evaluation: worktree is clean after commit.
   - Result: `phase18/review: lock agent execution contract evidence`.
