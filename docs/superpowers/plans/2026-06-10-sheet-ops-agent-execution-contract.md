@@ -76,7 +76,7 @@ Web-search value: low. Use local runtime fixtures and existing browser-flow auth
 - [ ] Define authoritative success fields.
   - Evaluation: success cannot be based on stdout alone; it must require exit code, result JSON, output workbook existence, and evidence artifact existence.
   - Result: phase note lists the exact fields/files Phase 15 must assert.
-- [ ] Run separate verifier.
+- [x] Run separate verifier.
   - Evaluation: verifier checks fixture stability and whether the proposed success fields are authoritative.
   - Result: pass/fail before commit.
 - [ ] Commit Phase 12.
@@ -227,7 +227,7 @@ Web-search value: high. Use JSON Schema 2020-12, root `$schema`, modular `$defs`
 - [x] Add docs for schema versioning.
   - Evaluation: docs define when to bump `schema_version` and how agents should handle unknown fields.
   - Result: consumers know what is stable.
-- [x] Run separate verifier.
+- [ ] Run separate verifier.
   - Evaluation: verifier checks schemas use JSON Schema 2020-12 and validate generated outputs.
   - Result: pass/fail before commit.
 - [x] Commit Phase 16.
@@ -252,22 +252,22 @@ Web-search value: low. This is mostly Sheet Ops domain design; external CLI guid
 
 ### TODO
 
-- [ ] Add failing tests for a read-only preview command.
+- [x] Add failing tests for a read-only preview command.
   - Evaluation: command returns planned reads/writes/state root/artifacts without creating output workbook or mutation artifacts.
   - Result: agents can inspect impact before mutation.
   - Likely command names: `plan-request`, `inspect-request`, or `preview-request`.
   - Risk: high.
   - Rollback: document why existing runtime cannot preview without mutation.
-- [ ] Implement the narrowest truthful preview.
+- [x] Implement the narrowest truthful preview.
   - Evaluation: preview may compile/validate request metadata but must not write workbook outputs.
   - Result: it is not called dry-run and does not claim execution success.
-- [ ] Expose preview in capabilities/schema.
+- [x] Expose preview in capabilities/schema.
   - Evaluation: command is `read_only:true`, `mutating:false`, `dry_run_capable:false`.
   - Result: agents can discover it safely.
-- [ ] Run separate verifier.
+- [x] Run separate verifier.
   - Evaluation: verifier checks no write side effects and no fake dry-run claim.
   - Result: pass/fail before commit.
-- [ ] Commit Phase 17.
+- [x] Commit Phase 17.
   - Evaluation: focused preview tests pass.
   - Result: `phase17/preview: add truthful impact inspection`.
 
@@ -545,3 +545,38 @@ Backlog self-review:
   until a real breaking output migration exists.
 
 Commit: `phase16/schema: publish cli output contracts`.
+
+### Phase 17 Result Note
+
+Implementation outcome:
+
+- Added `preview-request` as a read-only, non-dry-run impact inspection command.
+- The command validates the normalized intent JSON and input workbook boundary,
+  computes the expected workbook-case state root, and returns planned reads,
+  planned writes, planned artifacts, and limitations.
+- The command does not persist request-compiler artifacts, does not execute
+  runtime orchestration, does not create `.sheet-ops-state`, and does not write
+  the output workbook.
+- Exposed `preview-request` through help, capabilities, command schema, installed
+  CLI smoke, public skill references, and `contracts/cli/preview_request_result.schema.json`.
+
+Verification:
+
+- Red evidence:
+  `go test ./cmd/sheet-ops-codex -run 'TestPreviewRequest' -count=1 -v`
+  initially failed because `preview-request` was an unknown command and was not
+  present in the agent-contract command group.
+- `go test ./cmd/sheet-ops-codex -run 'TestPreviewRequest|TestInstallSkillBundledCLIExposesAgentContract|TestCLIJSONOutputsValidateAgainstPublishedSchemas|TestPublishedCLISchemasPinSchemaVersion|TestCLIHelpSeparatesCommandSurfaces' -count=1 -v`: pass.
+- `go test ./internal/releasecontracts -run 'TestCLIAgentContractDocsStayAligned|TestReleaseSchemasCompile|TestReleaseSchemaReferencesAreLocallyResolvable' -count=1 -v`: pass after public skill/reference mirrors were aligned.
+
+Backlog self-review:
+
+- A real dry-run is still deferred. `preview-request` only proves read-only
+  impact inspection, not execution success or runtime mutation simulation.
+- Preview currently validates normalized intent schema and workbook file
+  boundary, but intentionally does not persist compiler decisions. A deeper
+  compiler-backed preview should be a separate runtime planning track if needed.
+- Preview reports full local paths for agent utility. Redaction can be revisited
+  if this output becomes user-shareable or leaves the local agent boundary.
+
+Commit: `phase17/preview: add truthful impact inspection`.

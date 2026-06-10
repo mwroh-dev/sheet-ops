@@ -73,6 +73,7 @@ func TestCLIHelpSeparatesCommandSurfaces(t *testing.T) {
 		"Maintainer diagnostic surface:",
 		"install-skill",
 		"preflight",
+		"preview-request",
 		"prepare-use",
 		"run-validated",
 		"run-intent",

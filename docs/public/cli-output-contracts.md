@@ -10,6 +10,7 @@ root `$schema` and `$id` fields explicit.
 - `contracts/cli/command_schema.schema.json` validates `sheet-ops-codex schema --json` and `sheet-ops-codex schema command <name> --json`.
 - `contracts/cli/error_envelope.schema.json` validates JSON error envelopes.
 - `contracts/cli/preflight_result.schema.json` validates `sheet-ops-codex preflight --json`.
+- `contracts/cli/preview_request_result.schema.json` validates `sheet-ops-codex preview-request --json`.
 - `contracts/results/public_entry_result.schema.json` validates public execution results from `run-prompt`, `run-text`, and `run-intent`.
 
 ## Versioning Policy

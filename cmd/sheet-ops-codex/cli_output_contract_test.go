@@ -14,6 +14,7 @@ func TestCLIJSONOutputsValidateAgainstPublishedSchemas(t *testing.T) {
 		name      string
 		schemaRel string
 		args      []string
+		setup     func(*testing.T) []string
 	}{
 		{
 			name:      "capabilities",
@@ -35,12 +36,38 @@ func TestCLIJSONOutputsValidateAgainstPublishedSchemas(t *testing.T) {
 			schemaRel: "contracts/cli/preflight_result.schema.json",
 			args:      []string{"preflight", "--json", "--project", "."},
 		},
+		{
+			name:      "preview request",
+			schemaRel: "contracts/cli/preview_request_result.schema.json",
+			setup: func(t *testing.T) []string {
+				t.Helper()
+
+				projectDir := t.TempDir()
+				inputFile := filepath.Join(projectDir, "line-items.xlsx")
+				outputFile := filepath.Join(projectDir, "line-items-output.xlsx")
+				intentFile := filepath.Join(projectDir, "append-intent.json")
+				writeLineItemsWorkbook(t, inputFile)
+				writeAppendRowsIntent(t, intentFile)
+				return []string{
+					"preview-request",
+					"--json",
+					"--intent-file", intentFile,
+					"--input-file", inputFile,
+					"--output-file", outputFile,
+					"--scenario-id", "contract-preview-append-rows",
+				}
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			args := tt.args
+			if tt.setup != nil {
+				args = tt.setup(t)
+			}
 			var document any
-			executeCLIJSON(t, &document, tt.args...)
+			executeCLIJSON(t, &document, args...)
 			assertValidatesAgainstSchema(t, document, tt.schemaRel)
 		})
 	}
@@ -67,6 +94,7 @@ func TestPublishedCLISchemasPinSchemaVersion(t *testing.T) {
 		"contracts/cli/command_schema.schema.json",
 		"contracts/cli/error_envelope.schema.json",
 		"contracts/cli/preflight_result.schema.json",
+		"contracts/cli/preview_request_result.schema.json",
 		"contracts/results/public_entry_result.schema.json",
 	} {
 		t.Run(schemaRel, func(t *testing.T) {

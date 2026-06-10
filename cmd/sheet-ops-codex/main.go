@@ -42,6 +42,7 @@ func newRootCommand() *cobra.Command {
 	rootCmd.AddCommand(newCapabilitiesCommand())
 	rootCmd.AddCommand(newSchemaCommand())
 	rootCmd.AddCommand(newPreflightCommand())
+	rootCmd.AddCommand(newPreviewRequestCommand())
 	rootCmd.AddCommand(newRunValidatedCommand())
 	rootCmd.AddCommand(newRunRequestCommand())
 	rootCmd.AddCommand(newRunIntentCommand())

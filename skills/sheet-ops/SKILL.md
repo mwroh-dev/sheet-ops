@@ -164,11 +164,13 @@ Use these read-only contract surfaces for agent/CI discovery:
 - `sheet-ops-codex capabilities --json`
 - `sheet-ops-codex schema command preflight --json`
 - `sheet-ops-codex preflight --json`
+- `sheet-ops-codex preview-request --json --intent-file <path> --input-file <path> --output-file <path>`
 
 `sheet-ops-codex run-validated` is an internal handoff surface. It is owned by
 the installed skill handoff and must not be presented as the normal public
 request route. Mutating workbook commands currently report
-`dry_run_capable: false`; do not claim dry-run behavior until a truthful runtime
+`dry_run_capable: false`; `preview-request` is impact inspection only, not
+runtime dry-run evidence. Do not claim dry-run behavior until a truthful runtime
 planning mode exists.
 
 Follow-up:

@@ -70,6 +70,7 @@ func sheetOpsCLIContracts(rootName string) map[string]cliCommandContract {
 				"capabilities",
 				"install-skill",
 				"preflight",
+				"preview-request",
 				"prepare-use",
 				"run-validated",
 				"run-intent",
@@ -210,6 +211,7 @@ func sheetOpsCLIContracts(rootName string) map[string]cliCommandContract {
 			},
 			RelatedCommands: []string{
 				"capabilities",
+				"preview-request",
 				"run-validated",
 				"run-intent",
 				"schema",
@@ -248,6 +250,7 @@ func sheetOpsCLIContracts(rootName string) map[string]cliCommandContract {
 			},
 			RelatedCommands: []string{
 				"capabilities",
+				"preview-request",
 				"prepare-use",
 				"run-validated",
 				"schema",
@@ -282,6 +285,7 @@ func sheetOpsCLIContracts(rootName string) map[string]cliCommandContract {
 			},
 			RelatedCommands: []string{
 				"capabilities",
+				"preview-request",
 				"run-validated",
 				"prepare-use",
 				"schema",
@@ -318,6 +322,7 @@ func sheetOpsCLIContracts(rootName string) map[string]cliCommandContract {
 			RelatedCommands: []string{
 				"capabilities",
 				"prepare-use",
+				"preview-request",
 				"run-request",
 				"run-intent",
 				"schema",
@@ -355,6 +360,7 @@ func sheetOpsCLIReadOnlyDiscoveryContracts(rootName string) map[string]cliComman
 			RelatedCommands: []string{
 				"schema",
 				"preflight",
+				"preview-request",
 				"prepare-use",
 				"help",
 			},
@@ -389,6 +395,7 @@ func sheetOpsCLIReadOnlyDiscoveryContracts(rootName string) map[string]cliComman
 			RelatedCommands: []string{
 				"capabilities",
 				"preflight",
+				"preview-request",
 				"prepare-use",
 				"help",
 			},
@@ -431,9 +438,51 @@ func sheetOpsCLIReadOnlyDiscoveryContracts(rootName string) map[string]cliComman
 			RelatedCommands: []string{
 				"capabilities",
 				"schema",
+				"preview-request",
 				"prepare-use",
 				"run-validated",
 				"install-skill",
+			},
+			Mutating:      false,
+			ReadOnly:      true,
+			DryRunCapable: false,
+		},
+		"preview-request": {
+			Name:             "preview-request",
+			Classification:   cliClassificationAgentContract,
+			IntendedCaller:   "Automation, CI, or another agent inspecting planned workbook impact before choosing a mutating execution path.",
+			ShortDescription: "Inspect normalized-intent impact without runtime execution",
+			Usage:            rootName + " preview-request --json --intent-file <path> --input-file <path> --output-file <path> [--scenario-id <id>]",
+			Options: []string{
+				"--json: Emit machine-readable JSON on stdout.",
+				"--intent-file: Path to a normalized intent JSON file.",
+				"--input-file: Path to the input workbook.",
+				"--output-file: Planned output workbook path.",
+				"--scenario-id: Optional scenario identifier override.",
+			},
+			OutputMode: "Machine-readable preview JSON on stdout.",
+			SideEffects: []string{
+				"None. Does not create workbooks, request-compiler artifacts, runtime artifacts, or .sheet-ops-state directories.",
+			},
+			ReadArtifacts: []string{
+				"Normalized intent JSON file.",
+				"Input workbook metadata.",
+				"SHEET_OPS_STATE_ROOT when set.",
+			},
+			WrittenArtifacts: []string{
+				"None. Output workbook and state artifacts are reported as planned impact only.",
+			},
+			StateBehavior: "Read-only. Computes the workbook-case .sheet-ops-state path and validates state-root ownership without creating or mutating it.",
+			SafetyNotes: []string{
+				"Preview is not a dry-run and does not prove execution success.",
+				"Use runtime verification from a later mutating command before claiming workbook success.",
+			},
+			RelatedCommands: []string{
+				"capabilities",
+				"schema",
+				"preflight",
+				"prepare-use",
+				"run-intent",
 			},
 			Mutating:      false,
 			ReadOnly:      true,
@@ -791,7 +840,7 @@ func renderRootHelp(output io.Writer, rootCmd *cobra.Command, contracts map[stri
 	if err := renderContractSection(output, "Install surface:", contracts, []string{"install-skill"}); err != nil {
 		return err
 	}
-	if err := renderContractSection(output, "Agent-contract surface:", contracts, []string{"preflight", "prepare-use"}); err != nil {
+	if err := renderContractSection(output, "Agent-contract surface:", contracts, []string{"preflight", "preview-request", "prepare-use"}); err != nil {
 		return err
 	}
 	if err := renderContractSection(output, "Internal handoff surface:", contracts, []string{"run-validated"}); err != nil {

@@ -79,6 +79,9 @@ func TestInstallSkillBundledCLIExposesAgentContract(t *testing.T) {
 	if !containsString(agentGroup.Commands, "preflight") {
 		t.Fatalf("agent_contract commands = %v, want preflight", agentGroup.Commands)
 	}
+	if !containsString(agentGroup.Commands, "preview-request") {
+		t.Fatalf("agent_contract commands = %v, want preview-request", agentGroup.Commands)
+	}
 
 	var prepareUseSchema cliCommandSchemaEnvelope
 	runInstalledCLIJSON(t, installedCLI, &prepareUseSchema, "schema", "command", "prepare-use", "--json")
@@ -102,6 +105,43 @@ func TestInstallSkillBundledCLIExposesAgentContract(t *testing.T) {
 	}
 	if !preflightSchema.Command.ReadOnly || preflightSchema.Command.Mutating || preflightSchema.Command.DryRunCapable {
 		t.Fatalf("preflight schema has unsafe flags: %+v", preflightSchema.Command)
+	}
+
+	var previewSchema cliCommandSchemaEnvelope
+	runInstalledCLIJSON(t, installedCLI, &previewSchema, "schema", "command", "preview-request", "--json")
+	if previewSchema.Command.Name != "preview-request" {
+		t.Fatalf("schema command name = %q, want preview-request", previewSchema.Command.Name)
+	}
+	if !previewSchema.Command.ReadOnly || previewSchema.Command.Mutating || previewSchema.Command.DryRunCapable {
+		t.Fatalf("preview-request schema has unsafe flags: %+v", previewSchema.Command)
+	}
+
+	workspaceDir := filepath.Join(projectDir, "workspace")
+	if err := os.MkdirAll(workspaceDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll(workspace): %v", err)
+	}
+	inputFile := filepath.Join(workspaceDir, "line-items.xlsx")
+	outputFile := filepath.Join(workspaceDir, "line-items-output.xlsx")
+	intentFile := filepath.Join(workspaceDir, "append-intent.json")
+	writeLineItemsWorkbook(t, inputFile)
+	writeAppendRowsIntent(t, intentFile)
+	var preview previewRequestDocument
+	runInstalledCLIJSON(t, installedCLI, &preview,
+		"preview-request",
+		"--json",
+		"--intent-file", intentFile,
+		"--input-file", inputFile,
+		"--output-file", outputFile,
+		"--scenario-id", "installed-preview-append-rows",
+	)
+	if !preview.ReadOnly || preview.DryRun || preview.Command != "preview-request" {
+		t.Fatalf("installed preview has unsafe flags: %+v", preview)
+	}
+	if _, err := os.Stat(outputFile); !os.IsNotExist(err) {
+		t.Fatalf("installed preview created output workbook: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(workspaceDir, ".sheet-ops-state")); !os.IsNotExist(err) {
+		t.Fatalf("installed preview created state root: %v", err)
 	}
 
 	var preflight preflightDocumentView
