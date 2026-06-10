@@ -472,6 +472,39 @@ Lane: install/runtime proof.
   - Evaluation: installed contract smoke passes.
   - Result: `phase5/install: verify installed cli contract surface`.
 
+### Phase 5 Red Test Evidence (Pre-Implementation)
+
+- Added installed bundled CLI smoke test in
+  `cmd/sheet-ops-codex/install_skill_test.go` before manifest changes.
+- Initial red command:
+  `go test ./cmd/sheet-ops-codex -run 'TestInstallSkillBundledCLIExposesAgentContract' -count=1`.
+- Red result: installed package build failed because `install_manifest.txt`
+  did not include new CLI contract files. The materialized installed tree was
+  missing definitions for `classifyCLIError`, `newCapabilitiesCommand`,
+  `newSchemaCommand`, `newPreflightCommand`, and `applyCLIContracts`.
+
+## Phase 5 Result Note
+
+Implementation outcome:
+
+- Added installed bundled CLI smoke test that installs into a temp project,
+  executes installed `.codex/skills/sheet-ops/bin/sheet-ops-codex`, and verifies
+  `capabilities --json`, `schema command preflight --json`, and
+  `preflight --json`.
+- Updated `cmd/sheet-ops-codex/install_manifest.txt` so the materialized
+  installed tree includes the CLI contract, error, and preflight source files
+  required to build the bundled CLI.
+- Kept the test focused on installed meta-contract surfaces; minimal workbook
+  execution proof remains a higher-risk follow-up unless a fast fixture is
+  introduced.
+
+Verification commands passed:
+
+- `go test ./cmd/sheet-ops-codex -run 'TestInstallSkillBundledCLIExposesAgentContract' -count=1`.
+- `go test ./cmd/sheet-ops-codex -run 'TestInstallSkill|Test.*Preflight.*|Test.*Schema.*|Test.*Capabilities.*|Test.*Contract.*' -count=1`.
+- `go test ./cmd/sheet-ops-codex -count=1`.
+- `go test ./internal/releasecontracts -count=1`.
+
 ### Phase-End Backlog Review
 
 Ask:

@@ -2,7 +2,9 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -45,6 +47,58 @@ func TestInstallSkillInstallsProjectLocalSkillWhenGoIsReady(t *testing.T) {
 	assertNotExistsLocal(t, filepath.Join(skillRoot, "platforms"))
 }
 
+func TestInstallSkillBundledCLIExposesAgentContract(t *testing.T) {
+	if status := inspectGo("go"); status.kind != goStatusReady {
+		t.Skipf("go runtime is not ready for bundled CLI smoke: %s %v", status.kind, status.err)
+	}
+
+	projectDir := t.TempDir()
+	cmd := newRootCommand()
+	var stdout bytes.Buffer
+	cmd.SetOut(&stdout)
+	cmd.SetErr(&stdout)
+	cmd.SetArgs([]string{
+		"install-skill",
+		"--project", projectDir,
+		"--go-bin", "go",
+	})
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("install-skill failed: %v\noutput=%s", err, stdout.String())
+	}
+
+	installedCLI := filepath.Join(projectDir, ".codex", "skills", "sheet-ops", "bin", "sheet-ops-codex")
+	assertExistsLocal(t, installedCLI)
+
+	var capabilities cliCapabilitiesDocument
+	runInstalledCLIJSON(t, installedCLI, &capabilities, "capabilities", "--json")
+	if !containsString(capabilities.MachineEntryCommands, "schema") {
+		t.Fatalf("machine_entry_commands = %v, want schema", capabilities.MachineEntryCommands)
+	}
+	agentGroup := findCapabilityGroup(t, capabilities.CommandGroups, "agent_contract")
+	if !containsString(agentGroup.Commands, "preflight") {
+		t.Fatalf("agent_contract commands = %v, want preflight", agentGroup.Commands)
+	}
+
+	var preflightSchema cliCommandSchemaEnvelope
+	runInstalledCLIJSON(t, installedCLI, &preflightSchema, "schema", "command", "preflight", "--json")
+	if preflightSchema.Command.Name != "preflight" {
+		t.Fatalf("schema command name = %q, want preflight", preflightSchema.Command.Name)
+	}
+	if !preflightSchema.Command.ReadOnly || preflightSchema.Command.Mutating || preflightSchema.Command.DryRunCapable {
+		t.Fatalf("preflight schema has unsafe flags: %+v", preflightSchema.Command)
+	}
+
+	var preflight preflightDocumentView
+	runInstalledCLIJSON(t, installedCLI, &preflight, "preflight", "--json", "--project", projectDir)
+	if !preflight.ReadOnly {
+		t.Fatalf("preflight read_only = false, want true")
+	}
+	if findPreflightCheck(t, preflight.Checks, "package_manifest").Status != preflightStatusPass {
+		t.Fatalf("package_manifest check did not pass: %+v", preflight.Checks)
+	}
+}
+
 func TestInstallSkillSkipsPromptWhenGoIsReady(t *testing.T) {
 	projectDir := t.TempDir()
 	goDir := t.TempDir()
@@ -61,6 +115,19 @@ func TestInstallSkillSkipsPromptWhenGoIsReady(t *testing.T) {
 
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("install-skill should not prompt when Go is ready: %v", err)
+	}
+}
+
+func runInstalledCLIJSON(t *testing.T, binary string, target any, args ...string) {
+	t.Helper()
+
+	cmd := exec.Command(binary, args...)
+	stdout, err := cmd.Output()
+	if err != nil {
+		t.Fatalf("%s %s failed: %v", binary, strings.Join(args, " "), err)
+	}
+	if err := json.Unmarshal(stdout, target); err != nil {
+		t.Fatalf("json.Unmarshal(%s %s): %v\nstdout:\n%s", binary, strings.Join(args, " "), err, stdout)
 	}
 }
 
