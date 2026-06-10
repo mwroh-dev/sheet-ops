@@ -1,0 +1,310 @@
+package main
+
+import (
+	"encoding/json"
+	"errors"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"slices"
+	"strings"
+	"testing"
+
+	runtimeconfig "github.com/mwroh/sheet-ops/runtime/runtimeconfig"
+	runtimeworkbookcase "github.com/mwroh/sheet-ops/runtime/workbookcase"
+	"github.com/xuri/excelize/v2"
+)
+
+type installedRunIntentResult struct {
+	SchemaVersion string                  `json:"schema_version"`
+	OK            bool                    `json:"ok"`
+	Command       string                  `json:"command"`
+	Recoverable   bool                    `json:"recoverable"`
+	Artifacts     []PublicResultArtifact  `json:"artifacts"`
+	Entry         string                  `json:"entry"`
+	Status        string                  `json:"status"`
+	Runtime       installedRuntimePayload `json:"runtime"`
+}
+
+type installedRuntimePayload struct {
+	Paths        installedRunPaths        `json:"paths"`
+	Verification installedVerification    `json:"verification"`
+	Execution    installedExecutionResult `json:"execution"`
+}
+
+type installedRunPaths struct {
+	EvidenceDir      string `json:"evidence_dir"`
+	VerificationPath string `json:"verification_path"`
+	ExecutionPath    string `json:"execution_path"`
+	OutcomePath      string `json:"outcome_path"`
+}
+
+type installedVerification struct {
+	Pass         bool     `json:"pass"`
+	Operation    string   `json:"operation"`
+	OutputFile   string   `json:"output_file"`
+	WrittenCells []string `json:"written_cells"`
+}
+
+type installedExecutionResult struct {
+	Operation    string   `json:"operation"`
+	OutputFile   string   `json:"output_file"`
+	WrittenCells []string `json:"written_cells"`
+}
+
+func TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd(t *testing.T) {
+	if status := inspectGo("go"); status.kind != goStatusReady {
+		t.Skipf("go runtime is not ready for installed E2E smoke: %s %v", status.kind, status.err)
+	}
+
+	projectDir := t.TempDir()
+	installScript := filepath.Join("..", "..", "install-skill.sh")
+	cmd := exec.Command(installScript,
+		"--project", projectDir,
+		"--go-bin", "go",
+	)
+	installOutput, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("install-skill.sh failed: %v\noutput=%s", err, installOutput)
+	}
+
+	workspaceDir := filepath.Join(projectDir, "workspace")
+	if err := os.MkdirAll(workspaceDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll(workspace): %v", err)
+	}
+	inputFile := filepath.Join(workspaceDir, "line-items.xlsx")
+	outputFile := filepath.Join(workspaceDir, "line-items-output.xlsx")
+	writeLineItemsWorkbook(t, inputFile)
+	intentFile := filepath.Join(workspaceDir, "append-intent.json")
+	writeAppendRowsIntent(t, intentFile)
+
+	installedCLI := filepath.Join(projectDir, ".codex", "skills", "sheet-ops", "bin", "sheet-ops-codex")
+	var result installedRunIntentResult
+	runInstalledCLIJSONWithEnv(t, installedCLI, &result, []string{
+		runtimeconfig.RetentionModeEnv + "=" + string(runtimeconfig.RetentionModeFull),
+		runtimeconfig.RenderModeEnv + "=" + string(runtimeconfig.RenderModeNever),
+	}, "run-intent",
+		"--intent-file", intentFile,
+		"--input-file", inputFile,
+		"--output-file", outputFile,
+		"--scenario-id", "installed-append-rows-e2e",
+	)
+
+	if result.SchemaVersion != cliContractSchemaVersion {
+		t.Fatalf("schema_version = %q, want %q", result.SchemaVersion, cliContractSchemaVersion)
+	}
+	if !result.OK {
+		t.Fatalf("ok = false, want true: %+v", result)
+	}
+	if result.Command != "run-intent" || result.Entry != "run-intent" {
+		t.Fatalf("command/entry = %q/%q, want run-intent", result.Command, result.Entry)
+	}
+	if result.Status != "executed" {
+		t.Fatalf("status = %q, want executed", result.Status)
+	}
+	if result.Recoverable {
+		t.Fatalf("recoverable = true, want false")
+	}
+	if !result.Runtime.Verification.Pass {
+		t.Fatalf("runtime verification pass = false: %+v", result.Runtime.Verification)
+	}
+	if result.Runtime.Verification.Operation != runtimeworkbookcase.AppendRowsOperationName {
+		t.Fatalf("verification operation = %q, want %q", result.Runtime.Verification.Operation, runtimeworkbookcase.AppendRowsOperationName)
+	}
+	if !slices.Contains(result.Runtime.Verification.WrittenCells, "LineItems!A3") {
+		t.Fatalf("written_cells = %v, want LineItems!A3", result.Runtime.Verification.WrittenCells)
+	}
+	if !slices.Contains(result.Runtime.Verification.WrittenCells, "LineItems!B3") {
+		t.Fatalf("written_cells = %v, want LineItems!B3", result.Runtime.Verification.WrittenCells)
+	}
+	if !slices.Contains(result.Runtime.Verification.WrittenCells, "LineItems!C3") {
+		t.Fatalf("written_cells = %v, want LineItems!C3", result.Runtime.Verification.WrittenCells)
+	}
+	assertInstalledArtifactExists(t, result.Artifacts, "output_workbook", true, "primary_success")
+	assertInstalledArtifactExists(t, result.Artifacts, "verification", true, "success_evidence")
+	assertInstalledArtifactExists(t, result.Artifacts, "evidence_dir", true, "audit_trail")
+	assertFileExistsLocal(t, result.Runtime.Paths.ExecutionPath)
+	assertFileExistsLocal(t, result.Runtime.Paths.OutcomePath)
+	assertOutputWorkbookRow(t, outputFile, "LineItems", 3, []string{"B002", "3", "15"})
+	assertOutputWorkbookCell(t, outputFile, "LineItems", "A3", "B002")
+	assertOutputWorkbookCell(t, outputFile, "LineItems", "B3", "3")
+	assertOutputWorkbookCell(t, outputFile, "LineItems", "C3", "15")
+}
+
+func writeLineItemsWorkbook(t *testing.T, path string) {
+	t.Helper()
+
+	file := excelize.NewFile()
+	defer func() { _ = file.Close() }()
+	defaultSheet := file.GetSheetName(0)
+	if err := file.SetSheetName(defaultSheet, "LineItems"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	header := []any{"sku", "quantity", "unit_price"}
+	if err := file.SetSheetRow("LineItems", "A1", &header); err != nil {
+		t.Fatalf("SetSheetRow(header): %v", err)
+	}
+	existing := []any{"A001", 2, 10}
+	if err := file.SetSheetRow("LineItems", "A2", &existing); err != nil {
+		t.Fatalf("SetSheetRow(existing): %v", err)
+	}
+	if err := file.SaveAs(path); err != nil {
+		t.Fatalf("SaveAs(%s): %v", path, err)
+	}
+}
+
+func writeAppendRowsIntent(t *testing.T, path string) {
+	t.Helper()
+
+	intent := map[string]any{
+		"source_sheet_candidates": []string{"LineItems"},
+		"composition_candidates":  []string{"structured_row_append"},
+		"append_rows": map[string]any{
+			"include_source_columns": []string{"sku", "quantity", "unit_price"},
+			"values": []map[string]any{
+				{"cell": "sku", "value": "B002"},
+				{"cell": "quantity", "value": 3},
+				{"cell": "unit_price", "value": 15},
+			},
+		},
+		"add_data_validation": map[string]any{
+			"validation_rule": map[string]any{
+				"ranges":         []string{},
+				"rule_type":      "list",
+				"allowed_values": []string{},
+				"allow_blank":    false,
+			},
+		},
+		"materialization": map[string]any{
+			"preserve_original":       true,
+			"output_destination_mode": "new_workbook",
+			"write_shape":             "in_place_cells",
+		},
+		"ambiguity": map[string]any{
+			"markers":           []string{},
+			"unresolved_fields": []string{},
+			"checkpoint_hints":  []string{},
+		},
+	}
+	raw, err := json.MarshalIndent(intent, "", "  ")
+	if err != nil {
+		t.Fatalf("Marshal intent: %v", err)
+	}
+	if err := os.WriteFile(path, raw, 0o644); err != nil {
+		t.Fatalf("WriteFile(%s): %v", path, err)
+	}
+}
+
+func runInstalledCLIJSONWithEnv(t *testing.T, binary string, target any, env []string, args ...string) {
+	t.Helper()
+
+	cmd := exec.Command(binary, args...)
+	cmd.Env = cleanSheetOpsEnv(os.Environ())
+	cmd.Env = append(cmd.Env, env...)
+	stdout, err := cmd.Output()
+	if err != nil {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			t.Fatalf("%s %s failed: %v\nstderr:\n%s\nstdout:\n%s", binary, strings.Join(args, " "), err, exitErr.Stderr, stdout)
+		}
+		t.Fatalf("%s %s failed: %v\nstdout:\n%s", binary, strings.Join(args, " "), err, stdout)
+	}
+	if err := json.Unmarshal(stdout, target); err != nil {
+		t.Fatalf("json.Unmarshal(%s %s): %v\nstdout:\n%s", binary, strings.Join(args, " "), err, stdout)
+	}
+}
+
+func cleanSheetOpsEnv(env []string) []string {
+	cleaned := make([]string, 0, len(env))
+	for _, entry := range env {
+		if strings.HasPrefix(entry, "SHEET_OPS_") {
+			continue
+		}
+		cleaned = append(cleaned, entry)
+	}
+	return cleaned
+}
+
+func assertInstalledArtifactExists(t *testing.T, artifacts []PublicResultArtifact, kind string, required bool, role string) {
+	t.Helper()
+
+	for _, artifact := range artifacts {
+		if artifact.Kind != kind {
+			continue
+		}
+		if artifact.Required != required {
+			t.Fatalf("artifact %q required = %v, want %v", kind, artifact.Required, required)
+		}
+		if artifact.SuccessRole != role {
+			t.Fatalf("artifact %q success_role = %q, want %q", kind, artifact.SuccessRole, role)
+		}
+		assertFileOrDirExistsLocal(t, artifact.Path)
+		return
+	}
+	t.Fatalf("missing artifact kind %q in %+v", kind, artifacts)
+}
+
+func assertFileOrDirExistsLocal(t *testing.T, path string) {
+	t.Helper()
+
+	if _, err := os.Stat(path); err != nil {
+		t.Fatalf("stat %s: %v", path, err)
+	}
+}
+
+func assertFileExistsLocal(t *testing.T, path string) {
+	t.Helper()
+
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatalf("stat %s: %v", path, err)
+	}
+	if info.IsDir() {
+		t.Fatalf("%s is a directory, want file", path)
+	}
+}
+
+func assertOutputWorkbookCell(t *testing.T, path string, sheet string, cell string, want string) {
+	t.Helper()
+
+	workbook, err := excelize.OpenFile(path)
+	if err != nil {
+		t.Fatalf("OpenFile(%s): %v", path, err)
+	}
+	defer func() { _ = workbook.Close() }()
+	got, err := workbook.GetCellValue(sheet, cell)
+	if err != nil {
+		t.Fatalf("GetCellValue(%s!%s): %v", sheet, cell, err)
+	}
+	if got != want {
+		t.Fatalf("%s!%s = %q, want %q", sheet, cell, got, want)
+	}
+}
+
+func assertOutputWorkbookRow(t *testing.T, path string, sheet string, rowNumber int, want []string) {
+	t.Helper()
+
+	workbook, err := excelize.OpenFile(path)
+	if err != nil {
+		t.Fatalf("OpenFile(%s): %v", path, err)
+	}
+	defer func() { _ = workbook.Close() }()
+
+	rows, err := workbook.GetRows(sheet)
+	if err != nil {
+		t.Fatalf("GetRows(%s): %v", sheet, err)
+	}
+	rowIndex := rowNumber - 1
+	if rowIndex < 0 || rowIndex >= len(rows) {
+		t.Fatalf("%s row %d missing in %v", sheet, rowNumber, rows)
+	}
+	got := rows[rowIndex]
+	if len(got) < len(want) {
+		t.Fatalf("%s row %d = %v, want at least %v", sheet, rowNumber, got, want)
+	}
+	for index, wantValue := range want {
+		if got[index] != wantValue {
+			t.Fatalf("%s row %d = %v, want prefix %v", sheet, rowNumber, got, want)
+		}
+	}
+}

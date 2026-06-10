@@ -445,3 +445,45 @@ Backlog self-review:
   tests before promotion.
 
 Commit: `phase14/errors: emit state root mismatch producer`.
+
+### Phase 15 Result Note
+
+Implementation outcome:
+
+- Added an installed-package E2E smoke for the bundled `sheet-ops-codex`
+  launcher.
+- The test now creates a temp target project, runs the public
+  `install-skill.sh --project ...` entrypoint, builds the installed CLI binary,
+  generates a workbook, executes installed
+  `bin/sheet-ops-codex run-intent`, and parses the public JSON result.
+- The smoke proves the agent-facing success contract for a real workbook append:
+  `schema_version`, `ok:true`, `command:"run-intent"`, `recoverable:false`,
+  required success artifacts, runtime verification pass, evidence paths, and
+  output workbook mutation across `LineItems!A3:C3`.
+- The normalized intent fixture includes the data-validation default surface
+  required by the current internal normalization/schema pass, even though the
+  selected operation is `structured_row_append`.
+
+Verification:
+
+- Red evidence:
+  `go test ./cmd/sheet-ops-codex -run 'TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd' -count=1 -v`
+  initially failed with a normalized-intent schema error at
+  `/add_data_validation/validation_rule/rule_type`.
+- `go test ./cmd/sheet-ops-codex -run 'TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd' -count=1 -v`: pass.
+- `go test ./cmd/sheet-ops-codex ./cmd/sheet-ops-agent ./internal/releasecontracts -count=1`: pass.
+- Separate verifier initially found two gaps: the smoke used the in-process root
+  command instead of public `install-skill.sh`, and it only checked `A3`; both
+  were closed before commit.
+
+Backlog self-review:
+
+- This phase locks the installed `run-intent` workbook path for one concrete
+  append operation, not every public operation family.
+- The data-validation default fixture shape is a useful signal that a future
+  schema/normalization cleanup should avoid forcing unrelated operation defaults
+  into agent-authored normalized intents.
+- Phase 16 should still promote a formal result schema/golden fixture so agents
+  can validate the envelope without executing a workbook.
+
+Commit: `phase15/e2e: prove installed workbook execution`.
