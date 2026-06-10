@@ -194,15 +194,45 @@
               "minLength": 1
             },
             "output_file": {
+              "type": "string"
+            },
+            "output_workbook_sha256": {
               "type": "string",
-              "minLength": 1
+              "pattern": "^[a-f0-9]{64}$"
             },
             "reasons": {
               "type": "array",
               "items": { "type": "string" }
             }
           },
-          "additionalProperties": true
+          "additionalProperties": true,
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "pass": { "const": true }
+                },
+                "required": ["pass"]
+              },
+              "then": {
+                "required": ["output_workbook_sha256"]
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "output_file": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": ["output_file"]
+              },
+              "then": {
+                "required": ["output_workbook_sha256"]
+              }
+            }
+          ]
         },
         "verification_review": { "type": ["object", "null"] },
         "repair_advice": { "type": ["object", "null"] },
@@ -222,7 +252,6 @@
       "then": {
         "required": ["fingerprints"],
         "properties": {
-          "ok": { "const": true },
           "recoverable": { "const": false },
           "request_compiler": {
             "allOf": [
@@ -238,23 +267,6 @@
           },
           "artifacts": {
             "allOf": [
-              {
-                "contains": {
-                  "allOf": [
-                    { "$ref": "#/$defs/artifact" },
-                    {
-                      "properties": {
-                        "kind": { "const": "output_workbook" },
-                        "required": { "const": true },
-                        "success_role": { "const": "primary_success" },
-                        "path": { "minLength": 1 }
-                      },
-                      "required": ["kind", "required", "success_role", "path"]
-                    }
-                  ]
-                },
-                "minContains": 1
-              },
               {
                 "contains": {
                   "allOf": [
@@ -292,6 +304,36 @@
             ]
           },
           "runtime": { "$ref": "#/$defs/public_runtime_result" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": { "const": "executed" },
+          "ok": { "const": true }
+        },
+        "required": ["status", "ok"]
+      },
+      "then": {
+        "properties": {
+          "artifacts": {
+            "contains": {
+              "allOf": [
+                { "$ref": "#/$defs/artifact" },
+                {
+                  "properties": {
+                    "kind": { "const": "output_workbook" },
+                    "required": { "const": true },
+                    "success_role": { "const": "primary_success" },
+                    "path": { "minLength": 1 }
+                  },
+                  "required": ["kind", "required", "success_role", "path"]
+                }
+              ]
+            },
+            "minContains": 1
+          }
         }
       }
     },

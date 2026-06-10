@@ -40,6 +40,7 @@ Sequential implementation lane:
 9. Phase 22: output workbook identity sealing.
 10. Phase 23: verification artifact output identity sealing.
 11. Phase 24: successful verification hash requirement.
+12. Phase 25: verification output-file hash requirement.
 
 Phase 12 comes before Phase 13 because the existing runtime output must be observed before a stable envelope is imposed. Phase 15 comes after Phases 13-14 so the E2E smoke can assert the final contract rather than a temporary shape.
 
@@ -772,6 +773,115 @@ requirement is limited to successful verification summaries.
   reported no blockers and identified only non-blocking follow-up risk around
   explicit `pass:false` coverage and typed file-read failure handling; the
   compatibility test covers the former.
+
+## Phase 25 - Verification Output-File Hash Requirement
+
+Lane: Execution Contract.
+
+Web-search value: low. This phase is a local JSON Schema contract tightening
+based on the evidence tuple policy already established in Phases 22-24. The
+design question is not external API behavior; it is whether a verification
+artifact that names an output file may omit that file's byte identity.
+
+### TODO
+
+- [x] Add failing schema test for failed verification with output file but no
+  output hash.
+  - Evaluation: a `pass:false` verification summary with non-empty
+    `output_file` and no `output_workbook_sha256` is rejected.
+  - Result: failure-path artifacts cannot claim an output workbook path without
+    binding the workbook bytes.
+  - Likely files: `runtime/workbookcase/run_test.go`.
+  - Risk: medium.
+  - Rollback: keep Phase 24's success-only requirement and document the
+    failure-path gap.
+- [x] Preserve compatibility for failure summaries that have no output file.
+  - Evaluation: `pass:false`, empty `output_file`, and no
+    `output_workbook_sha256` remains schema-compatible.
+  - Result: early failures before output materialization can still be reported.
+- [x] Add conditional schema requirement for non-empty `output_file`.
+  - Evaluation: `output_file` with `minLength: 1` requires
+    `output_workbook_sha256`; the existing `pass:true` requirement remains.
+  - Result: all materialized-output verification artifacts carry byte identity.
+- [x] Update docs/phase evidence.
+  - Evaluation: public docs and mirrored skill references distinguish
+    materialized-output identity from semantic verification success.
+  - Result: agents know to require hash whenever a verification artifact names
+    an output file.
+- [x] Run separate verifier.
+  - Evaluation: verifier checks schema condition, compatibility for early
+    failures, no preview drift, and no overclaim on unreadable file handling.
+  - Result: pass/fail before commit.
+- [x] Commit Phase 25.
+  - Evaluation: focused runtime/schema tests, release contract tests, package
+    tests, and `git diff --check` pass.
+  - Result: `phase25/verification: require output-file identity`.
+
+### Phase-End Backlog Review
+
+Ask:
+
+- Should `fileSHA256IfReadable` become `fileSHA256` with an explicit error
+  return so unreadable output files fail before schema validation?
+- Should the runtime verification layer hash before and after semantic checks
+  to reduce the remaining mutation window?
+- Should input workbook fingerprints move into verification artifacts next so
+  each verification summary carries the complete input/output evidence tuple?
+
+Do not claim this phase proves semantic correctness from hashes. It only
+requires byte identity for verification artifacts that name a materialized
+output workbook.
+
+### Phase 25 Result Note
+
+- Implementation: `contracts/verification/verification_result.schema.json`
+  now requires `output_workbook_sha256` whenever `output_file` is a non-empty
+  string. The Phase 24 `pass:true` requirement remains in place.
+- Compatibility: failed verification summaries with an empty `output_file` can
+  still omit the hash, preserving early failure reporting before output
+  materialization.
+- Coverage: `runtime/workbookcase/run_test.go` now rejects failed verification
+  summaries that name an output file without output identity, allows early
+  failures with an empty output file, rejects successful summaries without
+  output identity, and keeps the runtime summary hash proof.
+- Public result alignment: `contracts/results/public_entry_result.schema.json`
+  mirrors the same nested `runtime.verification` hash requirement, and the
+  executed public-result fixture/golden now include
+  `runtime.verification.output_workbook_sha256`.
+- Documentation: public CLI output contracts and mirrored skill references now
+  tell agents that any verification artifact naming a non-empty `output_file`
+  must carry `runtime.verification.output_workbook_sha256`.
+- Red evidence:
+  `go test ./runtime/workbookcase -run TestVerificationSchemaRejectsFailedResultWithOutputFileWithoutOutputFingerprint -count=1 -v`
+  failed before the schema change because the schema accepted `pass:false`,
+  non-empty `output_file`, and missing `output_workbook_sha256`.
+- Focused verification:
+  `go test ./runtime/workbookcase -run 'TestVerificationSchemaRejectsSuccessfulResultWithoutOutputFingerprint|TestVerificationSchemaRejectsFailedResultWithOutputFileWithoutOutputFingerprint|TestVerificationSchemaAllowsFailedResultWithoutOutputFileOrFingerprint|TestVerificationSummaryCarriesOutputWorkbookFingerprint|TestRunAppendStructuredRowsEndToEnd' -count=1 -v`
+  passes.
+- Verifier blocker resolved: the first separate verifier found that the public
+  executed-result schema still allowed nested `runtime.verification.output_file`
+  without `output_workbook_sha256`. The public schema, fixture, and golden were
+  aligned, then
+  `go test ./cmd/sheet-ops-codex -run 'TestPublicEntryResultGoldenValidatesAgainstPublicSchema|TestExecutedPublicEntryResult.*Fingerprint|TestCLIJSONOutputsValidateAgainstPublishedSchemas|TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd' -count=1 -v`
+  passed.
+- Second verifier blocker resolved: the public executed-result schema had kept
+  `runtime.verification.output_file` stricter than the canonical verification
+  schema and also treated `status:"executed"` as `ok:true`. The public schema
+  now allows empty nested `output_file`, keeps the non-empty output-file hash
+  requirement, and allows executed envelopes whose verification failed
+  (`ok:false`) while still requiring `recoverable:false` and fingerprints.
+  `go test ./cmd/sheet-ops-codex -run 'TestExecutedPublicEntryResultSchemaRejectsVerificationOutputFileWithoutHash|TestExecutedPublicEntryResultSchemaAllowsVerificationFailureWithOutputFileAndHash|TestExecutedPublicEntryResultSchemaAllowsEarlyVerificationFailureWithoutOutputFileOrHash|TestPublicEntryResultGoldenValidatesAgainstPublicSchema|TestExecutedPublicEntryResultValidatesAgainstPublicSchema|TestExecutedPublicEntryResultSchemaRejectsMissingOutputFingerprint' -count=1 -v`
+  passes.
+- Third verifier blocker resolved: the public executed-result schema still
+  required an `output_workbook` artifact for every `status:"executed"` result,
+  even though real early verification failures omit that artifact when
+  `runtime.verification.output_file` is empty. The schema now requires the
+  primary output workbook artifact only for executed success (`ok:true`), while
+  still requiring verification and evidence artifacts for executed envelopes.
+  The early-failure public schema test now builds the envelope through
+  `newExecutedPublicEntryResult` and asserts the output workbook artifact is
+  absent. `go test ./cmd/sheet-ops-codex -run 'TestExecutedPublicEntryResultSchemaRejectsVerificationOutputFileWithoutHash|TestExecutedPublicEntryResultSchemaAllowsVerificationFailureWithOutputFileAndHash|TestExecutedPublicEntryResultSchemaAllowsEarlyVerificationFailureWithoutOutputFileOrHash|TestExecutedPublicEntryResultSchemaRejectsMissingSuccessArtifacts|TestExecutedPublicEntryResultValidatesAgainstPublicSchema' -count=1 -v`
+  passes.
 
 ## Final Review Phase - Agent Execution Contract Completion
 

@@ -115,6 +115,35 @@ func TestExecutedPublicEntryResultSchemaRejectsMissingOutputFingerprint(t *testi
 	}
 }
 
+func TestExecutedPublicEntryResultSchemaRejectsVerificationOutputFileWithoutHash(t *testing.T) {
+	document := publicEntryResultDocument(t, newTestExecutedPublicEntryResult(t))
+	verification := publicRuntimeVerification(t, document)
+	verification["pass"] = false
+	verification["output_file"] = "/tmp/output.xlsx"
+	delete(verification, "output_workbook_sha256")
+
+	if err := runtimeschema.ValidateStruct(publicEntryResultSchemaPath(), document); err == nil {
+		t.Fatalf("public entry result schema accepted runtime verification output_file without output_workbook_sha256")
+	}
+}
+
+func TestExecutedPublicEntryResultSchemaAllowsVerificationFailureWithOutputFileAndHash(t *testing.T) {
+	document := publicEntryResultDocument(t, newTestExecutedFailurePublicEntryResult(t, true))
+
+	if err := runtimeschema.ValidateStruct(publicEntryResultSchemaPath(), document); err != nil {
+		t.Fatalf("public entry result schema rejected executed verification failure with output file and hash: %v", err)
+	}
+}
+
+func TestExecutedPublicEntryResultSchemaAllowsEarlyVerificationFailureWithoutOutputFileOrHash(t *testing.T) {
+	document := publicEntryResultDocument(t, newTestExecutedFailurePublicEntryResult(t, false))
+	assertNoPublicResultArtifact(t, document, "output_workbook")
+
+	if err := runtimeschema.ValidateStruct(publicEntryResultSchemaPath(), document); err != nil {
+		t.Fatalf("public entry result schema rejected early runtime verification failure without output file or hash: %v", err)
+	}
+}
+
 func TestTerminalCompilerPublicEntryResultSchemaRejectsStatusMismatch(t *testing.T) {
 	compiled := requestcompiler.PersistedResult{
 		Result: requestcompiler.Result{
@@ -138,7 +167,38 @@ func TestTerminalCompilerPublicEntryResultSchemaRejectsStatusMismatch(t *testing
 func newTestExecutedPublicEntryResult(t *testing.T) PublicEntryResult {
 	t.Helper()
 
+	return newTestExecutedPublicEntryResultForVerification(t, runtimeworkbookcase.VerificationResult{
+		Pass:                 true,
+		Operation:            runtimeworkbookcase.AppendRowsOperationName,
+		OutputFile:           filepath.Join(t.TempDir(), "line-items-output.xlsx"),
+		OutputWorkbookSHA256: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+		Reasons:              []string{"output workbook contains appended row"},
+	})
+}
+
+func newTestExecutedFailurePublicEntryResult(t *testing.T, withOutputFile bool) PublicEntryResult {
+	t.Helper()
+
 	tempDir := t.TempDir()
+	verification := runtimeworkbookcase.VerificationResult{
+		Pass:      false,
+		Operation: runtimeworkbookcase.AppendRowsOperationName,
+		Reasons:   []string{"verification failed"},
+	}
+	if withOutputFile {
+		verification.OutputFile = filepath.Join(tempDir, "line-items-output.xlsx")
+		verification.OutputWorkbookSHA256 = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+	}
+	return newTestExecutedPublicEntryResultForVerification(t, verification)
+}
+
+func newTestExecutedPublicEntryResultForVerification(t *testing.T, verification runtimeworkbookcase.VerificationResult) PublicEntryResult {
+	t.Helper()
+
+	tempDir := t.TempDir()
+	if verification.OutputFile == "" && verification.Pass {
+		verification.OutputFile = filepath.Join(tempDir, "line-items-output.xlsx")
+	}
 	compiled := requestcompiler.PersistedResult{
 		Result: requestcompiler.Result{
 			Decision:                  requestcompiler.Decision{Status: requestcompiler.StatusCompiled},
@@ -165,14 +225,9 @@ func newTestExecutedPublicEntryResult(t *testing.T) PublicEntryResult {
 		},
 		Execution: runtimeworkbookcase.ExecutionSummary{
 			Operation:  runtimeworkbookcase.AppendRowsOperationName,
-			OutputFile: filepath.Join(tempDir, "line-items-output.xlsx"),
+			OutputFile: verification.OutputFile,
 		},
-		Verification: runtimeworkbookcase.VerificationResult{
-			Pass:       true,
-			Operation:  runtimeworkbookcase.AppendRowsOperationName,
-			OutputFile: filepath.Join(tempDir, "line-items-output.xlsx"),
-			Reasons:    []string{"output workbook contains appended row"},
-		},
+		Verification: verification,
 	}
 
 	return newExecutedPublicEntryResult("run-intent", compiled, result, executionFingerprints{
@@ -194,6 +249,20 @@ func publicEntryResultDocument(t *testing.T, envelope PublicEntryResult) map[str
 		t.Fatalf("Unmarshal public entry result: %v", err)
 	}
 	return document
+}
+
+func publicRuntimeVerification(t *testing.T, document map[string]any) map[string]any {
+	t.Helper()
+
+	runtime, ok := document["runtime"].(map[string]any)
+	if !ok {
+		t.Fatalf("runtime has type %T, want object", document["runtime"])
+	}
+	verification, ok := runtime["verification"].(map[string]any)
+	if !ok {
+		t.Fatalf("runtime.verification has type %T, want object", runtime["verification"])
+	}
+	return verification
 }
 
 func TestPublicEntryResultTerminalCompilerExposesRecoverableAgentEnvelope(t *testing.T) {
@@ -263,6 +332,24 @@ func assertPublicResultArtifact(t *testing.T, artifacts []PublicResultArtifact, 
 		}
 	}
 	t.Fatalf("missing artifact kind %q in %+v", kind, artifacts)
+}
+
+func assertNoPublicResultArtifact(t *testing.T, document map[string]any, kind string) {
+	t.Helper()
+
+	artifacts, ok := document["artifacts"].([]any)
+	if !ok {
+		t.Fatalf("artifacts has type %T, want array", document["artifacts"])
+	}
+	for _, value := range artifacts {
+		artifact, ok := value.(map[string]any)
+		if !ok {
+			t.Fatalf("artifact has type %T, want object", value)
+		}
+		if artifact["kind"] == kind {
+			t.Fatalf("unexpected artifact kind %q in %+v", kind, artifacts)
+		}
+	}
 }
 
 func publicEntryResultSchemaPath() string {

@@ -56,6 +56,7 @@
       "pass": true,
       "operation": "append_structured_rows",
       "output_file": "/workspace/out.xlsx",
+      "output_workbook_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
       "reasons": [
         "output workbook contains appended row"
       ],

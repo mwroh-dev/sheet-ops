@@ -187,16 +187,29 @@ func TestVerificationSchemaRejectsSuccessfulResultWithoutOutputFingerprint(t *te
 	}
 }
 
-func TestVerificationSchemaAllowsFailedResultWithoutOutputFingerprint(t *testing.T) {
+func TestVerificationSchemaAllowsFailedResultWithoutOutputFileOrFingerprint(t *testing.T) {
 	document := map[string]any{
 		"pass":        false,
 		"operation":   WriteValuesOperationName,
-		"output_file": "/tmp/output.xlsx",
+		"output_file": "",
 		"reasons":     []string{"failed before output identity was available"},
 	}
 
 	if err := runtimeschema.ValidateStruct(repoJoin("contracts", "verification", "verification_result.schema.json"), document); err != nil {
-		t.Fatalf("verification schema rejected pass=false result without output_workbook_sha256: %v", err)
+		t.Fatalf("verification schema rejected pass=false result without output_file or output_workbook_sha256: %v", err)
+	}
+}
+
+func TestVerificationSchemaRejectsFailedResultWithOutputFileWithoutOutputFingerprint(t *testing.T) {
+	document := map[string]any{
+		"pass":        false,
+		"operation":   WriteValuesOperationName,
+		"output_file": "/tmp/output.xlsx",
+		"reasons":     []string{"failed after output workbook was materialized"},
+	}
+
+	if err := runtimeschema.ValidateStruct(repoJoin("contracts", "verification", "verification_result.schema.json"), document); err == nil {
+		t.Fatalf("verification schema accepted pass=false result with output_file but without output_workbook_sha256")
 	}
 }
 

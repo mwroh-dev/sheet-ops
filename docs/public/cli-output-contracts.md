@@ -42,8 +42,8 @@ with the later `run-intent.fingerprints` to prove the run used the same
 normalized intent and input workbook, then bind the reported output workbook to
 a concrete file hash before trusting runtime artifacts. The same output hash is
 also carried in `runtime.verification.output_workbook_sha256` and the persisted
-verification artifact. Successful verification artifacts (`pass:true`) require
-this hash.
+verification artifact. Any verification artifact that names a non-empty
+`output_file` requires this hash.
 
 ## Versioning Policy
 
