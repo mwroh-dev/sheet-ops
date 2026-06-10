@@ -9,6 +9,24 @@ Operating model:
 The skill routes execution through the skill-owned runtime handoff, not through
 a runner-pane command.
 
+## CLI agent contract
+
+The `sheet-ops` skill is the single human-facing workbook request entry.
+`sheet-ops-codex` is an install, diagnostic, and agent-contract CLI surface,
+not a second human-facing workbook entry.
+
+Use these read-only contract surfaces for agent/CI discovery:
+
+- `sheet-ops-codex capabilities --json`
+- `sheet-ops-codex schema command preflight --json`
+- `sheet-ops-codex preflight --json`
+
+`sheet-ops-codex run-validated` is an internal handoff surface. It is owned by
+the installed skill handoff and must not be presented as the normal public
+request route. Mutating workbook commands currently report
+`dry_run_capable: false`; do not claim dry-run behavior until a truthful runtime
+planning mode exists.
+
 ## Public agent capabilities
 
 - `group_summarize`: use when the request asks to summarize rows by keys, such as "summarize revenue by region".
@@ -58,7 +76,13 @@ Before selecting a capability, read the matching machine-readable record in
 Install contract reminder:
 
 ```bash
+command -v go && go version
 /path/to/sheet-ops/install-skill.sh --project /path/to/target/workspace
 ```
 
-Go 1.25 or newer is required. If Go is ready, install-skill does not prompt. If Go is missing or outdated, it asks before continuing. The install flow does not use a zip file, tarball, or prebuilt platform binary.
+Go 1.25 or newer is required. If Go is installed but not visible in the current
+app or shell `PATH`, find the actual executable first and pass
+`--go-bin /absolute/path/to/go`. Do not guess the Go path or install a second
+copy before checking the existing installation. If Go is ready, install-skill
+does not prompt. If Go is missing or outdated, it asks before continuing. The
+install flow does not use a zip file, tarball, or prebuilt platform binary.

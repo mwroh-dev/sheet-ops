@@ -53,6 +53,24 @@ missing, it asks before directing the user to the official Go installation
 guide. If Go is present but older than 1.25, it asks before directing the user
 to upgrade.
 
+## CLI agent contract
+
+The `sheet-ops` skill is the single human-facing workbook request entry.
+`sheet-ops-codex` is an install, diagnostic, and agent-contract CLI surface,
+not a second human-facing workbook entry.
+
+Use these read-only contract surfaces for agent/CI discovery:
+
+- `sheet-ops-codex capabilities --json`
+- `sheet-ops-codex schema command preflight --json`
+- `sheet-ops-codex preflight --json`
+
+`sheet-ops-codex run-validated` is an internal handoff surface. It is owned by
+the installed skill handoff and must not be presented as the normal public
+request route. Mutating workbook commands currently report
+`dry_run_capable: false`; do not claim dry-run behavior until a truthful runtime
+planning mode exists.
+
 ## Public split surface
 
 The public-side path is `sheet-ops-codex prepare-use`, which captures the user

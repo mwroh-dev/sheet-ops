@@ -117,6 +117,42 @@ func TestReleaseSchemaReferencesAreLocallyResolvable(t *testing.T) {
 	}
 }
 
+func TestCLIAgentContractDocsStayAligned(t *testing.T) {
+	root := repoRoot(t)
+	requiredNeedles := []string{
+		"`sheet-ops` skill is the single human-facing workbook request entry",
+		"`sheet-ops-codex capabilities --json`",
+		"`sheet-ops-codex schema command preflight --json`",
+		"`sheet-ops-codex preflight --json`",
+		"`sheet-ops-codex run-validated` is an internal handoff surface",
+		"`dry_run_capable: false`",
+	}
+
+	for _, rel := range []string{
+		"README.md",
+		"docs/public/install.md",
+		"skills/sheet-ops/SKILL.md",
+		"cmd/sheet-ops-codex/skill_assets/SKILL.md",
+		"skills/sheet-ops/references/capabilities.md",
+		"cmd/sheet-ops-codex/skill_assets/references/capabilities.md",
+		"cmd/sheet-ops-codex/skill_assets/references/usage.md",
+	} {
+		t.Run(filepath.ToSlash(rel), func(t *testing.T) {
+			text := readText(t, filepath.Join(root, filepath.FromSlash(rel)))
+			for _, needle := range requiredNeedles {
+				if !strings.Contains(text, needle) {
+					t.Fatalf("%s missing %q", rel, needle)
+				}
+			}
+		})
+	}
+
+	assertTextFilesEqual(t, root,
+		"skills/sheet-ops/references/capabilities.md",
+		"cmd/sheet-ops-codex/skill_assets/references/capabilities.md",
+	)
+}
+
 func TestSchemaReferenceResolverAcceptsLocalSelfReference(t *testing.T) {
 	root := t.TempDir()
 	schemaPath := filepath.Join(root, "self_ref.schema.json")
@@ -613,6 +649,26 @@ func readJSON(t *testing.T, path string) any {
 		t.Fatalf("parse %s: %v", path, err)
 	}
 	return document
+}
+
+func readText(t *testing.T, path string) string {
+	t.Helper()
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read %s: %v", path, err)
+	}
+	return string(raw)
+}
+
+func assertTextFilesEqual(t *testing.T, root string, leftRel string, rightRel string) {
+	t.Helper()
+	leftPath := filepath.Join(root, filepath.FromSlash(leftRel))
+	rightPath := filepath.Join(root, filepath.FromSlash(rightRel))
+	left := readText(t, leftPath)
+	right := readText(t, rightPath)
+	if left != right {
+		t.Fatalf("%s and %s drifted", leftRel, rightRel)
+	}
 }
 
 func repoRoot(t *testing.T) string {

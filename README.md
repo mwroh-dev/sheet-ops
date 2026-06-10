@@ -154,6 +154,24 @@ evidence before the request is narrowed to supported atom execution.
 The `sheet-ops` skill is the single human-facing public entry for local
 Codex/Claude workbook requests.
 
+## CLI Agent Contract
+
+The `sheet-ops` skill is the single human-facing workbook request entry.
+`sheet-ops-codex` is an install, diagnostic, and agent-contract CLI surface,
+not a second human-facing workbook entry.
+
+Agent and CI discovery should use:
+
+- `sheet-ops-codex capabilities --json`
+- `sheet-ops-codex schema command preflight --json`
+- `sheet-ops-codex preflight --json`
+
+`sheet-ops-codex run-validated` is an internal handoff surface. It is owned by
+the installed skill handoff and must not be presented as the normal public
+request route. Mutating workbook commands currently report
+`dry_run_capable: false`; do not claim dry-run behavior until a truthful runtime
+planning mode exists.
+
 ## Internal Execution Boundary
 
 The bundled launcher behind this handoff is part of the skill-owned internal proof-gated boundary behind the public skill entry. It exists so the public entry and the runtime can meet at a typed contract rather than an unstructured conversation.

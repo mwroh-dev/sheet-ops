@@ -552,6 +552,36 @@ Lane: docs/final consistency.
   - Evaluation: docs/mirror tests and earlier CLI tests pass.
   - Result: `phase6/docs: align cli contract documentation`.
 
+### Phase 6 Red Test Evidence (Pre-Implementation)
+
+- Added `TestCLIAgentContractDocsStayAligned` in
+  `internal/releasecontracts/release_contracts_test.go` before doc updates.
+- Initial red command:
+  `go test ./internal/releasecontracts -run 'TestCLIAgentContractDocsStayAligned' -count=1`.
+- Red result: README, install docs, canonical skill docs, embedded skill docs,
+  and capability references were missing the shared CLI agent-contract language;
+  canonical and embedded capabilities references had drifted.
+
+## Phase 6 Result Note
+
+Implementation outcome:
+
+- Added shared CLI agent-contract language to README, public install docs,
+  canonical skill docs, embedded skill docs, canonical capabilities reference,
+  embedded capabilities reference, and embedded usage reference.
+- Added release-contract coverage that verifies the shared docs mention
+  `sheet-ops` as the single human-facing workbook entry, the read-only
+  `capabilities/schema/preflight` discovery surfaces, the internal
+  `run-validated` boundary, and `dry_run_capable: false`.
+- Added a mirror consistency assertion for canonical and embedded capabilities
+  references.
+
+Verification commands passed:
+
+- `go test ./internal/releasecontracts -run 'TestCLIAgentContractDocsStayAligned' -count=1`.
+- `go test ./internal/releasecontracts -count=1`.
+- `go test ./cmd/sheet-ops-codex -count=1`.
+
 ### Phase-End Backlog Review
 
 Ask:
