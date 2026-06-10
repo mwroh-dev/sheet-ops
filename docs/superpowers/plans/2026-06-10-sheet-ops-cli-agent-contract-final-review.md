@@ -1,86 +1,101 @@
-# Sheet Ops CLI Agent Contract Final Review
+# Sheet Ops Agent Execution Contract Final Review
 
 Branch: `codex/cli-agent-contract`
 
-Final status: pass after hardening follow-up.
+Final status: pass after Phase 18 documentation closure.
 
 ## Implemented Contract
 
 - `sheet-ops` remains the single human-facing workbook request entry.
-- `sheet-ops-codex` now exposes classified install, agent-contract, internal
-  handoff, maintainer diagnostic, compatibility, and support surfaces.
-- `capabilities --json` exposes machine-readable command groups, read-only
-  boundaries, mutating flags, hidden flags, and error taxonomy.
-- `schema --json` and `schema command <name> --json` expose command metadata,
-  artifacts, state behavior, safety notes, related commands, mutation flags,
-  read-only flags, and `dry_run_capable`.
-- `preflight --json` is a read-only diagnostic surface for project, Go,
-  embedded manifest, input readability, output parent ancestry, and state-root
-  checks.
-- Installed `.codex/skills/sheet-ops/bin/sheet-ops-codex` is smoke-tested for
-  `capabilities`, `schema command prepare-use`, `schema command preflight`, and
-  `preflight`.
-- Public docs and embedded skill docs share the CLI agent-contract language.
+- `sheet-ops-codex` exposes classified install, discovery, typed handoff,
+  maintainer diagnostic, internal execution, preview, and support surfaces.
+- Installed `.codex/skills/sheet-ops/bin/sheet-ops-codex` is tested for both
+  metadata discovery and real workbook execution.
+- Public `run-intent` results expose a stable agent envelope with
+  `schema_version`, `ok`, `command`, `recoverable`, `artifacts`,
+  `next_actions`, compiler status, and runtime evidence.
+- Public CLI outputs have JSON Schema 2020-12 contracts and compatibility
+  tests.
+- `preview-request` is a truthful non-mutating impact inspection surface. It is
+  not a dry-run and does not claim execution success.
 
-## Hardening Evidence Matrix
+## Evidence Matrix
 
 | Area | Status | Authoritative Evidence | Success Claim |
 | --- | --- | --- | --- |
-| Installed contract smoke | pass | `TestInstallSkillBundledCLIExposesAgentContract` executes installed `.codex/skills/sheet-ops/bin/sheet-ops-codex` for `capabilities --json`, `schema command prepare-use --json`, `schema command preflight --json`, and `preflight --json`. | Installed CLI exposes the agent contract after materialized install. |
-| Source CLI capabilities | pass | `go run ./cmd/sheet-ops-codex capabilities --json` returns `root_command.name:"sheet-ops-codex"`, `read_only_commands` without the root command, and `agent_contract` commands including `capabilities`, `preflight`, `prepare-use`, and `schema`. | Agents can discover safe command boundaries without parsing help prose. |
-| Error taxonomy | pass | `capabilities --json` returns `error_contract.codes[]` with non-empty `status` and `producer`; emitted codes are `invalid_usage`, `missing_required_option`, `unknown_command`, and `internal_error`; runtime/future categories are `reserved`. | Agents can distinguish currently emitted errors from reserved taxonomy. |
-| Prepare-use schema | pass | `go run ./cmd/sheet-ops-codex schema command prepare-use --json` returns `classification:"agent_contract"`, `mutating:true`, `read_only:false`, `dry_run_capable:false`, and `--envelope-file`. | The typed handoff surface is machine-readable. |
-| Preflight | pass | `go run ./cmd/sheet-ops-codex preflight --json` returns `ok:true`, `read_only:true`, `project_directory:pass`, `go_runtime:pass`, `package_manifest:pass`, and skips optional file checks when no file args are provided. | Preflight is a read-only readiness diagnostic, not a fake dry-run. |
-| Full test suite | pass | `go test ./... -count=1` passed. | No known repo test regression from the CLI contract hardening. |
-| Real dry-run | deferred | `dry_run_capable:false` remains explicit for mutating workbook commands. | No dry-run success is claimed. |
-| Full installed workbook execution smoke | deferred | No fast stable fixture selected. | No workbook execution success is claimed from meta-contract smoke alone. |
+| Phase/lane plan | pass | `docs/superpowers/plans/2026-06-10-sheet-ops-agent-execution-contract.md` defines Lane A execution, Lane B schema compatibility, and Lane C independent verification. | Work proceeded phase-by-phase with dependency-aware lanes. |
+| Installed workbook E2E | pass | `TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd` runs public `install-skill.sh`, executes installed `bin/sheet-ops-codex run-intent`, asserts `ok:true`, artifacts, verification pass, evidence paths, and output workbook row `LineItems!A3:C3`. | Installed CLI can execute a real workbook append with authoritative artifact evidence. |
+| Result envelope | pass | `TestExecutedPublicEntryResultExposesAgentEnvelope`, `TestExecutedPublicEntryResultValidatesAgainstPublicSchema`, and `TestTerminalCompilerPublicEntryResultValidatesAgainstPublicSchema`. | Agents get stable success and recoverable compiler-stop envelopes. |
+| Typed errors | pass with reserved backlog | `TestStateRootMismatchClassifiesAsConfigurationError`; `capabilities --json` marks `state_root_mismatch` as `emitted` and unproven runtime categories as `reserved`. | Emitted error taxonomy is evidence-backed; unproven categories are not overclaimed. |
+| JSON Schemas and golden fixture | pass | `TestCLIJSONOutputsValidateAgainstPublishedSchemas`, `TestPublishedCLISchemasPinSchemaVersion`, `TestPublicEntryResultGoldenValidatesAgainstPublicSchema`, release schema compile/reference tests. | Public CLI JSON outputs are schema-valid and version-pinned. |
+| Preview | pass | `TestPreviewRequestReportsImpactWithoutMutating`, `TestPreviewRequestIsExposedAsReadOnlyNonDryRunCommand`, installed CLI smoke, and `contracts/cli/preview_request_result.schema.json`. | Agents can inspect planned impact without workbook output or state mutation. |
+| Docs alignment | pass | `TestCLIAgentContractDocsStayAligned` keeps public and bundled skill references aligned. | Installed docs and public docs teach the same safe contract. |
+| Verifier separation and closure | pass | Separate verifier agents reviewed Phases 13-17 and final review; final verifier found documentation closure gaps, was closed after reporting, and Phase 12 was retrospectively verified before Phase 18. | Execution and verification roles are separated, and verifier sessions used in this thread were closed after use. |
+| Full regression | pass | `go test ./cmd/sheet-ops-codex ./cmd/sheet-ops-agent ./internal/releasecontracts -count=1`; `go test ./... -count=1`; `git diff --check`. | No known repo regression from the agent execution contract work. |
 
-## Unsupported Assumptions
+## Verification Commands
 
-- Full workbook execution from an installed skill is not proven by this branch.
-- Runtime-level reserved error categories are not proven emitted until typed
-  producers and focused tests exist.
-- Preflight proves readiness signals only; it does not prove a future workbook
-  mutation would succeed.
-- `dry_run_capable:false` is intentional until the runtime has a truthful
-  planning mode.
-
-## Allowed Strategy
-
-- Add focused producer tests before moving any error code from `reserved` to
-  `emitted`.
-- Add a fast installed workbook fixture later if it can assert result JSON,
-  output workbook existence, and evidence artifacts without excessive runtime
-  cost.
-- Keep `sheet-ops` as the single human-facing workbook request entry while
-  expanding machine-readable `sheet-ops-codex` discovery.
-
-## Rejected Strategy
-
-- Do not call preflight a dry-run or infer mutation success from readiness.
-- Do not treat `sheet-ops-agent` or bundled internal launchers as a public human
-  workbook CLI.
-- Do not report installed workbook execution as covered by `capabilities`,
-  `schema`, or `preflight` smoke.
-- Do not collapse reserved runtime errors into emitted errors without live
-  producer evidence.
-
-## Verification
-
+- `go test ./cmd/sheet-ops-codex -run 'TestInstallSkillBundledCLIRunIntentExecutesWorkbookEndToEnd|TestPreviewRequest|TestCLIJSONOutputsValidateAgainstPublishedSchemas|TestPublishedCLISchemasPinSchemaVersion|Test.*PublicEntryResult.*Schema|TestTerminalCompilerPublicEntryResultValidatesAgainstPublicSchema' -count=1 -v`: pass.
 - `go test ./cmd/sheet-ops-codex ./cmd/sheet-ops-agent ./internal/releasecontracts -count=1`: pass.
-- `go run ./cmd/sheet-ops-codex --help`: pass.
-- `go run ./cmd/sheet-ops-codex capabilities --json`: pass.
-- `go run ./cmd/sheet-ops-codex schema command prepare-use --json`: pass.
-- `go run ./cmd/sheet-ops-codex schema command preflight --json`: pass.
-- `go run ./cmd/sheet-ops-codex preflight --json`: pass.
+- `go test ./internal/releasecontracts -run 'TestReleaseSchemasCompile|TestReleaseSchemaReferencesAreLocallyResolvable|TestCLIAgentContractDocsStayAligned' -count=1 -v`: pass.
 - `go test ./... -count=1`: pass.
+- `go run ./cmd/sheet-ops-codex capabilities --json`: pass.
+- `go run ./cmd/sheet-ops-codex schema command preview-request --json`: pass.
+- `go run ./cmd/sheet-ops-codex preflight --json`: pass.
+- `go run ./cmd/sheet-ops-codex --help`: pass.
+- `git diff --check`: pass.
 
-## Backlog
+## Web-Research-Backed Design Choices
 
-- Full installed workbook execution smoke remains optional until a fast,
-  stable fixture is selected.
-- Error taxonomy includes `reserved` categories that should move to `emitted`
-  only when typed producers and focused tests exist.
-- Real dry-run remains deferred until the runtime has a truthful planning mode.
-- Preflight checks output parent ancestor accessibility without creating probe
-  files; deeper permission probing can be added later if required.
+- CLI stdout/exit-code shape follows the CLI Guidelines source class.
+- Tool execution versus protocol/business errors follows MCP tool error guidance
+  and SEP-1303's agent-visible validation-error direction.
+- JSON contracts use JSON Schema 2020-12 with explicit root `$schema`, `$id`,
+  and `$defs` based on JSON Schema and MCP schema guidance.
+
+## No-Overclaim Constraints
+
+- `preview-request` is not a dry-run. It validates input boundaries and reports
+  planned impact only.
+- Preflight is readiness diagnostics only. It does not prove future workbook
+  mutation success.
+- Runtime categories remain `reserved` until deterministic producers and tests
+  exist.
+- Installed workbook success is claimed only from the installed E2E test that
+  checks JSON result fields, evidence paths, and workbook contents.
+- No success claim is based on stdout alone when an authoritative artifact or
+  schema-validated JSON result exists.
+
+## Final Verifier Closure
+
+The final verifier found no code-level contract regressions, but did find three
+evidence/closure blockers:
+
+- Final review checklist and artifact still described a pending state.
+- Phase 12 and Phase 17 did not both record separate verifier outcomes in their
+  phase notes.
+- Subagent closure was not represented in the durable evidence matrix.
+
+Actions before Phase 18 commit:
+
+- Final review checklist was marked complete only after fresh verification and
+  final verifier review.
+- Phase 12 received a retrospective independent verifier pass confirming the
+  deterministic installed E2E candidate and authoritative success fields.
+- Phase 17 result note now records its independent verifier pass and the closed
+  residual schema-sweep risk.
+- The evidence matrix now includes verifier separation and closure. All
+  verifier subagents used in this final review turn were closed after their
+  reports were consumed.
+
+## Remaining Backlog
+
+- A deeper compiler-backed preview could be added later as a separate runtime
+  planning track.
+- A real dry-run remains deferred until runtime planning can prove non-mutation
+  while simulating execution semantics.
+- Runtime `validation_blocked`, `execution_failed`, and `verification_failed`
+  should move from `reserved` to `emitted` only with deterministic producer
+  tests.
+- Schema generation can be reconsidered if hand-written output schemas become
+  hard to maintain.

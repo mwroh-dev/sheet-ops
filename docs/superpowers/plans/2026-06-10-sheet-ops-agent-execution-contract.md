@@ -61,25 +61,25 @@ Web-search value: low. Use local runtime fixtures and existing browser-flow auth
 
 ### TODO
 
-- [ ] Identify the smallest stable workbook/request fixture.
+- [x] Identify the smallest stable workbook/request fixture.
   - Evaluation: fixture can run through installed skill surface without network, manual intervention, or long runtime.
   - Result: a candidate fixture path, request path, expected output workbook path, and expected evidence artifacts are documented.
   - Likely files: `internal/testfixtures/**`, `examples/**`, runtime package tests.
   - Risk: medium.
   - Rollback: document fixture blocker and stop before adding flaky smoke.
-- [ ] Add a skipped or failing E2E smoke skeleton.
+- [x] Add a skipped or failing E2E smoke skeleton.
   - Evaluation: test installs the package into a temp project and attempts to execute the installed surface only.
   - Result: red evidence shows the missing authoritative success contract or missing stable fixture.
   - Likely files: `cmd/sheet-ops-codex/install_e2e_test.go` or `cmd/sheet-ops-codex/install_skill_test.go`.
   - Risk: high.
   - Rollback: keep this phase as discovery-only if runtime invocation is too expensive.
-- [ ] Define authoritative success fields.
+- [x] Define authoritative success fields.
   - Evaluation: success cannot be based on stdout alone; it must require exit code, result JSON, output workbook existence, and evidence artifact existence.
   - Result: phase note lists the exact fields/files Phase 15 must assert.
 - [x] Run separate verifier.
   - Evaluation: verifier checks fixture stability and whether the proposed success fields are authoritative.
   - Result: pass/fail before commit.
-- [ ] Commit Phase 12.
+- [x] Commit Phase 12.
   - Evaluation: only discovery notes and/or smoke skeleton are staged.
   - Result: `phase12/e2e: discover installed workbook smoke contract`.
 
@@ -101,25 +101,25 @@ Web-search value: medium. Use CLI stdout/exit-code guidance and MCP tool-result/
 
 ### TODO
 
-- [ ] Add failing tests for a shared execution envelope shape.
+- [x] Add failing tests for a shared execution envelope shape.
   - Evaluation: mutating/diagnostic execution commands return JSON with stable outer fields: `schema_version`, `ok`, `status`, `command`, `artifacts`, `next_actions`, `recoverable`, and optional `error`.
   - Result: tests fail on commands whose success or blocked output is currently inconsistent.
   - Likely files: `cmd/sheet-ops-codex/*_test.go`, runtime result helpers.
   - Risk: high.
   - Rollback: start with one command and document commands not yet migrated.
-- [ ] Implement minimal envelope adapter.
+- [x] Implement minimal envelope adapter.
   - Evaluation: adapter wraps existing outputs without hiding existing detailed payloads.
   - Result: commands keep useful domain data while adding a predictable agent-facing outer contract.
-- [ ] Define artifact references.
+- [x] Define artifact references.
   - Evaluation: `artifacts` entries include kind, path, required flag, and success role.
   - Result: agent can decide which files prove success.
-- [ ] Preserve exit-code semantics.
+- [x] Preserve exit-code semantics.
   - Evaluation: success returns 0; invalid usage/data/runtime failures return the existing non-zero codes.
   - Result: machine-readable stdout and exit code agree.
-- [ ] Run separate verifier.
+- [x] Run separate verifier.
   - Evaluation: verifier checks that the envelope helps an agent recover and does not overclaim runtime success.
   - Result: pass/fail before commit.
-- [ ] Commit Phase 13.
+- [x] Commit Phase 13.
   - Evaluation: focused envelope tests pass.
   - Result: `phase13/envelope: standardize agent execution results`.
 
@@ -141,22 +141,22 @@ Web-search value: medium. Use MCP protocol vs execution error split and agent-vi
 
 ### TODO
 
-- [ ] Add failing producer tests for reserved runtime categories.
+- [x] Add failing producer tests for reserved runtime categories.
   - Evaluation: at least `state_root_mismatch`, `validation_blocked`, `request_checkpoint`, `execution_failed`, and `verification_failed` have explicit producer tests or remain documented as reserved with a blocker.
   - Result: every emitted runtime error has a live path and JSON envelope.
   - Likely files: `cmd/sheet-ops-codex/cli_errors_test.go`, runtime command tests.
   - Risk: high.
   - Rollback: promote only categories with deterministic producers.
-- [ ] Wire typed errors at runtime boundaries.
+- [x] Wire typed errors at runtime boundaries.
   - Evaluation: runtime failures map to stable `error.code`, `recoverable`, `suggested_commands`, and artifact references.
   - Result: agents can distinguish retryable repair from hard failure.
-- [ ] Update `error_contract.codes[]`.
+- [x] Update `error_contract.codes[]`.
   - Evaluation: statuses move from `reserved` to `emitted` only when producer tests pass.
   - Result: taxonomy stays honest.
-- [ ] Run separate verifier.
+- [x] Run separate verifier.
   - Evaluation: verifier confirms no reserved category was promoted without evidence.
   - Result: pass/fail before commit.
-- [ ] Commit Phase 14.
+- [x] Commit Phase 14.
   - Evaluation: focused error tests pass.
   - Result: `phase14/errors: wire runtime typed producers`.
 
@@ -178,19 +178,19 @@ Web-search value: low. Use Phase 12 local discovery and browser-flow authoritati
 
 ### TODO
 
-- [ ] Promote the Phase 12 smoke to a passing test.
+- [x] Promote the Phase 12 smoke to a passing test.
   - Evaluation: installed surface executes a minimal workbook request and exits 0.
   - Result: test proves installed workbook execution, not only metadata discovery.
-- [ ] Assert authoritative artifacts.
+- [x] Assert authoritative artifacts.
   - Evaluation: result envelope `ok:true`, output workbook exists, evidence artifacts exist, and verifier/result artifact reports success.
   - Result: success claim is based on files and fields.
-- [ ] Assert no manual intervention.
+- [x] Assert no manual intervention.
   - Evaluation: smoke output explicitly records no manual checkpoint or manual override.
   - Result: test cannot be mistaken for a manually assisted success.
-- [ ] Run separate verifier.
+- [x] Run separate verifier.
   - Evaluation: verifier checks that stdout alone is not used as proof.
   - Result: pass/fail before commit.
-- [ ] Commit Phase 15.
+- [x] Commit Phase 15.
   - Evaluation: installed E2E smoke passes in focused mode.
   - Result: `phase15/e2e: prove installed workbook execution`.
 
@@ -227,7 +227,7 @@ Web-search value: high. Use JSON Schema 2020-12, root `$schema`, modular `$defs`
 - [x] Add docs for schema versioning.
   - Evaluation: docs define when to bump `schema_version` and how agents should handle unknown fields.
   - Result: consumers know what is stable.
-- [ ] Run separate verifier.
+- [x] Run separate verifier.
   - Evaluation: verifier checks schemas use JSON Schema 2020-12 and validate generated outputs.
   - Result: pass/fail before commit.
 - [x] Commit Phase 16.
@@ -287,16 +287,16 @@ Lane: Independent Verification.
 
 ### TODO
 
-- [ ] Run full verification.
+- [x] Run full verification.
   - Evaluation: focused phase tests, `go test ./cmd/sheet-ops-codex ./cmd/sheet-ops-agent ./internal/releasecontracts -count=1`, `go test ./... -count=1`, generated JSON validation, installed E2E smoke, and schema compatibility tests pass.
   - Result: completion evidence is fresh.
-- [ ] Dispatch final verifier.
+- [x] Dispatch final verifier.
   - Evaluation: verifier reviews all phases, authoritative artifacts, web-research-backed design choices, and no-overclaim constraints.
   - Result: pass/fail before final commit.
-- [ ] Update final review artifact.
+- [x] Update final review artifact.
   - Evaluation: evidence matrix covers installed E2E, typed errors, result envelopes, schemas/goldens, preview, dry-run deferral, and remaining backlog.
   - Result: branch is reviewable.
-- [ ] Commit final review.
+- [x] Commit final review.
   - Evaluation: worktree is clean after commit.
   - Result: `phase18/review: lock agent execution contract evidence`.
 
@@ -353,6 +353,11 @@ Verification:
 - `go test ./runtime/workbookcase -run 'TestRunAppendStructuredRowsEndToEnd|TestRunUsesClosedArtifactsForSummaryAndHighlight' -count=1`: pass.
 - `go test ./runtime/openlayer/requestcompiler -run 'TestAppendRowsIntentCompilesThroughValidation|TestNormalizeHeadersIntentCompilesThroughValidation' -count=1`: pass.
 - `go test ./runtime/openlayer/useorchestrator -run 'TestNormalizeHeadersValidatedRequestBuildsHeaderNormalizationTaskSpec' -count=1`: pass.
+- Separate verifier: retrospective Phase 12 verifier passed with no blockers. It
+  confirmed the deterministic `append_structured_rows` candidate, the
+  non-stdout-only authoritative success fields, and that Phase 15 implemented
+  those fields in the installed E2E smoke. It also reran the workbookcase,
+  requestcompiler, and installed E2E focused commands successfully.
 
 Backlog self-review:
 
@@ -568,6 +573,13 @@ Verification:
   present in the agent-contract command group.
 - `go test ./cmd/sheet-ops-codex -run 'TestPreviewRequest|TestInstallSkillBundledCLIExposesAgentContract|TestCLIJSONOutputsValidateAgainstPublishedSchemas|TestPublishedCLISchemasPinSchemaVersion|TestCLIHelpSeparatesCommandSurfaces' -count=1 -v`: pass.
 - `go test ./internal/releasecontracts -run 'TestCLIAgentContractDocsStayAligned|TestReleaseSchemasCompile|TestReleaseSchemaReferencesAreLocallyResolvable' -count=1 -v`: pass after public skill/reference mirrors were aligned.
+- Separate verifier: pass, no blockers. It confirmed `preview-request` is
+  `read_only:true`, `mutating:false`, `dry_run_capable:false`, does not create
+  output workbook or state artifacts, does not claim dry-run or execution
+  success, is present in the install manifest and installed CLI smoke, and has a
+  schema-validated live output. The verifier's residual risk that generic CLI
+  schema sweep did not include preview was closed by adding the preview case to
+  `TestCLIJSONOutputsValidateAgainstPublishedSchemas`.
 
 Backlog self-review:
 
