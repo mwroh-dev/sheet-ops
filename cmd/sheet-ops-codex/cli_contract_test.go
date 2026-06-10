@@ -72,6 +72,7 @@ func TestCLIHelpSeparatesCommandSurfaces(t *testing.T) {
 		"Internal handoff surface:",
 		"Maintainer diagnostic surface:",
 		"install-skill",
+		"preflight",
 		"prepare-use",
 		"run-validated",
 		"run-intent",

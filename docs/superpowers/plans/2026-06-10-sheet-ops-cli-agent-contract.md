@@ -387,6 +387,44 @@ Lane: CLI contract core.
   - Evaluation: mutation/state/preflight tests pass and earlier contract tests still pass.
   - Result: `phase4/safety: expose state and mutation preflight`.
 
+### Phase 4 Red Test Evidence (Pre-Implementation)
+
+- Added focused Phase 4 tests in `cmd/sheet-ops-codex/preflight_command_test.go`
+  and extended schema expectations in `cmd/sheet-ops-codex/cli_schema_test.go`
+  before production implementation.
+- Initial red command:
+  `go test ./cmd/sheet-ops-codex -run 'Test.*Preflight.*|Test.*Schema.*|Test.*Capabilities.*' -count=1`.
+- Red result: `capabilities --json` did not list `preflight`, schema had no
+  `preflight` contract, and `preflight --json` failed as an unknown command.
+
+## Phase 4 Result Note
+
+Implementation outcome:
+
+- Added read-only `sheet-ops-codex preflight --json` diagnostic output.
+- Preflight checks project directory access, Go runtime availability, embedded
+  package manifest availability, optional state-root ownership, optional input
+  file readability, and optional output parent ancestry.
+- Added `dry_run_capable` to command schema. Current mutating workbook commands
+  do not claim dry-run support because there is no truthful runtime planning
+  mode yet.
+- Added `preflight` to capabilities, schema, and top-level help under the
+  agent-contract surface.
+
+Verification commands passed:
+
+- `go test ./cmd/sheet-ops-codex -run 'Test.*Preflight.*|Test.*Schema.*|Test.*Capabilities.*|Test.*Contract.*|Test.*Help.*' -count=1`.
+- `go test ./cmd/sheet-ops-codex -count=1`.
+- `go run ./cmd/sheet-ops-codex preflight --json`.
+- `go run ./cmd/sheet-ops-codex --help`.
+
+Phase 4 backlog:
+
+- Preflight remains a read-only readiness diagnostic, not a workbook mutation
+  dry-run. A real dry-run should be a separate runtime planning feature.
+- Output writability is checked without creating files; deeper permission
+  probing can be added if future tests require it.
+
 ### Phase-End Backlog Review
 
 Ask:

@@ -37,6 +37,7 @@ type cliCommandContract struct {
 	RelatedCommands  []string
 	Mutating         bool
 	ReadOnly         bool
+	DryRunCapable    bool
 	Hidden           bool
 }
 
@@ -68,6 +69,7 @@ func sheetOpsCLIContracts(rootName string) map[string]cliCommandContract {
 			RelatedCommands: []string{
 				"capabilities",
 				"install-skill",
+				"preflight",
 				"prepare-use",
 				"run-validated",
 				"run-intent",
@@ -352,6 +354,7 @@ func sheetOpsCLIReadOnlyDiscoveryContracts(rootName string) map[string]cliComman
 			},
 			RelatedCommands: []string{
 				"schema",
+				"preflight",
 				"prepare-use",
 				"help",
 			},
@@ -385,11 +388,56 @@ func sheetOpsCLIReadOnlyDiscoveryContracts(rootName string) map[string]cliComman
 			},
 			RelatedCommands: []string{
 				"capabilities",
+				"preflight",
 				"prepare-use",
 				"help",
 			},
 			Mutating: false,
 			ReadOnly: true,
+		},
+		"preflight": {
+			Name:             "preflight",
+			Classification:   cliClassificationAgentContract,
+			IntendedCaller:   "Automation, CI, or another agent checking whether Sheet Ops CLI surfaces are ready before mutation.",
+			ShortDescription: "Run read-only readiness checks for Sheet Ops CLI execution",
+			Usage:            rootName + " preflight --json [--project <path>] [--input-file <path>] [--output-file <path>] [--go-bin <path>]",
+			Options: []string{
+				"--json: Emit machine-readable JSON on stdout.",
+				"--project: Project directory whose local Sheet Ops install/readiness should be checked.",
+				"--input-file: Optional workbook path used to check readability and state-root ownership.",
+				"--output-file: Optional output workbook path used to check parent-directory writability.",
+				"--go-bin: Go binary used for readiness checks.",
+			},
+			OutputMode: "Machine-readable readiness JSON on stdout.",
+			SideEffects: []string{
+				"None. Does not create workbooks, envelopes, install trees, or .sheet-ops-state directories.",
+			},
+			ReadArtifacts: []string{
+				"Project directory metadata.",
+				"Go executable and go version output.",
+				"Embedded package manifest metadata.",
+				"Optional input workbook metadata.",
+				"Optional output parent directory metadata.",
+				"SHEET_OPS_STATE_ROOT when set.",
+			},
+			WrittenArtifacts: []string{
+				"None.",
+			},
+			StateBehavior: "Read-only. Checks whether SHEET_OPS_STATE_ROOT matches the workbook-case .sheet-ops-state when an input workbook is provided, but does not create or mutate state roots.",
+			SafetyNotes: []string{
+				"Preflight is a diagnostic surface only; it is not a dry-run for workbook mutations.",
+				"Mutating commands remain non-dry-run-capable until a truthful runtime planning mode exists.",
+			},
+			RelatedCommands: []string{
+				"capabilities",
+				"schema",
+				"prepare-use",
+				"run-validated",
+				"install-skill",
+			},
+			Mutating:      false,
+			ReadOnly:      true,
+			DryRunCapable: false,
 		},
 	}
 }
@@ -412,7 +460,7 @@ func applyCLIContracts(rootCmd *cobra.Command) {
 	rootCmd.InitDefaultHelpCmd()
 	rootCmd.InitDefaultCompletionCmd()
 
-	contracts := sheetOpsCLIContracts(rootCmd.Name())
+	contracts := sheetOpsCLIAllContracts(rootCmd.Name())
 	applyCLIContract(rootCmd, contracts[rootCmd.Name()])
 	for _, command := range rootCmd.Commands() {
 		if contract, ok := contracts[command.Name()]; ok {
@@ -499,6 +547,7 @@ type cliCommandSchemaPayload struct {
 	RelatedCommands  []string                 `json:"related_commands"`
 	Mutating         bool                     `json:"mutating"`
 	ReadOnly         bool                     `json:"read_only"`
+	DryRunCapable    bool                     `json:"dry_run_capable"`
 	Hidden           bool                     `json:"hidden"`
 }
 
@@ -663,6 +712,7 @@ func buildCommandSchemaPayload(contract cliCommandContract) cliCommandSchemaPayl
 		RelatedCommands:  append([]string(nil), contract.RelatedCommands...),
 		Mutating:         contract.Mutating,
 		ReadOnly:         contract.ReadOnly,
+		DryRunCapable:    contract.DryRunCapable,
 		Hidden:           contract.Hidden,
 	}
 }
@@ -729,7 +779,7 @@ func renderRootHelp(output io.Writer, rootCmd *cobra.Command, contracts map[stri
 	if err := renderContractSection(output, "Install surface:", contracts, []string{"install-skill"}); err != nil {
 		return err
 	}
-	if err := renderContractSection(output, "Agent-contract surface:", contracts, []string{"prepare-use"}); err != nil {
+	if err := renderContractSection(output, "Agent-contract surface:", contracts, []string{"preflight", "prepare-use"}); err != nil {
 		return err
 	}
 	if err := renderContractSection(output, "Internal handoff surface:", contracts, []string{"run-validated"}); err != nil {

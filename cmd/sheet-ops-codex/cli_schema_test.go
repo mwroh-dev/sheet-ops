@@ -74,6 +74,7 @@ type cliCommandSchemaView struct {
 	RelatedCommands  []string              `json:"related_commands"`
 	Mutating         bool                  `json:"mutating"`
 	ReadOnly         bool                  `json:"read_only"`
+	DryRunCapable    bool                  `json:"dry_run_capable"`
 	Hidden           bool                  `json:"hidden"`
 }
 
@@ -117,6 +118,9 @@ func TestCapabilitiesJSONReportsSafeEntryBoundaries(t *testing.T) {
 		if !slices.Contains(agentGroup.Commands, name) {
 			t.Fatalf("agent_contract commands missing %q: %v", name, agentGroup.Commands)
 		}
+	}
+	if !slices.Contains(agentGroup.Commands, "preflight") {
+		t.Fatalf("agent_contract commands missing preflight: %v", agentGroup.Commands)
 	}
 
 	runValidated := findCapabilityCommand(t, doc.Commands, "run-validated")
@@ -171,6 +175,23 @@ func TestSchemaJSONReportsCommandContracts(t *testing.T) {
 		}
 	}
 
+	preflight := findCommandSchema(t, doc.Commands, "preflight")
+	if preflight.Classification != "agent_contract" {
+		t.Fatalf("preflight classification = %q, want agent_contract", preflight.Classification)
+	}
+	if preflight.Mutating {
+		t.Fatalf("preflight mutating = true, want false")
+	}
+	if !preflight.ReadOnly {
+		t.Fatalf("preflight read_only = false, want true")
+	}
+	if preflight.DryRunCapable {
+		t.Fatalf("preflight dry_run_capable = true, want false for a read-only diagnostic")
+	}
+	if !strings.Contains(preflight.StateBehavior, "Read-only") {
+		t.Fatalf("preflight state_behavior = %q, want Read-only", preflight.StateBehavior)
+	}
+
 	for _, forbidden := range []string{"bash", "fish", "powershell", "zsh"} {
 		for _, command := range doc.Commands {
 			if command.Name == forbidden {
@@ -218,6 +239,9 @@ func TestSchemaCommandJSONReportsInternalCommandContract(t *testing.T) {
 	}
 	if !doc.Command.Mutating {
 		t.Fatalf("run-validated mutating = false, want true")
+	}
+	if doc.Command.DryRunCapable {
+		t.Fatalf("run-validated dry_run_capable = true, want false until truthful dry-run exists")
 	}
 }
 
