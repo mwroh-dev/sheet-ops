@@ -44,7 +44,9 @@ input workbook, then bind any reported output workbook to a concrete file hash
 before trusting runtime artifacts. The same output hash is also carried in
 `runtime.verification.output_workbook_sha256` and the persisted verification
 artifact. Any verification artifact that names a non-empty `output_file`
-requires this hash.
+requires this hash. Treat `output_workbook` as the primary success artifact
+only when the public result has `ok:true`; on `ok:false`, a materialized output
+workbook is failure evidence.
 
 ## Versioning Policy
 

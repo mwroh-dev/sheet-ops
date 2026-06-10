@@ -81,7 +81,8 @@ the inspected inputs, not proof of runtime execution success. After
 fingerprints, and when present use `output_workbook_sha256` to bind the
 produced workbook bytes before trusting runtime artifacts. Cross-check it
 against `runtime.verification.output_workbook_sha256`; verification artifacts
-that name a non-empty `output_file` require that hash.
+that name a non-empty `output_file` require that hash. Treat output workbooks
+on `ok:false` results as failure evidence, not primary success.
 
 ## Public split surface
 

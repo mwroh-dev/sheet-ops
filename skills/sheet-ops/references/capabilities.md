@@ -37,7 +37,8 @@ the execution result `fingerprints` to the preview fingerprints, and use
 `output_workbook_sha256` when present to bind the produced workbook bytes before
 trusting runtime artifacts. Cross-check it against
 `runtime.verification.output_workbook_sha256`; verification artifacts that name
-a non-empty `output_file` require that hash.
+a non-empty `output_file` require that hash. Treat output workbooks on
+`ok:false` results as failure evidence, not primary success.
 
 ## Public agent capabilities
 

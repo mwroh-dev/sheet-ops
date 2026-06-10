@@ -135,6 +135,26 @@ func TestExecutedPublicEntryResultSchemaAllowsVerificationFailureWithOutputFileA
 	}
 }
 
+func TestExecutedPublicEntryResultLabelsFailedOutputAsFailureEvidence(t *testing.T) {
+	envelope := newTestExecutedFailurePublicEntryResult(t, true)
+
+	if envelope.OK {
+		t.Fatalf("ok = true, want false for failed verification")
+	}
+	assertPublicResultArtifact(t, envelope.Artifacts, "output_workbook", false, "failure_evidence")
+}
+
+func TestExecutedPublicEntryResultSchemaRejectsFailedOutputMarkedAsPrimarySuccess(t *testing.T) {
+	document := publicEntryResultDocument(t, newTestExecutedFailurePublicEntryResult(t, true))
+	artifact := publicResultArtifact(t, document, "output_workbook")
+	artifact["required"] = true
+	artifact["success_role"] = "primary_success"
+
+	if err := runtimeschema.ValidateStruct(publicEntryResultSchemaPath(), document); err == nil {
+		t.Fatalf("public entry result schema accepted failed output workbook marked as primary_success")
+	}
+}
+
 func TestExecutedPublicEntryResultSchemaAllowsEarlyVerificationFailureWithoutOutputFileOrHash(t *testing.T) {
 	document := publicEntryResultDocument(t, newTestExecutedFailurePublicEntryResult(t, false))
 	assertNoPublicResultArtifact(t, document, "output_workbook")
@@ -368,6 +388,24 @@ func assertPublicResultArtifact(t *testing.T, artifacts []PublicResultArtifact, 
 func assertNoPublicResultArtifact(t *testing.T, document map[string]any, kind string) {
 	t.Helper()
 
+	if publicResultArtifactOrNil(t, document, kind) != nil {
+		t.Fatalf("unexpected artifact kind %q in %+v", kind, document["artifacts"])
+	}
+}
+
+func publicResultArtifact(t *testing.T, document map[string]any, kind string) map[string]any {
+	t.Helper()
+
+	artifact := publicResultArtifactOrNil(t, document, kind)
+	if artifact == nil {
+		t.Fatalf("missing artifact kind %q in %+v", kind, document["artifacts"])
+	}
+	return artifact
+}
+
+func publicResultArtifactOrNil(t *testing.T, document map[string]any, kind string) map[string]any {
+	t.Helper()
+
 	artifacts, ok := document["artifacts"].([]any)
 	if !ok {
 		t.Fatalf("artifacts has type %T, want array", document["artifacts"])
@@ -378,9 +416,10 @@ func assertNoPublicResultArtifact(t *testing.T, document map[string]any, kind st
 			t.Fatalf("artifact has type %T, want object", value)
 		}
 		if artifact["kind"] == kind {
-			t.Fatalf("unexpected artifact kind %q in %+v", kind, artifacts)
+			return artifact
 		}
 	}
+	return nil
 }
 
 func publicEntryResultSchemaPath() string {

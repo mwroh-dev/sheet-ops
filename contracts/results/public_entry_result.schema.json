@@ -343,6 +343,36 @@
     {
       "if": {
         "properties": {
+          "status": { "const": "executed" },
+          "ok": { "const": false }
+        },
+        "required": ["status", "ok"]
+      },
+      "then": {
+        "properties": {
+          "artifacts": {
+            "items": {
+              "if": {
+                "properties": {
+                  "kind": { "const": "output_workbook" }
+                },
+                "required": ["kind"]
+              },
+              "then": {
+                "properties": {
+                  "required": { "const": false },
+                  "success_role": { "const": "failure_evidence" }
+                },
+                "required": ["required", "success_role"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
           "status": { "const": "needs_human_checkpoint" }
         },
         "required": ["status"]

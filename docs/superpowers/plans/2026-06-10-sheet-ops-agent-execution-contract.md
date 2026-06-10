@@ -42,6 +42,7 @@ Sequential implementation lane:
 11. Phase 24: successful verification hash requirement.
 12. Phase 25: verification output-file hash requirement.
 13. Phase 26: executed failure public fingerprint contract.
+14. Phase 27: executed failure artifact role contract.
 
 Phase 12 comes before Phase 13 because the existing runtime output must be observed before a stable envelope is imposed. Phase 15 comes after Phases 13-14 so the E2E smoke can assert the final contract rather than a temporary shape.
 
@@ -978,6 +979,89 @@ workbook exists.
   executed failure that has a materialized output workbook can still label that
   artifact as `primary_success`; that is a result semantics problem, not part
   of this phase's fingerprint contract.
+
+## Phase 27 - Executed Failure Artifact Role Contract
+
+Lane: Execution Contract.
+
+Web-search value: low. This phase tightens the local public result contract so
+artifact roles do not overstate failed execution. No external methodology is
+needed; the existing envelope already separates `ok`, artifact `required`, and
+`success_role`.
+
+### TODO
+
+- [x] Add failing test for materialized-output executed failure artifact role.
+  - Evaluation: an executed public result with `ok:false` and non-empty
+    `runtime.verification.output_file` does not label `output_workbook` as
+    `primary_success` or `required:true`.
+  - Result: agents cannot misread failed workbook output as the primary success
+    artifact.
+  - Likely files: `cmd/sheet-ops-codex/public_entry_result_test.go`.
+  - Risk: medium.
+  - Rollback: keep Phase 26 fingerprint semantics and document the role gap.
+- [x] Split success and failure output workbook artifact roles.
+  - Evaluation: executed success keeps `output_workbook` as `required:true`,
+    `primary_success`; executed failure with output uses `required:false`,
+    `failure_evidence`.
+  - Result: materialized failed output remains visible for diagnosis without
+    being treated as success.
+- [x] Add schema guard for failed output artifact role.
+  - Evaluation: public schema rejects `status:"executed"`, `ok:false` results
+    whose `output_workbook` artifact is marked `primary_success` or
+    `required:true`.
+  - Result: the contract enforces the generator's failure semantics.
+- [x] Update docs/phase evidence.
+  - Evaluation: public docs and skill mirrors distinguish primary success
+    output from diagnostic failed output.
+  - Result: agents inspect failed output as evidence, not as success.
+- [x] Run separate verifier.
+  - Evaluation: verifier checks success artifact contract, failed materialized
+    output contract, early failure without output artifact, schema/golden
+    alignment, and no preview drift.
+  - Result: pass/fail before commit.
+- [x] Commit Phase 27.
+  - Evaluation: focused public schema/emitter tests, release contract tests,
+    package tests, and `git diff --check` pass.
+  - Result: `phase27/results: label failed output evidence`.
+
+### Phase-End Backlog Review
+
+Ask:
+
+- Should the field name `success_role` become a neutral `role` in a future
+  schema version?
+- Should public docs include a table of artifact roles by `ok` state?
+- Should failure evidence paths become required when `ok:false`?
+
+Do not change successful execution artifact semantics in this phase.
+
+### Phase 27 Result Note
+
+- Implementation: public result artifact generation now labels
+  `output_workbook` as `required:true`, `primary_success` only when
+  `runtime.verification.pass` is true. If verification fails but an output
+  workbook exists, the artifact is emitted as `required:false`,
+  `failure_evidence`.
+- Contract guard: `contracts/results/public_entry_result.schema.json` rejects
+  executed `ok:false` envelopes that mark `output_workbook` as
+  `primary_success` or `required:true`.
+- Coverage: `cmd/sheet-ops-codex/public_entry_result_test.go` proves failed
+  materialized output is labeled as failure evidence, schema rejects the old
+  primary-success shape, early failures without output still omit the artifact,
+  and executed success keeps the primary success artifact.
+- Documentation: public docs and mirrored skill references now tell agents to
+  treat output workbooks on `ok:false` results as failure evidence.
+- Red evidence:
+  `go test ./cmd/sheet-ops-codex -run TestExecutedPublicEntryResultLabelsFailedOutputAsFailureEvidence -count=1 -v`
+  failed before the generator change because the failed output artifact was
+  still `required:true`.
+- Verification evidence: focused public schema/emitter tests, release contract
+  tests, related package tests, and `git diff --check` pass. Separate verifier
+  reported no blockers and confirmed preview contract files did not drift.
+- Backlog self-review: keep failed `run-intent` end-to-end coverage as a later
+  enhancement. This phase locks the public generator/schema semantics with
+  focused coverage.
 
 ## Final Review Phase - Agent Execution Contract Completion
 

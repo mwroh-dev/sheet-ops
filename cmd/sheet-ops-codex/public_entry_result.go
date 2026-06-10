@@ -242,7 +242,7 @@ func newExecutedPublicEntryResult(entry string, compiled requestcompiler.Persist
 		OK:            result.Verification.Pass,
 		Command:       entry,
 		Recoverable:   false,
-		Artifacts:     publicSuccessArtifacts(publicRuntime),
+		Artifacts:     publicExecutionArtifacts(publicRuntime),
 		NextActions: []string{
 			"Inspect runtime.verification before claiming workbook success.",
 			"Open the output workbook only after verification pass is true.",
@@ -261,9 +261,14 @@ func newExecutedPublicEntryResult(entry string, compiled requestcompiler.Persist
 	}
 }
 
-func publicSuccessArtifacts(result PublicRuntimeResult) []PublicResultArtifact {
+func publicExecutionArtifacts(result PublicRuntimeResult) []PublicResultArtifact {
 	artifacts := make([]PublicResultArtifact, 0, 6)
-	artifacts = appendPublicResultArtifact(artifacts, "output_workbook", result.Verification.OutputFile, true, "primary_success")
+	outputRequired := result.Verification.Pass
+	outputRole := "failure_evidence"
+	if result.Verification.Pass {
+		outputRole = "primary_success"
+	}
+	artifacts = appendPublicResultArtifact(artifacts, "output_workbook", result.Verification.OutputFile, outputRequired, outputRole)
 	artifacts = appendPublicResultArtifact(artifacts, "verification", result.Paths.VerificationPath, true, "success_evidence")
 	artifacts = appendPublicResultArtifact(artifacts, "evidence_dir", result.Paths.EvidenceDir, true, "audit_trail")
 	artifacts = appendPublicResultArtifact(artifacts, "execution", result.Paths.ExecutionPath, false, "supporting_evidence")
