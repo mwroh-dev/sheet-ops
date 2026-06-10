@@ -43,6 +43,8 @@ type cliErrorCodeView struct {
 	Code        string `json:"code"`
 	ExitCode    int    `json:"exit_code"`
 	Recoverable bool   `json:"recoverable"`
+	Status      string `json:"status"`
+	Producer    string `json:"producer"`
 	Meaning     string `json:"meaning"`
 }
 
@@ -140,6 +142,24 @@ func TestCapabilitiesJSONReportsSafeEntryBoundaries(t *testing.T) {
 	for _, code := range []string{"invalid_usage", "missing_required_option", "unknown_command", "state_root_mismatch", "execution_failed", "verification_failed", "internal_error"} {
 		if findErrorCode(doc.ErrorContract.Codes, code).Code == "" {
 			t.Fatalf("error_contract.codes missing %q: %+v", code, doc.ErrorContract.Codes)
+		}
+	}
+	for _, code := range doc.ErrorContract.Codes {
+		if code.Status == "" {
+			t.Fatalf("error code %q has empty status: %+v", code.Code, code)
+		}
+		if code.Producer == "" {
+			t.Fatalf("error code %q has empty producer: %+v", code.Code, code)
+		}
+	}
+	for _, code := range []string{"invalid_usage", "missing_required_option", "unknown_command", "internal_error"} {
+		if got := findErrorCode(doc.ErrorContract.Codes, code); got.Status != "emitted" {
+			t.Fatalf("error code %q status = %q, want emitted", code, got.Status)
+		}
+	}
+	for _, code := range []string{"invalid_json_or_schema", "state_root_mismatch", "request_checkpoint", "validation_blocked", "execution_failed", "verification_failed"} {
+		if got := findErrorCode(doc.ErrorContract.Codes, code); got.Status != "reserved" {
+			t.Fatalf("error code %q status = %q, want reserved", code, got.Status)
 		}
 	}
 }

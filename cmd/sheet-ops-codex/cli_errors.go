@@ -29,6 +29,11 @@ const (
 	cliExitConfiguration = 78
 )
 
+const (
+	cliErrorStatusEmitted  = "emitted"
+	cliErrorStatusReserved = "reserved"
+)
+
 type cliError struct {
 	Code              string   `json:"code"`
 	Message           string   `json:"message"`
@@ -55,6 +60,8 @@ type cliErrorCodeDescriptor struct {
 	Code        string `json:"code"`
 	ExitCode    int    `json:"exit_code"`
 	Recoverable bool   `json:"recoverable"`
+	Status      string `json:"status"`
+	Producer    string `json:"producer"`
 	Meaning     string `json:"meaning"`
 }
 
@@ -130,66 +137,88 @@ func buildCLIErrorContractPayload() cliErrorContractPayload {
 				Code:        cliErrorInvalidUsage,
 				ExitCode:    cliExitUsage,
 				Recoverable: true,
+				Status:      cliErrorStatusEmitted,
+				Producer:    "json_mode_guard",
 				Meaning:     "The command form or required --json mode is invalid; inspect help or schema before retrying.",
 			},
 			{
 				Code:        cliErrorMissingRequiredOption,
 				ExitCode:    cliExitUsage,
 				Recoverable: true,
+				Status:      cliErrorStatusEmitted,
+				Producer:    "cobra_required_flags",
 				Meaning:     "A required option is missing; retry with the command-specific required flags.",
 			},
 			{
 				Code:        cliErrorUnknownCommand,
 				ExitCode:    cliExitUsage,
 				Recoverable: true,
+				Status:      cliErrorStatusEmitted,
+				Producer:    "cobra_or_schema_lookup",
 				Meaning:     "The command or schema target is unknown; rediscover commands through capabilities or schema.",
 			},
 			{
 				Code:        cliErrorInvalidData,
 				ExitCode:    cliExitData,
 				Recoverable: true,
+				Status:      cliErrorStatusReserved,
+				Producer:    "runtime_input_validation",
 				Meaning:     "Input JSON, request data, or schema validation failed before execution.",
 			},
 			{
 				Code:        cliErrorInstallDependency,
 				ExitCode:    cliExitUnavailable,
 				Recoverable: true,
+				Status:      cliErrorStatusReserved,
+				Producer:    "install_dependency_check",
 				Meaning:     "An install-time dependency such as Go or the bundled CLI binary is unavailable.",
 			},
 			{
 				Code:        cliErrorStateRootMismatch,
 				ExitCode:    cliExitConfiguration,
 				Recoverable: true,
+				Status:      cliErrorStatusReserved,
+				Producer:    "state_root_guard",
 				Meaning:     "State-root configuration would place artifacts outside the workbook-case state root.",
 			},
 			{
 				Code:        cliErrorRequestCheckpoint,
 				ExitCode:    cliExitConfiguration,
 				Recoverable: true,
+				Status:      cliErrorStatusReserved,
+				Producer:    "request_compiler_checkpoint",
 				Meaning:     "The request compiler stopped for a human checkpoint or blocked decision.",
 			},
 			{
 				Code:        cliErrorValidationBlocked,
 				ExitCode:    cliExitData,
 				Recoverable: true,
+				Status:      cliErrorStatusReserved,
+				Producer:    "runtime_validation",
 				Meaning:     "Validation blocked execution; inspect generated validation artifacts before retrying.",
 			},
 			{
 				Code:        cliErrorExecutionFailed,
 				ExitCode:    cliExitSoftware,
 				Recoverable: false,
+				Status:      cliErrorStatusReserved,
+				Producer:    "runtime_executor",
 				Meaning:     "Runtime execution failed after a validated request reached the orchestrator.",
 			},
 			{
 				Code:        cliErrorVerificationFailed,
 				ExitCode:    cliExitSoftware,
 				Recoverable: false,
+				Status:      cliErrorStatusReserved,
+				Producer:    "result_verifier",
 				Meaning:     "Result verification failed after runtime execution and needs artifact review.",
 			},
 			{
 				Code:        cliErrorInternal,
 				ExitCode:    cliExitGeneral,
 				Recoverable: false,
+				Status:      cliErrorStatusEmitted,
+				Producer:    "fallback_classifier",
 				Meaning:     "An uncategorized internal CLI or runtime error occurred.",
 			},
 		},
