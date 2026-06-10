@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"maps"
@@ -11,6 +12,7 @@ import (
 )
 
 const (
+	cliContractSchemaVersion              = "sheet-ops-cli/v1"
 	cliClassificationAgentContract        = "agent_contract"
 	cliClassificationBuiltinSupport       = "builtin_support"
 	cliClassificationCompatibilityHidden  = "compatibility_internal"
@@ -33,6 +35,9 @@ type cliCommandContract struct {
 	StateBehavior    string
 	SafetyNotes      []string
 	RelatedCommands  []string
+	Mutating         bool
+	ReadOnly         bool
+	Hidden           bool
 }
 
 func sheetOpsCLIContracts(rootName string) map[string]cliCommandContract {
@@ -61,11 +66,15 @@ func sheetOpsCLIContracts(rootName string) map[string]cliCommandContract {
 				"Use the `sheet-ops` skill, not this CLI root, as the single human-facing workbook request entry.",
 			},
 			RelatedCommands: []string{
+				"capabilities",
 				"install-skill",
 				"prepare-use",
 				"run-validated",
 				"run-intent",
+				"schema",
 			},
+			Mutating: false,
+			ReadOnly: true,
 		},
 		"completion": {
 			Name:             "completion",
@@ -94,6 +103,8 @@ func sheetOpsCLIContracts(rootName string) map[string]cliCommandContract {
 				"help",
 				rootName,
 			},
+			Mutating: false,
+			ReadOnly: true,
 		},
 		"help": {
 			Name:             "help",
@@ -120,8 +131,12 @@ func sheetOpsCLIContracts(rootName string) map[string]cliCommandContract {
 			},
 			RelatedCommands: []string{
 				rootName,
+				"capabilities",
 				"completion",
+				"schema",
 			},
+			Mutating: false,
+			ReadOnly: true,
 		},
 		"install-skill": {
 			Name:             "install-skill",
@@ -154,8 +169,11 @@ func sheetOpsCLIContracts(rootName string) map[string]cliCommandContract {
 			},
 			RelatedCommands: []string{
 				"prepare-use",
+				"capabilities",
+				"schema",
 				"help",
 			},
+			Mutating: true,
 		},
 		"prepare-use": {
 			Name:             "prepare-use",
@@ -189,9 +207,12 @@ func sheetOpsCLIContracts(rootName string) map[string]cliCommandContract {
 				"Keep `sheet-ops` as the single human-facing workbook request entry.",
 			},
 			RelatedCommands: []string{
+				"capabilities",
 				"run-validated",
 				"run-intent",
+				"schema",
 			},
+			Mutating: true,
 		},
 		"run-intent": {
 			Name:             "run-intent",
@@ -224,9 +245,12 @@ func sheetOpsCLIContracts(rootName string) map[string]cliCommandContract {
 				"Blocked or needs_human_checkpoint outcomes require artifact inspection before retry.",
 			},
 			RelatedCommands: []string{
+				"capabilities",
 				"prepare-use",
 				"run-validated",
+				"schema",
 			},
+			Mutating: true,
 		},
 		"run-request": {
 			Name:             "run-request",
@@ -255,9 +279,13 @@ func sheetOpsCLIContracts(rootName string) map[string]cliCommandContract {
 				"Hidden compatibility surface. Do not teach it as a public workbook entry.",
 			},
 			RelatedCommands: []string{
+				"capabilities",
 				"run-validated",
 				"prepare-use",
+				"schema",
 			},
+			Mutating: true,
+			Hidden:   true,
 		},
 		"run-validated": {
 			Name:             "run-validated",
@@ -286,12 +314,92 @@ func sheetOpsCLIContracts(rootName string) map[string]cliCommandContract {
 				"Internal handoff surface only. Do not present it as a second human-facing workbook request entry.",
 			},
 			RelatedCommands: []string{
+				"capabilities",
 				"prepare-use",
 				"run-request",
 				"run-intent",
+				"schema",
 			},
+			Mutating: true,
 		},
 	}
+}
+
+func sheetOpsCLIReadOnlyDiscoveryContracts(rootName string) map[string]cliCommandContract {
+	return map[string]cliCommandContract{
+		"capabilities": {
+			Name:             "capabilities",
+			Classification:   cliClassificationAgentContract,
+			IntendedCaller:   "Automation, CI, or another agent discovering safe Sheet Ops CLI entry boundaries.",
+			ShortDescription: "Emit machine-readable command groups and safe CLI entry boundaries",
+			Usage:            rootName + " capabilities --json",
+			Options: []string{
+				"--json: Emit machine-readable JSON on stdout.",
+			},
+			OutputMode: "Machine-readable JSON on stdout.",
+			SideEffects: []string{
+				"None.",
+			},
+			ReadArtifacts: []string{
+				"Registered Sheet Ops CLI command-contract metadata.",
+			},
+			WrittenArtifacts: []string{
+				"None.",
+			},
+			StateBehavior: "Read-only. Does not invoke workbook runtime paths or touch .sheet-ops-state.",
+			SafetyNotes: []string{
+				"Discovery surface only. It exists so another agent can find safe entry boundaries without parsing help prose.",
+			},
+			RelatedCommands: []string{
+				"schema",
+				"prepare-use",
+				"help",
+			},
+			Mutating: false,
+			ReadOnly: true,
+		},
+		"schema": {
+			Name:             "schema",
+			Classification:   cliClassificationAgentContract,
+			IntendedCaller:   "Automation, CI, or another agent inspecting the Sheet Ops CLI contract in detail.",
+			ShortDescription: "Emit machine-readable command schema for the CLI surface",
+			Usage:            rootName + " schema [command <name>] --json",
+			Options: []string{
+				"--json: Emit machine-readable JSON on stdout.",
+				"command <name>: Optional nested selector for a specific command contract.",
+			},
+			OutputMode: "Machine-readable JSON on stdout.",
+			SideEffects: []string{
+				"None.",
+			},
+			ReadArtifacts: []string{
+				"Registered Sheet Ops CLI command-contract metadata.",
+			},
+			WrittenArtifacts: []string{
+				"None.",
+			},
+			StateBehavior: "Read-only. Does not invoke workbook runtime paths or touch .sheet-ops-state.",
+			SafetyNotes: []string{
+				"Meta command only. It describes install, handoff, and diagnostic surfaces without executing them.",
+				"Cobra-generated completion leaf commands and the hidden --sheet-ops-codex-bin install flag are intentionally excluded from the machine-readable schema because they are generated or internal plumbing rather than stable Sheet Ops command-contract surfaces.",
+			},
+			RelatedCommands: []string{
+				"capabilities",
+				"prepare-use",
+				"help",
+			},
+			Mutating: false,
+			ReadOnly: true,
+		},
+	}
+}
+
+func sheetOpsCLIAllContracts(rootName string) map[string]cliCommandContract {
+	contracts := sheetOpsCLIContracts(rootName)
+	for name, contract := range sheetOpsCLIReadOnlyDiscoveryContracts(rootName) {
+		contracts[name] = contract
+	}
+	return contracts
 }
 
 func sortedContractNames(contracts map[string]cliCommandContract) []string {
@@ -335,6 +443,261 @@ func applyCLIContract(cmd *cobra.Command, contract cliCommandContract) {
 		"sheet_ops_intended_caller": contract.IntendedCaller,
 		"sheet_ops_output_mode":     contract.OutputMode,
 	}
+}
+
+type cliCapabilitiesPayload struct {
+	SchemaVersion        string                      `json:"schema_version"`
+	CLIName              string                      `json:"cli_name"`
+	HumanWorkbookEntry   string                      `json:"human_workbook_entry"`
+	MachineEntryCommands []string                    `json:"machine_entry_commands"`
+	ReadOnlyCommands     []string                    `json:"read_only_commands"`
+	CommandGroups        []cliCapabilityGroupPayload `json:"command_groups"`
+	Commands             []cliCapabilityBriefPayload `json:"commands"`
+}
+
+type cliCapabilityGroupPayload struct {
+	Name          string   `json:"name"`
+	Description   string   `json:"description"`
+	SafeDiscovery bool     `json:"safe_discovery"`
+	Commands      []string `json:"commands"`
+}
+
+type cliCapabilityBriefPayload struct {
+	Name           string `json:"name"`
+	Classification string `json:"classification"`
+	Mutating       bool   `json:"mutating"`
+	ReadOnly       bool   `json:"read_only"`
+	Hidden         bool   `json:"hidden"`
+}
+
+type cliSchemaPayload struct {
+	SchemaVersion string                    `json:"schema_version"`
+	CLIName       string                    `json:"cli_name"`
+	Commands      []cliCommandSchemaPayload `json:"commands"`
+}
+
+type cliCommandSchemaEnvelopePayload struct {
+	SchemaVersion string                  `json:"schema_version"`
+	CLIName       string                  `json:"cli_name"`
+	Command       cliCommandSchemaPayload `json:"command"`
+}
+
+type cliCommandSchemaPayload struct {
+	Name             string                   `json:"name"`
+	Classification   string                   `json:"classification"`
+	IntendedCaller   string                   `json:"intended_caller"`
+	Description      string                   `json:"description"`
+	Usage            string                   `json:"usage"`
+	Options          []cliSchemaOptionPayload `json:"options"`
+	OutputMode       string                   `json:"output_mode"`
+	SideEffects      []string                 `json:"side_effects"`
+	ReadArtifacts    []string                 `json:"read_artifacts"`
+	WrittenArtifacts []string                 `json:"written_artifacts"`
+	StateBehavior    string                   `json:"state_behavior"`
+	SafetyNotes      []string                 `json:"safety_notes"`
+	RelatedCommands  []string                 `json:"related_commands"`
+	Mutating         bool                     `json:"mutating"`
+	ReadOnly         bool                     `json:"read_only"`
+	Hidden           bool                     `json:"hidden"`
+}
+
+type cliSchemaOptionPayload struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+func newCapabilitiesCommand() *cobra.Command {
+	var jsonOutput bool
+
+	cmd := &cobra.Command{
+		Use:   "capabilities",
+		Short: "Emit machine-readable command groups and safe CLI entry boundaries",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !jsonOutput {
+				return fmt.Errorf("capabilities requires --json")
+			}
+			return writeContractJSON(cmd.OutOrStdout(), buildCapabilitiesPayload(cmd.Root().Name()))
+		},
+	}
+
+	cmd.Flags().BoolVar(&jsonOutput, "json", false, "Emit machine-readable JSON on stdout")
+	return cmd
+}
+
+func newSchemaCommand() *cobra.Command {
+	var jsonOutput bool
+
+	cmd := &cobra.Command{
+		Use:   "schema",
+		Short: "Emit machine-readable command schema for the CLI surface",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !jsonOutput {
+				return fmt.Errorf("schema requires --json")
+			}
+			return writeContractJSON(cmd.OutOrStdout(), buildSchemaPayload(cmd.Root().Name()))
+		},
+	}
+
+	cmd.PersistentFlags().BoolVar(&jsonOutput, "json", false, "Emit machine-readable JSON on stdout")
+	cmd.AddCommand(&cobra.Command{
+		Use:   "command <name>",
+		Short: "Emit machine-readable schema for one command",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !jsonOutput {
+				return fmt.Errorf("schema command requires --json")
+			}
+			contracts := sheetOpsCLIAllContracts(cmd.Root().Name())
+			contract, ok := contracts[args[0]]
+			if !ok {
+				return fmt.Errorf("unknown command %q", args[0])
+			}
+			return writeContractJSON(cmd.OutOrStdout(), cliCommandSchemaEnvelopePayload{
+				SchemaVersion: cliContractSchemaVersion,
+				CLIName:       cmd.Root().Name(),
+				Command:       buildCommandSchemaPayload(contract),
+			})
+		},
+	})
+	return cmd
+}
+
+func buildCapabilitiesPayload(rootName string) cliCapabilitiesPayload {
+	contracts := sheetOpsCLIAllContracts(rootName)
+	groupNames := []string{
+		cliClassificationPublicInstall,
+		cliClassificationAgentContract,
+		cliClassificationInternalHandoff,
+		cliClassificationMaintainerDiagnostic,
+		cliClassificationBuiltinSupport,
+		cliClassificationCompatibilityHidden,
+	}
+
+	commandGroups := make([]cliCapabilityGroupPayload, 0, len(groupNames))
+	for _, classification := range groupNames {
+		names := make([]string, 0, len(contracts))
+		for _, name := range sortedContractNames(contracts) {
+			if name == rootName {
+				continue
+			}
+			contract := contracts[name]
+			if contract.Classification == classification {
+				names = append(names, contract.Name)
+			}
+		}
+		if len(names) == 0 {
+			continue
+		}
+		commandGroups = append(commandGroups, cliCapabilityGroupPayload{
+			Name:          classification,
+			Description:   capabilityGroupDescription(classification),
+			SafeDiscovery: true,
+			Commands:      names,
+		})
+	}
+
+	readOnlyCommands := make([]string, 0, len(contracts))
+	commands := make([]cliCapabilityBriefPayload, 0, len(contracts))
+	for _, name := range sortedContractNames(contracts) {
+		contract := contracts[name]
+		if contract.ReadOnly {
+			readOnlyCommands = append(readOnlyCommands, contract.Name)
+		}
+		if name == rootName {
+			continue
+		}
+		commands = append(commands, cliCapabilityBriefPayload{
+			Name:           contract.Name,
+			Classification: contract.Classification,
+			Mutating:       contract.Mutating,
+			ReadOnly:       contract.ReadOnly,
+			Hidden:         contract.Hidden,
+		})
+	}
+
+	return cliCapabilitiesPayload{
+		SchemaVersion:        cliContractSchemaVersion,
+		CLIName:              rootName,
+		HumanWorkbookEntry:   "sheet-ops",
+		MachineEntryCommands: []string{"capabilities", "schema"},
+		ReadOnlyCommands:     readOnlyCommands,
+		CommandGroups:        commandGroups,
+		Commands:             commands,
+	}
+}
+
+func buildSchemaPayload(rootName string) cliSchemaPayload {
+	contracts := sheetOpsCLIAllContracts(rootName)
+	commands := make([]cliCommandSchemaPayload, 0, len(contracts))
+	for _, name := range sortedContractNames(contracts) {
+		commands = append(commands, buildCommandSchemaPayload(contracts[name]))
+	}
+	return cliSchemaPayload{
+		SchemaVersion: cliContractSchemaVersion,
+		CLIName:       rootName,
+		Commands:      commands,
+	}
+}
+
+func buildCommandSchemaPayload(contract cliCommandContract) cliCommandSchemaPayload {
+	return cliCommandSchemaPayload{
+		Name:             contract.Name,
+		Classification:   contract.Classification,
+		IntendedCaller:   contract.IntendedCaller,
+		Description:      contract.ShortDescription,
+		Usage:            contract.Usage,
+		Options:          buildOptionPayloads(contract.Options),
+		OutputMode:       contract.OutputMode,
+		SideEffects:      append([]string(nil), contract.SideEffects...),
+		ReadArtifacts:    append([]string(nil), contract.ReadArtifacts...),
+		WrittenArtifacts: append([]string(nil), contract.WrittenArtifacts...),
+		StateBehavior:    contract.StateBehavior,
+		SafetyNotes:      append([]string(nil), contract.SafetyNotes...),
+		RelatedCommands:  append([]string(nil), contract.RelatedCommands...),
+		Mutating:         contract.Mutating,
+		ReadOnly:         contract.ReadOnly,
+		Hidden:           contract.Hidden,
+	}
+}
+
+func buildOptionPayloads(options []string) []cliSchemaOptionPayload {
+	payloads := make([]cliSchemaOptionPayload, 0, len(options))
+	for _, option := range options {
+		name, description, hasDescription := strings.Cut(option, ":")
+		payload := cliSchemaOptionPayload{Name: strings.TrimSpace(name)}
+		if hasDescription {
+			payload.Description = strings.TrimSpace(description)
+		}
+		payloads = append(payloads, payload)
+	}
+	return payloads
+}
+
+func capabilityGroupDescription(classification string) string {
+	switch classification {
+	case cliClassificationPublicInstall:
+		return "Installation surface for materializing the project-local Sheet Ops skill package."
+	case cliClassificationAgentContract:
+		return "Agent-facing discovery and typed handoff surfaces that do not create a second human workbook entry."
+	case cliClassificationInternalHandoff:
+		return "Internal validated-request execution surfaces owned by the installed sheet-ops skill handoff."
+	case cliClassificationMaintainerDiagnostic:
+		return "Maintainer-only diagnostic surfaces that may compile or execute workbook intents."
+	case cliClassificationBuiltinSupport:
+		return "Read-only help and completion support surfaces."
+	case cliClassificationCompatibilityHidden:
+		return "Hidden compatibility surfaces kept for internal or legacy callers."
+	default:
+		return "Sheet Ops CLI surface."
+	}
+}
+
+func writeContractJSON(output io.Writer, value any) error {
+	encoder := json.NewEncoder(output)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(value)
 }
 
 func renderRootHelp(output io.Writer, rootCmd *cobra.Command, contracts map[string]cliCommandContract) error {

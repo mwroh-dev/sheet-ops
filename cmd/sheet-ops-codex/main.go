@@ -38,6 +38,8 @@ func newRootCommand() *cobra.Command {
 		SilenceErrors: true,
 	}
 	rootCmd.AddCommand(newPrepareUseCommand())
+	rootCmd.AddCommand(newCapabilitiesCommand())
+	rootCmd.AddCommand(newSchemaCommand())
 	rootCmd.AddCommand(newRunValidatedCommand())
 	rootCmd.AddCommand(newRunRequestCommand())
 	rootCmd.AddCommand(newRunIntentCommand())

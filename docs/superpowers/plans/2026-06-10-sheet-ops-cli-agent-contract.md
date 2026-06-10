@@ -164,6 +164,16 @@ Lane: CLI contract core.
   - Evaluation: schema/capabilities tests and Phase 1 tests pass.
   - Result: `phase2/schema: expose agent-readable cli contract`.
 
+### Phase 2 Red Test Evidence (Pre-Implementation)
+
+- Added focused Phase 2 tests in `cmd/sheet-ops-codex/cli_schema_test.go` before
+  production changes.
+- Red command:
+  `go test ./cmd/sheet-ops-codex -run 'Test.*Schema.*|Test.*Capabilities.*|Test.*Contract.*' -count=1`
+- Observed failure before implementation:
+  - `unknown command "capabilities" for "sheet-ops-codex"`
+  - `unknown command "schema" for "sheet-ops-codex"`
+
 ### Phase-End Backlog Review
 
 Ask:
@@ -173,6 +183,37 @@ Ask:
 - Are unsupported commands better classified as diagnostic than public?
 
 Fields that cannot be made truthful in this phase should be removed or marked explicitly as deferred; do not ship speculative metadata.
+
+## Phase 2 Result Note
+
+Implementation outcome:
+
+- Added read-only `sheet-ops-codex capabilities --json` discovery output.
+- Added read-only `sheet-ops-codex schema --json` and
+  `sheet-ops-codex schema command <name> --json` output.
+- Output uses consistent `schema_version` keys.
+- Command schema now reports command name, classification, intended caller,
+  description, usage, options, output mode, side effects, read artifacts,
+  written artifacts, state behavior, safety notes, related commands, and
+  mutation/read-only visibility metadata.
+
+Phase 2 schema-scope decision:
+
+- Include the hidden `run-request` compatibility command in machine-readable
+  schema, marked hidden, because it is a real Sheet Ops CLI surface with
+  behavior that existing wrappers may still call.
+- Exclude Cobra-generated completion leaf subcommands (`bash`, `zsh`, `fish`,
+  `powershell`) from machine-readable schema because they are generated support
+  details rather than stable Sheet Ops command-contract surfaces.
+- Exclude the hidden `install-skill --sheet-ops-codex-bin` flag from
+  machine-readable schema because it is internal install plumbing, not a stable
+  public or agent-facing contract boundary.
+
+Phase 2 backlog:
+
+- Phase 3 should decide whether unknown schema-command lookup errors need a
+  typed JSON error payload in `--json` mode or can remain plain Cobra/Go errors
+  until the broader error taxonomy lands.
 
 ## Phase 1 Result Note
 
