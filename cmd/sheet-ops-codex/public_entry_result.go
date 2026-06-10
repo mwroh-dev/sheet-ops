@@ -44,7 +44,7 @@ type PublicEntryCompilerRef struct {
 type executionFingerprints struct {
 	NormalizedIntentSHA256 string `json:"normalized_intent_sha256"`
 	InputWorkbookSHA256    string `json:"input_workbook_sha256"`
-	OutputWorkbookSHA256   string `json:"output_workbook_sha256"`
+	OutputWorkbookSHA256   string `json:"output_workbook_sha256,omitempty"`
 }
 
 type PublicRuntimeResult struct {

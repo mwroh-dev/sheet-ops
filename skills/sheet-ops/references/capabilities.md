@@ -34,8 +34,8 @@ planning mode exists.
 `mutation_summary`, and `fingerprints` fields as planning/trust metadata only;
 they do not prove that runtime execution succeeded. After `run-intent`, compare
 the execution result `fingerprints` to the preview fingerprints, and use
-`output_workbook_sha256` to bind the produced workbook bytes before trusting
-runtime artifacts. Cross-check it against
+`output_workbook_sha256` when present to bind the produced workbook bytes before
+trusting runtime artifacts. Cross-check it against
 `runtime.verification.output_workbook_sha256`; verification artifacts that name
 a non-empty `output_file` require that hash.
 

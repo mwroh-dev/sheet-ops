@@ -78,10 +78,10 @@ planning mode exists.
 `mutation_summary`, and input `fingerprints`. Treat these as trust metadata for
 the inspected inputs, not proof of runtime execution success. After
 `run-intent`, compare the execution result `fingerprints` to the preview
-fingerprints, and use `output_workbook_sha256` to bind the produced workbook
-bytes before trusting runtime artifacts. Cross-check it against
-`runtime.verification.output_workbook_sha256`; verification artifacts that name
-a non-empty `output_file` require that hash.
+fingerprints, and when present use `output_workbook_sha256` to bind the
+produced workbook bytes before trusting runtime artifacts. Cross-check it
+against `runtime.verification.output_workbook_sha256`; verification artifacts
+that name a non-empty `output_file` require that hash.
 
 ## Public split surface
 

@@ -114,7 +114,7 @@
     },
     "execution_fingerprints": {
       "type": "object",
-      "required": ["normalized_intent_sha256", "input_workbook_sha256", "output_workbook_sha256"],
+      "required": ["normalized_intent_sha256", "input_workbook_sha256"],
       "properties": {
         "normalized_intent_sha256": {
           "type": "string",
@@ -317,6 +317,9 @@
       },
       "then": {
         "properties": {
+          "fingerprints": {
+            "required": ["output_workbook_sha256"]
+          },
           "artifacts": {
             "contains": {
               "allOf": [

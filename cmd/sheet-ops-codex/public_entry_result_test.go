@@ -144,6 +144,37 @@ func TestExecutedPublicEntryResultSchemaAllowsEarlyVerificationFailureWithoutOut
 	}
 }
 
+func TestExecutedPublicEntryResultSchemaAllowsEarlyFailureWithoutOutputFingerprint(t *testing.T) {
+	document := publicEntryResultDocument(t, newTestExecutedFailurePublicEntryResult(t, false))
+	fingerprints, ok := document["fingerprints"].(map[string]any)
+	if !ok {
+		t.Fatalf("fingerprints has type %T, want object", document["fingerprints"])
+	}
+	if _, ok := fingerprints["output_workbook_sha256"]; ok {
+		t.Fatalf("early failure fingerprints unexpectedly include output_workbook_sha256: %+v", fingerprints)
+	}
+
+	if err := runtimeschema.ValidateStruct(publicEntryResultSchemaPath(), document); err != nil {
+		t.Fatalf("public entry result schema rejected early failure without output workbook fingerprint: %v", err)
+	}
+}
+
+func TestExecutedFingerprintsAllowsMissingOutputForEarlyFailure(t *testing.T) {
+	fingerprints, err := executedFingerprints(previewFingerprints{
+		NormalizedIntentSHA256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		InputWorkbookSHA256:    "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+	}, "", "")
+	if err != nil {
+		t.Fatalf("executedFingerprints returned error for missing output identity: %v", err)
+	}
+	if fingerprints.NormalizedIntentSHA256 == "" || fingerprints.InputWorkbookSHA256 == "" {
+		t.Fatalf("executedFingerprints lost input identity: %+v", fingerprints)
+	}
+	if fingerprints.OutputWorkbookSHA256 != "" {
+		t.Fatalf("output_workbook_sha256 = %q, want empty for early failure", fingerprints.OutputWorkbookSHA256)
+	}
+}
+
 func TestTerminalCompilerPublicEntryResultSchemaRejectsStatusMismatch(t *testing.T) {
 	compiled := requestcompiler.PersistedResult{
 		Result: requestcompiler.Result{
@@ -233,7 +264,7 @@ func newTestExecutedPublicEntryResultForVerification(t *testing.T, verification 
 	return newExecutedPublicEntryResult("run-intent", compiled, result, executionFingerprints{
 		NormalizedIntentSHA256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		InputWorkbookSHA256:    "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-		OutputWorkbookSHA256:   "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+		OutputWorkbookSHA256:   verification.OutputWorkbookSHA256,
 	})
 }
 

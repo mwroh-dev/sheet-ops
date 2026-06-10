@@ -41,6 +41,7 @@ Sequential implementation lane:
 10. Phase 23: verification artifact output identity sealing.
 11. Phase 24: successful verification hash requirement.
 12. Phase 25: verification output-file hash requirement.
+13. Phase 26: executed failure public fingerprint contract.
 
 Phase 12 comes before Phase 13 because the existing runtime output must be observed before a stable envelope is imposed. Phase 15 comes after Phases 13-14 so the E2E smoke can assert the final contract rather than a temporary shape.
 
@@ -882,6 +883,101 @@ output workbook.
   `newExecutedPublicEntryResult` and asserts the output workbook artifact is
   absent. `go test ./cmd/sheet-ops-codex -run 'TestExecutedPublicEntryResultSchemaRejectsVerificationOutputFileWithoutHash|TestExecutedPublicEntryResultSchemaAllowsVerificationFailureWithOutputFileAndHash|TestExecutedPublicEntryResultSchemaAllowsEarlyVerificationFailureWithoutOutputFileOrHash|TestExecutedPublicEntryResultSchemaRejectsMissingSuccessArtifacts|TestExecutedPublicEntryResultValidatesAgainstPublicSchema' -count=1 -v`
   passes.
+
+## Phase 26 - Executed Failure Public Fingerprint Contract
+
+Lane: Execution Contract.
+
+Web-search value: low. This phase aligns local public result schema and emitter
+behavior. The external methodology is unchanged: execution identity should
+preserve input fingerprints for every executed result and output fingerprints
+only when a materialized output workbook exists.
+
+### TODO
+
+- [x] Add failing public schema/emitter test for early executed verification
+  failure without output fingerprint.
+  - Evaluation: an executed public result with `ok:false`, empty
+    `runtime.verification.output_file`, no output workbook artifact, and no
+    `fingerprints.output_workbook_sha256` validates.
+  - Result: agents can receive structured executed failure results even before
+    output materialization.
+  - Likely files: `cmd/sheet-ops-codex/public_entry_result_test.go`,
+    `contracts/results/public_entry_result.schema.json`.
+  - Risk: medium.
+  - Rollback: keep Phase 25 schema allowance but document that the public
+    emitter cannot yet represent the early failure path.
+- [x] Keep executed success output fingerprint required.
+  - Evaluation: `status:"executed"`, `ok:true` without
+    `fingerprints.output_workbook_sha256` remains rejected.
+  - Result: success artifacts still bind the materialized workbook bytes.
+- [x] Split output fingerprint production from input fingerprint production.
+  - Evaluation: public result construction can carry normalized intent and
+    input workbook hashes when no output hash is available, without hashing an
+    empty output path.
+  - Result: emitter behavior matches the public schema for both success and
+    early failure.
+- [x] Update docs/phase evidence.
+  - Evaluation: docs distinguish input execution identity from optional output
+    identity on early failures.
+  - Result: agents do not expect output workbook identity before an output
+    workbook exists.
+- [x] Run separate verifier.
+  - Evaluation: verifier checks success contract, early failure contract,
+    public schema/golden alignment, no preview drift, and no semantic
+    correctness overclaim.
+  - Result: pass/fail before commit.
+- [x] Commit Phase 26.
+  - Evaluation: focused runtime/public tests, release contract tests, package
+    tests, and `git diff --check` pass.
+  - Result: `phase26/results: allow early failure fingerprints`.
+
+### Phase-End Backlog Review
+
+Ask:
+
+- Should `runIntentEntry` emit a public entry result when orchestration returns
+  an error after runtime start, instead of returning only the internal result?
+- Should `executedFingerprints` be renamed to clarify that output identity is
+  optional for executed failures?
+- Should public docs add a concrete failure envelope example?
+- Should executed failures with a materialized output workbook use a
+  non-success artifact role instead of `primary_success`?
+
+Do not relax output identity for successful execution. This phase only removes
+the false requirement that an output workbook hash exists before an output
+workbook exists.
+
+### Phase 26 Result Note
+
+- Implementation: public execution fingerprints now require normalized intent
+  and input workbook hashes for all executed results, while
+  outer `fingerprints.output_workbook_sha256` is required only for executed
+  success (`ok:true`). Runtime verification still requires its nested
+  `output_workbook_sha256` whenever it names a non-empty output file.
+- Emitter behavior: `executedFingerprints` no longer attempts to hash an empty
+  output path. It returns input identity with an omitted output hash for early
+  executed failures before output materialization.
+- Coverage: `cmd/sheet-ops-codex/public_entry_result_test.go` proves early
+  executed failure validates without outer `fingerprints.output_workbook_sha256`
+  by inspecting the marshaled public envelope, and that `executedFingerprints`
+  preserves input identity without output identity. Existing success tests still
+  reject missing output fingerprints.
+- Documentation: public CLI docs and mirrored skill references now say output
+  fingerprint binding applies when an output workbook exists; input
+  fingerprint comparison still applies to every executed public result.
+- Red evidence:
+  `go test ./cmd/sheet-ops-codex -run TestExecutedPublicEntryResultSchemaAllowsEarlyFailureWithoutOutputFingerprint -count=1 -v`
+  failed before the schema change because
+  `fingerprints.output_workbook_sha256` was always required.
+- Verification evidence:
+  focused public schema/emitter tests, release contract tests, related package
+  tests, and `git diff --check` pass. Separate verifier reported no blockers
+  and confirmed preview contracts did not drift.
+- Backlog self-review: keep the artifact-role issue for the next phase. An
+  executed failure that has a materialized output workbook can still label that
+  artifact as `primary_success`; that is a result semantics problem, not part
+  of this phase's fingerprint contract.
 
 ## Final Review Phase - Agent Execution Contract Completion
 

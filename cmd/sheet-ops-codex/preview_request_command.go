@@ -233,7 +233,7 @@ func inputFingerprints(intentFile string, inputFile string) (previewFingerprints
 
 func executedFingerprints(inputIdentity previewFingerprints, outputFile string, verificationOutputFingerprint string) (executionFingerprints, error) {
 	outputFingerprint := strings.TrimSpace(verificationOutputFingerprint)
-	if outputFingerprint == "" {
+	if outputFingerprint == "" && strings.TrimSpace(outputFile) != "" {
 		var err error
 		outputFingerprint, err = fileSHA256(outputFile)
 		if err != nil {
