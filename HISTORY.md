@@ -1,6 +1,37 @@
 # Sheet Ops History
 
 <!-- sheet-ops-history:start -->
+## 2026-06-11 - CLI agent contract
+
+- Added a machine-readable `sheet-ops-codex` agent-contract surface for
+  discovery, schema inspection, preflight readiness checks, preview impact
+  inspection, install diagnostics, and internal validated-request handoff.
+- Kept `sheet-ops` as the single human-facing workbook request entry while
+  documenting `sheet-ops-codex` as an install, diagnostic, and agent-oriented
+  contract surface.
+- Added JSON schemas for CLI capabilities, command schema, error envelopes,
+  preflight results, preview-request results, internal handoff results, and
+  public entry results.
+- Added stable CLI error taxonomy and exit code handling for usage errors,
+  missing required options, unknown commands, invalid JSON/schema data,
+  state-root mismatches, validation stops, execution failures, verification
+  failures, and internal errors.
+- Hardened JSON-mode failure behavior so emitted JSON error envelopes remain on
+  stdout without duplicate stderr noise.
+- Added read-only `preview-request` impact inspection with normalized-intent and
+  input workbook fingerprints. It is explicitly not runtime dry-run evidence.
+- Added installed-package e2e coverage for project-local `.codex/skills/sheet-ops`
+  installs, bundled CLI binaries, run-intent execution, output workbook
+  fingerprints, public result envelopes, and internal handoff envelopes.
+- Exercised the installed CLI from a throwaway project with 22 red-input and
+  happy-path cases covering discovery, schemas, preflight failures,
+  preview-request failures, state-root mismatch, prepare-use validation,
+  missing handoff requests, and successful run-intent execution.
+
+Limits: this release does not make `sheet-ops-codex` a second human-facing
+workbook entry, does not claim preview-request is a dry run, and does not make
+Sheet Ops hosted or multi-tenant ready.
+
 ## 2026-06-09 - Template research runtime bridge
 
 - Expanded the public workbook composition surface from the original

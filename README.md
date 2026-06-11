@@ -167,6 +167,13 @@ Agent and CI discovery should use:
 - `sheet-ops-codex preflight --json`
 - `sheet-ops-codex preview-request --json --intent-file <path> --input-file <path> --output-file <path>`
 
+The CLI contract is machine-readable and intended for agent orchestration:
+capabilities and schema commands expose stable command metadata, preflight
+reports read-only readiness checks, preview-request reports planned impact
+without creating workbooks or state artifacts, and emitted JSON failure
+envelopes keep stderr quiet so agents can treat stdout as the authoritative
+contract channel.
+
 `sheet-ops-codex run-validated` is an internal handoff surface. It is owned by
 the installed skill handoff and must not be presented as the normal public
 request route. Mutating workbook commands currently report
@@ -174,6 +181,12 @@ request route. Mutating workbook commands currently report
 `planner:"requestcompiler_validate_intent"` and
 `plan_confidence:"compiler_validated_boundary"`, not dry-run evidence. Do not
 claim dry-run behavior until a truthful runtime planning mode exists.
+
+The installed CLI has been exercised from a throwaway project-local
+`.codex/skills/sheet-ops` install with red-input coverage for discovery,
+schema lookup, preflight failure states, preview-request JSON failures,
+state-root mismatch, prepare-use validation, missing internal handoff requests,
+and a successful run-intent append path.
 
 ## Internal Execution Boundary
 
@@ -222,6 +235,9 @@ Supported today:
   final-workbook semantic verifier slices for 21 roadmap organisms
 - deterministic fixture-backed harness smoke with checked-in frozen demo
   evidence
+- installed CLI agent-contract smoke covering 22 discovery, preview, preflight,
+  handoff, and red-input cases from a project-local `.codex/skills/sheet-ops`
+  install
 - render artifact emission when renderer tools exist, or explicit unavailable
   evidence when they do not
 
