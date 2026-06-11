@@ -237,7 +237,7 @@ func executedFingerprints(inputIdentity previewFingerprints, outputFile string, 
 		var err error
 		outputFingerprint, err = fileSHA256(outputFile)
 		if err != nil {
-			return executionFingerprints{}, err
+			outputFingerprint = ""
 		}
 	}
 	return executionFingerprints{

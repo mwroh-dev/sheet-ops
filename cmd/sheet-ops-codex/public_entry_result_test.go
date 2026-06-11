@@ -195,6 +195,22 @@ func TestExecutedFingerprintsAllowsMissingOutputForEarlyFailure(t *testing.T) {
 	}
 }
 
+func TestExecutedFingerprintsDropsUnreadableFailedOutputWithoutHash(t *testing.T) {
+	fingerprints, err := executedFingerprints(previewFingerprints{
+		NormalizedIntentSHA256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		InputWorkbookSHA256:    "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+	}, filepath.Join(t.TempDir(), "missing-output.xlsx"), "")
+	if err != nil {
+		t.Fatalf("executedFingerprints returned error for unreadable failed output evidence: %v", err)
+	}
+	if fingerprints.NormalizedIntentSHA256 == "" || fingerprints.InputWorkbookSHA256 == "" {
+		t.Fatalf("executedFingerprints lost input identity: %+v", fingerprints)
+	}
+	if fingerprints.OutputWorkbookSHA256 != "" {
+		t.Fatalf("output_workbook_sha256 = %q, want empty for unreadable failed output evidence", fingerprints.OutputWorkbookSHA256)
+	}
+}
+
 func TestTerminalCompilerPublicEntryResultSchemaRejectsStatusMismatch(t *testing.T) {
 	compiled := requestcompiler.PersistedResult{
 		Result: requestcompiler.Result{

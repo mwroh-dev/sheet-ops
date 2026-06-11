@@ -386,14 +386,6 @@ func normalizedIntentRequestText(intent requestcompiler.NormalizedIntent) string
 	return string(raw)
 }
 
-func currentWorkingDirOrPanic() string {
-	workingDir, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-	return workingDir
-}
-
 func runtimeStarted(result useorchestrator.RunResult) bool {
 	return strings.TrimSpace(result.IDs.RunID) != "" || strings.TrimSpace(result.Paths.TelemetryDir) != ""
 }

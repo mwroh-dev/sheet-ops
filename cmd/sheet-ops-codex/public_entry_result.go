@@ -122,6 +122,7 @@ func newPublicRuntimeResult(result runtimeworkbookcase.RunResult) PublicRuntimeR
 		execution = redactExecutionSummary(execution)
 		verification = redactVerificationResult(verification)
 	}
+	verification = omitUnhashedVerificationOutput(verification)
 
 	return PublicRuntimeResult{
 		IDs: PublicRunIDs{
@@ -140,6 +141,13 @@ func newPublicRuntimeResult(result runtimeworkbookcase.RunResult) PublicRuntimeR
 		RepairAdvice:       loadRepairAdvice(result.Paths.RepairAdvicePath),
 		Failure:            result.Failure,
 	}
+}
+
+func omitUnhashedVerificationOutput(value runtimeworkbookcase.VerificationResult) runtimeworkbookcase.VerificationResult {
+	if value.OutputFile != "" && value.OutputWorkbookSHA256 == "" {
+		value.OutputFile = ""
+	}
+	return value
 }
 
 func loadVerificationReview(path string) *runtimeworkbookcase.VerificationReview {

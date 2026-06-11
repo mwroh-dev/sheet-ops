@@ -62,6 +62,32 @@ func TestInternalHandoffResultSchemaRejectsFailedOutputMarkedAsPrimarySuccess(t 
 	}
 }
 
+func TestInternalHandoffResultSuppressesUnreadableOutputFileWithoutHash(t *testing.T) {
+	envelope := newTestInternalHandoffRunResultWithVerification(t, runtimeworkbookcase.VerificationResult{
+		Pass:       false,
+		Operation:  runtimeworkbookcase.AppendRowsOperationName,
+		OutputFile: filepath.Join(t.TempDir(), "missing-output.xlsx"),
+		Reasons:    []string{"verification stopped before output workbook was readable"},
+	})
+	document := internalHandoffResultDocument(t, envelope)
+	assertNoPublicResultArtifact(t, document, "output_workbook")
+
+	runtimeDoc, ok := document["runtime"].(map[string]any)
+	if !ok {
+		t.Fatalf("runtime has type %T, want object", document["runtime"])
+	}
+	verification, ok := runtimeDoc["verification"].(map[string]any)
+	if !ok {
+		t.Fatalf("runtime.verification has type %T, want object", runtimeDoc["verification"])
+	}
+	if outputFile, ok := verification["output_file"].(string); ok && outputFile != "" {
+		t.Fatalf("runtime.verification.output_file = %q, want omitted or empty without output_workbook_sha256", outputFile)
+	}
+	if err := runtimeschema.ValidateStruct(internalHandoffResultSchemaPath(), document); err != nil {
+		t.Fatalf("internal handoff schema rejected degraded failure envelope without output hash: %v", err)
+	}
+}
+
 func TestPublicEntryResultSchemaRejectsRunValidatedHandoff(t *testing.T) {
 	document := internalHandoffResultDocument(t, newTestInternalHandoffRunResult(t, true))
 
@@ -81,6 +107,17 @@ func newTestInternalHandoffRunResult(t *testing.T, pass bool) InternalHandoffRun
 		OutputFile:           outputFile,
 		OutputWorkbookSHA256: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
 		Reasons:              []string{"verification evidence"},
+	}
+	return newTestInternalHandoffRunResultWithVerification(t, verification)
+}
+
+func newTestInternalHandoffRunResultWithVerification(t *testing.T, verification runtimeworkbookcase.VerificationResult) InternalHandoffRunResult {
+	t.Helper()
+
+	tempDir := t.TempDir()
+	outputFile := verification.OutputFile
+	if outputFile == "" {
+		outputFile = filepath.Join(tempDir, "line-items-output.xlsx")
 	}
 	result := runtimeworkbookcase.RunResult{
 		IDs: runtimeworkbookcase.RunIDs{
