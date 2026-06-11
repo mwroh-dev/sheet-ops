@@ -221,6 +221,19 @@ func TestPreviewRequestMissingIntentFileDoesNotClassifyAsInvalidData(t *testing.
 	}
 }
 
+func TestWriteCLIErrorJSONAndReturnNilErrorReturnsNil(t *testing.T) {
+	var stdout bytes.Buffer
+
+	err := writeCLIErrorJSONAndReturn(&stdout, nil)
+
+	if err != nil {
+		t.Fatalf("writeCLIErrorJSONAndReturn returned non-nil error for nil *cliError: %T %[1]v", err)
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout = %q, want empty for nil *cliError", stdout.String())
+	}
+}
+
 func executeCLIExpectError(t *testing.T, args ...string) (string, string, error) {
 	t.Helper()
 

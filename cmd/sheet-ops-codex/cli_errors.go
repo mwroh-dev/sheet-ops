@@ -142,6 +142,9 @@ func classifyCLIError(err error) cliError {
 }
 
 func writeCLIErrorJSON(output io.Writer, err *cliError) error {
+	if err == nil {
+		return nil
+	}
 	encoder := json.NewEncoder(output)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(cliErrorEnvelope{
@@ -152,6 +155,9 @@ func writeCLIErrorJSON(output io.Writer, err *cliError) error {
 }
 
 func writeCLIErrorJSONAndReturn(output io.Writer, err *cliError) error {
+	if err == nil {
+		return nil
+	}
 	if writeErr := writeCLIErrorJSON(output, err); writeErr != nil {
 		return writeErr
 	}
