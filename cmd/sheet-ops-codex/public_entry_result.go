@@ -13,6 +13,13 @@ import (
 )
 
 type PublicEntryResult struct {
+	SchemaVersion   string                 `json:"schema_version"`
+	OK              bool                   `json:"ok"`
+	Command         string                 `json:"command"`
+	Recoverable     bool                   `json:"recoverable"`
+	Artifacts       []PublicResultArtifact `json:"artifacts"`
+	NextActions     []string               `json:"next_actions"`
+	Fingerprints    *executionFingerprints `json:"fingerprints,omitempty"`
 	Entry           string                 `json:"entry"`
 	Status          string                 `json:"status"`
 	WorkUnitID      string                 `json:"work_unit_id"`
@@ -20,11 +27,24 @@ type PublicEntryResult struct {
 	Runtime         any                    `json:"runtime"`
 }
 
+type PublicResultArtifact struct {
+	Kind        string `json:"kind"`
+	Path        string `json:"path"`
+	Required    bool   `json:"required"`
+	SuccessRole string `json:"success_role"`
+}
+
 type PublicEntryCompilerRef struct {
 	Status               string `json:"status"`
 	RequestDir           string `json:"request_dir"`
 	DecisionPath         string `json:"decision_path"`
 	GeneratedRequestPath string `json:"generated_request_path"`
+}
+
+type executionFingerprints struct {
+	NormalizedIntentSHA256 string `json:"normalized_intent_sha256"`
+	InputWorkbookSHA256    string `json:"input_workbook_sha256"`
+	OutputWorkbookSHA256   string `json:"output_workbook_sha256,omitempty"`
 }
 
 type PublicRuntimeResult struct {
@@ -102,6 +122,7 @@ func newPublicRuntimeResult(result runtimeworkbookcase.RunResult) PublicRuntimeR
 		execution = redactExecutionSummary(execution)
 		verification = redactVerificationResult(verification)
 	}
+	verification = omitUnhashedVerificationOutput(verification)
 
 	return PublicRuntimeResult{
 		IDs: PublicRunIDs{
@@ -120,6 +141,13 @@ func newPublicRuntimeResult(result runtimeworkbookcase.RunResult) PublicRuntimeR
 		RepairAdvice:       loadRepairAdvice(result.Paths.RepairAdvicePath),
 		Failure:            result.Failure,
 	}
+}
+
+func omitUnhashedVerificationOutput(value runtimeworkbookcase.VerificationResult) runtimeworkbookcase.VerificationResult {
+	if value.OutputFile != "" && value.OutputWorkbookSHA256 == "" {
+		value.OutputFile = ""
+	}
+	return value
 }
 
 func loadVerificationReview(path string) *runtimeworkbookcase.VerificationReview {
@@ -176,6 +204,22 @@ func newTerminalCompilerResult(entry string, compiled requestcompiler.PersistedR
 		}
 	}
 	return PublicEntryResult{
+		SchemaVersion: cliContractSchemaVersion,
+		OK:            false,
+		Command:       entry,
+		Recoverable:   true,
+		Artifacts: []PublicResultArtifact{
+			{
+				Kind:        "compiler_decision",
+				Path:        decisionPath,
+				Required:    true,
+				SuccessRole: "failure_context",
+			},
+		},
+		NextActions: []string{
+			"Inspect request_compiler.decision_path.",
+			"Resolve the compiler checkpoint or blocked request before retrying.",
+		},
 		Entry:      entry,
 		Status:     status,
 		WorkUnitID: compiled.WorkUnitID,
@@ -189,7 +233,7 @@ func newTerminalCompilerResult(entry string, compiled requestcompiler.PersistedR
 	}, fmt.Errorf("request compiler stopped before runtime execution (status=%s)", compiled.Decision.Status)
 }
 
-func newExecutedPublicEntryResult(entry string, compiled requestcompiler.PersistedResult, result runtimeworkbookcase.RunResult) PublicEntryResult {
+func newExecutedPublicEntryResult(entry string, compiled requestcompiler.PersistedResult, result runtimeworkbookcase.RunResult, fingerprints executionFingerprints) PublicEntryResult {
 	requestDir := compiled.RequestDir
 	decisionPath := compiled.DecisionPath()
 	generatedRequestPath := compiled.GeneratedRequestPath()
@@ -200,18 +244,57 @@ func newExecutedPublicEntryResult(entry string, compiled requestcompiler.Persist
 			generatedRequestPath = filepath.Base(generatedRequestPath)
 		}
 	}
+	publicRuntime := newPublicRuntimeResult(result)
 	return PublicEntryResult{
-		Entry:      entry,
-		Status:     "executed",
-		WorkUnitID: compiled.WorkUnitID,
+		SchemaVersion: cliContractSchemaVersion,
+		OK:            result.Verification.Pass,
+		Command:       entry,
+		Recoverable:   false,
+		Artifacts:     publicExecutionArtifacts(publicRuntime),
+		NextActions: []string{
+			"Inspect runtime.verification before claiming workbook success.",
+			"Open the output workbook only after verification pass is true.",
+		},
+		Fingerprints: &fingerprints,
+		Entry:        entry,
+		Status:       "executed",
+		WorkUnitID:   compiled.WorkUnitID,
 		RequestCompiler: PublicEntryCompilerRef{
 			Status:               string(requestcompiler.StatusCompiled),
 			RequestDir:           requestDir,
 			DecisionPath:         decisionPath,
 			GeneratedRequestPath: generatedRequestPath,
 		},
-		Runtime: newPublicRuntimeResult(result),
+		Runtime: publicRuntime,
 	}
+}
+
+func publicExecutionArtifacts(result PublicRuntimeResult) []PublicResultArtifact {
+	artifacts := make([]PublicResultArtifact, 0, 6)
+	outputRequired := result.Verification.Pass
+	outputRole := "failure_evidence"
+	if result.Verification.Pass {
+		outputRole = "primary_success"
+	}
+	artifacts = appendPublicResultArtifact(artifacts, "output_workbook", result.Verification.OutputFile, outputRequired, outputRole)
+	artifacts = appendPublicResultArtifact(artifacts, "verification", result.Paths.VerificationPath, true, "success_evidence")
+	artifacts = appendPublicResultArtifact(artifacts, "evidence_dir", result.Paths.EvidenceDir, true, "audit_trail")
+	artifacts = appendPublicResultArtifact(artifacts, "execution", result.Paths.ExecutionPath, false, "supporting_evidence")
+	artifacts = appendPublicResultArtifact(artifacts, "outcome", result.Paths.OutcomePath, false, "supporting_evidence")
+	artifacts = appendPublicResultArtifact(artifacts, "report", result.Paths.ReportPath, false, "human_review")
+	return artifacts
+}
+
+func appendPublicResultArtifact(artifacts []PublicResultArtifact, kind, path string, required bool, role string) []PublicResultArtifact {
+	if path == "" {
+		return artifacts
+	}
+	return append(artifacts, PublicResultArtifact{
+		Kind:        kind,
+		Path:        path,
+		Required:    required,
+		SuccessRole: role,
+	})
 }
 
 func redactPublicRunPaths(paths runtimeworkbookcase.RunPaths) PublicRunPaths {

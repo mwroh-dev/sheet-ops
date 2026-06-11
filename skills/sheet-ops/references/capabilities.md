@@ -9,6 +9,39 @@ Operating model:
 The skill routes execution through the skill-owned runtime handoff, not through
 a runner-pane command.
 
+## CLI agent contract
+
+The `sheet-ops` skill is the single human-facing workbook request entry.
+`sheet-ops-codex` is an install, diagnostic, and agent-contract CLI surface,
+not a second human-facing workbook entry.
+
+Use these read-only contract surfaces for agent/CI discovery:
+
+- `sheet-ops-codex capabilities --json`
+- `sheet-ops-codex schema command preflight --json`
+- `sheet-ops-codex preflight --json`
+- `sheet-ops-codex preview-request --json --intent-file <path> --input-file <path> --output-file <path>`
+
+`sheet-ops-codex run-validated` is an internal handoff surface. It is owned by
+the installed skill handoff and must not be presented as the normal public
+request route. Its stdout is an internal handoff envelope with runtime evidence
+under `runtime`, not a public entry result. Validate it with
+`contracts/cli/internal_handoff_result.schema.json`, not the public entry
+schema. Mutating workbook commands currently report `dry_run_capable: false`;
+`preview-request` is impact inspection only, not runtime dry-run evidence. Do
+not claim dry-run behavior until a truthful runtime planning mode exists.
+
+`preview-request` includes `planner:"requestcompiler_validate_intent"` and
+`plan_confidence:"compiler_validated_boundary"`. Treat its `operation`, `would_mutate`,
+`mutation_summary`, and `fingerprints` fields as planning/trust metadata only;
+they do not prove that runtime execution succeeded. After `run-intent`, compare
+the execution result `fingerprints` to the preview fingerprints, and use
+`output_workbook_sha256` when present to bind the produced workbook bytes before
+trusting runtime artifacts. Cross-check it against
+`runtime.verification.output_workbook_sha256`; verification artifacts that name
+a non-empty `output_file` require that hash. Treat output workbooks on
+`ok:false` results as failure evidence, not primary success.
+
 ## Public agent capabilities
 
 - `group_summarize`: use when the request asks to summarize rows by keys, such as "summarize revenue by region".
@@ -58,7 +91,13 @@ Before selecting a capability, read the matching machine-readable record in
 Install contract reminder:
 
 ```bash
+command -v go && go version
 /path/to/sheet-ops/install-skill.sh --project /path/to/target/workspace
 ```
 
-Go 1.25 or newer is required. If Go is ready, install-skill does not prompt. If Go is missing or outdated, it asks before continuing. The install flow does not use a zip file, tarball, or prebuilt platform binary.
+Go 1.25 or newer is required. If Go is installed but not visible in the current
+app or shell `PATH`, find the actual executable first and pass
+`--go-bin /absolute/path/to/go`. Do not guess the Go path or install a second
+copy before checking the existing installation. If Go is ready, install-skill
+does not prompt. If Go is missing or outdated, it asks before continuing. The
+install flow does not use a zip file, tarball, or prebuilt platform binary.

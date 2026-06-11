@@ -1,19 +1,17 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sheet-ops.local/contracts/results/public_entry_result.schema.json",
-  "title": "PublicEntryResult",
+  "$id": "https://sheet-ops.local/contracts/cli/internal_handoff_result.schema.json",
+  "title": "InternalHandoffResult",
   "type": "object",
   "required": [
     "schema_version",
     "ok",
     "command",
+    "status",
+    "classification",
     "recoverable",
     "artifacts",
     "next_actions",
-    "entry",
-    "status",
-    "work_unit_id",
-    "request_compiler",
     "runtime"
   ],
   "properties": {
@@ -24,10 +22,16 @@
       "type": "boolean"
     },
     "command": {
-      "enum": ["run-prompt", "run-text", "run-intent"]
+      "enum": ["run-validated", "run-request"]
+    },
+    "status": {
+      "const": "executed"
+    },
+    "classification": {
+      "const": "internal_handoff"
     },
     "recoverable": {
-      "type": "boolean"
+      "const": false
     },
     "artifacts": {
       "type": "array",
@@ -44,27 +48,8 @@
         "minLength": 1
       }
     },
-    "fingerprints": {
-      "$ref": "#/$defs/execution_fingerprints"
-    },
-    "entry": {
-      "enum": ["run-prompt", "run-text", "run-intent"]
-    },
-    "status": {
-      "enum": ["compiled", "needs_human_checkpoint", "blocked", "executed"]
-    },
-    "work_unit_id": {
-      "type": "string",
-      "minLength": 1
-    },
-    "request_compiler": {
-      "$ref": "#/$defs/request_compiler"
-    },
     "runtime": {
-      "oneOf": [
-        { "type": "null" },
-        { "$ref": "#/$defs/public_runtime_result" }
-      ]
+      "$ref": "#/$defs/public_runtime_result"
     }
   },
   "additionalProperties": false,
@@ -87,46 +72,6 @@
         "success_role": {
           "type": "string",
           "minLength": 1
-        }
-      },
-      "additionalProperties": false
-    },
-    "request_compiler": {
-      "type": "object",
-      "required": ["status", "request_dir", "decision_path", "generated_request_path"],
-      "properties": {
-        "status": {
-          "enum": ["compiled", "needs_human_checkpoint", "blocked"]
-        },
-        "request_dir": {
-          "type": "string",
-          "minLength": 1
-        },
-        "decision_path": {
-          "type": "string",
-          "minLength": 1
-        },
-        "generated_request_path": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": false
-    },
-    "execution_fingerprints": {
-      "type": "object",
-      "required": ["normalized_intent_sha256", "input_workbook_sha256"],
-      "properties": {
-        "normalized_intent_sha256": {
-          "type": "string",
-          "pattern": "^[a-f0-9]{64}$"
-        },
-        "input_workbook_sha256": {
-          "type": "string",
-          "pattern": "^[a-f0-9]{64}$"
-        },
-        "output_workbook_sha256": {
-          "type": "string",
-          "pattern": "^[a-f0-9]{64}$"
         }
       },
       "additionalProperties": false
@@ -243,83 +188,56 @@
   },
   "allOf": [
     {
-      "if": {
-        "properties": {
-          "status": { "const": "executed" }
-        },
-        "required": ["status"]
-      },
-      "then": {
-        "required": ["fingerprints"],
-        "properties": {
-          "recoverable": { "const": false },
-          "request_compiler": {
-            "allOf": [
-              { "$ref": "#/$defs/request_compiler" },
-              {
-                "properties": {
-                  "status": { "const": "compiled" },
-                  "generated_request_path": { "minLength": 1 }
-                },
-                "required": ["status", "generated_request_path"]
-              }
-            ]
-          },
-          "artifacts": {
-            "allOf": [
-              {
-                "contains": {
-                  "allOf": [
-                    { "$ref": "#/$defs/artifact" },
-                    {
-                      "properties": {
-                        "kind": { "const": "verification" },
-                        "required": { "const": true },
-                        "success_role": { "const": "success_evidence" },
-                        "path": { "minLength": 1 }
-                      },
-                      "required": ["kind", "required", "success_role", "path"]
-                    }
-                  ]
-                },
-                "minContains": 1
+      "properties": {
+        "artifacts": {
+          "allOf": [
+            {
+              "contains": {
+                "allOf": [
+                  { "$ref": "#/$defs/artifact" },
+                  {
+                    "properties": {
+                      "kind": { "const": "verification" },
+                      "required": { "const": true },
+                      "success_role": { "const": "success_evidence" },
+                      "path": { "minLength": 1 }
+                    },
+                    "required": ["kind", "required", "success_role", "path"]
+                  }
+                ]
               },
-              {
-                "contains": {
-                  "allOf": [
-                    { "$ref": "#/$defs/artifact" },
-                    {
-                      "properties": {
-                        "kind": { "const": "evidence_dir" },
-                        "required": { "const": true },
-                        "success_role": { "const": "audit_trail" },
-                        "path": { "minLength": 1 }
-                      },
-                      "required": ["kind", "required", "success_role", "path"]
-                    }
-                  ]
-                },
-                "minContains": 1
-              }
-            ]
-          },
-          "runtime": { "$ref": "#/$defs/public_runtime_result" }
+              "minContains": 1
+            },
+            {
+              "contains": {
+                "allOf": [
+                  { "$ref": "#/$defs/artifact" },
+                  {
+                    "properties": {
+                      "kind": { "const": "evidence_dir" },
+                      "required": { "const": true },
+                      "success_role": { "const": "audit_trail" },
+                      "path": { "minLength": 1 }
+                    },
+                    "required": ["kind", "required", "success_role", "path"]
+                  }
+                ]
+              },
+              "minContains": 1
+            }
+          ]
         }
       }
     },
     {
       "if": {
         "properties": {
-          "status": { "const": "executed" },
           "ok": { "const": true }
         },
-        "required": ["status", "ok"]
+        "required": ["ok"]
       },
       "then": {
         "properties": {
-          "fingerprints": {
-            "required": ["output_workbook_sha256"]
-          },
           "artifacts": {
             "contains": {
               "allOf": [
@@ -343,10 +261,9 @@
     {
       "if": {
         "properties": {
-          "status": { "const": "executed" },
           "ok": { "const": false }
         },
-        "required": ["status", "ok"]
+        "required": ["ok"]
       },
       "then": {
         "properties": {
@@ -367,60 +284,6 @@
               }
             }
           }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "status": { "const": "needs_human_checkpoint" }
-        },
-        "required": ["status"]
-      },
-      "then": {
-        "properties": {
-          "ok": { "const": false },
-          "recoverable": { "const": true },
-          "request_compiler": {
-            "allOf": [
-              { "$ref": "#/$defs/request_compiler" },
-              {
-                "properties": {
-                  "status": { "const": "needs_human_checkpoint" },
-                  "generated_request_path": { "const": "" }
-                },
-                "required": ["status", "generated_request_path"]
-              }
-            ]
-          },
-          "runtime": { "type": "null" }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "status": { "const": "blocked" }
-        },
-        "required": ["status"]
-      },
-      "then": {
-        "properties": {
-          "ok": { "const": false },
-          "recoverable": { "const": true },
-          "request_compiler": {
-            "allOf": [
-              { "$ref": "#/$defs/request_compiler" },
-              {
-                "properties": {
-                  "status": { "const": "blocked" },
-                  "generated_request_path": { "const": "" }
-                },
-                "required": ["status", "generated_request_path"]
-              }
-            ]
-          },
-          "runtime": { "type": "null" }
         }
       }
     }

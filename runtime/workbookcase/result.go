@@ -227,17 +227,18 @@ type ExecutionSummary struct {
 }
 
 type VerificationResult struct {
-	Pass            bool                `json:"pass"`
-	Operation       string              `json:"operation"`
-	OutputFile      string              `json:"output_file"`
-	SummarySheet    string              `json:"summary_sheet,omitempty"`
-	SummaryMode     string              `json:"summary_mode,omitempty"`
-	SummaryRows     int                 `json:"summary_rows,omitempty"`
-	FormulaCells    []string            `json:"formula_cells,omitempty"`
-	HighlightedRows []int               `json:"highlighted_rows,omitempty"`
-	WrittenCells    []string            `json:"written_cells,omitempty"`
-	Layers          []VerificationLayer `json:"layers,omitempty"`
-	Reasons         []string            `json:"reasons"`
+	Pass                 bool                `json:"pass"`
+	Operation            string              `json:"operation"`
+	OutputFile           string              `json:"output_file"`
+	OutputWorkbookSHA256 string              `json:"output_workbook_sha256,omitempty"`
+	SummarySheet         string              `json:"summary_sheet,omitempty"`
+	SummaryMode          string              `json:"summary_mode,omitempty"`
+	SummaryRows          int                 `json:"summary_rows,omitempty"`
+	FormulaCells         []string            `json:"formula_cells,omitempty"`
+	HighlightedRows      []int               `json:"highlighted_rows,omitempty"`
+	WrittenCells         []string            `json:"written_cells,omitempty"`
+	Layers               []VerificationLayer `json:"layers,omitempty"`
+	Reasons              []string            `json:"reasons"`
 }
 
 type VerificationLayer struct {

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/cli/preflight_result.schema.json",
+  "title": "SheetOpsCLIPreflightResult",
+  "type": "object",
+  "required": ["schema_version", "command", "ok", "read_only", "checks"],
+  "properties": {
+    "schema_version": { "const": "sheet-ops-cli/v1" },
+    "command": { "const": "preflight" },
+    "ok": { "type": "boolean" },
+    "read_only": { "const": true },
+    "checks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/check" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "check": {
+      "type": "object",
+      "required": ["name", "status", "recoverable", "message"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["pass", "fail", "skip"] },
+        "recoverable": { "type": "boolean" },
+        "message": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    }
+  }
+}

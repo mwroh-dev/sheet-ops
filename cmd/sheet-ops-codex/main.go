@@ -19,11 +19,20 @@ import (
 
 const stateRootEnv = "SHEET_OPS_STATE_ROOT"
 
+var orchestrateValidated = useorchestrator.OrchestrateValidated
+
 func main() {
 	if err := newRootCommand().Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		os.Exit(handleCLIError(os.Stderr, err))
 	}
+}
+
+func handleCLIError(stderr io.Writer, err error) int {
+	cliErr := classifyCLIError(err)
+	if !cliErr.JSONEmitted {
+		fmt.Fprintln(stderr, cliErr.Message)
+	}
+	return cliErr.ExitCode
 }
 
 func newRootCommand() *cobra.Command {
@@ -38,10 +47,15 @@ func newRootCommand() *cobra.Command {
 		SilenceErrors: true,
 	}
 	rootCmd.AddCommand(newPrepareUseCommand())
+	rootCmd.AddCommand(newCapabilitiesCommand())
+	rootCmd.AddCommand(newSchemaCommand())
+	rootCmd.AddCommand(newPreflightCommand())
+	rootCmd.AddCommand(newPreviewRequestCommand())
 	rootCmd.AddCommand(newRunValidatedCommand())
 	rootCmd.AddCommand(newRunRequestCommand())
 	rootCmd.AddCommand(newRunIntentCommand())
 	rootCmd.AddCommand(newInstallSkillCommand())
+	applyCLIContracts(rootCmd)
 	return rootCmd
 }
 
@@ -53,7 +67,7 @@ func newRunValidatedCommand() *cobra.Command {
 		Short: "Run a validated execution request",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runValidatedExecutionRequest(cmd, requestFile)
+			return runValidatedExecutionRequest(cmd, "run-validated", requestFile)
 		},
 	}
 
@@ -74,7 +88,7 @@ func newRunRequestCommand() *cobra.Command {
 		Short:  "Compatibility alias for run-validated",
 		Args:   cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runValidatedExecutionRequest(cmd, requestFile)
+			return runValidatedExecutionRequest(cmd, "run-request", requestFile)
 		},
 	}
 
@@ -86,7 +100,7 @@ func newRunRequestCommand() *cobra.Command {
 	return cmd
 }
 
-func runValidatedExecutionRequest(cmd *cobra.Command, requestFile string) error {
+func runValidatedExecutionRequest(cmd *cobra.Command, commandName, requestFile string) error {
 	validatedReq, err := useorchestrator.LoadValidatedExecutionRequest(requestFile)
 	if err != nil {
 		return err
@@ -95,8 +109,12 @@ func runValidatedExecutionRequest(cmd *cobra.Command, requestFile string) error 
 	if err != nil {
 		return err
 	}
-	result, orchestrateErr := useorchestrator.OrchestrateValidated(validatedReq)
-	if err := writeResultJSON(cmd.OutOrStdout(), result); err != nil {
+	result, orchestrateErr := orchestrateValidated(validatedReq)
+	if orchestrateErr != nil && !runtimeStarted(result) {
+		return orchestrateErr
+	}
+	envelope := newInternalHandoffRunResult(commandName, result)
+	if err := writeInternalHandoffRunResultJSON(cmd.OutOrStdout(), envelope); err != nil {
 		return errors.Join(orchestrateErr, err)
 	}
 	return orchestrateErr
@@ -195,6 +213,10 @@ func runIntentEntry(intent requestcompiler.NormalizedIntent, input intentCompile
 	if err != nil {
 		return nil, nil, err
 	}
+	inputIdentity, err := inputFingerprints(input.IntentFile, input.InputFile)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	workspaceRoot := resolveWorkspaceRoot(input.InputFile)
 	workspaceRoot, err = configureStateRootsFromStateRoot(workspaceRoot)
@@ -228,14 +250,18 @@ func runIntentEntry(intent requestcompiler.NormalizedIntent, input intentCompile
 		}
 	}
 
-	result, orchestrateErr := useorchestrator.OrchestrateValidated(*compiled.ValidatedExecutionRequest)
-	if orchestrateErr != nil {
-		if runtimeStarted(result) {
-			return &result, nil, orchestrateErr
-		}
+	result, orchestrateErr := orchestrateValidated(*compiled.ValidatedExecutionRequest)
+	if orchestrateErr != nil && !runtimeStarted(result) {
 		return nil, nil, orchestrateErr
 	}
-	publicEntryResult := newExecutedPublicEntryResult("run-intent", compiled, result)
+	fingerprints, err := executedFingerprints(inputIdentity, result.Verification.OutputFile, result.Verification.OutputWorkbookSHA256)
+	if err != nil {
+		if orchestrateErr != nil {
+			return &result, nil, errors.Join(orchestrateErr, err)
+		}
+		return &result, nil, err
+	}
+	publicEntryResult := newExecutedPublicEntryResult("run-intent", compiled, result, fingerprints)
 	return &result, &publicEntryResult, orchestrateErr
 }
 
@@ -248,12 +274,12 @@ func configureStateRootsFromStateRoot(workspaceRoot string) (string, error) {
 		stateRoot = filepath.Clean(stateRoot)
 	}
 	if !samePath(stateRoot, expectedStateRoot) {
-		return "", fmt.Errorf(
+		return "", newStateRootMismatchError(fmt.Sprintf(
 			"%s=%q is not supported for public entry; expected %q so request-compiler and runtime artifacts stay under one state root",
 			stateRootEnv,
 			stateRoot,
 			expectedStateRoot,
-		)
+		))
 	}
 
 	expectedArtifactRoot := filepath.Join(stateRoot, "artifacts")
@@ -313,13 +339,13 @@ func validateDerivedStateRootEnv(envName, expectedValue string) error {
 	if samePath(currentValue, expectedValue) {
 		return nil
 	}
-	return fmt.Errorf(
+	return newStateRootMismatchError(fmt.Sprintf(
 		"%s=%q conflicts with %s; expected %q",
 		envName,
 		currentValue,
 		stateRootEnv,
 		expectedValue,
-	)
+	))
 }
 
 func samePath(left, right string) bool {
@@ -365,20 +391,6 @@ func normalizedIntentRequestText(intent requestcompiler.NormalizedIntent) string
 		return "normalized intent machine-boundary request"
 	}
 	return string(raw)
-}
-
-func currentWorkingDirOrPanic() string {
-	workingDir, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-	return workingDir
-}
-
-func writeResultJSON(output io.Writer, result useorchestrator.RunResult) error {
-	encoder := json.NewEncoder(output)
-	encoder.SetIndent("", "  ")
-	return encoder.Encode(result)
 }
 
 func runtimeStarted(result useorchestrator.RunResult) bool {

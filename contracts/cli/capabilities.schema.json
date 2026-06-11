@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/cli/capabilities.schema.json",
+  "title": "SheetOpsCLICapabilities",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "cli_name",
+    "human_workbook_entry",
+    "machine_entry_commands",
+    "root_command",
+    "read_only_commands",
+    "command_groups",
+    "commands",
+    "error_contract"
+  ],
+  "properties": {
+    "schema_version": { "const": "sheet-ops-cli/v1" },
+    "cli_name": { "type": "string", "minLength": 1 },
+    "human_workbook_entry": { "type": "string", "minLength": 1 },
+    "machine_entry_commands": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "root_command": { "$ref": "#/$defs/command_brief" },
+    "read_only_commands": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "command_groups": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/command_group" }
+    },
+    "commands": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/command_brief" }
+    },
+    "error_contract": { "$ref": "#/$defs/error_contract" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "command_brief": {
+      "type": "object",
+      "required": ["name", "classification", "mutating", "read_only", "hidden"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "classification": { "type": "string", "minLength": 1 },
+        "mutating": { "type": "boolean" },
+        "read_only": { "type": "boolean" },
+        "hidden": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "command_group": {
+      "type": "object",
+      "required": ["name", "description", "safe_discovery", "commands"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "safe_discovery": { "type": "boolean" },
+        "commands": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "additionalProperties": false
+    },
+    "error_contract": {
+      "type": "object",
+      "required": ["json_failure_shape", "codes"],
+      "properties": {
+        "json_failure_shape": { "type": "string", "minLength": 1 },
+        "codes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/error_code" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "error_code": {
+      "type": "object",
+      "required": ["code", "exit_code", "recoverable", "status", "producer", "meaning"],
+      "properties": {
+        "code": { "type": "string", "minLength": 1 },
+        "exit_code": { "type": "integer" },
+        "recoverable": { "type": "boolean" },
+        "status": { "enum": ["emitted", "reserved"] },
+        "producer": { "type": "string", "minLength": 1 },
+        "meaning": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    }
+  }
+}

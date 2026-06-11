@@ -2135,17 +2135,18 @@ func summaryVerificationFromRuntime(verification runtimeverify.VerificationResul
 
 func verificationSummaryFromRuntime(operation string, verification runtimeverify.VerificationResult) VerificationResult {
 	return VerificationResult{
-		Pass:            verification.Pass,
-		Operation:       operation,
-		OutputFile:      verification.OutputWorkbook,
-		SummarySheet:    verification.SummarySheet,
-		SummaryMode:     verification.SummaryMode,
-		SummaryRows:     verification.SummaryRows,
-		FormulaCells:    append([]string(nil), verification.FormulaCells...),
-		HighlightedRows: append([]int(nil), verification.HighlightedRows...),
-		WrittenCells:    append([]string(nil), verification.WrittenCells...),
-		Layers:          verificationLayersFromRuntime(verification.Layers),
-		Reasons:         append([]string(nil), verification.Reasons...),
+		Pass:                 verification.Pass,
+		Operation:            operation,
+		OutputFile:           verification.OutputWorkbook,
+		OutputWorkbookSHA256: fileSHA256IfReadable(verification.OutputWorkbook),
+		SummarySheet:         verification.SummarySheet,
+		SummaryMode:          verification.SummaryMode,
+		SummaryRows:          verification.SummaryRows,
+		FormulaCells:         append([]string(nil), verification.FormulaCells...),
+		HighlightedRows:      append([]int(nil), verification.HighlightedRows...),
+		WrittenCells:         append([]string(nil), verification.WrittenCells...),
+		Layers:               verificationLayersFromRuntime(verification.Layers),
+		Reasons:              append([]string(nil), verification.Reasons...),
 	}
 }
 

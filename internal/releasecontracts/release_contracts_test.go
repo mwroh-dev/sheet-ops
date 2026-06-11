@@ -117,6 +117,81 @@ func TestReleaseSchemaReferencesAreLocallyResolvable(t *testing.T) {
 	}
 }
 
+func TestCLIAgentContractDocsStayAligned(t *testing.T) {
+	root := repoRoot(t)
+	requiredNeedles := []string{
+		"`sheet-ops` skill is the single human-facing workbook request entry",
+		"`sheet-ops-codex capabilities --json`",
+		"`sheet-ops-codex schema command preflight --json`",
+		"`sheet-ops-codex preflight --json`",
+		"`sheet-ops-codex run-validated` is an internal handoff surface",
+		"`dry_run_capable: false`",
+	}
+	cliContractNeedles := []string{
+		"`sheet-ops-codex run-validated` is an internal handoff surface",
+		"`contracts/cli/internal_handoff_result.schema.json`",
+		"`contracts/results/public_entry_result.schema.json`",
+		"`preview-request` is impact inspection only, not runtime dry-run evidence",
+		"`planner:\"requestcompiler_validate_intent\"`",
+		"`plan_confidence:\"compiler_validated_boundary\"`",
+		"`output_workbook_sha256`",
+		"`runtime.verification.output_workbook_sha256`",
+		"`output_file` require that hash",
+		"failure evidence, not primary success",
+	}
+
+	for _, rel := range []string{
+		"README.md",
+		"docs/public/install.md",
+		"skills/sheet-ops/SKILL.md",
+		"cmd/sheet-ops-codex/skill_assets/SKILL.md",
+		"skills/sheet-ops/references/capabilities.md",
+		"cmd/sheet-ops-codex/skill_assets/references/capabilities.md",
+		"cmd/sheet-ops-codex/skill_assets/references/usage.md",
+	} {
+		t.Run(filepath.ToSlash(rel), func(t *testing.T) {
+			text := readText(t, filepath.Join(root, filepath.FromSlash(rel)))
+			for _, needle := range requiredNeedles {
+				if !strings.Contains(text, needle) {
+					t.Fatalf("%s missing %q", rel, needle)
+				}
+			}
+		})
+	}
+	for _, rel := range []string{
+		"skills/sheet-ops/SKILL.md",
+		"cmd/sheet-ops-codex/skill_assets/SKILL.md",
+		"cmd/sheet-ops-codex/skill_assets/references/usage.md",
+	} {
+		t.Run(filepath.ToSlash(rel)+" cli contract", func(t *testing.T) {
+			assertTextContainsAll(t, readText(t, filepath.Join(root, filepath.FromSlash(rel))), rel, cliContractNeedles)
+		})
+	}
+	assertTextContainsAll(t,
+		readText(t, filepath.Join(root, "docs", "public", "cli-output-contracts.md")),
+		"docs/public/cli-output-contracts.md",
+		[]string{
+			"`contracts/cli/internal_handoff_result.schema.json` validates internal handoff results from `run-validated` and hidden compatibility `run-request`",
+			"`contracts/results/public_entry_result.schema.json` validates public execution results",
+			"`preview-request` is read-only impact inspection, not runtime dry-run",
+			"`preview-request.fingerprints`",
+			"`run-intent.fingerprints`",
+			"`runtime.verification.output_workbook_sha256`",
+			"Treat `output_workbook` as the primary success artifact",
+			"only when the public result has `ok:true`",
+			"on `ok:false`, a materialized output",
+			"workbook is failure evidence",
+			"`classification:\"internal_handoff\"`",
+			"The public entry schema intentionally rejects this envelope.",
+		},
+	)
+
+	assertTextFilesEqual(t, root,
+		"skills/sheet-ops/references/capabilities.md",
+		"cmd/sheet-ops-codex/skill_assets/references/capabilities.md",
+	)
+}
+
 func TestSchemaReferenceResolverAcceptsLocalSelfReference(t *testing.T) {
 	root := t.TempDir()
 	schemaPath := filepath.Join(root, "self_ref.schema.json")
@@ -613,6 +688,35 @@ func readJSON(t *testing.T, path string) any {
 		t.Fatalf("parse %s: %v", path, err)
 	}
 	return document
+}
+
+func readText(t *testing.T, path string) string {
+	t.Helper()
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read %s: %v", path, err)
+	}
+	return string(raw)
+}
+
+func assertTextFilesEqual(t *testing.T, root string, leftRel string, rightRel string) {
+	t.Helper()
+	leftPath := filepath.Join(root, filepath.FromSlash(leftRel))
+	rightPath := filepath.Join(root, filepath.FromSlash(rightRel))
+	left := readText(t, leftPath)
+	right := readText(t, rightPath)
+	if left != right {
+		t.Fatalf("%s and %s drifted", leftRel, rightRel)
+	}
+}
+
+func assertTextContainsAll(t *testing.T, text string, rel string, needles []string) {
+	t.Helper()
+	for _, needle := range needles {
+		if !strings.Contains(text, needle) {
+			t.Fatalf("%s missing %q", rel, needle)
+		}
+	}
 }
 
 func repoRoot(t *testing.T) string {

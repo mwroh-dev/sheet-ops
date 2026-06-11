@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/cli/preview_request_result.schema.json",
+  "title": "SheetOpsCLIPreviewRequestResult",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "command",
+    "ok",
+    "read_only",
+    "dry_run",
+    "planner",
+    "plan_confidence",
+    "operation",
+    "would_mutate",
+    "mutation_summary",
+    "fingerprints",
+    "scenario_id",
+    "input_file",
+    "output_file",
+    "state_root",
+    "planned_reads",
+    "planned_writes",
+    "planned_artifacts",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": { "const": "sheet-ops-cli/v1" },
+    "command": { "const": "preview-request" },
+    "ok": { "const": true },
+    "read_only": { "const": true },
+    "dry_run": { "const": false },
+    "planner": { "const": "requestcompiler_validate_intent" },
+    "plan_confidence": { "enum": ["compiler_validated_boundary"] },
+    "operation": {
+      "enum": [
+        "create_summary_sheet",
+        "highlight_threshold_rows",
+        "create_join_lookup_result_sheet",
+        "append_structured_rows",
+        "extend_table_formulas",
+        "copy_period_sheet",
+        "add_data_validation",
+        "protect_formula_cells",
+        "normalize_headers",
+        "roll_forward_period",
+        "reconcile_tables",
+        "generate_printable_form",
+        "unresolved",
+        "unknown"
+      ]
+    },
+    "would_mutate": { "type": "boolean" },
+    "mutation_summary": { "$ref": "#/$defs/mutation_summary" },
+    "fingerprints": { "$ref": "#/$defs/fingerprints" },
+    "scenario_id": { "type": "string", "minLength": 1 },
+    "input_file": { "type": "string", "minLength": 1 },
+    "output_file": { "type": "string", "minLength": 1 },
+    "state_root": { "type": "string", "minLength": 1 },
+    "planned_reads": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/planned_artifact" }
+    },
+    "planned_writes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/planned_artifact" }
+    },
+    "planned_artifacts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/planned_artifact" }
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": { "would_mutate": { "const": false } },
+        "required": ["would_mutate"]
+      },
+      "then": {
+        "properties": {
+          "mutation_summary": { "$ref": "#/$defs/no_mutation_summary" },
+          "planned_writes": { "maxItems": 0 },
+          "planned_artifacts": { "maxItems": 0 }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "would_mutate": { "const": true } },
+        "required": ["would_mutate"]
+      },
+      "then": {
+        "properties": {
+          "mutation_summary": { "$ref": "#/$defs/planned_mutation_summary" },
+          "planned_writes": { "minItems": 1 },
+          "planned_artifacts": { "minItems": 1 }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "mutation_summary": {
+      "type": "object",
+      "required": ["workbook", "artifacts", "state", "execution_required"],
+      "properties": {
+        "workbook": { "enum": ["planned_output_workbook", "none"] },
+        "artifacts": { "enum": ["planned_runtime_artifacts", "none"] },
+        "state": { "enum": ["planned_state_root", "none"] },
+        "execution_required": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "planned_mutation_summary": {
+      "type": "object",
+      "required": ["workbook", "artifacts", "state", "execution_required"],
+      "properties": {
+        "workbook": { "const": "planned_output_workbook" },
+        "artifacts": { "const": "planned_runtime_artifacts" },
+        "state": { "const": "planned_state_root" },
+        "execution_required": { "const": true }
+      },
+      "additionalProperties": false
+    },
+    "no_mutation_summary": {
+      "type": "object",
+      "required": ["workbook", "artifacts", "state", "execution_required"],
+      "properties": {
+        "workbook": { "const": "none" },
+        "artifacts": { "const": "none" },
+        "state": { "const": "none" },
+        "execution_required": { "const": false }
+      },
+      "additionalProperties": false
+    },
+    "fingerprints": {
+      "type": "object",
+      "required": ["normalized_intent_sha256", "input_workbook_sha256"],
+      "properties": {
+        "normalized_intent_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "input_workbook_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "planned_artifact": {
+      "type": "object",
+      "required": ["kind", "path", "required"],
+      "properties": {
+        "kind": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "minLength": 1 },
+        "required": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

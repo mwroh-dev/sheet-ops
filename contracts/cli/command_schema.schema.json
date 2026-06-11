@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sheet-ops.local/contracts/cli/command_schema.schema.json",
+  "title": "SheetOpsCLICommandSchema",
+  "type": "object",
+  "required": ["schema_version", "cli_name"],
+  "properties": {
+    "schema_version": { "const": "sheet-ops-cli/v1" },
+    "cli_name": { "type": "string", "minLength": 1 },
+    "commands": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/command" }
+    },
+    "command": { "$ref": "#/$defs/command" }
+  },
+  "oneOf": [
+    { "required": ["commands"], "not": { "required": ["command"] } },
+    { "required": ["command"], "not": { "required": ["commands"] } }
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "command": {
+      "type": "object",
+      "required": [
+        "name",
+        "classification",
+        "intended_caller",
+        "description",
+        "usage",
+        "options",
+        "output_mode",
+        "side_effects",
+        "read_artifacts",
+        "written_artifacts",
+        "state_behavior",
+        "safety_notes",
+        "related_commands",
+        "mutating",
+        "read_only",
+        "dry_run_capable",
+        "hidden"
+      ],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "classification": { "type": "string", "minLength": 1 },
+        "intended_caller": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "usage": { "type": "string", "minLength": 1 },
+        "options": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/option" }
+        },
+        "output_mode": { "type": "string", "minLength": 1 },
+        "side_effects": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "read_artifacts": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "written_artifacts": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "state_behavior": { "type": "string", "minLength": 1 },
+        "safety_notes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "related_commands": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "mutating": { "type": "boolean" },
+        "read_only": { "type": "boolean" },
+        "dry_run_capable": { "type": "boolean" },
+        "hidden": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "option": {
+      "type": "object",
+      "required": ["name", "description"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    }
+  }
+}

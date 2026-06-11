@@ -2,11 +2,15 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
+
+	runtimeworkbookcase "github.com/mwroh/sheet-ops/runtime/workbookcase"
 )
 
 func TestInstallSkillInstallsProjectLocalSkillWhenGoIsReady(t *testing.T) {
@@ -45,6 +49,140 @@ func TestInstallSkillInstallsProjectLocalSkillWhenGoIsReady(t *testing.T) {
 	assertNotExistsLocal(t, filepath.Join(skillRoot, "platforms"))
 }
 
+func TestInstallSkillBundledCLIExposesAgentContract(t *testing.T) {
+	if status := inspectGo("go"); status.kind != goStatusReady {
+		t.Skipf("go runtime is not ready for bundled CLI smoke: %s %v", status.kind, status.err)
+	}
+
+	projectDir := t.TempDir()
+	cmd := newRootCommand()
+	var stdout bytes.Buffer
+	cmd.SetOut(&stdout)
+	cmd.SetErr(&stdout)
+	cmd.SetArgs([]string{
+		"install-skill",
+		"--project", projectDir,
+		"--go-bin", "go",
+	})
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("install-skill failed: %v\noutput=%s", err, stdout.String())
+	}
+
+	installedCLI := filepath.Join(projectDir, ".codex", "skills", "sheet-ops", "bin", "sheet-ops-codex")
+	assertExistsLocal(t, installedCLI)
+
+	var capabilities cliCapabilitiesDocument
+	runInstalledCLIJSON(t, installedCLI, &capabilities, "capabilities", "--json")
+	if !containsString(capabilities.MachineEntryCommands, "schema") {
+		t.Fatalf("machine_entry_commands = %v, want schema", capabilities.MachineEntryCommands)
+	}
+	agentGroup := findCapabilityGroup(t, capabilities.CommandGroups, "agent_contract")
+	if !containsString(agentGroup.Commands, "preflight") {
+		t.Fatalf("agent_contract commands = %v, want preflight", agentGroup.Commands)
+	}
+	if !containsString(agentGroup.Commands, "preview-request") {
+		t.Fatalf("agent_contract commands = %v, want preview-request", agentGroup.Commands)
+	}
+
+	var prepareUseSchema cliCommandSchemaEnvelope
+	runInstalledCLIJSON(t, installedCLI, &prepareUseSchema, "schema", "command", "prepare-use", "--json")
+	if prepareUseSchema.Command.Name != "prepare-use" {
+		t.Fatalf("schema command name = %q, want prepare-use", prepareUseSchema.Command.Name)
+	}
+	if prepareUseSchema.Command.Classification != cliClassificationAgentContract {
+		t.Fatalf("prepare-use classification = %q, want %q", prepareUseSchema.Command.Classification, cliClassificationAgentContract)
+	}
+	if !prepareUseSchema.Command.Mutating || prepareUseSchema.Command.ReadOnly {
+		t.Fatalf("prepare-use schema has unsafe flags: %+v", prepareUseSchema.Command)
+	}
+	if !schemaOptionsInclude(prepareUseSchema.Command.Options, "--envelope-file") {
+		t.Fatalf("prepare-use options = %+v, want --envelope-file", prepareUseSchema.Command.Options)
+	}
+
+	var preflightSchema cliCommandSchemaEnvelope
+	runInstalledCLIJSON(t, installedCLI, &preflightSchema, "schema", "command", "preflight", "--json")
+	if preflightSchema.Command.Name != "preflight" {
+		t.Fatalf("schema command name = %q, want preflight", preflightSchema.Command.Name)
+	}
+	if !preflightSchema.Command.ReadOnly || preflightSchema.Command.Mutating || preflightSchema.Command.DryRunCapable {
+		t.Fatalf("preflight schema has unsafe flags: %+v", preflightSchema.Command)
+	}
+
+	var previewSchema cliCommandSchemaEnvelope
+	runInstalledCLIJSON(t, installedCLI, &previewSchema, "schema", "command", "preview-request", "--json")
+	if previewSchema.Command.Name != "preview-request" {
+		t.Fatalf("schema command name = %q, want preview-request", previewSchema.Command.Name)
+	}
+	if !previewSchema.Command.ReadOnly || previewSchema.Command.Mutating || previewSchema.Command.DryRunCapable {
+		t.Fatalf("preview-request schema has unsafe flags: %+v", previewSchema.Command)
+	}
+
+	workspaceDir := filepath.Join(projectDir, "workspace")
+	if err := os.MkdirAll(workspaceDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll(workspace): %v", err)
+	}
+	inputFile := filepath.Join(workspaceDir, "line-items.xlsx")
+	outputFile := filepath.Join(workspaceDir, "line-items-output.xlsx")
+	intentFile := filepath.Join(workspaceDir, "append-intent.json")
+	writeLineItemsWorkbook(t, inputFile)
+	writeAppendRowsIntent(t, intentFile)
+	var preview previewRequestDocument
+	runInstalledCLIJSON(t, installedCLI, &preview,
+		"preview-request",
+		"--json",
+		"--intent-file", intentFile,
+		"--input-file", inputFile,
+		"--output-file", outputFile,
+		"--scenario-id", "installed-preview-append-rows",
+	)
+	if !preview.ReadOnly || preview.DryRun || preview.Command != "preview-request" {
+		t.Fatalf("installed preview has unsafe flags: %+v", preview)
+	}
+	if preview.Planner != "requestcompiler_validate_intent" {
+		t.Fatalf("installed preview planner = %q, want requestcompiler_validate_intent", preview.Planner)
+	}
+	if preview.PlanConfidence != "compiler_validated_boundary" {
+		t.Fatalf("installed preview plan_confidence = %q, want compiler_validated_boundary", preview.PlanConfidence)
+	}
+	if preview.Operation != runtimeworkbookcase.AppendRowsOperationName {
+		t.Fatalf("installed preview operation = %q, want %q", preview.Operation, runtimeworkbookcase.AppendRowsOperationName)
+	}
+	if !preview.WouldMutate {
+		t.Fatalf("installed preview would_mutate = false, want true")
+	}
+	if preview.MutationSummary.Workbook != "planned_output_workbook" {
+		t.Fatalf("installed preview mutation_summary.workbook = %q, want planned_output_workbook", preview.MutationSummary.Workbook)
+	}
+	if preview.MutationSummary.Artifacts != "planned_runtime_artifacts" {
+		t.Fatalf("installed preview mutation_summary.artifacts = %q, want planned_runtime_artifacts", preview.MutationSummary.Artifacts)
+	}
+	if preview.MutationSummary.State != "planned_state_root" {
+		t.Fatalf("installed preview mutation_summary.state = %q, want planned_state_root", preview.MutationSummary.State)
+	}
+	if !preview.MutationSummary.ExecutionRequired {
+		t.Fatalf("installed preview mutation_summary.execution_required = false, want true")
+	}
+	if len(preview.Fingerprints.NormalizedIntentSHA256) != 64 || len(preview.Fingerprints.InputWorkbookSHA256) != 64 {
+		t.Fatalf("installed preview fingerprints = %+v, want sha256 values", preview.Fingerprints)
+	}
+	if _, err := os.Stat(outputFile); !os.IsNotExist(err) {
+		t.Fatalf("installed preview created output workbook: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(workspaceDir, ".sheet-ops-state")); !os.IsNotExist(err) {
+		t.Fatalf("installed preview created state root: %v", err)
+	}
+
+	var preflight preflightDocumentView
+	runInstalledCLIJSON(t, installedCLI, &preflight, "preflight", "--json", "--project", projectDir)
+	if !preflight.ReadOnly {
+		t.Fatalf("preflight read_only = false, want true")
+	}
+	if findPreflightCheck(t, preflight.Checks, "package_manifest").Status != preflightStatusPass {
+		t.Fatalf("package_manifest check did not pass: %+v", preflight.Checks)
+	}
+}
+
 func TestInstallSkillSkipsPromptWhenGoIsReady(t *testing.T) {
 	projectDir := t.TempDir()
 	goDir := t.TempDir()
@@ -62,6 +200,28 @@ func TestInstallSkillSkipsPromptWhenGoIsReady(t *testing.T) {
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("install-skill should not prompt when Go is ready: %v", err)
 	}
+}
+
+func runInstalledCLIJSON(t *testing.T, binary string, target any, args ...string) {
+	t.Helper()
+
+	cmd := exec.Command(binary, args...)
+	stdout, err := cmd.Output()
+	if err != nil {
+		t.Fatalf("%s %s failed: %v", binary, strings.Join(args, " "), err)
+	}
+	if err := json.Unmarshal(stdout, target); err != nil {
+		t.Fatalf("json.Unmarshal(%s %s): %v\nstdout:\n%s", binary, strings.Join(args, " "), err, stdout)
+	}
+}
+
+func schemaOptionsInclude(options []cliSchemaOptionView, name string) bool {
+	for _, option := range options {
+		if option.Name == name {
+			return true
+		}
+	}
+	return false
 }
 
 func TestInstallSkillPromptsBeforeContinuingWhenGoIsOutdated(t *testing.T) {
