@@ -819,7 +819,10 @@ func writeContractJSON(output io.Writer, value any) error {
 }
 
 func renderRootHelp(output io.Writer, rootCmd *cobra.Command, contracts map[string]cliCommandContract) error {
-	rootContract := contracts[rootCmd.Name()]
+	rootContract, ok := contracts[rootCmd.Name()]
+	if !ok {
+		return fmt.Errorf("missing CLI contract for root command %q", rootCmd.Name())
+	}
 	sections := []cliContractSection{
 		{title: "Install surface:", names: []string{"install-skill"}},
 		{title: "Agent-contract surface:", names: []string{"preflight", "preview-request", "prepare-use"}},
@@ -888,7 +891,10 @@ func renderContractSection(output io.Writer, title string, contracts map[string]
 		return err
 	}
 	for _, name := range names {
-		contract := contracts[name]
+		contract, ok := contracts[name]
+		if !ok {
+			return fmt.Errorf("missing CLI contract for command %q", name)
+		}
 		if _, err := fmt.Fprintf(output, "  %-*s %s\n", nameWidth, contract.Name, contract.ShortDescription); err != nil {
 			return err
 		}

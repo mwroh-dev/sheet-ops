@@ -191,7 +191,7 @@ func TestPreviewRequestInvalidIntentJSONEmitsInvalidDataError(t *testing.T) {
 	}
 }
 
-func TestPreviewRequestMissingIntentFileDoesNotClassifyAsInvalidData(t *testing.T) {
+func TestPreviewRequestMissingIntentFileClassifiesAsRecoverableUsageError(t *testing.T) {
 	projectDir := t.TempDir()
 	inputFile := filepath.Join(projectDir, "line-items.xlsx")
 	outputFile := filepath.Join(projectDir, "line-items-output.xlsx")
@@ -218,6 +218,18 @@ func TestPreviewRequestMissingIntentFileDoesNotClassifyAsInvalidData(t *testing.
 	}
 	if envelope.Error.Code == cliErrorInvalidData {
 		t.Fatalf("error.code = %q, want non-invalid-data classification for missing file\nstdout:\n%s", envelope.Error.Code, stdout)
+	}
+	if envelope.Error.Code != cliErrorInvalidUsage {
+		t.Fatalf("error.code = %q, want %q\nstdout:\n%s", envelope.Error.Code, cliErrorInvalidUsage, stdout)
+	}
+	if envelope.Error.ExitCode != cliExitUsage {
+		t.Fatalf("error.exit_code = %d, want %d", envelope.Error.ExitCode, cliExitUsage)
+	}
+	if !envelope.Error.Recoverable {
+		t.Fatalf("error.recoverable = false, want true")
+	}
+	if !containsString(envelope.Error.SuggestedCommands, "preflight --json --input-file <workbook>") {
+		t.Fatalf("suggested_commands = %v, want preflight suggestion", envelope.Error.SuggestedCommands)
 	}
 }
 

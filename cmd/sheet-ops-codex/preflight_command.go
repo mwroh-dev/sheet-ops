@@ -150,6 +150,13 @@ func checkInputFile(inputFile string) preflightCheck {
 	if inputPath == "" {
 		return skippedPreflightCheck("input_file", "input-file not provided")
 	}
+	info, err := os.Stat(inputPath)
+	if err != nil {
+		return failedPreflightCheck("input_file", true, fmt.Sprintf("input file is not accessible: %v", err))
+	}
+	if info.IsDir() {
+		return failedPreflightCheck("input_file", true, "input file path is a directory, expected a workbook file")
+	}
 	file, err := os.Open(inputPath)
 	if err != nil {
 		return failedPreflightCheck("input_file", true, fmt.Sprintf("input file is not readable: %v", err))

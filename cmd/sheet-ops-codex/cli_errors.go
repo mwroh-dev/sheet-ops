@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"os"
 	"strings"
 )
 
@@ -42,9 +43,14 @@ type cliError struct {
 	ExitCode          int      `json:"exit_code"`
 }
 
-func (err cliError) Error() string {
+func (err *cliError) Error() string {
+	if err == nil {
+		return ""
+	}
 	return err.Message
 }
+
+var _ error = (*cliError)(nil)
 
 type cliErrorEnvelope struct {
 	SchemaVersion string   `json:"schema_version"`
@@ -111,6 +117,17 @@ func classifyCLIError(err error) cliError {
 	var typed *cliError
 	if errors.As(err, &typed) {
 		return *typed
+	}
+
+	if os.IsNotExist(err) {
+		return *newCLIError(
+			cliErrorInvalidUsage,
+			strings.TrimSpace(err.Error()),
+			true,
+			cliExitUsage,
+			"preflight --json --input-file <workbook>",
+			"schema --json",
+		)
 	}
 
 	message := strings.TrimSpace(err.Error())

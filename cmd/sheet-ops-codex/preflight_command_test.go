@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -81,6 +82,36 @@ func TestPreflightJSONReportsRecoverableStateRootMismatch(t *testing.T) {
 	}
 	if !check.Recoverable {
 		t.Fatalf("state_root recoverable = false, want true")
+	}
+}
+
+func TestPreflightInputFileRejectsDirectory(t *testing.T) {
+	projectDir := t.TempDir()
+	inputDir := filepath.Join(projectDir, "input-as-directory.xlsx")
+	if err := os.MkdirAll(inputDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll(%s): %v", inputDir, err)
+	}
+
+	var doc preflightDocumentView
+	executeCLIJSON(t, &doc,
+		"preflight",
+		"--json",
+		"--project", projectDir,
+		"--input-file", inputDir,
+	)
+
+	if doc.OK {
+		t.Fatalf("ok = true, want false for directory input file: %+v", doc.Checks)
+	}
+	check := findPreflightCheck(t, doc.Checks, "input_file")
+	if check.Status != preflightStatusFail {
+		t.Fatalf("input_file status = %q, want %q", check.Status, preflightStatusFail)
+	}
+	if !check.Recoverable {
+		t.Fatalf("input_file recoverable = false, want true")
+	}
+	if !strings.Contains(check.Message, "directory") {
+		t.Fatalf("input_file message = %q, want directory", check.Message)
 	}
 }
 

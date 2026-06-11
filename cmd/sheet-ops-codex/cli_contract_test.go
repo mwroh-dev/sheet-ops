@@ -133,6 +133,20 @@ func TestCLIHelpAlignsCommandDescriptions(t *testing.T) {
 	}
 }
 
+func TestRenderContractSectionRejectsMissingContract(t *testing.T) {
+	var stdout bytes.Buffer
+	err := renderContractSection(&stdout, "Agent-contract surface:", map[string]cliCommandContract{}, []string{"preview-request"}, len("preview-request"))
+	if err == nil {
+		t.Fatalf("renderContractSection returned nil, want missing contract error")
+	}
+	if !strings.Contains(err.Error(), "preview-request") {
+		t.Fatalf("error = %q, want missing command name", err.Error())
+	}
+	if strings.Contains(stdout.String(), "  ") {
+		t.Fatalf("stdout contains command row for missing contract:\n%s", stdout.String())
+	}
+}
+
 func assertCLIContractClassification(t *testing.T, contracts map[string]cliCommandContract, name, want string) {
 	t.Helper()
 
