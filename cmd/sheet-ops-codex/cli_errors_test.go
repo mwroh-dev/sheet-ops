@@ -246,6 +246,43 @@ func TestWriteCLIErrorJSONAndReturnNilErrorReturnsNil(t *testing.T) {
 	}
 }
 
+func TestHandleCLIErrorSuppressesStderrForEmittedJSONError(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	err := newCLIError(cliErrorUnknownCommand, "unknown command", true, cliExitUsage, "schema --json")
+
+	returnedErr := writeCLIErrorJSONAndReturn(&stdout, err)
+	if returnedErr == nil {
+		t.Fatalf("writeCLIErrorJSONAndReturn returned nil, want cli error")
+	}
+
+	exitCode := handleCLIError(&stderr, returnedErr)
+
+	if exitCode != cliExitUsage {
+		t.Fatalf("exit code = %d, want %d", exitCode, cliExitUsage)
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty for already-emitted JSON error", stderr.String())
+	}
+	if strings.Contains(stdout.String(), "JSONEmitted") || strings.Contains(stdout.String(), "json_emitted") {
+		t.Fatalf("stdout leaked internal JSONEmitted marker:\n%s", stdout.String())
+	}
+}
+
+func TestHandleCLIErrorWritesStderrForNonJSONError(t *testing.T) {
+	var stderr bytes.Buffer
+	err := newCLIError(cliErrorInvalidUsage, "capabilities requires --json", true, cliExitUsage, "capabilities --json")
+
+	exitCode := handleCLIError(&stderr, err)
+
+	if exitCode != cliExitUsage {
+		t.Fatalf("exit code = %d, want %d", exitCode, cliExitUsage)
+	}
+	if !strings.Contains(stderr.String(), "capabilities requires --json") {
+		t.Fatalf("stderr = %q, want error message", stderr.String())
+	}
+}
+
 func executeCLIExpectError(t *testing.T, args ...string) (string, string, error) {
 	t.Helper()
 

@@ -41,6 +41,7 @@ type cliError struct {
 	Recoverable       bool     `json:"recoverable"`
 	SuggestedCommands []string `json:"suggested_commands"`
 	ExitCode          int      `json:"exit_code"`
+	JSONEmitted       bool     `json:"-"`
 }
 
 func (err *cliError) Error() string {
@@ -178,6 +179,7 @@ func writeCLIErrorJSONAndReturn(output io.Writer, err *cliError) error {
 	if writeErr := writeCLIErrorJSON(output, err); writeErr != nil {
 		return writeErr
 	}
+	err.JSONEmitted = true
 	return err
 }
 

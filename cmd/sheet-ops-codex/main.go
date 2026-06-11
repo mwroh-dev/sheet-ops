@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -22,10 +23,16 @@ var orchestrateValidated = useorchestrator.OrchestrateValidated
 
 func main() {
 	if err := newRootCommand().Execute(); err != nil {
-		cliErr := classifyCLIError(err)
-		fmt.Fprintln(os.Stderr, cliErr.Message)
-		os.Exit(cliErr.ExitCode)
+		os.Exit(handleCLIError(os.Stderr, err))
 	}
+}
+
+func handleCLIError(stderr io.Writer, err error) int {
+	cliErr := classifyCLIError(err)
+	if !cliErr.JSONEmitted {
+		fmt.Fprintln(stderr, cliErr.Message)
+	}
+	return cliErr.ExitCode
 }
 
 func newRootCommand() *cobra.Command {
