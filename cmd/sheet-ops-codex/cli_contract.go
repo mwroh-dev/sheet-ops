@@ -820,6 +820,15 @@ func writeContractJSON(output io.Writer, value any) error {
 
 func renderRootHelp(output io.Writer, rootCmd *cobra.Command, contracts map[string]cliCommandContract) error {
 	rootContract := contracts[rootCmd.Name()]
+	sections := []cliContractSection{
+		{title: "Install surface:", names: []string{"install-skill"}},
+		{title: "Agent-contract surface:", names: []string{"preflight", "preview-request", "prepare-use"}},
+		{title: "Internal handoff surface:", names: []string{"run-validated"}},
+		{title: "Maintainer diagnostic surface:", names: []string{"run-intent"}},
+		{title: "CLI support surface:", names: []string{"help", "completion"}},
+	}
+	nameWidth := maxContractSectionNameWidth(contracts, sections)
+
 	if _, err := fmt.Fprintln(output, rootContract.ShortDescription); err != nil {
 		return err
 	}
@@ -839,20 +848,10 @@ func renderRootHelp(output io.Writer, rootCmd *cobra.Command, contracts map[stri
 		return err
 	}
 
-	if err := renderContractSection(output, "Install surface:", contracts, []string{"install-skill"}); err != nil {
-		return err
-	}
-	if err := renderContractSection(output, "Agent-contract surface:", contracts, []string{"preflight", "preview-request", "prepare-use"}); err != nil {
-		return err
-	}
-	if err := renderContractSection(output, "Internal handoff surface:", contracts, []string{"run-validated"}); err != nil {
-		return err
-	}
-	if err := renderContractSection(output, "Maintainer diagnostic surface:", contracts, []string{"run-intent"}); err != nil {
-		return err
-	}
-	if err := renderContractSection(output, "CLI support surface:", contracts, []string{"help", "completion"}); err != nil {
-		return err
+	for _, section := range sections {
+		if err := renderContractSection(output, section.title, contracts, section.names, nameWidth); err != nil {
+			return err
+		}
 	}
 
 	rootCmd.Flags().SetOutput(output)
@@ -867,13 +866,30 @@ func renderRootHelp(output io.Writer, rootCmd *cobra.Command, contracts map[stri
 	return err
 }
 
-func renderContractSection(output io.Writer, title string, contracts map[string]cliCommandContract, names []string) error {
+type cliContractSection struct {
+	title string
+	names []string
+}
+
+func maxContractSectionNameWidth(contracts map[string]cliCommandContract, sections []cliContractSection) int {
+	width := 0
+	for _, section := range sections {
+		for _, name := range section.names {
+			if contract, ok := contracts[name]; ok && len(contract.Name) > width {
+				width = len(contract.Name)
+			}
+		}
+	}
+	return width
+}
+
+func renderContractSection(output io.Writer, title string, contracts map[string]cliCommandContract, names []string, nameWidth int) error {
 	if _, err := fmt.Fprintln(output, title); err != nil {
 		return err
 	}
 	for _, name := range names {
 		contract := contracts[name]
-		if _, err := fmt.Fprintf(output, "  %-14s %s\n", contract.Name, contract.ShortDescription); err != nil {
+		if _, err := fmt.Fprintf(output, "  %-*s %s\n", nameWidth, contract.Name, contract.ShortDescription); err != nil {
 			return err
 		}
 	}

@@ -93,6 +93,46 @@ func TestCLIHelpSeparatesCommandSurfaces(t *testing.T) {
 	}
 }
 
+func TestCLIHelpAlignsCommandDescriptions(t *testing.T) {
+	root := newRootCommand()
+	var stdout bytes.Buffer
+	root.SetOut(&stdout)
+	root.SetErr(&stdout)
+	root.SetArgs([]string{"--help"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("Execute(--help): %v", err)
+	}
+
+	contracts := sheetOpsCLIAllContracts(root.Name())
+	descriptionColumn := -1
+	for _, line := range strings.Split(stdout.String(), "\n") {
+		if !strings.HasPrefix(line, "  ") {
+			continue
+		}
+		fields := strings.Fields(line)
+		if len(fields) == 0 {
+			continue
+		}
+		contract, ok := contracts[fields[0]]
+		if !ok || contract.Hidden || contract.Name == root.Name() {
+			continue
+		}
+
+		column := strings.Index(line, contract.ShortDescription)
+		if column < 0 {
+			t.Fatalf("help line for %q is missing description %q:\n%s", contract.Name, contract.ShortDescription, line)
+		}
+		if descriptionColumn == -1 {
+			descriptionColumn = column
+			continue
+		}
+		if column != descriptionColumn {
+			t.Fatalf("description column for %q = %d, want %d:\n%s", contract.Name, column, descriptionColumn, stdout.String())
+		}
+	}
+}
+
 func assertCLIContractClassification(t *testing.T, contracts map[string]cliCommandContract, name, want string) {
 	t.Helper()
 
