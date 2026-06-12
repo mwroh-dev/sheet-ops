@@ -13,7 +13,7 @@ Use these read-only contract surfaces for agent/CI discovery:
 - `sheet-ops-codex operation example <operation> --json`
 - `sheet-ops-codex schema command preflight --json`
 - `sheet-ops-codex preflight --json`
-- `sheet-ops-codex preview-request --json --intent-file <path-or-> --input-file <path> --output-file <path>`
+- `sheet-ops-codex preview-request --json --intent-file <path-or-stdin> --input-file <path> --output-file <path>`
 - `sheet-ops-codex evidence-summary --json --evidence-dir <path>`
 
 `sheet-ops-codex run-validated` is an internal handoff surface. It is owned by

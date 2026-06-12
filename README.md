@@ -169,7 +169,7 @@ Agent and CI discovery should use:
 - `sheet-ops-codex operation example <operation> --json`
 - `sheet-ops-codex schema command preflight --json`
 - `sheet-ops-codex preflight --json`
-- `sheet-ops-codex preview-request --json --intent-file <path-or-> --input-file <path> --output-file <path>`
+- `sheet-ops-codex preview-request --json --intent-file <path-or-stdin> --input-file <path> --output-file <path>`
 - `sheet-ops-codex evidence-summary --json --evidence-dir <path>`
 
 The CLI contract is machine-readable and intended for agent orchestration:

@@ -81,7 +81,7 @@ func newOperationCommand() *cobra.Command {
 			}
 			registry, err := loadOperationRegistry()
 			if err != nil {
-				return err
+				return writeOperationRegistryLoadError(cmd.OutOrStdout(), err)
 			}
 			return writeOperationJSON(cmd.OutOrStdout(), buildOperationListPayload(registry))
 		},
@@ -99,7 +99,7 @@ func newOperationCommand() *cobra.Command {
 			}
 			registry, err := loadOperationRegistry()
 			if err != nil {
-				return err
+				return writeOperationRegistryLoadError(cmd.OutOrStdout(), err)
 			}
 			capability, cliErr := publicCapabilityByName(registry, args[0])
 			if cliErr != nil {
@@ -126,7 +126,7 @@ func newOperationCommand() *cobra.Command {
 			}
 			registry, err := loadOperationRegistry()
 			if err != nil {
-				return err
+				return writeOperationRegistryLoadError(cmd.OutOrStdout(), err)
 			}
 			capability, cliErr := publicCapabilityByName(registry, args[0])
 			if cliErr != nil {
@@ -150,6 +150,11 @@ func newOperationCommand() *cobra.Command {
 		},
 	})
 	return cmd
+}
+
+func writeOperationRegistryLoadError(output io.Writer, err error) error {
+	classified := classifyCLIError(err)
+	return writeCLIErrorJSONAndReturn(output, &classified)
 }
 
 func loadOperationRegistry() (runtimecapabilities.Registry, error) {

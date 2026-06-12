@@ -102,7 +102,7 @@ func buildAgentGuidePayload(rootName string) agentGuidePayload {
 				Lane: "read_only",
 				Goal: "Inspect normalized-intent impact without calling runtime execution.",
 				Commands: []string{
-					rootName + " preview-request --json --intent-file <path-or-> --input-file <workbook> --output-file <workbook>",
+					rootName + " preview-request --json --intent-file <path-or-stdin> --input-file <workbook> --output-file <workbook>",
 				},
 				ExpectedEvidence: []string{
 					"dry_run false",
@@ -120,7 +120,7 @@ func buildAgentGuidePayload(rootName string) agentGuidePayload {
 				Goal: "Let the installed sheet-ops skill handoff own workbook mutation.",
 				Commands: []string{
 					"sheet-ops skill request",
-					rootName + " run-intent --intent-file <path-or-> --input-file <workbook> --output-file <workbook>",
+					rootName + " run-intent --intent-file <path-or-stdin> --input-file <workbook> --output-file <workbook>",
 				},
 				ExpectedEvidence: []string{
 					"public entry result or internal handoff envelope on stdout",

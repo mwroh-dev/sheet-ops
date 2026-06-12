@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 
 	runtimeschema "github.com/mwroh/sheet-ops/runtime/schema"
@@ -119,6 +121,49 @@ func TestOperationListUsesPackageRootWhenWorkingDirectoryIsProject(t *testing.T)
 	}
 	if len(doc.Operations) == 0 {
 		t.Fatalf("operations is empty")
+	}
+}
+
+func TestOperationCommandsSerializeRegistryLoadErrorsAsJSON(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		args []string
+	}{
+		{name: "list", args: []string{"operation", "list", "--json"}},
+		{name: "schema", args: []string{"operation", "schema", "append_structured_rows", "--json"}},
+		{name: "example", args: []string{"operation", "example", "append_structured_rows", "--json"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("SHEET_OPS_PACKAGE_ROOT", t.TempDir())
+
+			root := newRootCommand()
+			var stdout bytes.Buffer
+			var stderr bytes.Buffer
+			root.SetOut(&stdout)
+			root.SetErr(&stderr)
+			root.SetArgs(tc.args)
+
+			err := root.Execute()
+			if err == nil {
+				t.Fatalf("Execute(%v) returned nil, want registry load error", tc.args)
+			}
+			if stderr.Len() != 0 {
+				t.Fatalf("stderr = %q, want empty", stderr.String())
+			}
+			var envelope cliErrorEnvelope
+			if decodeErr := json.Unmarshal(stdout.Bytes(), &envelope); decodeErr != nil {
+				t.Fatalf("json.Unmarshal error envelope: %v\nstdout:\n%s", decodeErr, stdout.String())
+			}
+			if envelope.OK {
+				t.Fatalf("envelope.ok = true, want false")
+			}
+			if envelope.Error.Code != cliErrorInternal {
+				t.Fatalf("error.code = %q, want %q", envelope.Error.Code, cliErrorInternal)
+			}
+			if !strings.Contains(envelope.Error.Message, "SHEET_OPS_PACKAGE_ROOT") {
+				t.Fatalf("error.message = %q, want SHEET_OPS_PACKAGE_ROOT context", envelope.Error.Message)
+			}
+		})
 	}
 }
 

@@ -67,7 +67,7 @@ func TestAgentGuideJSONReportsOrderedAgentWorkflow(t *testing.T) {
 	if !slices.Contains(doc.Phases[0].Commands, "sheet-ops-codex capabilities --json") {
 		t.Fatalf("discover commands missing capabilities: %+v", doc.Phases[0].Commands)
 	}
-	if !slices.Contains(doc.Phases[2].Commands, "sheet-ops-codex preview-request --json --intent-file <path-or-> --input-file <workbook> --output-file <workbook>") {
+	if !slices.Contains(doc.Phases[2].Commands, "sheet-ops-codex preview-request --json --intent-file <path-or-stdin> --input-file <workbook> --output-file <workbook>") {
 		t.Fatalf("inspect_impact commands missing preview-request shape: %+v", doc.Phases[2].Commands)
 	}
 	if doc.BacklogPolicy == "" {
