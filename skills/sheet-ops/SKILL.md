@@ -161,7 +161,8 @@ not a second human-facing workbook entry.
 
 For agent/CI discovery, start with `sheet-ops-codex agent-guide --json` and
 follow its command order. Use `--intent-file -` only for generated normalized
-intent JSON passed through stdin.
+intent JSON passed through stdin. Read
+`references/cli-agent-contract.md` when operating CLI contract surfaces.
 
 `preview-request` is impact inspection only, not runtime dry-run evidence.
 After mutation, report success only after `evidence-summary --json` returns
