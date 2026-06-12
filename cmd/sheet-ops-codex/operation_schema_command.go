@@ -293,8 +293,6 @@ func normalizedIntentExample(operation string) (map[string]any, bool) {
 			"include_source_columns": []any{"Customer ID", "Amount"},
 			"append_lookup_columns":  []any{"Segment"},
 		}
-	default:
-		return base, true
 	}
 	return base, true
 }

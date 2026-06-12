@@ -87,6 +87,16 @@ func TestPreviewRequestReadsNormalizedIntentFromStdin(t *testing.T) {
 	}
 }
 
+func TestLoadPreviewIntentSourceRejectsEmptyPath(t *testing.T) {
+	_, err := loadPreviewIntentSource("   ", strings.NewReader(`{}`))
+	if err == nil {
+		t.Fatalf("loadPreviewIntentSource returned nil, want empty path error")
+	}
+	if !strings.Contains(err.Error(), "intent-file path cannot be empty") {
+		t.Fatalf("error = %q, want explicit empty path message", err.Error())
+	}
+}
+
 func TestPreviewRequestReportsImpactWithoutMutating(t *testing.T) {
 	projectDir := t.TempDir()
 	inputFile := filepath.Join(projectDir, "line-items.xlsx")

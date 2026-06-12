@@ -266,7 +266,11 @@ func loadPreviewNormalizedIntent(path string) (requestcompiler.NormalizedIntent,
 }
 
 func loadPreviewIntentSource(path string, stdin io.Reader) (previewIntentSource, error) {
-	if strings.TrimSpace(path) == "-" {
+	trimmedPath := strings.TrimSpace(path)
+	if trimmedPath == "" {
+		return previewIntentSource{}, fmt.Errorf("intent-file path cannot be empty")
+	}
+	if trimmedPath == "-" {
 		if stdin == nil {
 			stdin = os.Stdin
 		}
@@ -285,7 +289,7 @@ func loadPreviewIntentSource(path string, stdin io.Reader) (previewIntentSource,
 			DisplayPath: "stdin",
 		}, nil
 	}
-	absPath, err := filepath.Abs(path)
+	absPath, err := filepath.Abs(trimmedPath)
 	if err != nil {
 		return previewIntentSource{}, err
 	}

@@ -57,6 +57,25 @@ func TestEvidenceSummaryReportsVerifiedSuccess(t *testing.T) {
 	}
 }
 
+func TestEvidenceSummaryAcceptsUppercaseSHA256(t *testing.T) {
+	evidenceDir := t.TempDir()
+	writeJSONFile(t, filepath.Join(evidenceDir, "verification.json"), map[string]any{
+		"pass":                   true,
+		"output_workbook_sha256": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+	})
+	writeJSONFile(t, filepath.Join(evidenceDir, "execution.json"), map[string]any{
+		"operation": "append_structured_rows",
+	})
+
+	var doc evidenceSummaryDocument
+	executeCLIJSON(t, &doc, "evidence-summary", "--json", "--evidence-dir", evidenceDir)
+
+	if doc.Status != "verified_success" {
+		t.Fatalf("status = %q, want verified_success", doc.Status)
+	}
+	assertEvidenceCheck(t, doc.Checks, "output_workbook_sha256", "present")
+}
+
 func TestEvidenceSummaryReportsFailedVerification(t *testing.T) {
 	evidenceDir := t.TempDir()
 	writeJSONFile(t, filepath.Join(evidenceDir, "verification.json"), map[string]any{
