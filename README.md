@@ -162,17 +162,26 @@ not a second human-facing workbook entry.
 
 Agent and CI discovery should use:
 
+- `sheet-ops-codex agent-guide --json`
 - `sheet-ops-codex capabilities --json`
+- `sheet-ops-codex operation list --json`
+- `sheet-ops-codex operation schema <operation> --json`
+- `sheet-ops-codex operation example <operation> --json`
 - `sheet-ops-codex schema command preflight --json`
 - `sheet-ops-codex preflight --json`
-- `sheet-ops-codex preview-request --json --intent-file <path> --input-file <path> --output-file <path>`
+- `sheet-ops-codex preview-request --json --intent-file <path-or-> --input-file <path> --output-file <path>`
+- `sheet-ops-codex evidence-summary --json --evidence-dir <path>`
 
 The CLI contract is machine-readable and intended for agent orchestration:
-capabilities and schema commands expose stable command metadata, preflight
-reports read-only readiness checks, preview-request reports planned impact
-without creating workbooks or state artifacts, and emitted JSON failure
+agent-guide reports the recommended phase order, capabilities and schema
+commands expose stable command metadata, operation commands expose public
+workbook operation contracts and normalized-intent examples, preflight reports
+read-only readiness checks, preview-request reports planned impact without
+creating workbooks or state artifacts, and evidence-summary checks runtime
+verification artifacts before an agent claims success. Emitted JSON failure
 envelopes keep stderr quiet so agents can treat stdout as the authoritative
-contract channel.
+contract channel. Large or generated normalized intents may be passed through
+stdin with `--intent-file -` for `preview-request` and `run-intent`.
 
 `sheet-ops-codex run-validated` is an internal handoff surface. It is owned by
 the installed skill handoff and must not be presented as the normal public
@@ -181,6 +190,11 @@ request route. Mutating workbook commands currently report
 `planner:"requestcompiler_validate_intent"` and
 `plan_confidence:"compiler_validated_boundary"`, not dry-run evidence. Do not
 claim dry-run behavior until a truthful runtime planning mode exists.
+
+After execution, do not report workbook success from stdout alone. Use
+`sheet-ops-codex evidence-summary --json --evidence-dir <dir>` and require a
+passing `verification.json` plus `output_workbook_sha256`; failed or incomplete
+evidence must route to repair advice or human review.
 
 The installed CLI has been exercised from a throwaway project-local
 `.codex/skills/sheet-ops` install with red-input coverage for discovery,
