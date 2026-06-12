@@ -143,9 +143,9 @@ func TestCLIAgentContractDocsStayAligned(t *testing.T) {
 	for _, rel := range []string{
 		"README.md",
 		"docs/public/install.md",
-		"skills/sheet-ops/SKILL.md",
 		"cmd/sheet-ops-codex/skill_assets/SKILL.md",
 		"skills/sheet-ops/references/capabilities.md",
+		"skills/sheet-ops/references/cli-agent-contract.md",
 		"cmd/sheet-ops-codex/skill_assets/references/capabilities.md",
 		"cmd/sheet-ops-codex/skill_assets/references/usage.md",
 	} {
@@ -158,8 +158,20 @@ func TestCLIAgentContractDocsStayAligned(t *testing.T) {
 			}
 		})
 	}
+	t.Run("skills/sheet-ops/SKILL.md references cli contract", func(t *testing.T) {
+		skillText := readText(t, filepath.Join(root, "skills", "sheet-ops", "SKILL.md"))
+		if !strings.Contains(skillText, "`references/cli-agent-contract.md`") {
+			t.Fatalf("skills/sheet-ops/SKILL.md missing cli contract reference")
+		}
+		text := skillText + "\n" + readText(t, filepath.Join(root, "skills", "sheet-ops", "references", "cli-agent-contract.md"))
+		for _, needle := range requiredNeedles {
+			if !strings.Contains(text, needle) {
+				t.Fatalf("skills/sheet-ops/SKILL.md plus cli-agent-contract.md missing %q", needle)
+			}
+		}
+	})
 	for _, rel := range []string{
-		"skills/sheet-ops/SKILL.md",
+		"skills/sheet-ops/references/cli-agent-contract.md",
 		"cmd/sheet-ops-codex/skill_assets/SKILL.md",
 		"cmd/sheet-ops-codex/skill_assets/references/usage.md",
 	} {

@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"os"
@@ -77,6 +79,50 @@ func TestRunIntentCommandWritesPublicEnvelopeThenReturnsFailure(t *testing.T) {
 	assertPublicResultArtifact(t, result.Artifacts, "output_workbook", false, "failure_evidence")
 	if err := runtimeschema.ValidateStruct(publicEntryResultSchemaPath(), result); err != nil {
 		t.Fatalf("public entry result schema rejected command stdout envelope: %v", err)
+	}
+}
+
+func TestRunIntentCommandReadsNormalizedIntentFromStdin(t *testing.T) {
+	resetRunIntentTestEnv(t)
+	tempDir, intentFile, inputFile, outputFile, _ := writeRunIntentTestInputs(t)
+	stubRuntimeStartedFailure(t, tempDir, outputFile)
+	intentRaw, err := os.ReadFile(intentFile)
+	if err != nil {
+		t.Fatalf("ReadFile(intent): %v", err)
+	}
+
+	cmd := newRootCommand()
+	var stdout bytes.Buffer
+	cmd.SetOut(&stdout)
+	cmd.SetIn(bytes.NewReader(intentRaw))
+	cmd.SetArgs([]string{
+		"run-intent",
+		"--intent-file", "-",
+		"--input-file", inputFile,
+		"--output-file", outputFile,
+		"--scenario-id", "stdin-append-rows-failure",
+	})
+
+	err = cmd.Execute()
+	if err == nil {
+		t.Fatalf("run-intent command returned nil error, want orchestration failure")
+	}
+	var result PublicEntryResult
+	if decodeErr := json.Unmarshal(stdout.Bytes(), &result); decodeErr != nil {
+		t.Fatalf("run-intent stdout is not a public entry result JSON document: %v\nstdout:\n%s", decodeErr, stdout.String())
+	}
+	if result.Fingerprints == nil {
+		t.Fatalf("fingerprints is nil")
+	}
+	wantIntentSHA := sha256.Sum256(intentRaw)
+	if result.Fingerprints.NormalizedIntentSHA256 != hex.EncodeToString(wantIntentSHA[:]) {
+		t.Fatalf("normalized_intent_sha256 = %q, want stdin bytes hash", result.Fingerprints.NormalizedIntentSHA256)
+	}
+	if result.Fingerprints.OutputWorkbookSHA256 == "" {
+		t.Fatalf("output_workbook_sha256 is empty")
+	}
+	if err := runtimeschema.ValidateStruct(publicEntryResultSchemaPath(), result); err != nil {
+		t.Fatalf("public entry result schema rejected stdin command stdout envelope: %v", err)
 	}
 }
 

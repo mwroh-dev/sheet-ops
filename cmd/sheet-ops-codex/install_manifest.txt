@@ -25,8 +25,11 @@ knowledge/verification/episodic/.gitkeep
 knowledge/verification/semantic/.gitkeep
 cmd/sheet-ops-agent
 cmd/sheet-ops-codex/main.go
+cmd/sheet-ops-codex/agent_guide_command.go
 cmd/sheet-ops-codex/cli_contract.go
 cmd/sheet-ops-codex/cli_errors.go
+cmd/sheet-ops-codex/evidence_summary_command.go
+cmd/sheet-ops-codex/operation_schema_command.go
 cmd/sheet-ops-codex/prepare_use_command.go
 cmd/sheet-ops-codex/preflight_command.go
 cmd/sheet-ops-codex/preview_request_command.go

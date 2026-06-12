@@ -33,6 +33,44 @@ func TestResolvePackageRootPrefersExplicitInstalledPackageRootSignal(t *testing.
 	}
 }
 
+func TestResolvePackageRootIgnoresBlankPackageRootEnv(t *testing.T) {
+	workspaceDir := t.TempDir()
+	installedRoot := filepath.Join(workspaceDir, ".codex", "skills", "sheet-ops")
+	mustWriteRequestCompilerFixture(t, installedRoot)
+	t.Setenv("SHEET_OPS_PACKAGE_ROOT", "   ")
+
+	callerFile := filepath.Join(t.TempDir(), "runtime", "openlayer", "requestcompiler", "interpreter.go")
+	got := resolvePackageRoot(workspaceDir, callerFile)
+	if got != installedRoot {
+		t.Fatalf("resolvePackageRoot()=%q want installed root %q", got, installedRoot)
+	}
+}
+
+func TestResolvePackageRootAbsolutizesRelativePackageRootEnv(t *testing.T) {
+	workingDir := t.TempDir()
+	installedRoot := filepath.Join(workingDir, "sheet-ops")
+	mustWriteRequestCompilerFixture(t, installedRoot)
+	oldWorkingDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Getwd: %v", err)
+	}
+	if err := os.Chdir(workingDir); err != nil {
+		t.Fatalf("Chdir: %v", err)
+	}
+	defer func() {
+		if err := os.Chdir(oldWorkingDir); err != nil {
+			t.Fatalf("restore working dir: %v", err)
+		}
+	}()
+	t.Setenv("SHEET_OPS_PACKAGE_ROOT", "sheet-ops")
+
+	callerFile := filepath.Join(t.TempDir(), "runtime", "openlayer", "requestcompiler", "interpreter.go")
+	got := resolvePackageRoot(t.TempDir(), callerFile)
+	if canonicalPath(t, got) != canonicalPath(t, installedRoot) {
+		t.Fatalf("resolvePackageRoot()=%q want %q", got, installedRoot)
+	}
+}
+
 func TestResolvePackageRootFallsBackToCallerDerivedSourceRoot(t *testing.T) {
 	sourceRoot := t.TempDir()
 	mustWriteRequestCompilerFixture(t, sourceRoot)
@@ -42,6 +80,16 @@ func TestResolvePackageRootFallsBackToCallerDerivedSourceRoot(t *testing.T) {
 	if got != sourceRoot {
 		t.Fatalf("resolvePackageRoot()=%q want %q", got, sourceRoot)
 	}
+}
+
+func canonicalPath(t *testing.T, path string) string {
+	t.Helper()
+
+	canonical, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		t.Fatalf("EvalSymlinks(%s): %v", path, err)
+	}
+	return canonical
 }
 
 func TestResolvePackageRootAcceptsPackageRootWorkingDirectory(t *testing.T) {

@@ -334,6 +334,42 @@ func sheetOpsCLIContracts(rootName string) map[string]cliCommandContract {
 
 func sheetOpsCLIReadOnlyDiscoveryContracts(rootName string) map[string]cliCommandContract {
 	return map[string]cliCommandContract{
+		"agent-guide": {
+			Name:             "agent-guide",
+			Classification:   cliClassificationAgentContract,
+			IntendedCaller:   "Automation, CI, or another agent choosing the safe Sheet Ops CLI workflow before workbook mutation.",
+			ShortDescription: "Emit the recommended agent workflow for Sheet Ops CLI use",
+			Usage:            rootName + " agent-guide --json",
+			Options: []string{
+				"--json: Emit machine-readable JSON on stdout.",
+			},
+			OutputMode: "Machine-readable JSON on stdout.",
+			SideEffects: []string{
+				"None.",
+			},
+			ReadArtifacts: []string{
+				"Embedded Sheet Ops agent workflow guidance.",
+				"Registered root command name.",
+			},
+			WrittenArtifacts: []string{
+				"None.",
+			},
+			StateBehavior: "Read-only. Does not inspect workbooks, invoke runtime paths, or touch .sheet-ops-state.",
+			SafetyNotes: []string{
+				"Guide surface only. It does not prove readiness, preview impact, execution, or verification by itself.",
+				"Keep `sheet-ops` as the single human-facing workbook request entry.",
+			},
+			RelatedCommands: []string{
+				"capabilities",
+				"schema",
+				"preflight",
+				"preview-request",
+				"run-intent",
+			},
+			Mutating:      false,
+			ReadOnly:      true,
+			DryRunCapable: false,
+		},
 		"capabilities": {
 			Name:             "capabilities",
 			Classification:   cliClassificationAgentContract,
@@ -366,6 +402,81 @@ func sheetOpsCLIReadOnlyDiscoveryContracts(rootName string) map[string]cliComman
 			},
 			Mutating: false,
 			ReadOnly: true,
+		},
+		"operation": {
+			Name:             "operation",
+			Classification:   cliClassificationAgentContract,
+			IntendedCaller:   "Automation, CI, or another agent inspecting supported workbook operation contracts before constructing normalized intent.",
+			ShortDescription: "Inspect supported workbook operation schemas and examples",
+			Usage:            rootName + " operation <list|schema|example> --json",
+			Options: []string{
+				"--json: Emit machine-readable JSON on stdout.",
+				"list: List supported public workbook operations.",
+				"schema <name>: Show one operation contract with inputs, outputs, verification signals, and authority paths.",
+				"example <name>: Show one normalized-intent example for an operation.",
+			},
+			OutputMode: "Machine-readable JSON on stdout.",
+			SideEffects: []string{
+				"None.",
+			},
+			ReadArtifacts: []string{
+				"contracts/capabilities/records/*.yaml.",
+				"contracts/capabilities/capability.schema.json.",
+				"agents/request-compiler/contract/normalized_intent.schema.json for example shape compatibility.",
+			},
+			WrittenArtifacts: []string{
+				"None.",
+			},
+			StateBehavior: "Read-only. Does not inspect workbooks, compile intents, invoke runtime paths, or touch .sheet-ops-state.",
+			SafetyNotes: []string{
+				"Operation schemas describe supported public capability boundaries, not proof that a specific workbook request will compile.",
+				"Use preview-request against a concrete input workbook before mutating.",
+			},
+			RelatedCommands: []string{
+				"agent-guide",
+				"capabilities",
+				"schema",
+				"preview-request",
+			},
+			Mutating:      false,
+			ReadOnly:      true,
+			DryRunCapable: false,
+		},
+		"evidence-summary": {
+			Name:             "evidence-summary",
+			Classification:   cliClassificationAgentContract,
+			IntendedCaller:   "Automation, CI, or another agent checking runtime evidence before reporting workbook success.",
+			ShortDescription: "Summarize runtime evidence for agent success checks",
+			Usage:            rootName + " evidence-summary --json --evidence-dir <dir>",
+			Options: []string{
+				"--json: Emit machine-readable JSON on stdout.",
+				"--evidence-dir: Runtime evidence directory containing verification.json, execution.json, and optional failure.json.",
+			},
+			OutputMode: "Machine-readable JSON on stdout.",
+			SideEffects: []string{
+				"None.",
+			},
+			ReadArtifacts: []string{
+				"<evidence-dir>/verification.json.",
+				"<evidence-dir>/execution.json when present.",
+				"<evidence-dir>/failure.json when present.",
+			},
+			WrittenArtifacts: []string{
+				"None.",
+			},
+			StateBehavior: "Read-only. Reads existing runtime evidence files and never creates workbooks or state artifacts.",
+			SafetyNotes: []string{
+				"Success may be reported only when verification passes and output_workbook_sha256 is present.",
+				"Failure or incomplete evidence should be routed to repair advice or human review.",
+			},
+			RelatedCommands: []string{
+				"agent-guide",
+				"preview-request",
+				"run-intent",
+			},
+			Mutating:      false,
+			ReadOnly:      true,
+			DryRunCapable: false,
 		},
 		"schema": {
 			Name:             "schema",
@@ -825,7 +936,7 @@ func renderRootHelp(output io.Writer, rootCmd *cobra.Command, contracts map[stri
 	}
 	sections := []cliContractSection{
 		{title: "Install surface:", names: []string{"install-skill"}},
-		{title: "Agent-contract surface:", names: []string{"preflight", "preview-request", "prepare-use"}},
+		{title: "Agent-contract surface:", names: []string{"agent-guide", "operation", "preflight", "preview-request", "prepare-use", "evidence-summary"}},
 		{title: "Internal handoff surface:", names: []string{"run-validated"}},
 		{title: "Maintainer diagnostic surface:", names: []string{"run-intent"}},
 		{title: "CLI support surface:", names: []string{"help", "completion"}},

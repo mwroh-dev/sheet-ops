@@ -3,6 +3,7 @@ package requestcompiler
 import (
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 const packageRootEnv = "SHEET_OPS_PACKAGE_ROOT"
@@ -25,8 +26,10 @@ func resolvePackageRoot(workingDir, callerFile string) string {
 
 func packageRootCandidates(workingDir, callerFile string) []string {
 	candidates := make([]string, 0, 5)
-	if explicit := filepath.Clean(os.Getenv(packageRootEnv)); explicit != "." && explicit != "" {
-		candidates = append(candidates, explicit)
+	if explicit := strings.TrimSpace(os.Getenv(packageRootEnv)); explicit != "" {
+		if absExplicit, err := filepath.Abs(explicit); err == nil {
+			candidates = append(candidates, absExplicit)
+		}
 	}
 	if callerFile != "" {
 		candidates = append(candidates, filepath.Clean(filepath.Join(filepath.Dir(callerFile), "..", "..", "..")))
