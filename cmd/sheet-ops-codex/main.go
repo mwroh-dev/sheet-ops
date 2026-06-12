@@ -47,6 +47,7 @@ func newRootCommand() *cobra.Command {
 		SilenceErrors: true,
 	}
 	rootCmd.AddCommand(newPrepareUseCommand())
+	rootCmd.AddCommand(newAgentGuideCommand())
 	rootCmd.AddCommand(newCapabilitiesCommand())
 	rootCmd.AddCommand(newSchemaCommand())
 	rootCmd.AddCommand(newPreflightCommand())

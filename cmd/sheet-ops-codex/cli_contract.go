@@ -334,6 +334,42 @@ func sheetOpsCLIContracts(rootName string) map[string]cliCommandContract {
 
 func sheetOpsCLIReadOnlyDiscoveryContracts(rootName string) map[string]cliCommandContract {
 	return map[string]cliCommandContract{
+		"agent-guide": {
+			Name:             "agent-guide",
+			Classification:   cliClassificationAgentContract,
+			IntendedCaller:   "Automation, CI, or another agent choosing the safe Sheet Ops CLI workflow before workbook mutation.",
+			ShortDescription: "Emit the recommended agent workflow for Sheet Ops CLI use",
+			Usage:            rootName + " agent-guide --json",
+			Options: []string{
+				"--json: Emit machine-readable JSON on stdout.",
+			},
+			OutputMode: "Machine-readable JSON on stdout.",
+			SideEffects: []string{
+				"None.",
+			},
+			ReadArtifacts: []string{
+				"Embedded Sheet Ops agent workflow guidance.",
+				"Registered root command name.",
+			},
+			WrittenArtifacts: []string{
+				"None.",
+			},
+			StateBehavior: "Read-only. Does not inspect workbooks, invoke runtime paths, or touch .sheet-ops-state.",
+			SafetyNotes: []string{
+				"Guide surface only. It does not prove readiness, preview impact, execution, or verification by itself.",
+				"Keep `sheet-ops` as the single human-facing workbook request entry.",
+			},
+			RelatedCommands: []string{
+				"capabilities",
+				"schema",
+				"preflight",
+				"preview-request",
+				"run-intent",
+			},
+			Mutating:      false,
+			ReadOnly:      true,
+			DryRunCapable: false,
+		},
 		"capabilities": {
 			Name:             "capabilities",
 			Classification:   cliClassificationAgentContract,
@@ -825,7 +861,7 @@ func renderRootHelp(output io.Writer, rootCmd *cobra.Command, contracts map[stri
 	}
 	sections := []cliContractSection{
 		{title: "Install surface:", names: []string{"install-skill"}},
-		{title: "Agent-contract surface:", names: []string{"preflight", "preview-request", "prepare-use"}},
+		{title: "Agent-contract surface:", names: []string{"agent-guide", "preflight", "preview-request", "prepare-use"}},
 		{title: "Internal handoff surface:", names: []string{"run-validated"}},
 		{title: "Maintainer diagnostic surface:", names: []string{"run-intent"}},
 		{title: "CLI support surface:", names: []string{"help", "completion"}},
