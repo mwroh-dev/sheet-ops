@@ -22,6 +22,14 @@ type previewRequestOptions struct {
 	InputFile  string
 	OutputFile string
 	ScenarioID string
+	Stdin      io.Reader
+}
+
+type previewIntentSource struct {
+	Intent      requestcompiler.NormalizedIntent
+	Raw         []byte
+	Path        string
+	DisplayPath string
 }
 
 type previewRequestResult struct {
@@ -76,6 +84,7 @@ func newPreviewRequestCommand() *cobra.Command {
 			if !jsonOutput {
 				return newCLIError(cliErrorInvalidUsage, "preview-request requires --json", true, cliExitUsage, "preview-request --json")
 			}
+			options.Stdin = cmd.InOrStdin()
 			result, err := runPreviewRequest(options)
 			if err != nil {
 				var typed *cliError
@@ -107,10 +116,6 @@ func newPreviewRequestCommand() *cobra.Command {
 }
 
 func runPreviewRequest(options previewRequestOptions) (previewRequestResult, error) {
-	intentFile, err := filepath.Abs(options.IntentFile)
-	if err != nil {
-		return previewRequestResult{}, err
-	}
 	inputFile, err := filepath.Abs(options.InputFile)
 	if err != nil {
 		return previewRequestResult{}, err
@@ -119,7 +124,7 @@ func runPreviewRequest(options previewRequestOptions) (previewRequestResult, err
 	if err != nil {
 		return previewRequestResult{}, err
 	}
-	intent, err := loadPreviewNormalizedIntent(intentFile)
+	intentSource, err := loadPreviewIntentSource(options.IntentFile, options.Stdin)
 	if err != nil {
 		return previewRequestResult{}, err
 	}
@@ -136,7 +141,7 @@ func runPreviewRequest(options previewRequestOptions) (previewRequestResult, err
 	}
 	scenarioID := strings.TrimSpace(options.ScenarioID)
 	if scenarioID == "" {
-		scenarioID = defaultScenarioSlug("", intentFile)
+		scenarioID = defaultScenarioSlug("", intentSource.DisplayPath)
 	}
 	compilerResult, err := requestcompiler.ValidateIntent(requestcompiler.Input{
 		RequestSource: requestcompiler.RequestSource{
@@ -148,7 +153,7 @@ func runPreviewRequest(options previewRequestOptions) (previewRequestResult, err
 		ScenarioSlug:   scenarioID,
 		InputWorkbooks: []requestcompiler.WorkbookInput{{Path: inputFile, Role: "primary_input"}},
 		OutputFile:     outputFile,
-	}, intent)
+	}, intentSource.Intent)
 	if err != nil {
 		return previewRequestResult{}, err
 	}
@@ -181,7 +186,7 @@ func runPreviewRequest(options previewRequestOptions) (previewRequestResult, err
 			{Kind: "runtime_evidence", Path: filepath.Join(stateRoot, "artifacts"), Required: true},
 		}
 	}
-	fingerprints, err := inputFingerprints(intentFile, inputFile)
+	fingerprints, err := inputFingerprintsFromIntentBytes(intentSource.Raw, inputFile)
 	if err != nil {
 		return previewRequestResult{}, err
 	}
@@ -203,7 +208,7 @@ func runPreviewRequest(options previewRequestOptions) (previewRequestResult, err
 		OutputFile:      outputFile,
 		StateRoot:       stateRoot,
 		PlannedReads: []previewPlannedArtifact{
-			{Kind: "normalized_intent", Path: intentFile, Required: true},
+			{Kind: "normalized_intent", Path: intentSource.DisplayPath, Required: true},
 			{Kind: "input_workbook", Path: inputFile, Required: true},
 		},
 		PlannedWrites:    plannedWrites,
@@ -217,16 +222,21 @@ func runPreviewRequest(options previewRequestOptions) (previewRequestResult, err
 }
 
 func inputFingerprints(intentFile string, inputFile string) (previewFingerprints, error) {
-	intentFingerprint, err := fileSHA256(intentFile)
+	raw, err := os.ReadFile(intentFile)
 	if err != nil {
 		return previewFingerprints{}, err
 	}
+	return inputFingerprintsFromIntentBytes(raw, inputFile)
+}
+
+func inputFingerprintsFromIntentBytes(intentRaw []byte, inputFile string) (previewFingerprints, error) {
+	intentHash := sha256.Sum256(intentRaw)
 	workbookFingerprint, err := fileSHA256(inputFile)
 	if err != nil {
 		return previewFingerprints{}, err
 	}
 	return previewFingerprints{
-		NormalizedIntentSHA256: intentFingerprint,
+		NormalizedIntentSHA256: hex.EncodeToString(intentHash[:]),
 		InputWorkbookSHA256:    workbookFingerprint,
 	}, nil
 }
@@ -252,9 +262,53 @@ func loadPreviewNormalizedIntent(path string) (requestcompiler.NormalizedIntent,
 	if err != nil {
 		return requestcompiler.NormalizedIntent{}, err
 	}
+	return loadPreviewNormalizedIntentFromBytes(path, raw)
+}
+
+func loadPreviewIntentSource(path string, stdin io.Reader) (previewIntentSource, error) {
+	if strings.TrimSpace(path) == "-" {
+		if stdin == nil {
+			stdin = os.Stdin
+		}
+		raw, err := io.ReadAll(stdin)
+		if err != nil {
+			return previewIntentSource{}, err
+		}
+		intent, err := loadPreviewNormalizedIntentFromBytes("stdin", raw)
+		if err != nil {
+			return previewIntentSource{}, err
+		}
+		return previewIntentSource{
+			Intent:      intent,
+			Raw:         raw,
+			Path:        "-",
+			DisplayPath: "stdin",
+		}, nil
+	}
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return previewIntentSource{}, err
+	}
+	raw, err := os.ReadFile(absPath)
+	if err != nil {
+		return previewIntentSource{}, err
+	}
+	intent, err := loadPreviewNormalizedIntentFromBytes(absPath, raw)
+	if err != nil {
+		return previewIntentSource{}, err
+	}
+	return previewIntentSource{
+		Intent:      intent,
+		Raw:         raw,
+		Path:        absPath,
+		DisplayPath: absPath,
+	}, nil
+}
+
+func loadPreviewNormalizedIntentFromBytes(label string, raw []byte) (requestcompiler.NormalizedIntent, error) {
 	intent, err := requestcompiler.LoadNormalizedIntentFromBytes(raw)
 	if err != nil {
-		return requestcompiler.NormalizedIntent{}, newInvalidDataError(fmt.Sprintf("load normalized intent %q: %v", path, err))
+		return requestcompiler.NormalizedIntent{}, newInvalidDataError(fmt.Sprintf("load normalized intent %q: %v", label, err))
 	}
 	return intent, nil
 }

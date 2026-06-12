@@ -1,6 +1,9 @@
 package main
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -31,6 +34,57 @@ type previewRequestDocument struct {
 	PlannedWrites    []previewPlannedArtifact `json:"planned_writes"`
 	PlannedArtifacts []previewPlannedArtifact `json:"planned_artifacts"`
 	Limitations      []string                 `json:"limitations"`
+}
+
+func TestPreviewRequestReadsNormalizedIntentFromStdin(t *testing.T) {
+	projectDir := t.TempDir()
+	inputFile := filepath.Join(projectDir, "line-items.xlsx")
+	outputFile := filepath.Join(projectDir, "line-items-output.xlsx")
+	intentFile := filepath.Join(projectDir, "append-intent.json")
+	writeLineItemsWorkbook(t, inputFile)
+	writeAppendRowsIntent(t, intentFile)
+	intentRaw, err := os.ReadFile(intentFile)
+	if err != nil {
+		t.Fatalf("ReadFile(intent): %v", err)
+	}
+
+	root := newRootCommand()
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	root.SetOut(&stdout)
+	root.SetErr(&stderr)
+	root.SetIn(bytes.NewReader(intentRaw))
+	root.SetArgs([]string{
+		"preview-request",
+		"--json",
+		"--intent-file", "-",
+		"--input-file", inputFile,
+		"--output-file", outputFile,
+		"--scenario-id", "preview-stdin-append-rows",
+	})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("Execute(preview-request stdin): %v\nstderr:\n%s\nstdout:\n%s", err, stderr.String(), stdout.String())
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", stderr.String())
+	}
+
+	var doc previewRequestDocument
+	if err := json.Unmarshal(stdout.Bytes(), &doc); err != nil {
+		t.Fatalf("json.Unmarshal(stdout): %v\nstdout:\n%s", err, stdout.String())
+	}
+	assertValidatesAgainstSchema(t, doc, "contracts/cli/preview_request_result.schema.json")
+	if doc.Operation != "append_structured_rows" {
+		t.Fatalf("operation = %q, want append_structured_rows", doc.Operation)
+	}
+	wantIntentSHA := sha256.Sum256(intentRaw)
+	if doc.Fingerprints.NormalizedIntentSHA256 != hex.EncodeToString(wantIntentSHA[:]) {
+		t.Fatalf("normalized_intent_sha256 = %q, want stdin bytes hash", doc.Fingerprints.NormalizedIntentSHA256)
+	}
+	assertPreviewArtifact(t, doc.PlannedReads, "normalized_intent", "stdin", true)
+	if _, err := os.Stat(outputFile); !os.IsNotExist(err) {
+		t.Fatalf("output workbook was created during stdin preview: %v", err)
+	}
 }
 
 func TestPreviewRequestReportsImpactWithoutMutating(t *testing.T) {
