@@ -442,6 +442,42 @@ func sheetOpsCLIReadOnlyDiscoveryContracts(rootName string) map[string]cliComman
 			ReadOnly:      true,
 			DryRunCapable: false,
 		},
+		"evidence-summary": {
+			Name:             "evidence-summary",
+			Classification:   cliClassificationAgentContract,
+			IntendedCaller:   "Automation, CI, or another agent checking runtime evidence before reporting workbook success.",
+			ShortDescription: "Summarize runtime evidence for agent success checks",
+			Usage:            rootName + " evidence-summary --json --evidence-dir <dir>",
+			Options: []string{
+				"--json: Emit machine-readable JSON on stdout.",
+				"--evidence-dir: Runtime evidence directory containing verification.json, execution.json, and optional failure.json.",
+			},
+			OutputMode: "Machine-readable JSON on stdout.",
+			SideEffects: []string{
+				"None.",
+			},
+			ReadArtifacts: []string{
+				"<evidence-dir>/verification.json.",
+				"<evidence-dir>/execution.json when present.",
+				"<evidence-dir>/failure.json when present.",
+			},
+			WrittenArtifacts: []string{
+				"None.",
+			},
+			StateBehavior: "Read-only. Reads existing runtime evidence files and never creates workbooks or state artifacts.",
+			SafetyNotes: []string{
+				"Success may be reported only when verification passes and output_workbook_sha256 is present.",
+				"Failure or incomplete evidence should be routed to repair advice or human review.",
+			},
+			RelatedCommands: []string{
+				"agent-guide",
+				"preview-request",
+				"run-intent",
+			},
+			Mutating:      false,
+			ReadOnly:      true,
+			DryRunCapable: false,
+		},
 		"schema": {
 			Name:             "schema",
 			Classification:   cliClassificationAgentContract,
@@ -900,7 +936,7 @@ func renderRootHelp(output io.Writer, rootCmd *cobra.Command, contracts map[stri
 	}
 	sections := []cliContractSection{
 		{title: "Install surface:", names: []string{"install-skill"}},
-		{title: "Agent-contract surface:", names: []string{"agent-guide", "operation", "preflight", "preview-request", "prepare-use"}},
+		{title: "Agent-contract surface:", names: []string{"agent-guide", "operation", "preflight", "preview-request", "prepare-use", "evidence-summary"}},
 		{title: "Internal handoff surface:", names: []string{"run-validated"}},
 		{title: "Maintainer diagnostic surface:", names: []string{"run-intent"}},
 		{title: "CLI support surface:", names: []string{"help", "completion"}},
