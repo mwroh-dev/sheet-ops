@@ -3,6 +3,7 @@
 /node_modules/
 /coverage/
 /dist/
+/docs/superpowers/
 /.codex/
 /.sheet-ops-state/
 /.worktrees/
