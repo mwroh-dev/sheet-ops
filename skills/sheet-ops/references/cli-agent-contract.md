@@ -22,9 +22,9 @@ request route. Its stdout is an internal handoff envelope with runtime evidence
 under `runtime`, not a public entry result. Validate it with
 `contracts/cli/internal_handoff_result.schema.json`, not the public entry
 schema `contracts/results/public_entry_result.schema.json`. Mutating workbook
-commands currently report `dry_run_capable: false`; `preview-request` is impact
-inspection only, not runtime dry-run evidence. Do not claim dry-run behavior
-until a truthful runtime planning mode exists.
+commands currently report `dry_run_capable: false`.
+`preview-request` is impact inspection only, not runtime dry-run evidence. Do
+not claim dry-run behavior until a truthful runtime planning mode exists.
 
 For large or generated normalized-intent payloads, prefer stdin over shell
 escaping: `sheet-ops-codex preview-request --json --intent-file - ...` and
