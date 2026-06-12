@@ -13,6 +13,7 @@ import (
 )
 
 const publicAgentCapabilityExposure = "public_agent_capability"
+const sheetOpsPackageRootEnv = "SHEET_OPS_PACKAGE_ROOT"
 
 type operationListPayload struct {
 	SchemaVersion string                     `json:"schema_version"`
@@ -160,12 +161,18 @@ func loadOperationRegistry() (runtimecapabilities.Registry, error) {
 }
 
 func discoverRepoRoot() (string, error) {
+	if explicit := filepath.Clean(os.Getenv(sheetOpsPackageRootEnv)); explicit != "." && explicit != "" {
+		if hasRepoManifest(explicit) {
+			return explicit, nil
+		}
+		return "", fmt.Errorf("%s=%s is not a sheet-ops package root", sheetOpsPackageRootEnv, explicit)
+	}
 	workingDir, err := os.Getwd()
 	if err != nil {
 		return "", err
 	}
 	for dir := filepath.Clean(workingDir); ; dir = filepath.Dir(dir) {
-		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+		if hasRepoManifest(dir) {
 			return dir, nil
 		}
 		parent := filepath.Dir(dir)
@@ -173,6 +180,11 @@ func discoverRepoRoot() (string, error) {
 			return "", fmt.Errorf("could not locate repository root from %s", workingDir)
 		}
 	}
+}
+
+func hasRepoManifest(root string) bool {
+	info, err := os.Stat(filepath.Join(root, "go.mod"))
+	return err == nil && !info.IsDir()
 }
 
 func publicCapabilityByName(registry runtimecapabilities.Registry, name string) (runtimecapabilities.Capability, *cliError) {

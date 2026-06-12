@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"slices"
 	"testing"
 
@@ -86,6 +88,37 @@ func TestOperationListJSONReportsPublicAgentOperations(t *testing.T) {
 	}
 	if slices.Contains(names, "write_values") {
 		t.Fatalf("operation list exposed runtime primitive write_values: %v", names)
+	}
+}
+
+func TestOperationListUsesPackageRootWhenWorkingDirectoryIsProject(t *testing.T) {
+	originalDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Getwd: %v", err)
+	}
+	repoRoot, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatalf("filepath.Abs(repo root): %v", err)
+	}
+	projectDir := t.TempDir()
+	t.Setenv("SHEET_OPS_PACKAGE_ROOT", repoRoot)
+	if err := os.Chdir(projectDir); err != nil {
+		t.Fatalf("Chdir(%s): %v", projectDir, err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(originalDir); err != nil {
+			t.Fatalf("restore chdir(%s): %v", originalDir, err)
+		}
+	})
+
+	var doc operationListDocument
+	executeCLIJSON(t, &doc, "operation", "list", "--json")
+
+	if !doc.OK {
+		t.Fatalf("ok = false, want true")
+	}
+	if len(doc.Operations) == 0 {
+		t.Fatalf("operations is empty")
 	}
 }
 
