@@ -163,6 +163,7 @@ type intentCompileInput struct {
 	InputFile  string
 	OutputFile string
 	ScenarioID string
+	IntentRaw  []byte
 }
 
 func newRunIntentCommand() *cobra.Command {
@@ -173,12 +174,14 @@ func newRunIntentCommand() *cobra.Command {
 		Short: "Validate a normalized intent document and run it",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			intent, err := requestcompiler.LoadNormalizedIntent(input.IntentFile)
+			intentSource, err := loadPreviewIntentSource(input.IntentFile, cmd.InOrStdin())
 			if err != nil {
 				return err
 			}
+			input.IntentFile = intentSource.DisplayPath
+			input.IntentRaw = intentSource.Raw
 
-			runtimeResult, publicEntryResult, orchestrateErr := runIntentEntry(intent, input)
+			runtimeResult, publicEntryResult, orchestrateErr := runIntentEntry(intentSource.Intent, input)
 			if publicEntryResult != nil {
 				if err := writePublicEntryResultJSON(cmd.OutOrStdout(), *publicEntryResult); err != nil {
 					return errors.Join(orchestrateErr, err)
@@ -215,7 +218,7 @@ func runIntentEntry(intent requestcompiler.NormalizedIntent, input intentCompile
 	if err != nil {
 		return nil, nil, err
 	}
-	inputIdentity, err := inputFingerprints(input.IntentFile, input.InputFile)
+	inputIdentity, err := inputFingerprintsForRunIntent(input)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -265,6 +268,13 @@ func runIntentEntry(intent requestcompiler.NormalizedIntent, input intentCompile
 	}
 	publicEntryResult := newExecutedPublicEntryResult("run-intent", compiled, result, fingerprints)
 	return &result, &publicEntryResult, orchestrateErr
+}
+
+func inputFingerprintsForRunIntent(input intentCompileInput) (previewFingerprints, error) {
+	if len(input.IntentRaw) > 0 {
+		return inputFingerprintsFromIntentBytes(input.IntentRaw, input.InputFile)
+	}
+	return inputFingerprints(input.IntentFile, input.InputFile)
 }
 
 func configureStateRootsFromStateRoot(workspaceRoot string) (string, error) {
