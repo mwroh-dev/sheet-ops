@@ -3,6 +3,7 @@ package schema
 import (
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 const packageRootEnv = "SHEET_OPS_PACKAGE_ROOT"
@@ -22,8 +23,10 @@ func ResolveRepoPath(callerFile string, sourceRootDepth int, rel ...string) stri
 
 func repoPathCandidates(callerFile string, sourceRootDepth int, relPath string) []string {
 	candidates := make([]string, 0, 7)
-	if explicit := filepath.Clean(os.Getenv(packageRootEnv)); explicit != "." && explicit != "" {
-		candidates = append(candidates, filepath.Join(explicit, relPath))
+	if explicit := strings.TrimSpace(os.Getenv(packageRootEnv)); explicit != "" {
+		if absExplicit, err := filepath.Abs(explicit); err == nil {
+			candidates = append(candidates, filepath.Join(absExplicit, relPath))
+		}
 	}
 	if workingDir, err := os.Getwd(); err == nil && workingDir != "" {
 		candidates = append(candidates,

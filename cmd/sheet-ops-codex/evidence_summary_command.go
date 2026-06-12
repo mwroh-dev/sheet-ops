@@ -66,7 +66,11 @@ func newEvidenceSummaryCommand() *cobra.Command {
 }
 
 func summarizeEvidenceDir(evidenceDir string) (evidenceSummaryResult, error) {
-	absDir, err := filepath.Abs(evidenceDir)
+	trimmedDir := strings.TrimSpace(evidenceDir)
+	if trimmedDir == "" {
+		return evidenceSummaryResult{}, fmt.Errorf("evidence-dir path cannot be empty")
+	}
+	absDir, err := filepath.Abs(trimmedDir)
 	if err != nil {
 		return evidenceSummaryResult{}, err
 	}

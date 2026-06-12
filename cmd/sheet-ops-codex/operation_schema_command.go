@@ -166,9 +166,13 @@ func loadOperationRegistry() (runtimecapabilities.Registry, error) {
 }
 
 func discoverRepoRoot() (string, error) {
-	if explicit := filepath.Clean(os.Getenv(sheetOpsPackageRootEnv)); explicit != "." && explicit != "" {
-		if hasRepoManifest(explicit) {
-			return explicit, nil
+	if explicit := strings.TrimSpace(os.Getenv(sheetOpsPackageRootEnv)); explicit != "" {
+		absExplicit, err := filepath.Abs(explicit)
+		if err != nil {
+			return "", err
+		}
+		if hasRepoManifest(absExplicit) {
+			return absExplicit, nil
 		}
 		return "", fmt.Errorf("%s=%s is not a sheet-ops package root", sheetOpsPackageRootEnv, explicit)
 	}
@@ -293,6 +297,8 @@ func normalizedIntentExample(operation string) (map[string]any, bool) {
 			"include_source_columns": []any{"Customer ID", "Amount"},
 			"append_lookup_columns":  []any{"Segment"},
 		}
+	default:
+		return nil, false
 	}
 	return base, true
 }

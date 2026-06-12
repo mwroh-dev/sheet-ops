@@ -124,6 +124,55 @@ func TestOperationListUsesPackageRootWhenWorkingDirectoryIsProject(t *testing.T)
 	}
 }
 
+func TestOperationListAcceptsRelativePackageRoot(t *testing.T) {
+	originalDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Getwd: %v", err)
+	}
+	repoRoot, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatalf("filepath.Abs(repo root): %v", err)
+	}
+	parentDir := filepath.Dir(repoRoot)
+	relativeRoot, err := filepath.Rel(parentDir, repoRoot)
+	if err != nil {
+		t.Fatalf("filepath.Rel(repo root): %v", err)
+	}
+	t.Setenv("SHEET_OPS_PACKAGE_ROOT", relativeRoot)
+	if err := os.Chdir(parentDir); err != nil {
+		t.Fatalf("Chdir(%s): %v", parentDir, err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(originalDir); err != nil {
+			t.Fatalf("restore chdir(%s): %v", originalDir, err)
+		}
+	})
+
+	var doc operationListDocument
+	executeCLIJSON(t, &doc, "operation", "list", "--json")
+
+	if !doc.OK {
+		t.Fatalf("ok = false, want true")
+	}
+	if len(doc.Operations) == 0 {
+		t.Fatalf("operations is empty")
+	}
+}
+
+func TestOperationListIgnoresBlankPackageRootEnv(t *testing.T) {
+	t.Setenv("SHEET_OPS_PACKAGE_ROOT", "   ")
+
+	var doc operationListDocument
+	executeCLIJSON(t, &doc, "operation", "list", "--json")
+
+	if !doc.OK {
+		t.Fatalf("ok = false, want true")
+	}
+	if len(doc.Operations) == 0 {
+		t.Fatalf("operations is empty")
+	}
+}
+
 func TestOperationCommandsSerializeRegistryLoadErrorsAsJSON(t *testing.T) {
 	for _, tc := range []struct {
 		name string
@@ -164,6 +213,29 @@ func TestOperationCommandsSerializeRegistryLoadErrorsAsJSON(t *testing.T) {
 				t.Fatalf("error.message = %q, want SHEET_OPS_PACKAGE_ROOT context", envelope.Error.Message)
 			}
 		})
+	}
+}
+
+func TestOperationExampleRejectsMissingDetailedExample(t *testing.T) {
+	stdout, stderr, err := executeCLIExpectError(t, "operation", "example", "extend_table_formulas", "--json")
+	if err == nil {
+		t.Fatalf("Execute(operation example extend_table_formulas) returned nil, want missing example error")
+	}
+	if stderr != "" {
+		t.Fatalf("stderr = %q, want empty for JSON error", stderr)
+	}
+	var envelope cliErrorEnvelope
+	if decodeErr := json.Unmarshal([]byte(stdout), &envelope); decodeErr != nil {
+		t.Fatalf("json.Unmarshal error envelope: %v\nstdout:\n%s", decodeErr, stdout)
+	}
+	if envelope.OK {
+		t.Fatalf("envelope.ok = true, want false")
+	}
+	if envelope.Error.Code != cliErrorInvalidData {
+		t.Fatalf("error.code = %q, want %q", envelope.Error.Code, cliErrorInvalidData)
+	}
+	if !strings.Contains(envelope.Error.Message, "no normalized intent example") {
+		t.Fatalf("error.message = %q, want missing normalized intent example", envelope.Error.Message)
 	}
 }
 

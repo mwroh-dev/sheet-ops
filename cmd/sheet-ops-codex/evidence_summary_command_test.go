@@ -3,6 +3,7 @@ package main
 import (
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -74,6 +75,16 @@ func TestEvidenceSummaryAcceptsUppercaseSHA256(t *testing.T) {
 		t.Fatalf("status = %q, want verified_success", doc.Status)
 	}
 	assertEvidenceCheck(t, doc.Checks, "output_workbook_sha256", "present")
+}
+
+func TestSummarizeEvidenceDirRejectsEmptyPath(t *testing.T) {
+	_, err := summarizeEvidenceDir("   ")
+	if err == nil {
+		t.Fatalf("summarizeEvidenceDir returned nil, want empty path error")
+	}
+	if !strings.Contains(err.Error(), "evidence-dir path cannot be empty") {
+		t.Fatalf("error = %q, want explicit empty path message", err.Error())
+	}
 }
 
 func TestEvidenceSummaryReportsFailedVerification(t *testing.T) {
