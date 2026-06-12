@@ -403,6 +403,45 @@ func sheetOpsCLIReadOnlyDiscoveryContracts(rootName string) map[string]cliComman
 			Mutating: false,
 			ReadOnly: true,
 		},
+		"operation": {
+			Name:             "operation",
+			Classification:   cliClassificationAgentContract,
+			IntendedCaller:   "Automation, CI, or another agent inspecting supported workbook operation contracts before constructing normalized intent.",
+			ShortDescription: "Inspect supported workbook operation schemas and examples",
+			Usage:            rootName + " operation <list|schema|example> --json",
+			Options: []string{
+				"--json: Emit machine-readable JSON on stdout.",
+				"list: List supported public workbook operations.",
+				"schema <name>: Show one operation contract with inputs, outputs, verification signals, and authority paths.",
+				"example <name>: Show one normalized-intent example for an operation.",
+			},
+			OutputMode: "Machine-readable JSON on stdout.",
+			SideEffects: []string{
+				"None.",
+			},
+			ReadArtifacts: []string{
+				"contracts/capabilities/records/*.yaml.",
+				"contracts/capabilities/capability.schema.json.",
+				"agents/request-compiler/contract/normalized_intent.schema.json for example shape compatibility.",
+			},
+			WrittenArtifacts: []string{
+				"None.",
+			},
+			StateBehavior: "Read-only. Does not inspect workbooks, compile intents, invoke runtime paths, or touch .sheet-ops-state.",
+			SafetyNotes: []string{
+				"Operation schemas describe supported public capability boundaries, not proof that a specific workbook request will compile.",
+				"Use preview-request against a concrete input workbook before mutating.",
+			},
+			RelatedCommands: []string{
+				"agent-guide",
+				"capabilities",
+				"schema",
+				"preview-request",
+			},
+			Mutating:      false,
+			ReadOnly:      true,
+			DryRunCapable: false,
+		},
 		"schema": {
 			Name:             "schema",
 			Classification:   cliClassificationAgentContract,
@@ -861,7 +900,7 @@ func renderRootHelp(output io.Writer, rootCmd *cobra.Command, contracts map[stri
 	}
 	sections := []cliContractSection{
 		{title: "Install surface:", names: []string{"install-skill"}},
-		{title: "Agent-contract surface:", names: []string{"agent-guide", "preflight", "preview-request", "prepare-use"}},
+		{title: "Agent-contract surface:", names: []string{"agent-guide", "operation", "preflight", "preview-request", "prepare-use"}},
 		{title: "Internal handoff surface:", names: []string{"run-validated"}},
 		{title: "Maintainer diagnostic surface:", names: []string{"run-intent"}},
 		{title: "CLI support surface:", names: []string{"help", "completion"}},
